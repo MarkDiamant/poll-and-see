@@ -1,6 +1,7 @@
-export const dynamic = "force-dynamic";
+"use client";
 
 import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 type Poll = {
@@ -18,22 +19,43 @@ type PollOption = {
   option_text: string;
 };
 
-export default async function Home() {
-  const { data: polls, error } = await supabase
-    .from("polls")
-    .select("*")
-    .order("id", { ascending: true });
+export default function Home() {
+  const [polls, setPolls] = useState<Poll[]>([]);
+  const [featuredOptions, setFeaturedOptions] = useState<PollOption[]>([]);
+  const [featuredVoteCounts, setFeaturedVoteCounts] = useState<Record<number, number>>({});
+  const [totalSiteVotes, setTotalSiteVotes] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const featuredPoll = polls?.[0];
+  const loadHomeData = useCallback(async () => {
+    setError("");
 
-  let featuredOptions: PollOption[] = [];
-  let featuredVoteCounts: Record<number, number> = {};
-  let totalSiteVotes = 0;
+    const { data: pollsData, error: pollsError } = await supabase
+      .from("polls")
+      .select("*")
+      .order("id", { ascending: true });
 
-  const { data: allVotes } = await supabase.from("votes").select("id");
-  totalSiteVotes = allVotes?.length || 0;
+    if (pollsError) {
+      setError("Error loading polls.");
+      setLoading(false);
+      return;
+    }
 
-  if (featuredPoll) {
+    const safePolls = pollsData || [];
+    setPolls(safePolls);
+
+    const featuredPoll = safePolls[0];
+
+    const { data: allVotes } = await supabase.from("votes").select("id");
+    setTotalSiteVotes(allVotes?.length || 0);
+
+    if (!featuredPoll) {
+      setFeaturedOptions([]);
+      setFeaturedVoteCounts({});
+      setLoading(false);
+      return;
+    }
+
     const { data: optionsData } = await supabase
       .from("poll_options")
       .select("*")
@@ -45,22 +67,81 @@ export default async function Home() {
       .select("option_id")
       .eq("poll_id", featuredPoll.id);
 
-    featuredOptions = optionsData || [];
+    const counts: Record<number, number> = {};
 
     (votesData || []).forEach((vote) => {
-      featuredVoteCounts[vote.option_id] =
-        (featuredVoteCounts[vote.option_id] || 0) + 1;
+      counts[vote.option_id] = (counts[vote.option_id] || 0) + 1;
     });
-  }
+
+    setFeaturedOptions(optionsData || []);
+    setFeaturedVoteCounts(counts);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    loadHomeData();
+  }, [loadHomeData]);
+
+  useEffect(() => {
+    const handleFocus = () => {
+      loadHomeData();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        loadHomeData();
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [loadHomeData]);
+
+  const featuredPoll = polls[0];
 
   const totalFeaturedVotes = Object.values(featuredVoteCounts).reduce(
     (sum, count) => sum + count,
     0
   );
 
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
+        <section className="max-w-6xl mx-auto px-6 pt-10 pb-12">
+          <p>Loading...</p>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
-      <section className="max-w-6xl mx-auto px-6 pt-10 pb-8">
+      <header className="max-w-6xl mx-auto px-6 pt-6 pb-4 flex items-center justify-between">
+        <h1 className="text-xl font-bold">PollAndSee</h1>
+
+        <div className="flex gap-3">
+          <Link
+            href="/"
+            className="text-sm px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700"
+          >
+            Home
+          </Link>
+
+          <Link
+            href="/submit-poll"
+            className="text-sm px-4 py-2 rounded-lg bg-white text-black hover:bg-gray-200"
+          >
+            Submit Poll
+          </Link>
+        </div>
+      </header>
+
+      <section className="max-w-6xl mx-auto px-6 pt-4 pb-8">
         <div className="text-center mb-10">
           <h1 className="text-4xl md:text-5xl font-bold mb-3">PollAndSee</h1>
           <p className="text-lg text-gray-300 mb-4">See what people really think</p>
@@ -143,11 +224,11 @@ export default async function Home() {
 
             <div className="border-t border-gray-700 pt-4">
               <Link
-  href="/submit-poll"
-  className="block w-full text-center bg-white text-black py-3 rounded-xl font-medium hover:bg-gray-200 transition"
->
-  Submit a Poll
-</Link>
+                href="/submit-poll"
+                className="block w-full text-center bg-white text-black py-3 rounded-xl font-medium hover:bg-gray-200 transition"
+              >
+                Submit a Poll
+              </Link>
             </div>
           </div>
         </div>
@@ -157,14 +238,14 @@ export default async function Home() {
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-2xl font-semibold">Live Polls</h3>
           <span className="text-sm text-gray-400">
-            {polls?.length ?? 0} active polls
+            {polls.length} active polls
           </span>
         </div>
 
-        {error && <p className="text-red-400 mb-4">Error loading polls.</p>}
+        {error && <p className="text-red-400 mb-4">{error}</p>}
 
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {polls?.map((poll: Poll) => (
+          {polls.map((poll) => (
             <Link
               key={poll.id}
               href={`/poll/${poll.slug}`}
