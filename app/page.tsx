@@ -123,7 +123,7 @@ export default async function Home() {
                 </div>
 
                 <Link
-                  href={`/poll/${featuredPoll.id}`}
+                  href={`/poll/${featuredPoll.slug}`}
                   className="inline-block bg-white text-black px-5 py-3 rounded-xl font-medium hover:bg-gray-200 transition"
                 >
                   Vote on featured poll
@@ -163,7 +163,7 @@ export default async function Home() {
           {polls?.map((poll: Poll) => (
             <Link
               key={poll.id}
-              href={`/poll/${poll.id}`}
+              href={`/poll/${poll.slug}`}
               className="bg-gray-800 rounded-2xl p-5 shadow-lg transition border border-gray-700 hover:border-gray-500"
             >
               <div className="mb-3">

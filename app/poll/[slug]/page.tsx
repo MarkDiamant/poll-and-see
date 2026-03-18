@@ -10,6 +10,7 @@ type Poll = {
   question: string;
   description: string;
   category: string;
+  slug: string;
 };
 
 type PollOption = {
@@ -22,7 +23,7 @@ type VoteCounts = Record<number, number>;
 
 export default function PollPage() {
   const params = useParams();
-  const id = Number(params.id);
+  const slug = String(params.slug);
 
   const [poll, setPoll] = useState<Poll | null>(null);
   const [options, setOptions] = useState<PollOption[]>([]);
@@ -33,28 +34,38 @@ export default function PollPage() {
   const [shareText, setShareText] = useState("Share poll");
 
   useEffect(() => {
-    const savedVote = localStorage.getItem(`poll-voted-${id}`);
-    if (savedVote === "true") {
-      setVoted(true);
-    }
-
     const loadPoll = async () => {
       const { data: pollData } = await supabase
         .from("polls")
         .select("*")
-        .eq("id", id)
+        .eq("slug", slug)
         .single();
+
+      const pollId = pollData?.id;
+
+      if (!pollId) {
+        setPoll(null);
+        setOptions([]);
+        setVoteCounts({});
+        setLoading(false);
+        return;
+      }
+
+      const savedVote = localStorage.getItem(`poll-voted-${pollId}`);
+      if (savedVote === "true") {
+        setVoted(true);
+      }
 
       const { data: optionsData } = await supabase
         .from("poll_options")
         .select("*")
-        .eq("poll_id", id)
+        .eq("poll_id", pollId)
         .order("id", { ascending: true });
 
       const { data: votesData } = await supabase
         .from("votes")
         .select("option_id")
-        .eq("poll_id", id);
+        .eq("poll_id", pollId);
 
       const counts: VoteCounts = {};
       (votesData || []).forEach((vote) => {
@@ -67,18 +78,18 @@ export default function PollPage() {
       setLoading(false);
     };
 
-    if (id) {
+    if (slug) {
       loadPoll();
     }
-  }, [id]);
+  }, [slug]);
 
   const handleVote = async (optionId: number) => {
-    if (voted || submitting) return;
+    if (!poll || voted || submitting) return;
 
     setSubmitting(true);
 
     const { error } = await supabase.from("votes").insert({
-      poll_id: id,
+      poll_id: poll.id,
       option_id: optionId,
     });
 
@@ -87,7 +98,7 @@ export default function PollPage() {
         ...prev,
         [optionId]: (prev[optionId] || 0) + 1,
       }));
-      localStorage.setItem(`poll-voted-${id}`, "true");
+      localStorage.setItem(`poll-voted-${poll.id}`, "true");
       setVoted(true);
     }
 
@@ -96,9 +107,7 @@ export default function PollPage() {
 
   const handleShare = async () => {
     const url = window.location.href;
-    const text = poll
-      ? `Vote on this poll: ${poll.question}`
-      : "Vote on this poll";
+    const text = poll ? `Vote on this poll: ${poll.question}` : "Vote on this poll";
 
     if (navigator.share) {
       try {
@@ -108,8 +117,7 @@ export default function PollPage() {
           url,
         });
         return;
-      } catch {
-      }
+      } catch {}
     }
 
     try {
@@ -197,8 +205,7 @@ export default function PollPage() {
             <div className="space-y-5">
               {options.map((option) => {
                 const count = voteCounts[option.id] || 0;
-                const percent =
-                  totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                const percent = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
 
                 return (
                   <div key={option.id}>
