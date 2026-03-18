@@ -142,9 +142,12 @@ export default async function Home() {
             </p>
 
             <div className="border-t border-gray-700 pt-4">
-              <button className="w-full bg-white text-black py-3 rounded-xl font-medium hover:bg-gray-200 transition">
-                Submit a Poll
-              </button>
+              <Link
+  href="/submit-poll"
+  className="block w-full text-center bg-white text-black py-3 rounded-xl font-medium hover:bg-gray-200 transition"
+>
+  Submit a Poll
+</Link>
             </div>
           </div>
         </div>

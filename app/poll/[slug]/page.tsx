@@ -158,18 +158,9 @@ export default function PollPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
       <section className="max-w-4xl mx-auto px-6 pt-10 pb-8">
-        <div className="flex items-center justify-between gap-4">
-          <Link href="/" className="text-sm text-blue-300 hover:underline">
-            ← Back to all polls
-          </Link>
-
-          <button
-            onClick={handleShare}
-            className="text-sm bg-white text-black px-4 py-2 rounded-xl font-medium hover:bg-gray-200 transition"
-          >
-            {shareText}
-          </button>
-        </div>
+        <Link href="/" className="text-sm text-blue-300 hover:underline">
+          ← Back to all polls
+        </Link>
 
         <div className="mt-6 bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
           <div className="flex items-center justify-between mb-4">
@@ -232,6 +223,15 @@ export default function PollPage() {
               <p className="text-sm text-gray-400 pt-2">Your vote has been recorded.</p>
             </div>
           )}
+
+          <div className="mt-8 border-t border-gray-700 pt-6">
+            <button
+              onClick={handleShare}
+              className="bg-white text-black px-4 py-2 rounded-xl font-medium hover:bg-gray-200 transition"
+            >
+              {shareText}
+            </button>
+          </div>
         </div>
       </section>
     </main>
