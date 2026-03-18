@@ -8,6 +8,7 @@ type Poll = {
   question: string;
   description: string;
   category: string;
+  slug: string;
   created_at?: string;
 };
 
