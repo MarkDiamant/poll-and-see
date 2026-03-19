@@ -108,6 +108,20 @@ export default function PollPage() {
 
   const handleShare = async () => {
     const url = window.location.href;
+    const text = poll ? `Vote on this poll: ${poll.question}` : "Vote on this poll";
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Poll & See",
+          text,
+          url,
+        });
+        return;
+      } catch {
+        // fall through to clipboard fallback
+      }
+    }
 
     try {
       await navigator.clipboard.writeText(url);
