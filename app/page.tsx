@@ -105,12 +105,12 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
       <header className="max-w-6xl mx-auto px-6 pt-6 pb-4">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-6">
           <Link href="/" className="flex items-center shrink-0" aria-label="Go to homepage">
             <img
               src="/logo.png"
               alt="Poll & See"
-              className="h-10 md:h-12 w-auto object-contain block"
+              className="h-12 md:h-14 w-auto object-contain block"
             />
           </Link>
 
