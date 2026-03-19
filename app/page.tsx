@@ -88,7 +88,6 @@ export default function Home() {
     };
   }, [loadHomeData]);
 
-  // Save current homepage scroll position
   useEffect(() => {
     const handleScroll = () => {
       sessionStorage.setItem("homeScrollY", String(window.scrollY));
@@ -101,22 +100,28 @@ export default function Home() {
     };
   }, []);
 
-  // Restore homepage scroll position after returning from a poll page
   useEffect(() => {
-    if (!loading && polls.length > 0) {
-      const savedScroll = sessionStorage.getItem("homeScrollY");
+    if (!loading) {
+      const shouldRestore = sessionStorage.getItem("restoreHomeScroll");
 
-      if (savedScroll) {
-        const scrollY = parseInt(savedScroll, 10);
+      if (shouldRestore === "true") {
+        const savedScroll = sessionStorage.getItem("homeScrollY");
 
-        if (!Number.isNaN(scrollY)) {
-          setTimeout(() => {
-            window.scrollTo({ top: scrollY, behavior: "auto" });
-          }, 50);
+        if (savedScroll) {
+          const scrollY = parseInt(savedScroll, 10);
+
+          if (!Number.isNaN(scrollY)) {
+            setTimeout(() => {
+              window.scrollTo({ top: scrollY, behavior: "auto" });
+              sessionStorage.removeItem("restoreHomeScroll");
+            }, 50);
+          }
+        } else {
+          sessionStorage.removeItem("restoreHomeScroll");
         }
       }
     }
-  }, [loading, polls.length]);
+  }, [loading]);
 
   const featuredPoll = polls.find((p) => p.featured) || polls[0];
 
@@ -283,9 +288,10 @@ export default function Home() {
           ))}
         </div>
       </section>
+
       <footer className="text-center text-sm text-gray-500 py-8">
-  © {new Date().getFullYear()} Poll & See
-</footer>
+        © {new Date().getFullYear()} Poll & See
+      </footer>
     </main>
   );
 }

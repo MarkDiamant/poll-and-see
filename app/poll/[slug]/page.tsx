@@ -120,7 +120,8 @@ export default function PollPage() {
   };
 
   const handleBack = () => {
-    router.back();
+    sessionStorage.setItem("restoreHomeScroll", "true");
+    router.push("/");
   };
 
   if (loading) {
@@ -157,6 +158,10 @@ export default function PollPage() {
         <section className="max-w-4xl mx-auto px-6 pt-6 pb-8">
           <p>Loading poll...</p>
         </section>
+
+        <footer className="text-center text-sm text-gray-500 py-8">
+          © {new Date().getFullYear()} Poll & See
+        </footer>
       </main>
     );
   }
@@ -200,6 +205,10 @@ export default function PollPage() {
             </Link>
           </div>
         </section>
+
+        <footer className="text-center text-sm text-gray-500 py-8">
+          © {new Date().getFullYear()} Poll & See
+        </footer>
       </main>
     );
   }
@@ -321,6 +330,10 @@ export default function PollPage() {
           </div>
         </div>
       </section>
+
+      <footer className="text-center text-sm text-gray-500 py-8">
+        © {new Date().getFullYear()} Poll & See
+      </footer>
     </main>
   );
 }
