@@ -120,11 +120,7 @@ export default function PollPage() {
   };
 
   const handleBack = () => {
-    if (window.history.length > 1) {
-      router.back();
-    } else {
-      router.push("/");
-    }
+    router.back();
   };
 
   if (loading) {
