@@ -117,14 +117,14 @@ export default function Home() {
           <div className="flex items-center gap-2 shrink-0">
             <Link
               href="/"
-              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-5 text-sm font-medium text-white transition hover:bg-gray-800"
+              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-gray-800"
             >
               Home
             </Link>
 
             <Link
               href="/submit-poll"
-              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-5 text-sm font-medium text-white transition hover:bg-blue-500"
+              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-blue-500"
             >
               Submit Poll
             </Link>
