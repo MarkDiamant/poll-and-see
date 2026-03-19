@@ -106,7 +106,7 @@ export default function Home() {
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
       <header className="max-w-6xl mx-auto px-4 md:px-6 pt-5 pb-4">
         <div className="flex items-center justify-between gap-4">
-          <Link href="/" aria-label="Go to homepage" className="shrink-0">
+          <Link href="/" aria-label="Go to homepage" className="shrink-0 rounded-xl bg-gray-900/70 px-2 py-1">
             <img
               src="/logo.png"
               alt="Poll & See"
