@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -10,7 +11,6 @@ type Poll = {
   description: string;
   category: string;
   slug: string;
-  created_at?: string;
 };
 
 type PollOption = {
@@ -23,31 +23,18 @@ export default function Home() {
   const [polls, setPolls] = useState<Poll[]>([]);
   const [featuredOptions, setFeaturedOptions] = useState<PollOption[]>([]);
   const [featuredVoteCounts, setFeaturedVoteCounts] = useState<Record<number, number>>({});
-  const [totalSiteVotes, setTotalSiteVotes] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   const loadHomeData = useCallback(async () => {
-    setError("");
-
-    const { data: pollsData, error: pollsError } = await supabase
+    const { data: pollsData } = await supabase
       .from("polls")
       .select("*")
       .order("id", { ascending: true });
-
-    if (pollsError) {
-      setError("Error loading polls.");
-      setLoading(false);
-      return;
-    }
 
     const safePolls = pollsData || [];
     setPolls(safePolls);
 
     const featuredPoll = safePolls[0];
-
-    const { data: allVotes } = await supabase.from("votes").select("id");
-    setTotalSiteVotes(allVotes?.length || 0);
 
     if (!featuredPoll) {
       setFeaturedOptions([]);
@@ -83,14 +70,9 @@ export default function Home() {
   }, [loadHomeData]);
 
   useEffect(() => {
-    const handleFocus = () => {
-      loadHomeData();
-    };
-
+    const handleFocus = () => loadHomeData();
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        loadHomeData();
-      }
+      if (document.visibilityState === "visible") loadHomeData();
     };
 
     window.addEventListener("focus", handleFocus);
@@ -121,8 +103,18 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
+
+      {/* HEADER WITH LOGO */}
       <header className="max-w-6xl mx-auto px-6 pt-6 pb-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold">PollAndSee</h1>
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/logo.png"
+            alt="Poll & See"
+            width={140}
+            height={40}
+            priority
+          />
+        </Link>
 
         <div className="flex gap-3">
           <Link
@@ -141,25 +133,25 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="max-w-6xl mx-auto px-6 pt-4 pb-8">
-        <div className="text-center mb-10">
-          <h1 className="text-4xl md:text-5xl font-bold mb-3">PollAndSee</h1>
-          <p className="text-lg text-gray-300 mb-4">See what people really think</p>
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-gray-200">
-            <span className="font-semibold">{totalSiteVotes}</span>
-            <span>total votes across the site</span>
-          </div>
-        </div>
+      {/* HERO */}
+      <section className="max-w-6xl mx-auto px-6 pt-4 pb-8 text-center">
+        <h1 className="text-4xl md:text-5xl font-bold mb-3">Poll & See</h1>
+        <p className="text-lg text-gray-300 mb-6">
+          See what people really think
+        </p>
 
+        {/* REMOVED TOTAL VOTES DISPLAY */}
+      </section>
+
+      {/* FEATURED */}
+      <section className="max-w-6xl mx-auto px-6 pb-8">
         <div className="grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2 bg-gray-800 rounded-2xl p-6 shadow-lg">
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm text-blue-300 bg-blue-500/10 px-3 py-1 rounded-full">
                 Featured Poll
               </span>
-              <span className="text-sm text-gray-400">
-                {totalFeaturedVotes} votes
-              </span>
+              {/* REMOVED TOTAL VOTES HERE TOO */}
             </div>
 
             {featuredPoll ? (
@@ -234,6 +226,7 @@ export default function Home() {
         </div>
       </section>
 
+      {/* LIVE POLLS */}
       <section className="max-w-6xl mx-auto px-6 pb-12">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-2xl font-semibold">Live Polls</h3>
@@ -241,8 +234,6 @@ export default function Home() {
             {polls.length} active polls
           </span>
         </div>
-
-        {error && <p className="text-red-400 mb-4">{error}</p>}
 
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {polls.map((poll) => (
