@@ -19,6 +19,12 @@ type PollOption = {
   option_text: string;
 };
 
+const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899"];
+
+const getOptionColour = (index: number) => {
+  return OPTION_COLOURS[index] || OPTION_COLOURS[OPTION_COLOURS.length - 1];
+};
+
 export default function Home() {
   const [polls, setPolls] = useState<Poll[]>([]);
   const [featuredOptions, setFeaturedOptions] = useState<PollOption[]>([]);
@@ -200,19 +206,12 @@ export default function Home() {
                 </p>
 
                 <div className="space-y-4 mb-6">
-                  {featuredOptions.map((option) => {
+                  {featuredOptions.map((option, index) => {
                     const count = featuredVoteCounts[option.id] || 0;
                     const percent =
                       totalFeaturedVotes > 0
                         ? Math.round((count / totalFeaturedVotes) * 100)
                         : 0;
-
-                    const barColor =
-                      option.option_text.toLowerCase() === "yes"
-                        ? "bg-green-500"
-                        : option.option_text.toLowerCase() === "no"
-                        ? "bg-red-500"
-                        : "bg-blue-500";
 
                     return (
                       <div key={option.id}>
@@ -222,8 +221,11 @@ export default function Home() {
                         </div>
                         <div className="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
                           <div
-                            className={`${barColor} h-4`}
-                            style={{ width: `${percent}%` }}
+                            className="h-4"
+                            style={{
+                              width: `${percent}%`,
+                              backgroundColor: getOptionColour(index),
+                            }}
                           />
                         </div>
                       </div>

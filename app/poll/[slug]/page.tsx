@@ -21,6 +21,12 @@ type PollOption = {
 
 type VoteCounts = Record<number, number>;
 
+const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899"];
+
+const getOptionColour = (index: number) => {
+  return OPTION_COLOURS[index] || OPTION_COLOURS[OPTION_COLOURS.length - 1];
+};
+
 export default function PollPage() {
   const params = useParams();
   const router = useRouter();
@@ -119,7 +125,7 @@ export default function PollPage() {
         });
         return;
       } catch {
-        // fall through to clipboard fallback
+        // fall through
       }
     }
 
@@ -282,18 +288,13 @@ export default function PollPage() {
           {!voted ? (
             <>
               <div className="flex flex-col gap-4">
-                {options.map((option) => (
+                {options.map((option, index) => (
                   <button
                     key={option.id}
                     onClick={() => handleVote(option.id)}
                     disabled={submitting}
-                    className={`py-3 rounded-xl font-medium transition ${
-                      option.option_text.toLowerCase() === "yes"
-                        ? "bg-green-600 hover:bg-green-700"
-                        : option.option_text.toLowerCase() === "no"
-                        ? "bg-red-600 hover:bg-red-700"
-                        : "bg-gray-700 hover:bg-gray-600"
-                    }`}
+                    className="py-3 rounded-xl font-medium text-white transition disabled:opacity-70"
+                    style={{ backgroundColor: getOptionColour(index) }}
                   >
                     {submitting ? "Submitting..." : option.option_text}
                   </button>
@@ -304,7 +305,7 @@ export default function PollPage() {
             </>
           ) : (
             <div className="space-y-5">
-              {options.map((option) => {
+              {options.map((option, index) => {
                 const count = voteCounts[option.id] || 0;
                 const percent = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
 
@@ -316,14 +317,11 @@ export default function PollPage() {
                     </div>
                     <div className="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
                       <div
-                        className={
-                          option.option_text.toLowerCase() === "yes"
-                            ? "bg-green-500 h-4"
-                            : option.option_text.toLowerCase() === "no"
-                            ? "bg-red-500 h-4"
-                            : "bg-blue-500 h-4"
-                        }
-                        style={{ width: `${percent}%` }}
+                        className="h-4"
+                        style={{
+                          width: `${percent}%`,
+                          backgroundColor: getOptionColour(index),
+                        }}
                       />
                     </div>
                   </div>
