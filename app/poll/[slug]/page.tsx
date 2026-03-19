@@ -300,7 +300,7 @@ export default function PollPage() {
                 );
               })}
 
-              <p className="text-sm text-gray-400 pt-2">Your vote has been recorded.</p>
+              <p className="text-sm text-gray-400 pt-2">You've voted.</p>
             </div>
           )}
 
