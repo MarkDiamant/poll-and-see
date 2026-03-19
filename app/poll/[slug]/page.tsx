@@ -120,23 +120,81 @@ export default function PollPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white p-6">
-        <div className="max-w-2xl mx-auto mt-16">
+      <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
+        <header className="max-w-6xl mx-auto px-4 md:px-6 pt-5 pb-4">
+          <div className="flex items-center justify-between gap-4">
+            <Link href="/" aria-label="Go to homepage" className="shrink-0">
+              <img
+                src="/logo.png"
+                alt="Poll & See"
+                className="h-12 md:h-16 w-auto object-contain block"
+              />
+            </Link>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <Link
+                href="/"
+                className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-gray-800"
+              >
+                Home
+              </Link>
+
+              <Link
+                href="/submit-poll"
+                className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-blue-500"
+              >
+                Submit Poll
+              </Link>
+            </div>
+          </div>
+        </header>
+
+        <section className="max-w-4xl mx-auto px-6 pt-6 pb-8">
           <p>Loading poll...</p>
-        </div>
+        </section>
       </main>
     );
   }
 
   if (!poll) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white p-6">
-        <div className="max-w-2xl mx-auto mt-16 bg-gray-800 rounded-2xl p-6">
-          <h1 className="text-2xl font-bold mb-3">Poll not found</h1>
-          <Link href="/" className="text-blue-300 hover:underline">
-            Return to homepage
-          </Link>
-        </div>
+      <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
+        <header className="max-w-6xl mx-auto px-4 md:px-6 pt-5 pb-4">
+          <div className="flex items-center justify-between gap-4">
+            <Link href="/" aria-label="Go to homepage" className="shrink-0">
+              <img
+                src="/logo.png"
+                alt="Poll & See"
+                className="h-12 md:h-16 w-auto object-contain block"
+              />
+            </Link>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <Link
+                href="/"
+                className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-gray-800"
+              >
+                Home
+              </Link>
+
+              <Link
+                href="/submit-poll"
+                className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-blue-500"
+              >
+                Submit Poll
+              </Link>
+            </div>
+          </div>
+        </header>
+
+        <section className="max-w-4xl mx-auto px-6 pt-6 pb-8">
+          <div className="bg-gray-800 rounded-2xl p-6">
+            <h1 className="text-2xl font-bold mb-3">Poll not found</h1>
+            <Link href="/" className="text-blue-300 hover:underline">
+              Return to homepage
+            </Link>
+          </div>
+        </section>
       </main>
     );
   }
@@ -145,7 +203,35 @@ export default function PollPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
-      <section className="max-w-4xl mx-auto px-6 pt-10 pb-8">
+      <header className="max-w-6xl mx-auto px-4 md:px-6 pt-5 pb-4">
+        <div className="flex items-center justify-between gap-4">
+          <Link href="/" aria-label="Go to homepage" className="shrink-0">
+            <img
+              src="/logo.png"
+              alt="Poll & See"
+              className="h-12 md:h-16 w-auto object-contain block"
+            />
+          </Link>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              href="/"
+              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-gray-800"
+            >
+              Home
+            </Link>
+
+            <Link
+              href="/submit-poll"
+              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-blue-500"
+            >
+              Submit Poll
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      <section className="max-w-4xl mx-auto px-6 pt-2 pb-8">
         <Link href="/" className="text-sm text-blue-300 hover:underline">
           ← Back to all polls
         </Link>
@@ -182,8 +268,8 @@ export default function PollPage() {
                 ))}
               </div>
 
-              <p className="mt-4 text-sm text-gray-400">
-                Vote to see results.
+              <p className="mt-4 text-sm text-gray-500">
+                Vote to see results
               </p>
             </>
           ) : (
@@ -214,7 +300,7 @@ export default function PollPage() {
                 );
               })}
 
-              <p className="text-sm text-gray-400 pt-2">You've voted.</p>
+              <p className="text-sm text-gray-400 pt-2">Your vote has been recorded.</p>
             </div>
           )}
 
