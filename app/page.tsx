@@ -10,6 +10,7 @@ type Poll = {
   description: string;
   category: string;
   slug: string;
+  featured?: boolean;
 };
 
 type PollOption = {
@@ -25,17 +26,19 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   const loadHomeData = useCallback(async () => {
+    setLoading(true);
+
     const { data: pollsData } = await supabase
       .from("polls")
-      .select("*")
+      .select("id, question, description, category, slug, featured")
       .order("id", { ascending: true });
 
     const safePolls = pollsData || [];
     setPolls(safePolls);
 
-    const featuredPoll = safePolls[0];
+    const chosenFeaturedPoll = safePolls.find((p) => p.featured) || safePolls[0];
 
-    if (!featuredPoll) {
+    if (!chosenFeaturedPoll) {
       setFeaturedOptions([]);
       setFeaturedVoteCounts({});
       setLoading(false);
@@ -44,14 +47,14 @@ export default function Home() {
 
     const { data: optionsData } = await supabase
       .from("poll_options")
-      .select("id, question, description, category, slug, featured")
-      .eq("poll_id", featuredPoll.id)
+      .select("*")
+      .eq("poll_id", chosenFeaturedPoll.id)
       .order("id", { ascending: true });
 
     const { data: votesData } = await supabase
       .from("votes")
       .select("option_id")
-      .eq("poll_id", featuredPoll.id);
+      .eq("poll_id", chosenFeaturedPoll.id);
 
     const counts: Record<number, number> = {};
 
