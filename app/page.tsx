@@ -24,6 +24,7 @@ export default function Home() {
   const [featuredOptions, setFeaturedOptions] = useState<PollOption[]>([]);
   const [featuredVoteCounts, setFeaturedVoteCounts] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(true);
+  const [featuredPollVoted, setFeaturedPollVoted] = useState(false);
 
   const loadHomeData = useCallback(async () => {
     setLoading(true);
@@ -41,9 +42,13 @@ export default function Home() {
     if (!chosenFeaturedPoll) {
       setFeaturedOptions([]);
       setFeaturedVoteCounts({});
+      setFeaturedPollVoted(false);
       setLoading(false);
       return;
     }
+
+    const savedVote = localStorage.getItem(`poll-voted-${chosenFeaturedPoll.id}`);
+    setFeaturedPollVoted(savedVote === "true");
 
     const { data: optionsData } = await supabase
       .from("poll_options")
@@ -230,7 +235,7 @@ export default function Home() {
                   href={`/poll/${featuredPoll.slug}`}
                   className="inline-block bg-white text-black px-5 py-3 rounded-xl font-medium hover:bg-gray-200 transition"
                 >
-                  Vote on featured poll
+                  {featuredPollVoted ? "View poll" : "Vote on featured poll"}
                 </Link>
               </>
             ) : (
