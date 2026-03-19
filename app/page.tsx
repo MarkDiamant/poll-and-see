@@ -283,6 +283,9 @@ export default function Home() {
           ))}
         </div>
       </section>
+      <footer className="text-center text-sm text-gray-500 py-8">
+  © {new Date().getFullYear()} Poll & See
+</footer>
     </main>
   );
 }
