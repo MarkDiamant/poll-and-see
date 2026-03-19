@@ -125,7 +125,7 @@ export default function PollPage() {
         });
         return;
       } catch {
-        // fall through
+        // fall through to clipboard fallback
       }
     }
 
@@ -288,13 +288,12 @@ export default function PollPage() {
           {!voted ? (
             <>
               <div className="flex flex-col gap-4">
-                {options.map((option, index) => (
+                {options.map((option) => (
                   <button
                     key={option.id}
                     onClick={() => handleVote(option.id)}
                     disabled={submitting}
-                    className="py-3 rounded-xl font-medium text-white transition disabled:opacity-70"
-                    style={{ backgroundColor: getOptionColour(index) }}
+                    className="py-3 rounded-xl font-medium text-white transition bg-gray-700 hover:bg-gray-600 disabled:opacity-70"
                   >
                     {submitting ? "Submitting..." : option.option_text}
                   </button>
