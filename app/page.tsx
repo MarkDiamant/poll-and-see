@@ -72,7 +72,9 @@ export default function Home() {
   useEffect(() => {
     const handleFocus = () => loadHomeData();
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") loadHomeData();
+      if (document.visibilityState === "visible") {
+        loadHomeData();
+      }
     };
 
     window.addEventListener("focus", handleFocus);
@@ -103,55 +105,49 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
-
-      {/* HEADER WITH LOGO */}
-      <header className="max-w-6xl mx-auto px-6 pt-6 pb-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center">
-          <Image
-            src="/logo.png"
-            alt="Poll & See"
-            width={140}
-            height={40}
-            priority
-          />
-        </Link>
-
-        <div className="flex gap-3">
-          <Link
-            href="/"
-            className="text-sm px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700"
-          >
-            Home
+      <header className="max-w-6xl mx-auto px-6 pt-6 pb-4">
+        <div className="flex items-center justify-between gap-4">
+          <Link href="/" className="flex items-center" aria-label="Go to homepage">
+            <Image
+              src="/logo.png"
+              alt="Poll & See"
+              width={150}
+              height={44}
+              priority
+              className="h-auto w-auto max-h-11"
+            />
           </Link>
 
-          <Link
-            href="/submit-poll"
-            className="text-sm px-4 py-2 rounded-lg bg-white text-black hover:bg-gray-200"
-          >
-            Submit Poll
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/"
+              className="inline-flex items-center rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+            >
+              Home
+            </Link>
+
+            <Link
+              href="/submit-poll"
+              className="inline-flex items-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-500"
+            >
+              Submit Poll
+            </Link>
+          </div>
         </div>
       </header>
 
-      {/* HERO */}
-      <section className="max-w-6xl mx-auto px-6 pt-4 pb-8 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold mb-3">Poll & See</h1>
-        <p className="text-lg text-gray-300 mb-6">
-          See what people really think
-        </p>
+      <section className="max-w-6xl mx-auto px-6 pt-4 pb-8">
+        <div className="text-center mb-10">
+          <h1 className="text-4xl md:text-5xl font-bold mb-3">Poll & See</h1>
+          <p className="text-lg text-gray-300 mb-4">See what people really think</p>
+        </div>
 
-        {/* REMOVED TOTAL VOTES DISPLAY */}
-      </section>
-
-      {/* FEATURED */}
-      <section className="max-w-6xl mx-auto px-6 pb-8">
         <div className="grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2 bg-gray-800 rounded-2xl p-6 shadow-lg">
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm text-blue-300 bg-blue-500/10 px-3 py-1 rounded-full">
                 Featured Poll
               </span>
-              {/* REMOVED TOTAL VOTES HERE TOO */}
             </div>
 
             {featuredPoll ? (
@@ -217,7 +213,7 @@ export default function Home() {
             <div className="border-t border-gray-700 pt-4">
               <Link
                 href="/submit-poll"
-                className="block w-full text-center bg-white text-black py-3 rounded-xl font-medium hover:bg-gray-200 transition"
+                className="block w-full text-center rounded-xl bg-blue-600 py-3 font-medium text-white transition hover:bg-blue-500"
               >
                 Submit a Poll
               </Link>
@@ -226,7 +222,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* LIVE POLLS */}
       <section className="max-w-6xl mx-auto px-6 pb-12">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-2xl font-semibold">Live Polls</h3>
