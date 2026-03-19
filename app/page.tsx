@@ -44,7 +44,7 @@ export default function Home() {
 
     const { data: optionsData } = await supabase
       .from("poll_options")
-      .select("*")
+      .select("id, question, description, category, slug, featured")
       .eq("poll_id", featuredPoll.id)
       .order("id", { ascending: true });
 
