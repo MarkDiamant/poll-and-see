@@ -85,7 +85,7 @@ export default function Home() {
     };
   }, [loadHomeData]);
 
-  const featuredPoll = polls[0];
+  const featuredPoll = polls.find((p) => p.featured) || polls[0];
 
   const totalFeaturedVotes = Object.values(featuredVoteCounts).reduce(
     (sum, count) => sum + count,
