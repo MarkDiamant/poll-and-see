@@ -183,7 +183,7 @@ export default function PollPage() {
               </div>
 
               <p className="mt-4 text-sm text-gray-400">
-                Vote to reveal results.
+                Vote to see results.
               </p>
             </>
           ) : (
@@ -214,7 +214,7 @@ export default function PollPage() {
                 );
               })}
 
-              <p className="text-sm text-gray-400 pt-2">Your vote has been recorded.</p>
+              <p className="text-sm text-gray-400 pt-2">You've voted.</p>
             </div>
           )}
 
