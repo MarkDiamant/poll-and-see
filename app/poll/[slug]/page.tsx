@@ -107,18 +107,6 @@ export default function PollPage() {
 
   const handleShare = async () => {
     const url = window.location.href;
-    const text = poll ? `Vote on this poll: ${poll.question}` : "Vote on this poll";
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: "PollAndSee",
-          text,
-          url,
-        });
-        return;
-      } catch {}
-    }
 
     try {
       await navigator.clipboard.writeText(url);
@@ -174,24 +162,30 @@ export default function PollPage() {
           <p className="text-gray-300 mb-8">{poll.description}</p>
 
           {!voted ? (
-            <div className="flex flex-col gap-4">
-              {options.map((option) => (
-                <button
-                  key={option.id}
-                  onClick={() => handleVote(option.id)}
-                  disabled={submitting}
-                  className={`py-3 rounded-xl font-medium transition ${
-                    option.option_text.toLowerCase() === "yes"
-                      ? "bg-green-600 hover:bg-green-700"
-                      : option.option_text.toLowerCase() === "no"
-                      ? "bg-red-600 hover:bg-red-700"
-                      : "bg-gray-700 hover:bg-gray-600"
-                  }`}
-                >
-                  {submitting ? "Submitting..." : option.option_text}
-                </button>
-              ))}
-            </div>
+            <>
+              <div className="flex flex-col gap-4">
+                {options.map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => handleVote(option.id)}
+                    disabled={submitting}
+                    className={`py-3 rounded-xl font-medium transition ${
+                      option.option_text.toLowerCase() === "yes"
+                        ? "bg-green-600 hover:bg-green-700"
+                        : option.option_text.toLowerCase() === "no"
+                        ? "bg-red-600 hover:bg-red-700"
+                        : "bg-gray-700 hover:bg-gray-600"
+                    }`}
+                  >
+                    {submitting ? "Submitting..." : option.option_text}
+                  </button>
+                ))}
+              </div>
+
+              <p className="mt-4 text-sm text-gray-400">
+                Vote to reveal results.
+              </p>
+            </>
           ) : (
             <div className="space-y-5">
               {options.map((option) => {
