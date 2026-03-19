@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -107,14 +106,11 @@ export default function Home() {
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
       <header className="max-w-6xl mx-auto px-6 pt-6 pb-4">
         <div className="flex items-center justify-between gap-4">
-          <Link href="/" className="flex items-center" aria-label="Go to homepage">
-            <Image
+          <Link href="/" className="flex items-center shrink-0" aria-label="Go to homepage">
+            <img
               src="/logo.png"
               alt="Poll & See"
-              width={150}
-              height={44}
-              priority
-              className="h-auto w-auto max-h-11"
+              className="h-10 md:h-12 w-auto object-contain block"
             />
           </Link>
 
