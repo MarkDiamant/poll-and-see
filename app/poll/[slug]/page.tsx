@@ -268,7 +268,7 @@ export default function PollPage() {
                 ))}
               </div>
 
-              <p className="mt-4 text-sm text-gray-500">
+              <p className="mt-4 text-sm text-gray-400">
                 Vote to see results
               </p>
             </>
