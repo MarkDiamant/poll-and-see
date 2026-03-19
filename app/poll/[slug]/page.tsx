@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -23,6 +23,7 @@ type VoteCounts = Record<number, number>;
 
 export default function PollPage() {
   const params = useParams();
+  const router = useRouter();
   const slug = String(params.slug);
 
   const [poll, setPoll] = useState<Poll | null>(null);
@@ -115,6 +116,14 @@ export default function PollPage() {
     } catch {
       setShareText("Could not copy");
       setTimeout(() => setShareText("Share poll"), 2000);
+    }
+  };
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/");
     }
   };
 
@@ -232,9 +241,13 @@ export default function PollPage() {
       </header>
 
       <section className="max-w-4xl mx-auto px-6 pt-2 pb-8">
-        <Link href="/" className="text-sm text-blue-300 hover:underline">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="text-sm text-blue-300 hover:underline"
+        >
           ← Back to all polls
-        </Link>
+        </button>
 
         <div className="mt-6 bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
           <div className="flex items-center justify-between mb-4">
@@ -268,9 +281,7 @@ export default function PollPage() {
                 ))}
               </div>
 
-              <p className="mt-4 text-sm text-gray-400">
-                Vote to see results
-              </p>
+              <p className="mt-4 text-sm text-gray-400">Vote to see results</p>
             </>
           ) : (
             <div className="space-y-5">
@@ -300,7 +311,7 @@ export default function PollPage() {
                 );
               })}
 
-              <p className="text-sm text-gray-400 pt-2">You've voted.</p>
+              <p className="text-sm text-gray-400 pt-2">You’ve voted.</p>
             </div>
           )}
 
