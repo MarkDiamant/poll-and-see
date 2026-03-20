@@ -17,7 +17,9 @@ const CATEGORY_OPTIONS = [
 type Category = (typeof CATEGORY_OPTIONS)[number] | "";
 
 function suggestCategory(question: string): Category {
-  const q = question.toLowerCase();
+  const q = question.toLowerCase().trim();
+
+  if (!q) return "";
 
   if (
     q.includes("school") ||
@@ -28,7 +30,11 @@ function suggestCategory(question: string): Category {
     q.includes("university") ||
     q.includes("college") ||
     q.includes("exam") ||
-    q.includes("education")
+    q.includes("education") ||
+    q.includes("classroom") ||
+    q.includes("learning") ||
+    q.includes("degree") ||
+    q.includes("tuition")
   ) {
     return "Education";
   }
@@ -38,12 +44,23 @@ function suggestCategory(question: string): Category {
     q.includes("salary") ||
     q.includes("cost") ||
     q.includes("price") ||
+    q.includes("prices") ||
     q.includes("rent") ||
     q.includes("mortgage") ||
     q.includes("tax") ||
     q.includes("income") ||
     q.includes("finance") ||
-    q.includes("financial")
+    q.includes("financial") ||
+    q.includes("bills") ||
+    q.includes("saving") ||
+    q.includes("savings") ||
+    q.includes("afford") ||
+    q.includes("affording") ||
+    q.includes("expenses") ||
+    q.includes("paid") ||
+    q.includes("pay rise") ||
+    q.includes("wages") ||
+    q.includes("debt")
   ) {
     return "Finance";
   }
@@ -53,11 +70,21 @@ function suggestCategory(question: string): Category {
     q.includes("startup") ||
     q.includes("marketing") ||
     q.includes("customer") ||
+    q.includes("customers") ||
     q.includes("sales") ||
     q.includes("office") ||
     q.includes("remote work") ||
+    q.includes("hybrid work") ||
     q.includes("workplace") ||
-    q.includes("company")
+    q.includes("company") ||
+    q.includes("career") ||
+    q.includes("job market") ||
+    q.includes("manager") ||
+    q.includes("employee") ||
+    q.includes("employees") ||
+    q.includes("boss") ||
+    q.includes("entrepreneur") ||
+    q.includes("freelance")
   ) {
     return "Business";
   }
@@ -67,21 +94,56 @@ function suggestCategory(question: string): Category {
     q.includes("local") ||
     q.includes("neighbour") ||
     q.includes("neighbor") ||
+    q.includes("neighbourhood") ||
+    q.includes("neighborhood") ||
     q.includes("communal") ||
-    q.includes("public support")
+    q.includes("public support") ||
+    q.includes("charity") ||
+    q.includes("volunteer") ||
+    q.includes("volunteering") ||
+    q.includes("council") ||
+    q.includes("area") ||
+    q.includes("high street") ||
+    q.includes("public services")
   ) {
     return "Community";
   }
 
   if (
-    q.includes("life") ||
     q.includes("dating") ||
-    q.includes("health") ||
-    q.includes("routine") ||
+    q.includes("relationship") ||
+    q.includes("relationships") ||
+    q.includes("marriage") ||
+    q.includes("married") ||
+    q.includes("parent") ||
+    q.includes("parents") ||
+    q.includes("parenting") ||
     q.includes("family") ||
     q.includes("kids") ||
     q.includes("children") ||
-    q.includes("social media")
+    q.includes("child") ||
+    q.includes("baby") ||
+    q.includes("babies") ||
+    q.includes("health") ||
+    q.includes("healthy") ||
+    q.includes("mental health") ||
+    q.includes("fitness") ||
+    q.includes("exercise") ||
+    q.includes("gym") ||
+    q.includes("diet") ||
+    q.includes("sleep") ||
+    q.includes("routine") ||
+    q.includes("work life balance") ||
+    q.includes("work-life balance") ||
+    q.includes("social media") ||
+    q.includes("screen time") ||
+    q.includes("phone use") ||
+    q.includes("phones") ||
+    q.includes("lifestyle") ||
+    q.includes("home life") ||
+    q.includes("stress") ||
+    q.includes("wellbeing") ||
+    q.includes("well-being")
   ) {
     return "Lifestyle";
   }
@@ -91,10 +153,18 @@ function suggestCategory(question: string): Category {
     q.includes("favourite") ||
     q.includes("favorite") ||
     q.includes("movie") ||
+    q.includes("film") ||
     q.includes("music") ||
     q.includes("pizza") ||
     q.includes("game") ||
-    q.includes("holiday")
+    q.includes("games") ||
+    q.includes("holiday") ||
+    q.includes("weekend") ||
+    q.includes("tv show") ||
+    q.includes("series") ||
+    q.includes("food") ||
+    q.includes("best snack") ||
+    q.includes("would you rather")
   ) {
     return "Fun";
   }
