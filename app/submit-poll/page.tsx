@@ -4,6 +4,16 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
+const CATEGORY_OPTIONS = [
+  "General",
+  "Lifestyle",
+  "Community",
+  "Finance",
+  "Business",
+  "Education",
+  "Fun",
+];
+
 export default function SubmitPollPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -26,9 +36,7 @@ export default function SubmitPollPage() {
   };
 
   const addOption = () => {
-    if (options.length < 4) {
-      setOptions([...options, ""]);
-    }
+    if (options.length < 4) setOptions([...options, ""]);
   };
 
   const removeOption = (index: number) => {
@@ -36,15 +44,12 @@ export default function SubmitPollPage() {
     setOptions(options.filter((_, i) => i !== index));
   };
 
-  const resetForm = () => {
-    setName("");
-    setEmail("");
+  // ✅ keeps name + email
+  const resetPollFields = () => {
     setQuestion("");
     setDescription("");
     setCategory("");
     setOptions(["", ""]);
-    setMessage("");
-    setMessageType("");
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -67,18 +72,6 @@ export default function SubmitPollPage() {
     if (description.length > 200) {
       setMessageType("error");
       setMessage("Description must be 200 characters or fewer.");
-      return;
-    }
-
-    if (cleanedOptions.length < 2) {
-      setMessageType("error");
-      setMessage("Minimum 2 options required.");
-      return;
-    }
-
-    if (cleanedOptions.length > 4) {
-      setMessageType("error");
-      setMessage("Maximum 4 options allowed.");
       return;
     }
 
@@ -117,6 +110,8 @@ export default function SubmitPollPage() {
       return;
     }
 
+    resetPollFields();
+
     setMessageType("success");
     setMessage("Thanks — your poll has been submitted for review.");
     setSubmitting(false);
@@ -124,12 +119,43 @@ export default function SubmitPollPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
-      <section className="max-w-3xl mx-auto px-6 pt-10 pb-12">
+
+      {/* ✅ HEADER */}
+      <header className="max-w-6xl mx-auto px-4 md:px-6 pt-5 pb-4">
+        <div className="flex items-center justify-between gap-4">
+          <Link href="/" className="shrink-0">
+            <img
+              src="/logo.png"
+              alt="Poll & See"
+              className="h-12 md:h-16 w-auto object-contain"
+            />
+          </Link>
+
+          <div className="flex items-center gap-2">
+            <Link
+              href="/"
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white hover:bg-gray-800"
+            >
+              Home
+            </Link>
+
+            <Link
+              href="/submit-poll"
+              className="inline-flex h-11 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm text-white hover:bg-blue-500"
+            >
+              Create Poll
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* CONTENT */}
+      <section className="max-w-3xl mx-auto px-6 pt-6 pb-12">
         <Link href="/" className="text-sm text-blue-300 hover:underline">
           ← Back to homepage
         </Link>
 
-        <div className="mt-6 bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
+        <div className="mt-6 bg-gray-800 rounded-2xl p-6 border border-gray-700">
           <h1 className="text-3xl font-bold mb-3">Create a Poll</h1>
 
           <p className="text-gray-300 mb-8">
@@ -137,130 +163,105 @@ export default function SubmitPollPage() {
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+
             {/* Name */}
-            <div>
-              <label className="block text-sm mb-2">Name</label>
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3"
-              />
-            </div>
+            <input
+              placeholder="Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full bg-gray-900 border border-gray-700 px-4 py-3 rounded-xl"
+            />
 
             {/* Email */}
-            <div>
-              <label className="block text-sm mb-2">Email</label>
-              <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3"
-              />
-            </div>
+            <input
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-gray-900 border border-gray-700 px-4 py-3 rounded-xl"
+            />
 
             {/* Question */}
-            <div>
-              <label className="block text-sm mb-2">Poll Question</label>
-              <input
-                maxLength={100}
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3"
-              />
-              <p className="text-xs text-gray-400">{question.length}/100</p>
-            </div>
+            <input
+              placeholder="Poll Question"
+              maxLength={100}
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              className="w-full bg-gray-900 border border-gray-700 px-4 py-3 rounded-xl"
+            />
 
             {/* Description */}
-            <div>
-              <label className="block text-sm mb-2">
-                Poll Description (optional)
-              </label>
-              <textarea
-                maxLength={200}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3"
-              />
-              <p className="text-xs text-gray-400">{description.length}/200</p>
-            </div>
+            <textarea
+              placeholder="Poll Description (optional)"
+              maxLength={200}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full bg-gray-900 border border-gray-700 px-4 py-3 rounded-xl"
+            />
 
             {/* Category */}
-            <div>
-              <label className="block text-sm mb-2">Category</label>
-              <input
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3"
-              />
-            </div>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full bg-gray-900 border border-gray-700 px-4 py-3 rounded-xl"
+            >
+              <option value="">Select category</option>
+              {CATEGORY_OPTIONS.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
 
             {/* Options */}
-            <div>
-              <label className="block text-sm mb-2">
-                Poll Options (2–4 inputs)
-              </label>
+            {options.map((option, i) => (
+              <div key={i} className="flex gap-2">
+                <input
+                  value={option}
+                  maxLength={40}
+                  onChange={(e) => updateOption(i, e.target.value)}
+                  className="w-full bg-gray-900 border border-gray-700 px-4 py-3 rounded-xl"
+                />
+                {canRemoveOption && (
+                  <button
+                    type="button"
+                    onClick={() => removeOption(i)}
+                    className="px-3 bg-gray-700 rounded-xl"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            ))}
 
-              {options.map((option, i) => (
-                <div key={i} className="flex gap-2 mb-2">
-                  <input
-                    maxLength={40}
-                    value={option}
-                    onChange={(e) => updateOption(i, e.target.value)}
-                    className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3"
-                  />
-                  {canRemoveOption && (
-                    <button
-                      type="button"
-                      onClick={() => removeOption(i)}
-                      className="px-3 bg-gray-700 rounded-xl"
-                    >
-                      Remove
-                    </button>
-                  )}
-                </div>
-              ))}
-
-              {canAddOption && (
-                <button
-                  type="button"
-                  onClick={addOption}
-                  className="mt-2 text-sm text-blue-300"
-                >
-                  + Add option
-                </button>
-              )}
-            </div>
+            {canAddOption && (
+              <button
+                type="button"
+                onClick={addOption}
+                className="text-blue-300 text-sm"
+              >
+                + Add option
+              </button>
+            )}
 
             {/* Button */}
             <button
-              type={messageType === "success" ? "button" : "submit"}
-              onClick={() => {
-                if (messageType === "success") resetForm();
-              }}
+              type="submit"
               disabled={submitting}
-              className="bg-white text-black px-5 py-3 rounded-xl font-medium hover:bg-gray-200 transition disabled:opacity-60"
+              className="bg-white text-black px-5 py-3 rounded-xl font-medium"
             >
-              {messageType === "success"
-                ? "Create another poll"
-                : submitting
-                ? "Submitting..."
-                : "Create Poll"}
+              {submitting ? "Submitting..." : "Create Poll"}
             </button>
 
             {/* Message */}
             {message && (
-              <p
-                className={`text-sm ${
-                  messageType === "success"
-                    ? "text-green-400"
-                    : "text-red-400"
-                }`}
-              >
-                {message}
-              </p>
+              <p className="text-green-400 text-sm">{message}</p>
             )}
           </form>
         </div>
       </section>
+
+      {/* ✅ FOOTER */}
+      <footer className="text-center text-sm text-gray-500 py-8">
+        © {new Date().getFullYear()} Poll & See
+      </footer>
     </main>
   );
 }
