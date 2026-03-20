@@ -12,22 +12,113 @@ const CATEGORY_OPTIONS = [
   "Business",
   "Education",
   "Fun",
-];
+] as const;
+
+type Category = (typeof CATEGORY_OPTIONS)[number] | "";
+
+function suggestCategory(question: string): Category {
+  const q = question.toLowerCase();
+
+  if (
+    q.includes("school") ||
+    q.includes("teacher") ||
+    q.includes("student") ||
+    q.includes("students") ||
+    q.includes("homework") ||
+    q.includes("university") ||
+    q.includes("college") ||
+    q.includes("exam") ||
+    q.includes("education")
+  ) {
+    return "Education";
+  }
+
+  if (
+    q.includes("money") ||
+    q.includes("salary") ||
+    q.includes("cost") ||
+    q.includes("price") ||
+    q.includes("rent") ||
+    q.includes("mortgage") ||
+    q.includes("tax") ||
+    q.includes("income") ||
+    q.includes("finance") ||
+    q.includes("financial")
+  ) {
+    return "Finance";
+  }
+
+  if (
+    q.includes("business") ||
+    q.includes("startup") ||
+    q.includes("marketing") ||
+    q.includes("customer") ||
+    q.includes("sales") ||
+    q.includes("office") ||
+    q.includes("remote work") ||
+    q.includes("workplace") ||
+    q.includes("company")
+  ) {
+    return "Business";
+  }
+
+  if (
+    q.includes("community") ||
+    q.includes("local") ||
+    q.includes("neighbour") ||
+    q.includes("neighbor") ||
+    q.includes("communal") ||
+    q.includes("public support")
+  ) {
+    return "Community";
+  }
+
+  if (
+    q.includes("life") ||
+    q.includes("dating") ||
+    q.includes("health") ||
+    q.includes("routine") ||
+    q.includes("family") ||
+    q.includes("kids") ||
+    q.includes("children") ||
+    q.includes("social media")
+  ) {
+    return "Lifestyle";
+  }
+
+  if (
+    q.includes("fun") ||
+    q.includes("favourite") ||
+    q.includes("favorite") ||
+    q.includes("movie") ||
+    q.includes("music") ||
+    q.includes("pizza") ||
+    q.includes("game") ||
+    q.includes("holiday")
+  ) {
+    return "Fun";
+  }
+
+  return "General";
+}
 
 export default function SubmitPollPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [question, setQuestion] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState<Category>("");
   const [options, setOptions] = useState(["", ""]);
 
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "">("");
+  const [categoryTouched, setCategoryTouched] = useState(false);
 
   const canAddOption = useMemo(() => options.length < 4, [options.length]);
   const canRemoveOption = useMemo(() => options.length > 2, [options.length]);
+
+  const suggestedCategory = question.trim() ? suggestCategory(question) : "";
 
   const updateOption = (index: number, value: string) => {
     const next = [...options];
@@ -44,12 +135,25 @@ export default function SubmitPollPage() {
     setOptions(options.filter((_, i) => i !== index));
   };
 
-  // ✅ keeps name + email
   const resetPollFields = () => {
     setQuestion("");
     setDescription("");
     setCategory("");
     setOptions(["", ""]);
+    setCategoryTouched(false);
+  };
+
+  const handleQuestionChange = (value: string) => {
+    setQuestion(value);
+
+    if (!categoryTouched) {
+      setCategory(value.trim() ? suggestCategory(value) : "");
+    }
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setCategory(value as Category);
+    setCategoryTouched(true);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -63,15 +167,27 @@ export default function SubmitPollPage() {
       return;
     }
 
-    if (question.length > 100) {
+    if (question.trim().length > 100) {
       setMessageType("error");
       setMessage("Question must be 100 characters or fewer.");
       return;
     }
 
-    if (description.length > 200) {
+    if (description.trim().length > 200) {
       setMessageType("error");
       setMessage("Description must be 200 characters or fewer.");
+      return;
+    }
+
+    if (cleanedOptions.length < 2) {
+      setMessageType("error");
+      setMessage("Minimum 2 options required.");
+      return;
+    }
+
+    if (cleanedOptions.length > 4) {
+      setMessageType("error");
+      setMessage("Maximum 4 options allowed.");
       return;
     }
 
@@ -111,7 +227,6 @@ export default function SubmitPollPage() {
     }
 
     resetPollFields();
-
     setMessageType("success");
     setMessage("Thanks — your poll has been submitted for review.");
     setSubmitting(false);
@@ -119,29 +234,27 @@ export default function SubmitPollPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
-
-      {/* ✅ HEADER */}
       <header className="max-w-6xl mx-auto px-4 md:px-6 pt-5 pb-4">
         <div className="flex items-center justify-between gap-4">
-          <Link href="/" className="shrink-0">
+          <Link href="/" className="shrink-0" aria-label="Go to homepage">
             <img
               src="/logo.png"
               alt="Poll & See"
-              className="h-12 md:h-16 w-auto object-contain"
+              className="h-12 md:h-16 w-auto object-contain block"
             />
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <Link
               href="/"
-              className="inline-flex h-11 items-center justify-center rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white hover:bg-gray-800"
+              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-gray-800"
             >
               Home
             </Link>
 
             <Link
               href="/submit-poll"
-              className="inline-flex h-11 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm text-white hover:bg-blue-500"
+              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-blue-500"
             >
               Create Poll
             </Link>
@@ -149,13 +262,12 @@ export default function SubmitPollPage() {
         </div>
       </header>
 
-      {/* CONTENT */}
       <section className="max-w-3xl mx-auto px-6 pt-6 pb-12">
         <Link href="/" className="text-sm text-blue-300 hover:underline">
           ← Back to homepage
         </Link>
 
-        <div className="mt-6 bg-gray-800 rounded-2xl p-6 border border-gray-700">
+        <div className="mt-6 bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
           <h1 className="text-3xl font-bold mb-3">Create a Poll</h1>
 
           <p className="text-gray-300 mb-8">
@@ -163,102 +275,138 @@ export default function SubmitPollPage() {
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-sm mb-2">Name</label>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3"
+              />
+            </div>
 
-            {/* Name */}
-            <input
-              placeholder="Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 px-4 py-3 rounded-xl"
-            />
+            <div>
+              <label className="block text-sm mb-2">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3"
+              />
+            </div>
 
-            {/* Email */}
-            <input
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 px-4 py-3 rounded-xl"
-            />
+            <div>
+              <label className="block text-sm mb-2">Poll Question</label>
+              <input
+                maxLength={100}
+                value={question}
+                onChange={(e) => handleQuestionChange(e.target.value)}
+                className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3"
+              />
+              <p className="mt-1 text-xs text-gray-400">{question.length}/100</p>
+            </div>
 
-            {/* Question */}
-            <input
-              placeholder="Poll Question"
-              maxLength={100}
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 px-4 py-3 rounded-xl"
-            />
+            <div>
+              <label className="block text-sm mb-2">Poll Description (optional)</label>
+              <textarea
+                maxLength={200}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3"
+                rows={4}
+              />
+              <p className="mt-1 text-xs text-gray-400">{description.length}/200</p>
+            </div>
 
-            {/* Description */}
-            <textarea
-              placeholder="Poll Description (optional)"
-              maxLength={200}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 px-4 py-3 rounded-xl"
-            />
-
-            {/* Category */}
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 px-4 py-3 rounded-xl"
-            >
-              <option value="">Select category</option>
-              {CATEGORY_OPTIONS.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
-
-            {/* Options */}
-            {options.map((option, i) => (
-              <div key={i} className="flex gap-2">
-                <input
-                  value={option}
-                  maxLength={40}
-                  onChange={(e) => updateOption(i, e.target.value)}
-                  className="w-full bg-gray-900 border border-gray-700 px-4 py-3 rounded-xl"
-                />
-                {canRemoveOption && (
-                  <button
-                    type="button"
-                    onClick={() => removeOption(i)}
-                    className="px-3 bg-gray-700 rounded-xl"
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-            ))}
-
-            {canAddOption && (
-              <button
-                type="button"
-                onClick={addOption}
-                className="text-blue-300 text-sm"
+            <div>
+              <label className="block text-sm mb-2">Category</label>
+              <select
+                value={category}
+                onChange={(e) => handleCategoryChange(e.target.value)}
+                className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 text-white"
               >
-                + Add option
-              </button>
-            )}
+                <option value="">Select category</option>
+                {CATEGORY_OPTIONS.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
 
-            {/* Button */}
+              {suggestedCategory && !categoryTouched && (
+                <p className="mt-1 text-xs text-gray-400">
+                  Suggested category: {suggestedCategory}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm mb-2">Poll Options (2–4 inputs)</label>
+
+              <div className="space-y-3">
+                {options.map((option, i) => (
+                  <div key={i} className="flex gap-2">
+                    <input
+                      maxLength={40}
+                      value={option}
+                      onChange={(e) => updateOption(i, e.target.value)}
+                      className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3"
+                      placeholder={`Option ${i + 1}`}
+                    />
+                    {canRemoveOption && (
+                      <button
+                        type="button"
+                        onClick={() => removeOption(i)}
+                        className="px-3 bg-gray-700 rounded-xl whitespace-nowrap"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {canAddOption && (
+                <button
+                  type="button"
+                  onClick={addOption}
+                  className="mt-3 text-sm text-blue-300"
+                >
+                  + Add option
+                </button>
+              )}
+            </div>
+
             <button
-              type="submit"
+              type={messageType === "success" ? "button" : "submit"}
+              onClick={() => {
+                if (messageType === "success") {
+                  setMessage("");
+                  setMessageType("");
+                }
+              }}
               disabled={submitting}
-              className="bg-white text-black px-5 py-3 rounded-xl font-medium"
+              className="bg-white text-black px-5 py-3 rounded-xl font-medium hover:bg-gray-200 transition disabled:opacity-60"
             >
-              {submitting ? "Submitting..." : "Create Poll"}
+              {messageType === "success"
+                ? "Create another poll"
+                : submitting
+                ? "Submitting..."
+                : "Create Poll"}
             </button>
 
-            {/* Message */}
             {message && (
-              <p className="text-green-400 text-sm">{message}</p>
+              <p
+                className={`text-sm ${
+                  messageType === "success" ? "text-green-400" : "text-red-400"
+                }`}
+              >
+                {message}
+              </p>
             )}
           </form>
         </div>
       </section>
 
-      {/* ✅ FOOTER */}
       <footer className="text-center text-sm text-gray-500 py-8">
         © {new Date().getFullYear()} Poll & See
       </footer>
