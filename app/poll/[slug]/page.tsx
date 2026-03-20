@@ -169,7 +169,7 @@ export default function PollPage() {
                 href="/submit-poll"
                 className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-blue-500"
               >
-                Submit Poll
+                Create Poll
               </Link>
             </div>
           </div>
@@ -211,7 +211,7 @@ export default function PollPage() {
                 href="/submit-poll"
                 className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-blue-500"
               >
-                Submit Poll
+                Create Poll
               </Link>
             </div>
           </div>
@@ -259,7 +259,7 @@ export default function PollPage() {
               href="/submit-poll"
               className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-blue-500"
             >
-              Submit Poll
+              Create Poll
             </Link>
           </div>
         </div>
@@ -338,6 +338,12 @@ export default function PollPage() {
             >
               {shareText}
             </button>
+
+            <div className="mt-4 text-sm text-gray-400">
+              <Link href="/submit-poll" className="text-blue-300 hover:underline">
+                Want to run your own poll? →
+              </Link>
+            </div>
           </div>
         </div>
       </section>

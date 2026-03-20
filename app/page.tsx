@@ -68,7 +68,6 @@ export default function Home() {
       .eq("poll_id", chosenFeaturedPoll.id);
 
     const counts: Record<number, number> = {};
-
     (votesData || []).forEach((vote) => {
       counts[vote.option_id] = (counts[vote.option_id] || 0) + 1;
     });
@@ -175,7 +174,7 @@ export default function Home() {
               href="/submit-poll"
               className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-blue-500"
             >
-              Submit Poll
+              Create Poll
             </Link>
           </div>
         </div>
@@ -251,12 +250,16 @@ export default function Home() {
               Vote on real questions. Compare your answer. See how others think.
             </p>
 
+            <p className="text-gray-300 mb-4">
+              From everyday opinions to testing ideas, create a poll and see what people really think.
+            </p>
+
             <div className="border-t border-gray-700 pt-4">
               <Link
                 href="/submit-poll"
                 className="block w-full text-center rounded-xl bg-blue-600 py-3 font-medium text-white transition hover:bg-blue-500"
               >
-                Submit a Poll
+                Create a Poll
               </Link>
             </div>
           </div>
