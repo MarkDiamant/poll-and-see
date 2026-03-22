@@ -140,6 +140,9 @@ export default function PollPage() {
   };
 
   const handleBack = () => {
+    if (poll?.category) {
+      sessionStorage.setItem("selectedPollCategory", poll.category);
+    }
     sessionStorage.setItem("restoreHomeScroll", "true");
     router.push("/");
   };
