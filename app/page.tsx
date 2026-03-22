@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -26,12 +27,15 @@ const getOptionColour = (index: number) => {
 };
 
 export default function Home() {
+  const searchParams = useSearchParams();
+
   const [polls, setPolls] = useState<Poll[]>([]);
   const [featuredOptions, setFeaturedOptions] = useState<PollOption[]>([]);
   const [featuredVoteCounts, setFeaturedVoteCounts] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(true);
   const [featuredPollVoted, setFeaturedPollVoted] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [categoryInitialised, setCategoryInitialised] = useState(false);
 
   const loadHomeData = useCallback(async () => {
     setLoading(true);
@@ -153,6 +157,27 @@ export default function Home() {
     return ["All", ...uniqueCategories];
   }, [polls]);
 
+  useEffect(() => {
+    if (categories.length === 0 || categoryInitialised) return;
+
+    const queryCategory = searchParams.get("category");
+    const savedCategory = sessionStorage.getItem("selectedPollCategory");
+    const preferredCategory = queryCategory || savedCategory || "All";
+
+    if (categories.includes(preferredCategory)) {
+      setSelectedCategory(preferredCategory);
+    } else {
+      setSelectedCategory("All");
+    }
+
+    setCategoryInitialised(true);
+  }, [categories, categoryInitialised, searchParams]);
+
+  useEffect(() => {
+    if (!categoryInitialised) return;
+    sessionStorage.setItem("selectedPollCategory", selectedCategory);
+  }, [selectedCategory, categoryInitialised]);
+
   const filteredPolls = useMemo(() => {
     if (selectedCategory === "All") {
       return polls;
@@ -223,12 +248,6 @@ export default function Home() {
 
             {featuredPoll ? (
               <>
-                <div className="mb-4">
-                  <span className="text-xs text-blue-300 bg-blue-500/10 px-2 py-1 rounded-full">
-                    {featuredPoll.category}
-                  </span>
-                </div>
-
                 <h2 className="text-2xl font-semibold mb-3">
                   {featuredPoll.question}
                 </h2>
@@ -303,12 +322,12 @@ export default function Home() {
         <div className="mb-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <h3 className="text-2xl font-semibold">Live Polls</h3>
-            <span className="text-sm text-gray-400">
+            <span className="text-base text-gray-300 font-medium">
               {activePollCount} active polls
             </span>
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
             {categories.map((category) => {
               const isActive = selectedCategory === category;
 
@@ -317,7 +336,7 @@ export default function Home() {
                   key={category}
                   type="button"
                   onClick={() => setSelectedCategory(category)}
-                  className={`rounded-full px-3.5 py-2 text-sm font-medium transition ${
+                  className={`h-11 rounded-xl px-3 text-sm font-medium transition ${
                     isActive
                       ? "bg-blue-600 text-white"
                       : "border border-gray-700 bg-gray-800 text-gray-300 hover:bg-gray-700"

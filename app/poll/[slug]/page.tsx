@@ -271,7 +271,7 @@ export default function PollPage() {
           onClick={handleBack}
           className="text-sm text-blue-300 hover:underline"
         >
-          ← Back to all polls
+          ← Back to polls
         </button>
 
         <div className="mt-6 bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
@@ -332,12 +332,21 @@ export default function PollPage() {
           )}
 
           <div className="mt-8 border-t border-gray-700 pt-6">
-            <button
-              onClick={handleShare}
-              className="bg-white text-black px-4 py-2 rounded-xl font-medium hover:bg-gray-200 transition"
-            >
-              {shareText}
-            </button>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={handleShare}
+                className="bg-white text-black px-4 py-2 rounded-xl font-medium hover:bg-gray-200 transition"
+              >
+                {shareText}
+              </button>
+
+              <Link
+                href={`/?category=${encodeURIComponent(poll.category)}`}
+                className="inline-flex items-center rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 font-medium text-white transition hover:bg-gray-800"
+              >
+                See other {poll.category} polls
+              </Link>
+            </div>
 
             <div className="mt-4 text-sm text-gray-400">
               <Link href="/submit-poll" className="text-blue-300 hover:underline">
