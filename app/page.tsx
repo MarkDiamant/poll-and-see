@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 type Poll = {
@@ -33,6 +33,8 @@ export default function Home() {
   const [featuredPollVoted, setFeaturedPollVoted] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [categoryInitialised, setCategoryInitialised] = useState(false);
+
+  const hasPersistedCategoryRef = useRef(false);
 
   const loadHomeData = useCallback(async () => {
     setLoading(true);
@@ -141,6 +143,12 @@ export default function Home() {
 
   useEffect(() => {
     if (!categoryInitialised) return;
+
+    if (!hasPersistedCategoryRef.current) {
+      hasPersistedCategoryRef.current = true;
+      return;
+    }
+
     sessionStorage.setItem("selectedPollCategory", selectedCategory);
   }, [selectedCategory, categoryInitialised]);
 
