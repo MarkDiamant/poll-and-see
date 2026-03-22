@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 type Poll = {
@@ -33,8 +33,6 @@ export default function Home() {
   const [featuredPollVoted, setFeaturedPollVoted] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("All");
 
-  const hasInitialisedCategoryRef = useRef(false);
-
   const loadHomeData = useCallback(async () => {
     setLoading(true);
 
@@ -45,6 +43,28 @@ export default function Home() {
 
     const safePolls = pollsData || [];
     setPolls(safePolls);
+
+    const availableCategories = [
+      "All",
+      ...Array.from(
+        new Set(
+          safePolls
+            .map((poll) => poll.category?.trim())
+            .filter((category): category is string => Boolean(category))
+        )
+      ).sort((a, b) => a.localeCompare(b)),
+    ];
+
+    const params = new URLSearchParams(window.location.search);
+    const queryCategory = params.get("category");
+    const savedCategory = sessionStorage.getItem("selectedPollCategory");
+    const preferredCategory = queryCategory || savedCategory || "All";
+
+    if (availableCategories.includes(preferredCategory)) {
+      setSelectedCategory(preferredCategory);
+    } else {
+      setSelectedCategory("All");
+    }
 
     const chosenFeaturedPoll = safePolls.find((p) => p.featured) || safePolls[0];
 
@@ -113,37 +133,7 @@ export default function Home() {
     };
   }, []);
 
-  const categories = useMemo(() => {
-    const uniqueCategories = Array.from(
-      new Set(
-        polls
-          .map((poll) => poll.category?.trim())
-          .filter((category): category is string => Boolean(category))
-      )
-    ).sort((a, b) => a.localeCompare(b));
-
-    return ["All", ...uniqueCategories];
-  }, [polls]);
-
   useEffect(() => {
-    if (categories.length === 0 || hasInitialisedCategoryRef.current) return;
-
-    const params = new URLSearchParams(window.location.search);
-    const queryCategory = params.get("category");
-    const savedCategory = sessionStorage.getItem("selectedPollCategory");
-    const preferredCategory = queryCategory || savedCategory || "All";
-
-    if (categories.includes(preferredCategory)) {
-      setSelectedCategory(preferredCategory);
-    } else {
-      setSelectedCategory("All");
-    }
-
-    hasInitialisedCategoryRef.current = true;
-  }, [categories]);
-
-  useEffect(() => {
-    if (!hasInitialisedCategoryRef.current) return;
     sessionStorage.setItem("selectedPollCategory", selectedCategory);
   }, [selectedCategory]);
 
@@ -194,6 +184,18 @@ export default function Home() {
       window.history.replaceState({}, "", newUrl);
     }
   };
+
+  const categories = useMemo(() => {
+    const uniqueCategories = Array.from(
+      new Set(
+        polls
+          .map((poll) => poll.category?.trim())
+          .filter((category): category is string => Boolean(category))
+      )
+    ).sort((a, b) => a.localeCompare(b));
+
+    return ["All", ...uniqueCategories];
+  }, [polls]);
 
   const featuredPoll = polls.find((p) => p.featured) || polls[0];
 
