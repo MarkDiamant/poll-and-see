@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 type Poll = {
@@ -32,6 +32,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [featuredPollVoted, setFeaturedPollVoted] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("All");
+
+  const hasInitialisedCategoryRef = useRef(false);
 
   const loadHomeData = useCallback(async () => {
     setLoading(true);
@@ -124,32 +126,31 @@ export default function Home() {
   }, [polls]);
 
   useEffect(() => {
-    if (categories.length === 0) return;
+    if (categories.length === 0 || hasInitialisedCategoryRef.current) return;
 
     const params = new URLSearchParams(window.location.search);
     const queryCategory = params.get("category");
     const savedCategory = sessionStorage.getItem("selectedPollCategory");
+    const preferredCategory = queryCategory || savedCategory || "All";
 
-    if (queryCategory && categories.includes(queryCategory)) {
-      if (selectedCategory !== queryCategory) {
-        setSelectedCategory(queryCategory);
-      }
-      return;
-    }
-
-    if (savedCategory && categories.includes(savedCategory)) {
-      if (selectedCategory !== savedCategory) {
-        setSelectedCategory(savedCategory);
-      }
-      return;
-    }
-
-    if (selectedCategory !== "All") {
+    if (categories.includes(preferredCategory)) {
+      setSelectedCategory(preferredCategory);
+    } else {
       setSelectedCategory("All");
     }
-  }, [categories, selectedCategory]);
+
+    if (queryCategory) {
+      params.delete("category");
+      const newSearch = params.toString();
+      const newUrl = `${window.location.pathname}${newSearch ? `?${newSearch}` : ""}${window.location.hash}`;
+      window.history.replaceState({}, "", newUrl);
+    }
+
+    hasInitialisedCategoryRef.current = true;
+  }, [categories]);
 
   useEffect(() => {
+    if (!hasInitialisedCategoryRef.current) return;
     sessionStorage.setItem("selectedPollCategory", selectedCategory);
   }, [selectedCategory]);
 
