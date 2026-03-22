@@ -32,7 +32,6 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [featuredPollVoted, setFeaturedPollVoted] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [categoryInitialised, setCategoryInitialised] = useState(false);
 
   const loadHomeData = useCallback(async () => {
     setLoading(true);
@@ -125,26 +124,34 @@ export default function Home() {
   }, [polls]);
 
   useEffect(() => {
-    if (categories.length === 0 || categoryInitialised) return;
+    if (categories.length === 0) return;
 
     const params = new URLSearchParams(window.location.search);
     const queryCategory = params.get("category");
     const savedCategory = sessionStorage.getItem("selectedPollCategory");
-    const preferredCategory = queryCategory || savedCategory || "All";
 
-    if (categories.includes(preferredCategory)) {
-      setSelectedCategory(preferredCategory);
-    } else {
-      setSelectedCategory("All");
+    if (queryCategory && categories.includes(queryCategory)) {
+      if (selectedCategory !== queryCategory) {
+        setSelectedCategory(queryCategory);
+      }
+      return;
     }
 
-    setCategoryInitialised(true);
-  }, [categories, categoryInitialised]);
+    if (savedCategory && categories.includes(savedCategory)) {
+      if (selectedCategory !== savedCategory) {
+        setSelectedCategory(savedCategory);
+      }
+      return;
+    }
+
+    if (selectedCategory !== "All") {
+      setSelectedCategory("All");
+    }
+  }, [categories, selectedCategory]);
 
   useEffect(() => {
-    if (!categoryInitialised) return;
     sessionStorage.setItem("selectedPollCategory", selectedCategory);
-  }, [selectedCategory, categoryInitialised]);
+  }, [selectedCategory]);
 
   useEffect(() => {
     if (!loading) {
@@ -170,7 +177,7 @@ export default function Home() {
   }, [loading]);
 
   useEffect(() => {
-    if (!categoryInitialised || loading) return;
+    if (loading) return;
 
     if (window.location.hash === "#live-polls") {
       setTimeout(() => {
@@ -180,7 +187,7 @@ export default function Home() {
         }
       }, 100);
     }
-  }, [categoryInitialised, selectedCategory, loading]);
+  }, [loading, selectedCategory]);
 
   const featuredPoll = polls.find((p) => p.featured) || polls[0];
 
