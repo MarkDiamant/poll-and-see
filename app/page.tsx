@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -27,8 +26,6 @@ const getOptionColour = (index: number) => {
 };
 
 export default function Home() {
-  const searchParams = useSearchParams();
-
   const [polls, setPolls] = useState<Poll[]>([]);
   const [featuredOptions, setFeaturedOptions] = useState<PollOption[]>([]);
   const [featuredVoteCounts, setFeaturedVoteCounts] = useState<Record<number, number>>({});
@@ -138,13 +135,6 @@ export default function Home() {
     }
   }, [loading]);
 
-  const featuredPoll = polls.find((p) => p.featured) || polls[0];
-
-  const totalFeaturedVotes = Object.values(featuredVoteCounts).reduce(
-    (sum, count) => sum + count,
-    0
-  );
-
   const categories = useMemo(() => {
     const uniqueCategories = Array.from(
       new Set(
@@ -160,7 +150,8 @@ export default function Home() {
   useEffect(() => {
     if (categories.length === 0 || categoryInitialised) return;
 
-    const queryCategory = searchParams.get("category");
+    const params = new URLSearchParams(window.location.search);
+    const queryCategory = params.get("category");
     const savedCategory = sessionStorage.getItem("selectedPollCategory");
     const preferredCategory = queryCategory || savedCategory || "All";
 
@@ -171,12 +162,19 @@ export default function Home() {
     }
 
     setCategoryInitialised(true);
-  }, [categories, categoryInitialised, searchParams]);
+  }, [categories, categoryInitialised]);
 
   useEffect(() => {
     if (!categoryInitialised) return;
     sessionStorage.setItem("selectedPollCategory", selectedCategory);
   }, [selectedCategory, categoryInitialised]);
+
+  const featuredPoll = polls.find((p) => p.featured) || polls[0];
+
+  const totalFeaturedVotes = Object.values(featuredVoteCounts).reduce(
+    (sum, count) => sum + count,
+    0
+  );
 
   const filteredPolls = useMemo(() => {
     if (selectedCategory === "All") {
