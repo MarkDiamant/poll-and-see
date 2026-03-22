@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 type Poll = {
@@ -31,6 +31,7 @@ export default function Home() {
   const [featuredVoteCounts, setFeaturedVoteCounts] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(true);
   const [featuredPollVoted, setFeaturedPollVoted] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
   const loadHomeData = useCallback(async () => {
     setLoading(true);
@@ -38,7 +39,7 @@ export default function Home() {
     const { data: pollsData } = await supabase
       .from("polls")
       .select("id, question, description, category, slug, featured")
-      .order("id", { ascending: true });
+      .order("id", { ascending: false });
 
     const safePolls = pollsData || [];
     setPolls(safePolls);
@@ -140,6 +141,28 @@ export default function Home() {
     0
   );
 
+  const categories = useMemo(() => {
+    const uniqueCategories = Array.from(
+      new Set(
+        polls
+          .map((poll) => poll.category?.trim())
+          .filter((category): category is string => Boolean(category))
+      )
+    );
+
+    return ["All", ...uniqueCategories];
+  }, [polls]);
+
+  const livePolls = useMemo(() => {
+    const nonFeaturedPolls = polls.filter((poll) => poll.id !== featuredPoll?.id);
+
+    if (selectedCategory === "All") {
+      return nonFeaturedPolls;
+    }
+
+    return nonFeaturedPolls.filter((poll) => poll.category === selectedCategory);
+  }, [polls, featuredPoll, selectedCategory]);
+
   if (loading) {
     return (
       <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
@@ -196,6 +219,12 @@ export default function Home() {
 
             {featuredPoll ? (
               <>
+                <div className="mb-4">
+                  <span className="text-xs text-blue-300 bg-blue-500/10 px-2 py-1 rounded-full">
+                    {featuredPoll.category}
+                  </span>
+                </div>
+
                 <h2 className="text-2xl font-semibold mb-3">
                   {featuredPoll.question}
                 </h2>
@@ -267,36 +296,67 @@ export default function Home() {
       </section>
 
       <section className="max-w-6xl mx-auto px-6 pb-12">
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="text-2xl font-semibold">Live Polls</h3>
-          <span className="text-sm text-gray-400">
-            {polls.length} active polls
-          </span>
+        <div className="flex flex-col gap-4 mb-5">
+          <div className="flex items-center justify-between gap-4">
+            <h3 className="text-2xl font-semibold">Live Polls</h3>
+            <span className="text-sm text-gray-400">
+              {livePolls.length} active polls
+            </span>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {categories.map((category) => {
+              const isActive = selectedCategory === category;
+
+              return (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={() => setSelectedCategory(category)}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                    isActive
+                      ? "bg-blue-600 text-white"
+                      : "border border-gray-700 bg-gray-800 text-gray-300 hover:bg-gray-700"
+                  }`}
+                >
+                  {category}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {polls.map((poll) => (
-            <Link
-              key={poll.id}
-              href={`/poll/${poll.slug}`}
-              className="bg-gray-800 rounded-2xl p-5 shadow-lg transition border border-gray-700 hover:border-gray-500"
-            >
-              <div className="mb-3">
-                <span className="text-xs text-blue-300 bg-blue-500/10 px-2 py-1 rounded-full">
-                  {poll.category}
-                </span>
-              </div>
+        {livePolls.length > 0 ? (
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {livePolls.map((poll) => (
+              <Link
+                key={poll.id}
+                href={`/poll/${poll.slug}`}
+                className="bg-gray-800 rounded-2xl p-5 shadow-lg transition border border-gray-700 hover:border-gray-500"
+              >
+                <div className="mb-3">
+                  <span className="text-xs text-blue-300 bg-blue-500/10 px-2 py-1 rounded-full">
+                    {poll.category}
+                  </span>
+                </div>
 
-              <h4 className="text-lg font-semibold mb-2">{poll.question}</h4>
-              <p className="text-sm text-gray-300 mb-4">{poll.description}</p>
+                <h4 className="text-lg font-semibold mb-2">{poll.question}</h4>
+                <p className="text-sm text-gray-300 mb-4">{poll.description}</p>
 
-              <div className="flex items-center justify-between text-sm text-gray-400">
-                <span>View poll</span>
-                <span>→</span>
-              </div>
-            </Link>
-          ))}
-        </div>
+                <div className="flex items-center justify-between text-sm text-gray-400">
+                  <span>View poll</span>
+                  <span>→</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+            <p className="text-gray-300">
+              No polls found in this category.
+            </p>
+          </div>
+        )}
       </section>
 
       <footer className="text-center text-sm text-gray-500 py-8">
