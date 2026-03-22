@@ -140,11 +140,6 @@ export default function PollPage() {
   };
 
   const handleBack = () => {
-    if (window.history.length > 1) {
-      router.back();
-      return;
-    }
-
     sessionStorage.setItem("restoreHomeScroll", "true");
     router.push("/");
   };

@@ -140,25 +140,32 @@ export default function Home() {
   useEffect(() => {
     if (!loading) {
       const shouldRestore = sessionStorage.getItem("restoreHomeScroll");
+      const lastViewedPollSlug = sessionStorage.getItem("lastViewedPollSlug");
 
       if (shouldRestore === "true") {
-        const savedScroll = sessionStorage.getItem("homeScrollY");
-
-        if (savedScroll) {
-          const scrollY = parseInt(savedScroll, 10);
-
-          if (!Number.isNaN(scrollY)) {
-            setTimeout(() => {
-              window.scrollTo({ top: scrollY, behavior: "auto" });
+        setTimeout(() => {
+          if (lastViewedPollSlug) {
+            const pollCard = document.getElementById(`poll-card-${lastViewedPollSlug}`);
+            if (pollCard) {
+              pollCard.scrollIntoView({ behavior: "auto", block: "center" });
               sessionStorage.removeItem("restoreHomeScroll");
-            }, 50);
+              return;
+            }
           }
-        } else {
+
+          const savedScroll = sessionStorage.getItem("homeScrollY");
+          if (savedScroll) {
+            const scrollY = parseInt(savedScroll, 10);
+            if (!Number.isNaN(scrollY)) {
+              window.scrollTo({ top: scrollY, behavior: "auto" });
+            }
+          }
+
           sessionStorage.removeItem("restoreHomeScroll");
-        }
+        }, 100);
       }
     }
-  }, [loading]);
+  }, [loading, selectedCategory]);
 
   useEffect(() => {
     if (loading) return;
@@ -185,6 +192,19 @@ export default function Home() {
     }
   };
 
+  const handlePollClick = (poll: Poll) => {
+    sessionStorage.setItem("lastViewedPollSlug", poll.slug);
+    sessionStorage.setItem("selectedPollCategory", selectedCategory);
+    sessionStorage.setItem("homeScrollY", String(window.scrollY));
+  };
+
+  const featuredPoll = polls.find((p) => p.featured) || polls[0];
+
+  const totalFeaturedVotes = Object.values(featuredVoteCounts).reduce(
+    (sum, count) => sum + count,
+    0
+  );
+
   const categories = useMemo(() => {
     const uniqueCategories = Array.from(
       new Set(
@@ -196,13 +216,6 @@ export default function Home() {
 
     return ["All", ...uniqueCategories];
   }, [polls]);
-
-  const featuredPoll = polls.find((p) => p.featured) || polls[0];
-
-  const totalFeaturedVotes = Object.values(featuredVoteCounts).reduce(
-    (sum, count) => sum + count,
-    0
-  );
 
   const filteredPolls = useMemo(() => {
     if (selectedCategory === "All") {
@@ -386,7 +399,9 @@ export default function Home() {
             {livePolls.map((poll) => (
               <Link
                 key={poll.id}
+                id={`poll-card-${poll.slug}`}
                 href={`/poll/${poll.slug}`}
+                onClick={() => handlePollClick(poll)}
                 className="bg-gray-800 rounded-2xl p-5 shadow-lg transition border border-gray-700 hover:border-gray-500"
               >
                 <div className="mb-3">
