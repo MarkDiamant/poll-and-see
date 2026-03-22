@@ -344,7 +344,10 @@ export default function PollPage() {
               </button>
 
               <Link
-                href={`/?category=${encodeURIComponent(poll.category)}#live-polls`}
+                href="/#live-polls"
+                onClick={() => {
+                  sessionStorage.setItem("selectedPollCategory", poll.category);
+                }}
                 className="inline-flex items-center rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 font-medium text-white transition hover:bg-gray-800"
               >
                 See other {poll.category} polls

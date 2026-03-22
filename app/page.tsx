@@ -127,10 +127,8 @@ export default function Home() {
   useEffect(() => {
     if (categories.length === 0 || categoryInitialised) return;
 
-    const params = new URLSearchParams(window.location.search);
-    const queryCategory = params.get("category");
     const savedCategory = sessionStorage.getItem("selectedPollCategory");
-    const preferredCategory = queryCategory || savedCategory || "All";
+    const preferredCategory = savedCategory || "All";
 
     if (categories.includes(preferredCategory)) {
       setSelectedCategory(preferredCategory);
@@ -139,15 +137,6 @@ export default function Home() {
     }
 
     setCategoryInitialised(true);
-
-    if (window.location.hash === "#live-polls") {
-      setTimeout(() => {
-        const livePollsSection = document.getElementById("live-polls");
-        if (livePollsSection) {
-          livePollsSection.scrollIntoView({ behavior: "auto", block: "start" });
-        }
-      }, 50);
-    }
   }, [categories, categoryInitialised]);
 
   useEffect(() => {
@@ -177,6 +166,19 @@ export default function Home() {
       }
     }
   }, [loading]);
+
+  useEffect(() => {
+    if (!categoryInitialised || loading) return;
+
+    if (window.location.hash === "#live-polls") {
+      setTimeout(() => {
+        const livePollsSection = document.getElementById("live-polls");
+        if (livePollsSection) {
+          livePollsSection.scrollIntoView({ behavior: "auto", block: "start" });
+        }
+      }, 100);
+    }
+  }, [categoryInitialised, selectedCategory, loading]);
 
   const featuredPoll = polls.find((p) => p.featured) || polls[0];
 
@@ -334,16 +336,22 @@ export default function Home() {
             </span>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-nowrap lg:gap-2">
-            {categories.map((category) => {
+          <div className="mt-4 grid grid-cols-6 gap-2 lg:flex lg:flex-nowrap lg:gap-2">
+            {categories.map((category, index) => {
               const isActive = selectedCategory === category;
+              const mobileCenterClass =
+                categories.length === 8 && index === 6
+                  ? "col-start-2"
+                  : categories.length === 8 && index === 7
+                  ? "col-start-4"
+                  : "";
 
               return (
                 <button
                   key={category}
                   type="button"
                   onClick={() => setSelectedCategory(category)}
-                  className={`h-10 rounded-xl px-2.5 text-sm font-medium transition lg:min-w-0 lg:flex-1 ${
+                  className={`col-span-2 h-10 rounded-xl px-2 text-sm font-medium transition lg:min-w-0 lg:flex-1 ${mobileCenterClass} ${
                     isActive
                       ? "bg-blue-600 text-white"
                       : "border border-gray-700 bg-gray-800 text-gray-300 hover:bg-gray-700"
