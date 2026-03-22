@@ -139,13 +139,6 @@ export default function Home() {
       setSelectedCategory("All");
     }
 
-    if (queryCategory) {
-      params.delete("category");
-      const newSearch = params.toString();
-      const newUrl = `${window.location.pathname}${newSearch ? `?${newSearch}` : ""}${window.location.hash}`;
-      window.history.replaceState({}, "", newUrl);
-    }
-
     hasInitialisedCategoryRef.current = true;
   }, [categories]);
 
@@ -189,6 +182,18 @@ export default function Home() {
       }, 100);
     }
   }, [loading, selectedCategory]);
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("category")) {
+      params.delete("category");
+      const newSearch = params.toString();
+      const newUrl = `${window.location.pathname}${newSearch ? `?${newSearch}` : ""}${window.location.hash}`;
+      window.history.replaceState({}, "", newUrl);
+    }
+  };
 
   const featuredPoll = polls.find((p) => p.featured) || polls[0];
 
@@ -360,7 +365,7 @@ export default function Home() {
                 <button
                   key={category}
                   type="button"
-                  onClick={() => setSelectedCategory(category)}
+                  onClick={() => handleCategoryChange(category)}
                   className={`col-span-2 h-10 rounded-xl px-2 text-sm font-medium transition lg:min-w-0 lg:flex-1 ${mobileCenterClass} ${
                     isActive
                       ? "bg-blue-600 text-white"
