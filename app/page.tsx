@@ -148,20 +148,24 @@ export default function Home() {
           .map((poll) => poll.category?.trim())
           .filter((category): category is string => Boolean(category))
       )
-    );
+    ).sort((a, b) => a.localeCompare(b));
 
     return ["All", ...uniqueCategories];
   }, [polls]);
 
-  const livePolls = useMemo(() => {
-    const nonFeaturedPolls = polls.filter((poll) => poll.id !== featuredPoll?.id);
-
+  const filteredPolls = useMemo(() => {
     if (selectedCategory === "All") {
-      return nonFeaturedPolls;
+      return polls;
     }
 
-    return nonFeaturedPolls.filter((poll) => poll.category === selectedCategory);
-  }, [polls, featuredPoll, selectedCategory]);
+    return polls.filter((poll) => poll.category === selectedCategory);
+  }, [polls, selectedCategory]);
+
+  const livePolls = useMemo(() => {
+    return filteredPolls.filter((poll) => poll.id !== featuredPoll?.id);
+  }, [filteredPolls, featuredPoll]);
+
+  const activePollCount = filteredPolls.length;
 
   if (loading) {
     return (
@@ -296,15 +300,15 @@ export default function Home() {
       </section>
 
       <section className="max-w-6xl mx-auto px-6 pb-12">
-        <div className="flex flex-col gap-4 mb-5">
-          <div className="flex items-center justify-between gap-4">
+        <div className="mb-5">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <h3 className="text-2xl font-semibold">Live Polls</h3>
             <span className="text-sm text-gray-400">
-              {livePolls.length} active polls
+              {activePollCount} active polls
             </span>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap gap-2">
             {categories.map((category) => {
               const isActive = selectedCategory === category;
 
@@ -313,7 +317,7 @@ export default function Home() {
                   key={category}
                   type="button"
                   onClick={() => setSelectedCategory(category)}
-                  className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                  className={`rounded-full px-3.5 py-2 text-sm font-medium transition ${
                     isActive
                       ? "bg-blue-600 text-white"
                       : "border border-gray-700 bg-gray-800 text-gray-300 hover:bg-gray-700"
