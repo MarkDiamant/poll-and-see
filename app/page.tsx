@@ -112,29 +112,6 @@ export default function Home() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!loading) {
-      const shouldRestore = sessionStorage.getItem("restoreHomeScroll");
-
-      if (shouldRestore === "true") {
-        const savedScroll = sessionStorage.getItem("homeScrollY");
-
-        if (savedScroll) {
-          const scrollY = parseInt(savedScroll, 10);
-
-          if (!Number.isNaN(scrollY)) {
-            setTimeout(() => {
-              window.scrollTo({ top: scrollY, behavior: "auto" });
-              sessionStorage.removeItem("restoreHomeScroll");
-            }, 50);
-          }
-        } else {
-          sessionStorage.removeItem("restoreHomeScroll");
-        }
-      }
-    }
-  }, [loading]);
-
   const categories = useMemo(() => {
     const uniqueCategories = Array.from(
       new Set(
@@ -162,12 +139,44 @@ export default function Home() {
     }
 
     setCategoryInitialised(true);
+
+    if (window.location.hash === "#live-polls") {
+      setTimeout(() => {
+        const livePollsSection = document.getElementById("live-polls");
+        if (livePollsSection) {
+          livePollsSection.scrollIntoView({ behavior: "auto", block: "start" });
+        }
+      }, 50);
+    }
   }, [categories, categoryInitialised]);
 
   useEffect(() => {
     if (!categoryInitialised) return;
     sessionStorage.setItem("selectedPollCategory", selectedCategory);
   }, [selectedCategory, categoryInitialised]);
+
+  useEffect(() => {
+    if (!loading) {
+      const shouldRestore = sessionStorage.getItem("restoreHomeScroll");
+
+      if (shouldRestore === "true") {
+        const savedScroll = sessionStorage.getItem("homeScrollY");
+
+        if (savedScroll) {
+          const scrollY = parseInt(savedScroll, 10);
+
+          if (!Number.isNaN(scrollY)) {
+            setTimeout(() => {
+              window.scrollTo({ top: scrollY, behavior: "auto" });
+              sessionStorage.removeItem("restoreHomeScroll");
+            }, 50);
+          }
+        } else {
+          sessionStorage.removeItem("restoreHomeScroll");
+        }
+      }
+    }
+  }, [loading]);
 
   const featuredPoll = polls.find((p) => p.featured) || polls[0];
 
@@ -316,7 +325,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-6 pb-12">
+      <section id="live-polls" className="max-w-6xl mx-auto px-6 pb-12 scroll-mt-6">
         <div className="mb-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <h3 className="text-2xl font-semibold">Live Polls</h3>
@@ -325,7 +334,7 @@ export default function Home() {
             </span>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-nowrap lg:gap-2">
             {categories.map((category) => {
               const isActive = selectedCategory === category;
 
@@ -334,7 +343,7 @@ export default function Home() {
                   key={category}
                   type="button"
                   onClick={() => setSelectedCategory(category)}
-                  className={`h-11 rounded-xl px-3 text-sm font-medium transition ${
+                  className={`h-10 rounded-xl px-2.5 text-sm font-medium transition lg:min-w-0 lg:flex-1 ${
                     isActive
                       ? "bg-blue-600 text-white"
                       : "border border-gray-700 bg-gray-800 text-gray-300 hover:bg-gray-700"
