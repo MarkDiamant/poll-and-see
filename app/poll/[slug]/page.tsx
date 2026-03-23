@@ -33,62 +33,74 @@ const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: strin
   Business: {
     text: "#93c5fd",
     bg: "rgba(37, 99, 235, 0.12)",
-    border: "rgba(37, 99, 235, 0.4)",
+    border: "rgba(37, 99, 235, 0.45)",
     solid: "#2563eb",
   },
-  Finance: {
-    text: "#86efac",
-    bg: "rgba(34, 197, 94, 0.12)",
-    border: "rgba(34, 197, 94, 0.4)",
-    solid: "#16a34a",
-  },
-  Fun: {
-    text: "#fde68a",
-    bg: "rgba(251, 191, 36, 0.14)",
-    border: "rgba(251, 191, 36, 0.45)",
-    solid: "#d97706",
-  },
-  Lifestyle: {
-    text: "#f9a8d4",
-    bg: "rgba(236, 72, 153, 0.12)",
-    border: "rgba(236, 72, 153, 0.4)",
-    solid: "#db2777",
+  Community: {
+    text: "#6ee7b7",
+    bg: "rgba(16, 185, 129, 0.12)",
+    border: "rgba(16, 185, 129, 0.45)",
+    solid: "#10b981",
   },
   Education: {
     text: "#c4b5fd",
     bg: "rgba(139, 92, 246, 0.12)",
-    border: "rgba(139, 92, 246, 0.4)",
-    solid: "#7c3aed",
+    border: "rgba(139, 92, 246, 0.45)",
+    solid: "#8b5cf6",
   },
-  Politics: {
-    text: "#fca5a5",
-    bg: "rgba(239, 68, 68, 0.12)",
-    border: "rgba(239, 68, 68, 0.4)",
-    solid: "#dc2626",
+  Finance: {
+    text: "#86efac",
+    bg: "rgba(34, 197, 94, 0.12)",
+    border: "rgba(34, 197, 94, 0.45)",
+    solid: "#22c55e",
   },
-  Tech: {
-    text: "#67e8f9",
-    bg: "rgba(6, 182, 212, 0.12)",
-    border: "rgba(6, 182, 212, 0.4)",
-    solid: "#0891b2",
+  Fun: {
+    text: "#fde68a",
+    bg: "rgba(245, 158, 11, 0.12)",
+    border: "rgba(245, 158, 11, 0.45)",
+    solid: "#f59e0b",
+  },
+  General: {
+    text: "#7dd3fc",
+    bg: "rgba(14, 165, 233, 0.12)",
+    border: "rgba(14, 165, 233, 0.45)",
+    solid: "#0ea5e9",
+  },
+  Lifestyle: {
+    text: "#f9a8d4",
+    bg: "rgba(236, 72, 153, 0.12)",
+    border: "rgba(236, 72, 153, 0.45)",
+    solid: "#ec4899",
   },
   Health: {
     text: "#fdba74",
     bg: "rgba(249, 115, 22, 0.12)",
-    border: "rgba(249, 115, 22, 0.4)",
-    solid: "#ea580c",
+    border: "rgba(249, 115, 22, 0.45)",
+    solid: "#f97316",
+  },
+  Politics: {
+    text: "#fca5a5",
+    bg: "rgba(239, 68, 68, 0.12)",
+    border: "rgba(239, 68, 68, 0.45)",
+    solid: "#ef4444",
   },
   Sport: {
-    text: "#a7f3d0",
-    bg: "rgba(16, 185, 129, 0.12)",
-    border: "rgba(16, 185, 129, 0.4)",
-    solid: "#059669",
+    text: "#67e8f9",
+    bg: "rgba(6, 182, 212, 0.12)",
+    border: "rgba(6, 182, 212, 0.45)",
+    solid: "#06b6d4",
   },
   Sports: {
-    text: "#a7f3d0",
-    bg: "rgba(16, 185, 129, 0.12)",
-    border: "rgba(16, 185, 129, 0.4)",
-    solid: "#059669",
+    text: "#67e8f9",
+    bg: "rgba(6, 182, 212, 0.12)",
+    border: "rgba(6, 182, 212, 0.45)",
+    solid: "#06b6d4",
+  },
+  Tech: {
+    text: "#d8b4fe",
+    bg: "rgba(168, 85, 247, 0.12)",
+    border: "rgba(168, 85, 247, 0.45)",
+    solid: "#a855f7",
   },
 };
 
@@ -96,38 +108,68 @@ const FALLBACK_CATEGORY_COLOURS = [
   {
     text: "#93c5fd",
     bg: "rgba(37, 99, 235, 0.12)",
-    border: "rgba(37, 99, 235, 0.4)",
+    border: "rgba(37, 99, 235, 0.45)",
     solid: "#2563eb",
   },
   {
-    text: "#86efac",
-    bg: "rgba(34, 197, 94, 0.12)",
-    border: "rgba(34, 197, 94, 0.4)",
-    solid: "#16a34a",
-  },
-  {
-    text: "#fde68a",
-    bg: "rgba(251, 191, 36, 0.14)",
-    border: "rgba(251, 191, 36, 0.45)",
-    solid: "#d97706",
-  },
-  {
-    text: "#f9a8d4",
-    bg: "rgba(236, 72, 153, 0.12)",
-    border: "rgba(236, 72, 153, 0.4)",
-    solid: "#db2777",
+    text: "#6ee7b7",
+    bg: "rgba(16, 185, 129, 0.12)",
+    border: "rgba(16, 185, 129, 0.45)",
+    solid: "#10b981",
   },
   {
     text: "#c4b5fd",
     bg: "rgba(139, 92, 246, 0.12)",
-    border: "rgba(139, 92, 246, 0.4)",
-    solid: "#7c3aed",
+    border: "rgba(139, 92, 246, 0.45)",
+    solid: "#8b5cf6",
+  },
+  {
+    text: "#86efac",
+    bg: "rgba(34, 197, 94, 0.12)",
+    border: "rgba(34, 197, 94, 0.45)",
+    solid: "#22c55e",
+  },
+  {
+    text: "#fde68a",
+    bg: "rgba(245, 158, 11, 0.12)",
+    border: "rgba(245, 158, 11, 0.45)",
+    solid: "#f59e0b",
+  },
+  {
+    text: "#7dd3fc",
+    bg: "rgba(14, 165, 233, 0.12)",
+    border: "rgba(14, 165, 233, 0.45)",
+    solid: "#0ea5e9",
+  },
+  {
+    text: "#f9a8d4",
+    bg: "rgba(236, 72, 153, 0.12)",
+    border: "rgba(236, 72, 153, 0.45)",
+    solid: "#ec4899",
+  },
+  {
+    text: "#fdba74",
+    bg: "rgba(249, 115, 22, 0.12)",
+    border: "rgba(249, 115, 22, 0.45)",
+    solid: "#f97316",
+  },
+  {
+    text: "#fca5a5",
+    bg: "rgba(239, 68, 68, 0.12)",
+    border: "rgba(239, 68, 68, 0.45)",
+    solid: "#ef4444",
   },
   {
     text: "#67e8f9",
     bg: "rgba(6, 182, 212, 0.12)",
-    border: "rgba(6, 182, 212, 0.4)",
-    solid: "#0891b2",
+    border: "rgba(6, 182, 212, 0.45)",
+    solid: "#06b6d4",
+  },
+  {
+    text: "#d8b4fe",
+    bg: "rgba(168, 85, 247, 0.12)",
+    border: "rgba(168, 85, 247, 0.45)",
+    solid: "#a855f7",
   },
 ];
 
@@ -161,7 +203,7 @@ export default function PollPage() {
 
   const [poll, setPoll] = useState<Poll | null>(null);
   const [options, setOptions] = useState<PollOption[]>([]);
-  const [voteCounts, setVoteCounts] = useState<VoteCounts>({});
+  const [voteCounts, setVoteCounts] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(true);
   const [voted, setVoted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -201,7 +243,7 @@ export default function PollPage() {
         .select("option_id")
         .eq("poll_id", pollId);
 
-      const counts: VoteCounts = {};
+      const counts: Record<number, number> = {};
       (votesData || []).forEach((vote) => {
         counts[vote.option_id] = (counts[vote.option_id] || 0) + 1;
       });
