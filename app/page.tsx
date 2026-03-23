@@ -21,8 +21,135 @@ type PollOption = {
 
 const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899"];
 
+const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: string; solid: string }> = {
+  All: {
+    text: "#e5e7eb",
+    bg: "rgba(31, 41, 55, 0.9)",
+    border: "rgba(75, 85, 99, 1)",
+    solid: "#374151",
+  },
+  Business: {
+    text: "#93c5fd",
+    bg: "rgba(37, 99, 235, 0.12)",
+    border: "rgba(37, 99, 235, 0.4)",
+    solid: "#2563eb",
+  },
+  Finance: {
+    text: "#86efac",
+    bg: "rgba(34, 197, 94, 0.12)",
+    border: "rgba(34, 197, 94, 0.4)",
+    solid: "#16a34a",
+  },
+  Fun: {
+    text: "#fde68a",
+    bg: "rgba(251, 191, 36, 0.14)",
+    border: "rgba(251, 191, 36, 0.45)",
+    solid: "#d97706",
+  },
+  Lifestyle: {
+    text: "#f9a8d4",
+    bg: "rgba(236, 72, 153, 0.12)",
+    border: "rgba(236, 72, 153, 0.4)",
+    solid: "#db2777",
+  },
+  Education: {
+    text: "#c4b5fd",
+    bg: "rgba(139, 92, 246, 0.12)",
+    border: "rgba(139, 92, 246, 0.4)",
+    solid: "#7c3aed",
+  },
+  Politics: {
+    text: "#fca5a5",
+    bg: "rgba(239, 68, 68, 0.12)",
+    border: "rgba(239, 68, 68, 0.4)",
+    solid: "#dc2626",
+  },
+  Tech: {
+    text: "#67e8f9",
+    bg: "rgba(6, 182, 212, 0.12)",
+    border: "rgba(6, 182, 212, 0.4)",
+    solid: "#0891b2",
+  },
+  Health: {
+    text: "#fdba74",
+    bg: "rgba(249, 115, 22, 0.12)",
+    border: "rgba(249, 115, 22, 0.4)",
+    solid: "#ea580c",
+  },
+  Sport: {
+    text: "#a7f3d0",
+    bg: "rgba(16, 185, 129, 0.12)",
+    border: "rgba(16, 185, 129, 0.4)",
+    solid: "#059669",
+  },
+  Sports: {
+    text: "#a7f3d0",
+    bg: "rgba(16, 185, 129, 0.12)",
+    border: "rgba(16, 185, 129, 0.4)",
+    solid: "#059669",
+  },
+};
+
+const FALLBACK_CATEGORY_COLOURS = [
+  {
+    text: "#93c5fd",
+    bg: "rgba(37, 99, 235, 0.12)",
+    border: "rgba(37, 99, 235, 0.4)",
+    solid: "#2563eb",
+  },
+  {
+    text: "#86efac",
+    bg: "rgba(34, 197, 94, 0.12)",
+    border: "rgba(34, 197, 94, 0.4)",
+    solid: "#16a34a",
+  },
+  {
+    text: "#fde68a",
+    bg: "rgba(251, 191, 36, 0.14)",
+    border: "rgba(251, 191, 36, 0.45)",
+    solid: "#d97706",
+  },
+  {
+    text: "#f9a8d4",
+    bg: "rgba(236, 72, 153, 0.12)",
+    border: "rgba(236, 72, 153, 0.4)",
+    solid: "#db2777",
+  },
+  {
+    text: "#c4b5fd",
+    bg: "rgba(139, 92, 246, 0.12)",
+    border: "rgba(139, 92, 246, 0.4)",
+    solid: "#7c3aed",
+  },
+  {
+    text: "#67e8f9",
+    bg: "rgba(6, 182, 212, 0.12)",
+    border: "rgba(6, 182, 212, 0.4)",
+    solid: "#0891b2",
+  },
+];
+
 const getOptionColour = (index: number) => {
   return OPTION_COLOURS[index] || OPTION_COLOURS[OPTION_COLOURS.length - 1];
+};
+
+const getCategoryColours = (category: string) => {
+  const trimmed = category?.trim();
+
+  if (!trimmed) {
+    return CATEGORY_COLOURS.All;
+  }
+
+  if (CATEGORY_COLOURS[trimmed]) {
+    return CATEGORY_COLOURS[trimmed];
+  }
+
+  let hash = 0;
+  for (let i = 0; i < trimmed.length; i += 1) {
+    hash = trimmed.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  return FALLBACK_CATEGORY_COLOURS[Math.abs(hash) % FALLBACK_CATEGORY_COLOURS.length];
 };
 
 export default function Home() {
@@ -283,6 +410,10 @@ export default function Home() {
               <span className="text-sm text-blue-300 bg-blue-500/10 px-3 py-1 rounded-full">
                 Featured Poll
               </span>
+
+              {featuredPoll ? (
+                <span className="text-sm text-gray-400">{totalFeaturedVotes} votes</span>
+              ) : null}
             </div>
 
             {featuredPoll ? (
@@ -376,16 +507,27 @@ export default function Home() {
                   ? "col-start-4"
                   : "";
 
+              const categoryColours = getCategoryColours(category);
+
               return (
                 <button
                   key={category}
                   type="button"
                   onClick={() => handleCategoryChange(category)}
-                  className={`col-span-2 h-10 rounded-xl px-2 text-sm font-medium transition lg:min-w-0 lg:flex-1 ${mobileCenterClass} ${
+                  className={`col-span-2 h-10 rounded-xl px-2 text-sm font-medium transition lg:min-w-0 lg:flex-1 ${mobileCenterClass}`}
+                  style={
                     isActive
-                      ? "bg-blue-600 text-white"
-                      : "border border-gray-700 bg-gray-800 text-gray-300 hover:bg-gray-700"
-                  }`}
+                      ? {
+                          backgroundColor: categoryColours.solid,
+                          border: `1px solid ${categoryColours.solid}`,
+                          color: "#ffffff",
+                        }
+                      : {
+                          backgroundColor: categoryColours.bg,
+                          border: `1px solid ${categoryColours.border}`,
+                          color: categoryColours.text,
+                        }
+                  }
                 >
                   {category}
                 </button>
@@ -396,29 +538,40 @@ export default function Home() {
 
         {livePolls.length > 0 ? (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {livePolls.map((poll) => (
-              <Link
-                key={poll.id}
-                id={`poll-card-${poll.slug}`}
-                href={`/poll/${poll.slug}`}
-                onClick={() => handlePollClick(poll)}
-                className="bg-gray-800 rounded-2xl p-5 shadow-lg transition border border-gray-700 hover:border-gray-500"
-              >
-                <div className="mb-3">
-                  <span className="text-xs text-blue-300 bg-blue-500/10 px-2 py-1 rounded-full">
-                    {poll.category}
-                  </span>
-                </div>
+            {livePolls.map((poll) => {
+              const categoryColours = getCategoryColours(poll.category);
 
-                <h4 className="text-lg font-semibold mb-2">{poll.question}</h4>
-                <p className="text-sm text-gray-300 mb-4">{poll.description}</p>
+              return (
+                <Link
+                  key={poll.id}
+                  id={`poll-card-${poll.slug}`}
+                  href={`/poll/${poll.slug}`}
+                  onClick={() => handlePollClick(poll)}
+                  className="bg-gray-800 rounded-2xl p-5 shadow-lg transition border border-gray-700 hover:border-gray-500"
+                >
+                  <div className="mb-3">
+                    <span
+                      className="text-xs px-2 py-1 rounded-full"
+                      style={{
+                        color: categoryColours.text,
+                        backgroundColor: categoryColours.bg,
+                        border: `1px solid ${categoryColours.border}`,
+                      }}
+                    >
+                      {poll.category}
+                    </span>
+                  </div>
 
-                <div className="flex items-center justify-between text-sm text-gray-400">
-                  <span>View poll</span>
-                  <span>→</span>
-                </div>
-              </Link>
-            ))}
+                  <h4 className="text-lg font-semibold mb-2">{poll.question}</h4>
+                  <p className="text-sm text-gray-300 mb-4">{poll.description}</p>
+
+                  <div className="flex items-center justify-between text-sm text-gray-400">
+                    <span>View poll</span>
+                    <span>→</span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         ) : (
           <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
