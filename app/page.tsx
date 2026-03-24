@@ -194,62 +194,68 @@ const getCategoryColours = (category: string) => {
 };
 
 function LiveVoteCounter({ value }: { value: number }) {
-  const [displayValue, setDisplayValue] = useState(value);
-  const [previousValue, setPreviousValue] = useState(value);
+  const formattedValue = value.toLocaleString();
+  const prefix = formattedValue.slice(0, -1);
+  const currentLastChar = formattedValue.slice(-1) || "0";
+
+  const [displayedLastChar, setDisplayedLastChar] = useState(currentLastChar);
+  const [previousLastChar, setPreviousLastChar] = useState(currentLastChar);
   const [isAnimating, setIsAnimating] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (value === displayValue) return;
+    if (currentLastChar === displayedLastChar) return;
 
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
 
-    setPreviousValue(displayValue);
-    setDisplayValue(value);
+    setPreviousLastChar(displayedLastChar);
+    setDisplayedLastChar(currentLastChar);
     setIsAnimating(true);
 
     timeoutRef.current = setTimeout(() => {
       setIsAnimating(false);
-    }, 250);
+    }, 280);
 
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [value, displayValue]);
-
-  const currentFormatted = displayValue.toLocaleString();
-  const previousFormatted = previousValue.toLocaleString();
+  }, [currentLastChar, displayedLastChar]);
 
   return (
-    <div className="mt-5 mb-2 text-center">
-      <p className="text-xs uppercase tracking-[0.22em] text-gray-500">
-        Total votes cast
+    <div className="mt-6 mb-2 text-center">
+      <p className="text-sm font-semibold uppercase tracking-[0.28em] text-blue-300/90">
+        Total Votes Cast
       </p>
 
-      <div className="mt-2 inline-flex items-center justify-center rounded-2xl border border-gray-800 bg-gray-900/70 px-5 py-3 shadow-lg">
-        <div className="relative h-[2.2rem] overflow-hidden md:h-[2.8rem]">
-          <div
-            className="flex flex-col transition-transform duration-200 ease-out"
-            style={{
-              transform: isAnimating ? "translateY(-50%)" : "translateY(0%)",
-            }}
-          >
-            <span className="flex h-[2.2rem] items-center justify-center leading-none text-3xl md:h-[2.8rem] md:text-4xl font-bold text-white">
-              {previousFormatted}
+      <div className="mt-3 inline-flex items-center justify-center rounded-2xl border border-blue-500/25 bg-gradient-to-b from-slate-900 to-slate-950 px-6 py-4 shadow-[0_0_24px_rgba(37,99,235,0.12)]">
+        <div className="flex items-center justify-center text-4xl md:text-5xl font-bold leading-none text-white">
+          <span>{prefix}</span>
+
+          <span className="relative ml-[0.02em] inline-flex h-[1em] w-[0.65ch] overflow-hidden">
+            <span
+              className="absolute left-0 top-0 flex flex-col transition-transform duration-300 ease-out"
+              style={{
+                transform: isAnimating ? "translateY(-50%)" : "translateY(0%)",
+              }}
+            >
+              <span className="flex h-[1em] items-center justify-center">
+                {previousLastChar}
+              </span>
+              <span className="flex h-[1em] items-center justify-center">
+                {displayedLastChar}
+              </span>
             </span>
-            <span className="flex h-[2.2rem] items-center justify-center leading-none text-3xl md:h-[2.8rem] md:text-4xl font-bold text-white">
-              {currentFormatted}
-            </span>
-          </div>
+          </span>
         </div>
       </div>
     </div>
   );
 }
+
 export default function Home() {
   const [polls, setPolls] = useState<Poll[]>([]);
   const [featuredOptions, setFeaturedOptions] = useState<PollOption[]>([]);
