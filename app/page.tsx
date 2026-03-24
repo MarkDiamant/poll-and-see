@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 type Poll = {
@@ -17,6 +17,11 @@ type PollOption = {
   id: number;
   poll_id: number;
   option_text: string;
+};
+
+type VoteInsertPayload = {
+  poll_id?: number;
+  option_id?: number;
 };
 
 const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899"];
@@ -188,10 +193,75 @@ const getCategoryColours = (category: string) => {
   return FALLBACK_CATEGORY_COLOURS[Math.abs(hash) % FALLBACK_CATEGORY_COLOURS.length];
 };
 
+function LiveVoteCounter({ value }: { value: number }) {
+  const formattedValue = value.toLocaleString();
+  const safeFormattedValue = formattedValue.length > 0 ? formattedValue : "0";
+  const prefix = safeFormattedValue.slice(0, -1);
+  const currentLastDigit = safeFormattedValue.slice(-1);
+
+  const [displayedLastDigit, setDisplayedLastDigit] = useState(currentLastDigit);
+  const [previousLastDigit, setPreviousLastDigit] = useState(currentLastDigit);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (currentLastDigit === displayedLastDigit) return;
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    setPreviousLastDigit(displayedLastDigit);
+    setDisplayedLastDigit(currentLastDigit);
+    setIsAnimating(true);
+
+    timeoutRef.current = setTimeout(() => {
+      setIsAnimating(false);
+    }, 250);
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [currentLastDigit, displayedLastDigit]);
+
+  return (
+    <div className="mt-5 mb-2 text-center">
+      <p className="text-xs uppercase tracking-[0.22em] text-gray-500">
+        Total votes cast
+      </p>
+
+      <div className="mt-2 inline-flex items-end rounded-2xl border border-gray-800 bg-gray-900/70 px-5 py-3 shadow-lg">
+        <span className="text-3xl md:text-4xl font-bold text-white leading-none">
+          {prefix}
+        </span>
+
+        <span className="relative ml-0.5 inline-block h-[1em] w-[0.7ch] overflow-hidden align-bottom">
+          <span
+            className="absolute left-0 top-0 flex flex-col transition-transform duration-200 ease-out"
+            style={{
+              transform: isAnimating ? "translateY(-50%)" : "translateY(0%)",
+            }}
+          >
+            <span className="h-[1em] leading-none text-3xl md:text-4xl font-bold text-white">
+              {previousLastDigit}
+            </span>
+            <span className="h-[1em] leading-none text-3xl md:text-4xl font-bold text-white">
+              {displayedLastDigit}
+            </span>
+          </span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const [polls, setPolls] = useState<Poll[]>([]);
   const [featuredOptions, setFeaturedOptions] = useState<PollOption[]>([]);
   const [featuredVoteCounts, setFeaturedVoteCounts] = useState<Record<number, number>>({});
+  const [totalVoteCount, setTotalVoteCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [featuredPollVoted, setFeaturedPollVoted] = useState(false);
   const [featuredSelectedOptionId, setFeaturedSelectedOptionId] = useState<number | null>(null);
@@ -200,13 +270,17 @@ export default function Home() {
   const loadHomeData = useCallback(async () => {
     setLoading(true);
 
-    const { data: pollsData } = await supabase
-      .from("polls")
-      .select("id, question, description, category, slug, featured")
-      .order("id", { ascending: false });
+    const [{ data: pollsData }, { count: votesCount }] = await Promise.all([
+      supabase
+        .from("polls")
+        .select("id, question, description, category, slug, featured")
+        .order("id", { ascending: false }),
+      supabase.from("votes").select("*", { count: "exact", head: true }),
+    ]);
 
     const safePolls = pollsData || [];
     setPolls(safePolls);
+    setTotalVoteCount(votesCount || 0);
 
     const availableCategories = [
       "All",
@@ -253,16 +327,17 @@ export default function Home() {
       setFeaturedSelectedOptionId(null);
     }
 
-    const { data: optionsData } = await supabase
-      .from("poll_options")
-      .select("*")
-      .eq("poll_id", chosenFeaturedPoll.id)
-      .order("id", { ascending: true });
-
-    const { data: votesData } = await supabase
-      .from("votes")
-      .select("option_id")
-      .eq("poll_id", chosenFeaturedPoll.id);
+    const [{ data: optionsData }, { data: votesData }] = await Promise.all([
+      supabase
+        .from("poll_options")
+        .select("*")
+        .eq("poll_id", chosenFeaturedPoll.id)
+        .order("id", { ascending: true }),
+      supabase
+        .from("votes")
+        .select("option_id")
+        .eq("poll_id", chosenFeaturedPoll.id),
+    ]);
 
     const counts: Record<number, number> = {};
     (votesData || []).forEach((vote) => {
@@ -354,6 +429,40 @@ export default function Home() {
     }
   }, [loading, selectedCategory]);
 
+  const featuredPoll = polls.find((p) => p.featured) || polls[0];
+
+  useEffect(() => {
+    if (!featuredPoll?.id) return;
+
+    const channel = supabase
+      .channel(`homepage-votes-${featuredPoll.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "votes",
+        },
+        (payload) => {
+          const newVote = payload.new as VoteInsertPayload;
+
+          setTotalVoteCount((prev) => prev + 1);
+
+          if (newVote.poll_id === featuredPoll.id && typeof newVote.option_id === "number") {
+            setFeaturedVoteCounts((prev) => ({
+              ...prev,
+              [newVote.option_id as number]: (prev[newVote.option_id as number] || 0) + 1,
+            }));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [featuredPoll?.id]);
+
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
 
@@ -371,8 +480,6 @@ export default function Home() {
     sessionStorage.setItem("selectedPollCategory", selectedCategory);
     sessionStorage.setItem("homeScrollY", String(window.scrollY));
   };
-
-  const featuredPoll = polls.find((p) => p.featured) || polls[0];
 
   const totalFeaturedVotes = Object.values(featuredVoteCounts).reduce(
     (sum, count) => sum + count,
@@ -448,7 +555,8 @@ export default function Home() {
       <section className="max-w-6xl mx-auto px-6 pt-4 pb-8">
         <div className="text-center mb-10">
           <h1 className="text-4xl md:text-5xl font-bold mb-3">Poll & See</h1>
-          <p className="text-lg text-gray-300 mb-4">See what people really think</p>
+          <p className="text-lg text-gray-300">See what people really think</p>
+          <LiveVoteCounter value={totalVoteCount} />
         </div>
 
         <div className="grid gap-8 lg:grid-cols-3">
