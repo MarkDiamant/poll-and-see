@@ -194,59 +194,78 @@ const getCategoryColours = (category: string) => {
 };
 
 function LiveVoteCounter({ value }: { value: number }) {
-  const formattedValue = value.toLocaleString();
-  const prefix = formattedValue.slice(0, -1);
-  const currentLastChar = formattedValue.slice(-1) || "0";
-
-  const [displayedLastChar, setDisplayedLastChar] = useState(currentLastChar);
-  const [previousLastChar, setPreviousLastChar] = useState(currentLastChar);
+  const [displayValue, setDisplayValue] = useState(value);
+  const [previousValue, setPreviousValue] = useState(value);
   const [isAnimating, setIsAnimating] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const animResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (currentLastChar === displayedLastChar) return;
+    if (displayValue === value) return;
 
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
+    const stepDelay = Math.abs(value - displayValue) > 10 ? 60 : 140;
 
-    setPreviousLastChar(displayedLastChar);
-    setDisplayedLastChar(currentLastChar);
-    setIsAnimating(true);
+    const stepTimeout = setTimeout(() => {
+      const direction = value > displayValue ? 1 : -1;
+      const nextValue = displayValue + direction;
 
-    timeoutRef.current = setTimeout(() => {
-      setIsAnimating(false);
-    }, 280);
+      setPreviousValue(displayValue);
+      setDisplayValue(nextValue);
+      setIsAnimating(true);
+
+      if (animResetTimeoutRef.current) {
+        clearTimeout(animResetTimeoutRef.current);
+      }
+
+      animResetTimeoutRef.current = setTimeout(() => {
+        setIsAnimating(false);
+      }, 220);
+    }, stepDelay);
 
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
+      clearTimeout(stepTimeout);
+    };
+  }, [value, displayValue]);
+
+  useEffect(() => {
+    return () => {
+      if (animResetTimeoutRef.current) {
+        clearTimeout(animResetTimeoutRef.current);
       }
     };
-  }, [currentLastChar, displayedLastChar]);
+  }, []);
+
+  const formattedCurrent = displayValue.toLocaleString();
+  const formattedPrevious = previousValue.toLocaleString();
+
+  const currentPrefix = formattedCurrent.slice(0, -1);
+  const previousPrefix = formattedPrevious.slice(0, -1);
+  const currentLastDigit = formattedCurrent.slice(-1) || "0";
+  const previousLastDigit = formattedPrevious.slice(-1) || "0";
+
+  const stablePrefix = isAnimating ? previousPrefix : currentPrefix;
 
   return (
     <div className="mt-6 mb-2 text-center">
-      <p className="text-sm font-semibold uppercase tracking-[0.28em] text-blue-300/90">
-        Total Votes Cast
-      </p>
+      <div className="inline-flex flex-col items-center rounded-2xl border border-blue-500/30 bg-gradient-to-b from-[#0b1730] to-[#09111f] px-6 py-3 shadow-[0_0_30px_rgba(37,99,235,0.16)]">
+        <p className="text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.28em] text-blue-200/95">
+          Total Votes Cast
+        </p>
 
-      <div className="mt-3 inline-flex items-center justify-center rounded-2xl border border-blue-500/25 bg-gradient-to-b from-slate-900 to-slate-950 px-6 py-4 shadow-[0_0_24px_rgba(37,99,235,0.12)]">
-        <div className="flex items-center justify-center text-4xl md:text-5xl font-bold leading-none text-white">
-          <span>{prefix}</span>
+        <div className="mt-2 flex items-center justify-center text-4xl md:text-5xl font-bold leading-none text-white tabular-nums">
+          <span>{stablePrefix}</span>
 
-          <span className="relative ml-[0.02em] inline-flex h-[1em] w-[0.65ch] overflow-hidden">
+          <span className="relative ml-[0.02em] inline-flex h-[1.12em] w-[0.9ch] overflow-hidden">
             <span
               className="absolute left-0 top-0 flex flex-col transition-transform duration-300 ease-out"
               style={{
                 transform: isAnimating ? "translateY(-50%)" : "translateY(0%)",
               }}
             >
-              <span className="flex h-[1em] items-center justify-center">
-                {previousLastChar}
+              <span className="flex h-[1.12em] items-center justify-center leading-none">
+                {previousLastDigit}
               </span>
-              <span className="flex h-[1em] items-center justify-center">
-                {displayedLastChar}
+              <span className="flex h-[1.12em] items-center justify-center leading-none">
+                {currentLastDigit}
               </span>
             </span>
           </span>
@@ -431,10 +450,8 @@ export default function Home() {
   const featuredPoll = polls.find((p) => p.featured) || polls[0];
 
   useEffect(() => {
-    if (!featuredPoll?.id) return;
-
     const channel = supabase
-      .channel(`homepage-votes-${featuredPoll.id}`)
+      .channel("homepage-live-votes")
       .on(
         "postgres_changes",
         {
@@ -447,7 +464,7 @@ export default function Home() {
 
           setTotalVoteCount((prev) => prev + 1);
 
-          if (newVote.poll_id === featuredPoll.id && typeof newVote.option_id === "number") {
+          if (featuredPoll?.id && newVote.poll_id === featuredPoll.id && typeof newVote.option_id === "number") {
             setFeaturedVoteCounts((prev) => ({
               ...prev,
               [newVote.option_id as number]: (prev[newVote.option_id as number] || 0) + 1,
@@ -459,6 +476,46 @@ export default function Home() {
 
     return () => {
       supabase.removeChannel(channel);
+    };
+  }, [featuredPoll?.id]);
+
+  useEffect(() => {
+    const syncVoteCount = async () => {
+      const { count } = await supabase.from("votes").select("*", { count: "exact", head: true });
+
+      if (typeof count === "number") {
+        setTotalVoteCount(count);
+      }
+    };
+
+    const interval = setInterval(syncVoteCount, 5000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!featuredPoll?.id) return;
+
+    const syncFeaturedVotes = async () => {
+      const { data } = await supabase
+        .from("votes")
+        .select("option_id")
+        .eq("poll_id", featuredPoll.id);
+
+      const counts: Record<number, number> = {};
+      (data || []).forEach((vote) => {
+        counts[vote.option_id] = (counts[vote.option_id] || 0) + 1;
+      });
+
+      setFeaturedVoteCounts(counts);
+    };
+
+    const interval = setInterval(syncFeaturedVotes, 5000);
+
+    return () => {
+      clearInterval(interval);
     };
   }, [featuredPoll?.id]);
 
