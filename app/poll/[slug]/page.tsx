@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 type Poll = {
@@ -203,6 +203,8 @@ export default function PollPage() {
   const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [shareText, setShareText] = useState("Share poll");
+  const [wrappedOptionIds, setWrappedOptionIds] = useState<Record<number, boolean>>({});
+  const optionTextRefs = useRef<Record<number, HTMLSpanElement | null>>({});
 
   useEffect(() => {
     const loadPoll = async () => {
@@ -263,6 +265,50 @@ export default function PollPage() {
       loadPoll();
     }
   }, [slug]);
+
+  useLayoutEffect(() => {
+    if (!voted || options.length === 0) return;
+
+    const measureWrappedOptions = () => {
+      const nextWrapped: Record<number, boolean> = {};
+
+      options.forEach((option) => {
+        const el = optionTextRefs.current[option.id];
+        if (!el) {
+          nextWrapped[option.id] = false;
+          return;
+        }
+
+        const computedStyle = window.getComputedStyle(el);
+        const lineHeight = parseFloat(computedStyle.lineHeight);
+        const height = el.getBoundingClientRect().height;
+
+        nextWrapped[option.id] = lineHeight > 0 ? height > lineHeight * 1.5 : false;
+      });
+
+      setWrappedOptionIds(nextWrapped);
+    };
+
+    measureWrappedOptions();
+
+    const resizeObserver = new ResizeObserver(() => {
+      measureWrappedOptions();
+    });
+
+    options.forEach((option) => {
+      const el = optionTextRefs.current[option.id];
+      if (el) {
+        resizeObserver.observe(el);
+      }
+    });
+
+    window.addEventListener("resize", measureWrappedOptions);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", measureWrappedOptions);
+    };
+  }, [voted, options]);
 
   const handleVote = async (optionId: number) => {
     if (!poll || voted || submitting) return;
@@ -493,6 +539,7 @@ export default function PollPage() {
                 const percent = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
                 const isSelected = selectedOptionId === option.id;
                 const optionColour = getOptionColour(index);
+                const isWrapped = wrappedOptionIds[option.id] === true;
 
                 return (
                   <div
@@ -506,26 +553,61 @@ export default function PollPage() {
                     }}
                   >
                     <div className="px-3 pt-3">
-                      <div className="grid grid-cols-[1fr_auto] items-start gap-x-3">
-                        <div className="flex items-start gap-2 min-w-0">
-                          {isSelected ? (
-                            <span
-                              className="mt-0.5 shrink-0 text-base font-bold"
-                              style={{ color: optionColour }}
-                            >
-                              ✓
-                            </span>
-                          ) : null}
+                      {!isWrapped ? (
+                        <div className="grid grid-cols-[1fr_auto] items-start gap-x-3">
+                          <div className="flex items-start gap-2 min-w-0">
+                            {isSelected ? (
+                              <span
+                                className="mt-0.5 shrink-0 text-base font-bold"
+                                style={{ color: optionColour }}
+                              >
+                                ✓
+                              </span>
+                            ) : null}
 
-                          <span className="min-w-0 leading-6 break-words text-white">
-                            {option.option_text}
+                            <span
+                              ref={(el) => {
+                                optionTextRefs.current[option.id] = el;
+                              }}
+                              className="min-w-0 leading-6 break-words text-white"
+                            >
+                              {option.option_text}
+                            </span>
+                          </div>
+
+                          <span className="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-gray-300">
+                            {percent}%
                           </span>
                         </div>
+                      ) : (
+                        <>
+                          <div className="flex items-start gap-2 min-w-0">
+                            {isSelected ? (
+                              <span
+                                className="mt-0.5 shrink-0 text-base font-bold"
+                                style={{ color: optionColour }}
+                              >
+                                ✓
+                              </span>
+                            ) : null}
 
-                        <span className="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-gray-300">
-                          {percent}%
-                        </span>
-                      </div>
+                            <span
+                              ref={(el) => {
+                                optionTextRefs.current[option.id] = el;
+                              }}
+                              className="min-w-0 leading-6 break-words text-white"
+                            >
+                              {option.option_text}
+                            </span>
+                          </div>
+
+                          <div className="mt-2 flex justify-end">
+                            <span className="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-gray-300">
+                              {percent}%
+                            </span>
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     <div className="px-3 pb-3 pt-2">
