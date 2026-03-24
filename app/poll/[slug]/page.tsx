@@ -494,39 +494,62 @@ export default function PollPage() {
                 const percent = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
                 const isSelected = selectedOptionId === option.id;
                 const isLeader = count > 0 && count === highestVoteCount;
+                const optionColour = getOptionColour(index);
 
                 return (
                   <div
                     key={option.id}
-                    className={`rounded-2xl border transition ${
-                      isSelected
-                        ? "border-white/40 bg-gray-900/70 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]"
-                        : "border-transparent bg-transparent"
+                    className={`rounded-2xl transition ${
+                      isSelected || isLeader ? "bg-gray-900/55" : "bg-transparent"
                     }`}
+                    style={{
+                      border: isSelected
+                        ? `3px solid ${optionColour}`
+                        : isLeader
+                        ? `2px solid ${optionColour}88`
+                        : "2px solid transparent",
+                      boxShadow: isSelected
+                        ? `0 0 0 1px ${optionColour}55, 0 0 18px ${optionColour}22`
+                        : isLeader
+                        ? `0 0 0 1px ${optionColour}22`
+                        : "none",
+                    }}
                   >
-                    <div className="flex items-start gap-3 mb-2 text-sm px-3 pt-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start gap-2">
-                          {isSelected ? (
-                            <span className="mt-0.5 shrink-0 text-white">✓</span>
-                          ) : null}
-                          <span className="leading-6 break-words">{option.option_text}</span>
-                        </div>
+                    <div className="px-3 pt-3">
+                      <div className="flex items-start gap-2">
+                        {isSelected ? (
+                          <span
+                            className="mt-0.5 shrink-0 text-base font-bold"
+                            style={{ color: optionColour }}
+                          >
+                            ✓
+                          </span>
+                        ) : null}
+
+                        <span className="flex-1 min-w-0 leading-6 break-words text-white">
+                          {option.option_text}
+                        </span>
                       </div>
 
-                      <span className="shrink-0 min-w-[56px] text-right text-gray-300">
-                        {percent}%
-                      </span>
+                      <div className="mt-2 flex justify-end">
+                        <span
+                          className="shrink-0 text-right text-sm font-semibold"
+                          style={{ color: isSelected || isLeader ? optionColour : "#d1d5db" }}
+                        >
+                          {percent}%
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="px-3 pb-3">
+                    <div className="px-3 pb-3 pt-2">
                       <div className="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
                         <div
                           className="h-4 transition-all"
                           style={{
                             width: `${percent}%`,
-                            backgroundColor: getOptionColour(index),
-                            opacity: isLeader ? 1 : 0.9,
+                            backgroundColor: optionColour,
+                            opacity: isLeader ? 1 : 0.92,
+                            boxShadow: isLeader ? `0 0 12px ${optionColour}55` : "none",
                           }}
                         />
                       </div>
