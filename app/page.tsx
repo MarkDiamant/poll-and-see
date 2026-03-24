@@ -230,18 +230,18 @@ function LiveVoteCounter({ value }: { value: number }) {
         Total votes cast
       </p>
 
-      <div className="mt-2 inline-flex items-center justify-center rounded-2xl border border-gray-800 bg-gray-900/70 px-5 py-3 shadow-lg overflow-hidden">
-        <div className="relative h-[1em] overflow-hidden">
+      <div className="mt-2 inline-flex items-center justify-center rounded-2xl border border-gray-800 bg-gray-900/70 px-5 py-3 shadow-lg">
+        <div className="relative h-[2.2rem] overflow-hidden md:h-[2.8rem]">
           <div
             className="flex flex-col transition-transform duration-200 ease-out"
             style={{
               transform: isAnimating ? "translateY(-50%)" : "translateY(0%)",
             }}
           >
-            <span className="h-[1em] leading-none text-3xl md:text-4xl font-bold text-white">
+            <span className="flex h-[2.2rem] items-center justify-center leading-none text-3xl md:h-[2.8rem] md:text-4xl font-bold text-white">
               {previousFormatted}
             </span>
-            <span className="h-[1em] leading-none text-3xl md:text-4xl font-bold text-white">
+            <span className="flex h-[2.2rem] items-center justify-center leading-none text-3xl md:h-[2.8rem] md:text-4xl font-bold text-white">
               {currentFormatted}
             </span>
           </div>
