@@ -506,23 +506,23 @@ export default function PollPage() {
                     }}
                   >
                     <div className="px-3 pt-3">
-                      <div className="flex items-start gap-2">
-                        {isSelected ? (
-                          <span
-                            className="mt-0.5 shrink-0 text-base font-bold"
-                            style={{ color: optionColour }}
-                          >
-                            ✓
+                      <div className="grid grid-cols-[1fr_auto] items-start gap-x-3">
+                        <div className="flex items-start gap-2 min-w-0">
+                          {isSelected ? (
+                            <span
+                              className="mt-0.5 shrink-0 text-base font-bold"
+                              style={{ color: optionColour }}
+                            >
+                              ✓
+                            </span>
+                          ) : null}
+
+                          <span className="min-w-0 leading-6 break-words text-white">
+                            {option.option_text}
                           </span>
-                        ) : null}
+                        </div>
 
-                        <span className="flex-1 min-w-0 leading-6 break-words text-white">
-                          {option.option_text}
-                        </span>
-                      </div>
-
-                      <div className="mt-2 flex justify-end">
-                        <span className="shrink-0 text-right text-sm font-semibold text-gray-300">
+                        <span className="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-gray-300">
                           {percent}%
                         </span>
                       </div>
