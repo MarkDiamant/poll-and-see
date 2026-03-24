@@ -197,52 +197,52 @@ function LiveVoteCounter({ value }: { value: number }) {
   const [displayValue, setDisplayValue] = useState(value);
   const [previousValue, setPreviousValue] = useState(value);
   const [isAnimating, setIsAnimating] = useState(false);
-  const animResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const animTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (displayValue === value) return;
+    if (displayValue === value || isAnimating) return;
 
-    const stepDelay = Math.abs(value - displayValue) > 10 ? 60 : 140;
+    const stepDelay = Math.abs(value - displayValue) > 10 ? 70 : 180;
 
     const stepTimeout = setTimeout(() => {
       const direction = value > displayValue ? 1 : -1;
       const nextValue = displayValue + direction;
 
       setPreviousValue(displayValue);
-      setDisplayValue(nextValue);
       setIsAnimating(true);
 
-      if (animResetTimeoutRef.current) {
-        clearTimeout(animResetTimeoutRef.current);
+      if (animTimeoutRef.current) {
+        clearTimeout(animTimeoutRef.current);
       }
 
-      animResetTimeoutRef.current = setTimeout(() => {
+      animTimeoutRef.current = setTimeout(() => {
+        setDisplayValue(nextValue);
         setIsAnimating(false);
-      }, 220);
+      }, 340);
     }, stepDelay);
 
     return () => {
       clearTimeout(stepTimeout);
     };
-  }, [value, displayValue]);
+  }, [value, displayValue, isAnimating]);
 
   useEffect(() => {
     return () => {
-      if (animResetTimeoutRef.current) {
-        clearTimeout(animResetTimeoutRef.current);
+      if (animTimeoutRef.current) {
+        clearTimeout(animTimeoutRef.current);
       }
     };
   }, []);
 
-  const formattedCurrent = displayValue.toLocaleString();
-  const formattedPrevious = previousValue.toLocaleString();
+  const previousFormatted = previousValue.toLocaleString();
+  const currentFormatted = displayValue.toLocaleString();
 
-  const currentPrefix = formattedCurrent.slice(0, -1);
-  const previousPrefix = formattedPrevious.slice(0, -1);
-  const currentLastDigit = formattedCurrent.slice(-1) || "0";
-  const previousLastDigit = formattedPrevious.slice(-1) || "0";
+  const previousPrefix = previousFormatted.slice(0, -1);
+  const currentPrefix = currentFormatted.slice(0, -1);
+  const previousLastDigit = previousFormatted.slice(-1) || "0";
+  const currentLastDigit = currentFormatted.slice(-1) || "0";
 
-  const stablePrefix = isAnimating ? previousPrefix : currentPrefix;
+  const visiblePrefix = isAnimating ? previousPrefix : currentPrefix;
 
   return (
     <div className="mt-6 mb-2 text-center">
@@ -252,22 +252,26 @@ function LiveVoteCounter({ value }: { value: number }) {
         </p>
 
         <div className="mt-2 flex items-center justify-center text-4xl md:text-5xl font-bold leading-none text-white tabular-nums">
-          <span>{stablePrefix}</span>
+          <span>{visiblePrefix}</span>
 
-          <span className="relative ml-[0.02em] inline-flex h-[1.12em] w-[0.9ch] overflow-hidden">
-            <span
-              className="absolute left-0 top-0 flex flex-col transition-transform duration-300 ease-out"
-              style={{
-                transform: isAnimating ? "translateY(-50%)" : "translateY(0%)",
-              }}
-            >
-              <span className="flex h-[1.12em] items-center justify-center leading-none">
-                {previousLastDigit}
+          <span className="relative ml-[0.03em] inline-flex h-[1.18em] w-[1ch] overflow-hidden pr-[0.04em]">
+            {isAnimating ? (
+              <span
+                className="absolute left-0 top-0 flex w-full flex-col transition-transform duration-300 ease-out"
+                style={{ transform: "translateY(-50%)" }}
+              >
+                <span className="flex h-[1.18em] items-center justify-center leading-none">
+                  {previousLastDigit}
+                </span>
+                <span className="flex h-[1.18em] items-center justify-center leading-none">
+                  {displayValue < value ? String((Number(previousLastDigit) + 1) % 10) : String((Number(previousLastDigit) + 9) % 10)}
+                </span>
               </span>
-              <span className="flex h-[1.12em] items-center justify-center leading-none">
+            ) : (
+              <span className="flex h-[1.18em] w-full items-center justify-center leading-none">
                 {currentLastDigit}
               </span>
-            </span>
+            )}
           </span>
         </div>
       </div>
@@ -488,7 +492,7 @@ export default function Home() {
       }
     };
 
-    const interval = setInterval(syncVoteCount, 5000);
+    const interval = setInterval(syncVoteCount, 2000);
 
     return () => {
       clearInterval(interval);
@@ -512,7 +516,7 @@ export default function Home() {
       setFeaturedVoteCounts(counts);
     };
 
-    const interval = setInterval(syncFeaturedVotes, 5000);
+    const interval = setInterval(syncFeaturedVotes, 2000);
 
     return () => {
       clearInterval(interval);
