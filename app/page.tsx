@@ -194,10 +194,10 @@ const getCategoryColours = (category: string) => {
 };
 
 function getCommonPrefixLength(a: string, b: string) {
-  const max = Math.min(a.length, b.length);
+  const maxLength = Math.min(a.length, b.length);
   let i = 0;
 
-  while (i < max && a[i] === b[i]) {
+  while (i < maxLength && a[i] === b[i]) {
     i += 1;
   }
 
@@ -209,14 +209,16 @@ function LiveVoteCounter({ value }: { value: number }) {
   const [animationFrom, setAnimationFrom] = useState(value);
   const [animationTo, setAnimationTo] = useState(value);
   const [isAnimating, setIsAnimating] = useState(false);
-  const animTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const settleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const stepTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (displayValue === value || isAnimating) return;
+    if (isAnimating || displayValue === value) return;
 
-    const stepDelay = Math.abs(value - displayValue) > 10 ? 90 : 220;
+    const stepDelay = Math.abs(value - displayValue) > 10 ? 120 : 260;
 
-    const stepTimeout = setTimeout(() => {
+    stepTimeoutRef.current = setTimeout(() => {
       const direction = value > displayValue ? 1 : -1;
       const nextValue = displayValue + direction;
 
@@ -224,25 +226,26 @@ function LiveVoteCounter({ value }: { value: number }) {
       setAnimationTo(nextValue);
       setIsAnimating(true);
 
-      if (animTimeoutRef.current) {
-        clearTimeout(animTimeoutRef.current);
-      }
-
-      animTimeoutRef.current = setTimeout(() => {
+      settleTimeoutRef.current = setTimeout(() => {
         setDisplayValue(nextValue);
         setIsAnimating(false);
-      }, 520);
+      }, 700);
     }, stepDelay);
 
     return () => {
-      clearTimeout(stepTimeout);
+      if (stepTimeoutRef.current) {
+        clearTimeout(stepTimeoutRef.current);
+      }
     };
   }, [value, displayValue, isAnimating]);
 
   useEffect(() => {
     return () => {
-      if (animTimeoutRef.current) {
-        clearTimeout(animTimeoutRef.current);
+      if (stepTimeoutRef.current) {
+        clearTimeout(stepTimeoutRef.current);
+      }
+      if (settleTimeoutRef.current) {
+        clearTimeout(settleTimeoutRef.current);
       }
     };
   }, []);
@@ -262,7 +265,7 @@ function LiveVoteCounter({ value }: { value: number }) {
   const previousSuffix = isAnimating ? fromFormatted.slice(commonPrefixLength) : "";
   const nextSuffix = isAnimating ? toFormatted.slice(commonPrefixLength) : "";
 
-  const suffixWidthCh = Math.max(previousSuffix.length, nextSuffix.length, 1);
+  const widthInCh = Math.max(fromFormatted.length, toFormatted.length, settledFormatted.length, value.toLocaleString().length);
 
   return (
     <div className="mt-6 mb-2 text-center">
@@ -271,31 +274,34 @@ function LiveVoteCounter({ value }: { value: number }) {
           Total Votes Cast
         </p>
 
-        <div className="mt-2 flex items-center justify-center text-4xl md:text-5xl font-bold leading-none text-white tabular-nums">
-          <span>{stablePrefix}</span>
+        <div
+          className="mt-2 flex items-center justify-center text-4xl md:text-5xl font-bold leading-none text-white tabular-nums"
+          style={{ minWidth: `${widthInCh}ch` }}
+        >
+          <span className="whitespace-pre">{stablePrefix}</span>
 
           {isAnimating ? (
             <span
-              className="relative inline-flex overflow-hidden align-middle"
+              className="relative inline-flex overflow-hidden whitespace-pre align-middle"
               style={{
-                height: "1.28em",
-                minWidth: `${suffixWidthCh}ch`,
-                paddingRight: "0.06em",
+                height: "1.24em",
+                minWidth: `${Math.max(previousSuffix.length, nextSuffix.length, 1)}ch`,
+                paddingRight: "0.04em",
               }}
             >
               <span
-                className="absolute left-0 top-0 flex w-full flex-col whitespace-pre text-center transition-transform duration-500 ease-out"
-                style={{ transform: "translateY(-50%)" }}
+                className="absolute left-0 top-0 flex w-full flex-col transition-transform duration-700 ease-out"
+                style={{ transform: "translateY(-1.24em)" }}
               >
                 <span
                   className="flex items-center justify-center leading-none"
-                  style={{ height: "1.28em" }}
+                  style={{ height: "1.24em" }}
                 >
                   {previousSuffix}
                 </span>
                 <span
                   className="flex items-center justify-center leading-none"
-                  style={{ height: "1.28em" }}
+                  style={{ height: "1.24em" }}
                 >
                   {nextSuffix}
                 </span>
