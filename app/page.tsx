@@ -209,9 +209,11 @@ function LiveVoteCounter({ value }: { value: number }) {
   const [animationFrom, setAnimationFrom] = useState(value);
   const [animationTo, setAnimationTo] = useState(value);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [translateActive, setTranslateActive] = useState(false);
 
   const stepTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const settleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (isAnimating || displayValue === value) return;
@@ -225,11 +227,19 @@ function LiveVoteCounter({ value }: { value: number }) {
       setAnimationFrom(displayValue);
       setAnimationTo(nextValue);
       setIsAnimating(true);
+      setTranslateActive(false);
+
+      rafRef.current = window.requestAnimationFrame(() => {
+        rafRef.current = window.requestAnimationFrame(() => {
+          setTranslateActive(true);
+        });
+      });
 
       settleTimeoutRef.current = setTimeout(() => {
         setDisplayValue(nextValue);
         setIsAnimating(false);
-      }, 950);
+        setTranslateActive(false);
+      }, 1100);
     }, stepDelay);
 
     return () => {
@@ -246,6 +256,9 @@ function LiveVoteCounter({ value }: { value: number }) {
       }
       if (settleTimeoutRef.current) {
         clearTimeout(settleTimeoutRef.current);
+      }
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
       }
     };
   }, []);
@@ -276,13 +289,13 @@ function LiveVoteCounter({ value }: { value: number }) {
 
   return (
     <div className="mt-6 mb-2 text-center">
-      <div className="inline-flex h-[116px] min-w-[210px] flex-col items-center justify-center rounded-2xl border border-cyan-400/45 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.18),_rgba(8,15,30,0.98)_56%)] px-6 py-3 shadow-[0_0_38px_rgba(34,211,238,0.16)]">
-        <p className="text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-200">
+      <div className="inline-flex h-[116px] min-w-[214px] flex-col items-center justify-center rounded-2xl border border-cyan-400/55 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.22),_rgba(8,15,30,0.98)_56%)] px-6 py-3 shadow-[0_0_44px_rgba(34,211,238,0.20)]">
+        <p className="text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-100">
           Total Votes Cast
         </p>
 
         <div
-          className="mt-3 flex h-[60px] items-center justify-center overflow-hidden text-4xl md:text-5xl font-bold leading-none text-white tabular-nums"
+          className="mt-3 flex h-[62px] items-center justify-center overflow-hidden text-4xl md:text-5xl font-bold leading-none text-white tabular-nums"
           style={{ minWidth: `${fixedWidthCh}ch` }}
         >
           <span className="whitespace-pre">{stablePrefix}</span>
@@ -291,27 +304,28 @@ function LiveVoteCounter({ value }: { value: number }) {
             <span
               className="relative inline-flex overflow-hidden whitespace-pre align-middle"
               style={{
-                height: "1.26em",
+                height: "1.28em",
                 minWidth: `${suffixWidthCh}ch`,
                 paddingRight: "0.03em",
               }}
             >
               <span
-                className="absolute left-0 top-0 flex w-full flex-col transition-transform ease-out"
+                className="absolute left-0 top-0 flex w-full flex-col ease-out"
                 style={{
-                  transform: "translateY(-1.26em)",
-                  transitionDuration: "950ms",
+                  transform: translateActive ? "translateY(-1.28em)" : "translateY(0)",
+                  transitionDuration: translateActive ? "1100ms" : "0ms",
+                  transitionProperty: "transform",
                 }}
               >
                 <span
                   className="flex items-center justify-center leading-none"
-                  style={{ height: "1.26em" }}
+                  style={{ height: "1.28em" }}
                 >
                   {previousSuffix}
                 </span>
                 <span
                   className="flex items-center justify-center leading-none"
-                  style={{ height: "1.26em" }}
+                  style={{ height: "1.28em" }}
                 >
                   {nextSuffix}
                 </span>
