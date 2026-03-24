@@ -194,25 +194,20 @@ const getCategoryColours = (category: string) => {
 };
 
 function LiveVoteCounter({ value }: { value: number }) {
-  const formattedValue = value.toLocaleString();
-  const safeFormattedValue = formattedValue.length > 0 ? formattedValue : "0";
-  const prefix = safeFormattedValue.slice(0, -1);
-  const currentLastDigit = safeFormattedValue.slice(-1);
-
-  const [displayedLastDigit, setDisplayedLastDigit] = useState(currentLastDigit);
-  const [previousLastDigit, setPreviousLastDigit] = useState(currentLastDigit);
+  const [displayValue, setDisplayValue] = useState(value);
+  const [previousValue, setPreviousValue] = useState(value);
   const [isAnimating, setIsAnimating] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (currentLastDigit === displayedLastDigit) return;
+    if (value === displayValue) return;
 
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
 
-    setPreviousLastDigit(displayedLastDigit);
-    setDisplayedLastDigit(currentLastDigit);
+    setPreviousValue(displayValue);
+    setDisplayValue(value);
     setIsAnimating(true);
 
     timeoutRef.current = setTimeout(() => {
@@ -224,7 +219,10 @@ function LiveVoteCounter({ value }: { value: number }) {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [currentLastDigit, displayedLastDigit]);
+  }, [value, displayValue]);
+
+  const currentFormatted = displayValue.toLocaleString();
+  const previousFormatted = previousValue.toLocaleString();
 
   return (
     <div className="mt-5 mb-2 text-center">
@@ -232,31 +230,26 @@ function LiveVoteCounter({ value }: { value: number }) {
         Total votes cast
       </p>
 
-      <div className="mt-2 inline-flex items-end rounded-2xl border border-gray-800 bg-gray-900/70 px-5 py-3 shadow-lg">
-        <span className="text-3xl md:text-4xl font-bold text-white leading-none">
-          {prefix}
-        </span>
-
-        <span className="relative ml-0.5 inline-block h-[1em] w-[0.7ch] overflow-hidden align-bottom">
-          <span
-            className="absolute left-0 top-0 flex flex-col transition-transform duration-200 ease-out"
+      <div className="mt-2 inline-flex items-center justify-center rounded-2xl border border-gray-800 bg-gray-900/70 px-5 py-3 shadow-lg overflow-hidden">
+        <div className="relative h-[1em] overflow-hidden">
+          <div
+            className="flex flex-col transition-transform duration-200 ease-out"
             style={{
               transform: isAnimating ? "translateY(-50%)" : "translateY(0%)",
             }}
           >
             <span className="h-[1em] leading-none text-3xl md:text-4xl font-bold text-white">
-              {previousLastDigit}
+              {previousFormatted}
             </span>
             <span className="h-[1em] leading-none text-3xl md:text-4xl font-bold text-white">
-              {displayedLastDigit}
+              {currentFormatted}
             </span>
-          </span>
-        </span>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
-
 export default function Home() {
   const [polls, setPolls] = useState<Poll[]>([]);
   const [featuredOptions, setFeaturedOptions] = useState<PollOption[]>([]);
