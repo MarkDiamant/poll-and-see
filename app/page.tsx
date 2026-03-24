@@ -495,8 +495,15 @@ export default function Home() {
                         key={option.id}
                         className="rounded-2xl"
                         style={{
-                          border: isSelected ? `3px solid ${optionColour}` : "3px solid transparent",
-                          boxShadow: isSelected ? `0 0 0 1px ${optionColour}55, 0 0 18px ${optionColour}22` : "none",
+                          backgroundColor: isLeader ? `${optionColour}1f` : "transparent",
+                          border: isSelected
+                            ? `3px solid ${optionColour}`
+                            : isLeader
+                            ? `1px solid ${optionColour}44`
+                            : "1px solid transparent",
+                          boxShadow: isSelected
+                            ? `0 0 0 1px ${optionColour}33, 0 0 16px ${optionColour}18`
+                            : "none",
                         }}
                       >
                         <div className="px-3 pt-3">
@@ -523,20 +530,16 @@ export default function Home() {
                         </div>
 
                         <div className="px-3 pb-3 pt-2">
-                          <div
-                            className={`rounded-xl p-2 ${isLeader ? "bg-gray-900/55" : ""}`}
-                          >
-                            <div className="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
-                              <div
-                                className="h-4 transition-all"
-                                style={{
-                                  width: `${percent}%`,
-                                  backgroundColor: optionColour,
-                                  opacity: isLeader ? 1 : 0.92,
-                                  boxShadow: isLeader ? `0 0 12px ${optionColour}55` : "none",
-                                }}
-                              />
-                            </div>
+                          <div className="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
+                            <div
+                              className="h-4 transition-all"
+                              style={{
+                                width: `${percent}%`,
+                                backgroundColor: optionColour,
+                                opacity: isLeader ? 1 : 0.92,
+                                boxShadow: isLeader ? `0 0 12px ${optionColour}44` : "none",
+                              }}
+                            />
                           </div>
                         </div>
                       </div>
