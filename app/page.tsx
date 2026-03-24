@@ -210,13 +210,13 @@ function LiveVoteCounter({ value }: { value: number }) {
   const [animationTo, setAnimationTo] = useState(value);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  const settleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stepTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const settleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (isAnimating || displayValue === value) return;
 
-    const stepDelay = Math.abs(value - displayValue) > 10 ? 120 : 260;
+    const stepDelay = Math.abs(value - displayValue) > 10 ? 180 : 320;
 
     stepTimeoutRef.current = setTimeout(() => {
       const direction = value > displayValue ? 1 : -1;
@@ -229,7 +229,7 @@ function LiveVoteCounter({ value }: { value: number }) {
       settleTimeoutRef.current = setTimeout(() => {
         setDisplayValue(nextValue);
         setIsAnimating(false);
-      }, 700);
+      }, 900);
     }, stepDelay);
 
     return () => {
@@ -265,18 +265,25 @@ function LiveVoteCounter({ value }: { value: number }) {
   const previousSuffix = isAnimating ? fromFormatted.slice(commonPrefixLength) : "";
   const nextSuffix = isAnimating ? toFormatted.slice(commonPrefixLength) : "";
 
-  const widthInCh = Math.max(fromFormatted.length, toFormatted.length, settledFormatted.length, value.toLocaleString().length);
+  const fixedWidthCh = Math.max(
+    settledFormatted.length,
+    fromFormatted.length,
+    toFormatted.length,
+    value.toLocaleString().length
+  );
+
+  const suffixWidthCh = Math.max(previousSuffix.length, nextSuffix.length, 1);
 
   return (
     <div className="mt-6 mb-2 text-center">
-      <div className="inline-flex flex-col items-center rounded-2xl border border-blue-500/30 bg-gradient-to-b from-[#0b1730] to-[#09111f] px-6 py-3 shadow-[0_0_30px_rgba(37,99,235,0.16)]">
-        <p className="text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.28em] text-blue-200/95">
+      <div className="inline-flex h-[112px] min-w-[188px] flex-col items-center justify-center rounded-2xl border border-cyan-400/35 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.22),_rgba(8,15,30,0.98)_58%)] px-6 py-3 shadow-[0_0_34px_rgba(59,130,246,0.16)]">
+        <p className="text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-200">
           Total Votes Cast
         </p>
 
         <div
-          className="mt-2 flex items-center justify-center text-4xl md:text-5xl font-bold leading-none text-white tabular-nums"
-          style={{ minWidth: `${widthInCh}ch` }}
+          className="mt-3 flex h-[56px] items-center justify-center overflow-hidden text-4xl md:text-5xl font-bold leading-none text-white tabular-nums"
+          style={{ minWidth: `${fixedWidthCh}ch` }}
         >
           <span className="whitespace-pre">{stablePrefix}</span>
 
@@ -285,13 +292,16 @@ function LiveVoteCounter({ value }: { value: number }) {
               className="relative inline-flex overflow-hidden whitespace-pre align-middle"
               style={{
                 height: "1.24em",
-                minWidth: `${Math.max(previousSuffix.length, nextSuffix.length, 1)}ch`,
-                paddingRight: "0.04em",
+                minWidth: `${suffixWidthCh}ch`,
+                paddingRight: "0.03em",
               }}
             >
               <span
-                className="absolute left-0 top-0 flex w-full flex-col transition-transform duration-700 ease-out"
-                style={{ transform: "translateY(-1.24em)" }}
+                className="absolute left-0 top-0 flex w-full flex-col transition-transform ease-out"
+                style={{
+                  transform: "translateY(-1.24em)",
+                  transitionDuration: "900ms",
+                }}
               >
                 <span
                   className="flex items-center justify-center leading-none"
