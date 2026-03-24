@@ -193,22 +193,35 @@ const getCategoryColours = (category: string) => {
   return FALLBACK_CATEGORY_COLOURS[Math.abs(hash) % FALLBACK_CATEGORY_COLOURS.length];
 };
 
+function getCommonPrefixLength(a: string, b: string) {
+  const max = Math.min(a.length, b.length);
+  let i = 0;
+
+  while (i < max && a[i] === b[i]) {
+    i += 1;
+  }
+
+  return i;
+}
+
 function LiveVoteCounter({ value }: { value: number }) {
   const [displayValue, setDisplayValue] = useState(value);
-  const [previousValue, setPreviousValue] = useState(value);
+  const [animationFrom, setAnimationFrom] = useState(value);
+  const [animationTo, setAnimationTo] = useState(value);
   const [isAnimating, setIsAnimating] = useState(false);
   const animTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (displayValue === value || isAnimating) return;
 
-    const stepDelay = Math.abs(value - displayValue) > 10 ? 70 : 180;
+    const stepDelay = Math.abs(value - displayValue) > 10 ? 90 : 220;
 
     const stepTimeout = setTimeout(() => {
       const direction = value > displayValue ? 1 : -1;
       const nextValue = displayValue + direction;
 
-      setPreviousValue(displayValue);
+      setAnimationFrom(displayValue);
+      setAnimationTo(nextValue);
       setIsAnimating(true);
 
       if (animTimeoutRef.current) {
@@ -218,7 +231,7 @@ function LiveVoteCounter({ value }: { value: number }) {
       animTimeoutRef.current = setTimeout(() => {
         setDisplayValue(nextValue);
         setIsAnimating(false);
-      }, 340);
+      }, 520);
     }, stepDelay);
 
     return () => {
@@ -234,15 +247,22 @@ function LiveVoteCounter({ value }: { value: number }) {
     };
   }, []);
 
-  const previousFormatted = previousValue.toLocaleString();
-  const currentFormatted = displayValue.toLocaleString();
+  const settledFormatted = displayValue.toLocaleString();
+  const fromFormatted = animationFrom.toLocaleString();
+  const toFormatted = animationTo.toLocaleString();
 
-  const previousPrefix = previousFormatted.slice(0, -1);
-  const currentPrefix = currentFormatted.slice(0, -1);
-  const previousLastDigit = previousFormatted.slice(-1) || "0";
-  const currentLastDigit = currentFormatted.slice(-1) || "0";
+  const commonPrefixLength = isAnimating
+    ? getCommonPrefixLength(fromFormatted, toFormatted)
+    : settledFormatted.length;
 
-  const visiblePrefix = isAnimating ? previousPrefix : currentPrefix;
+  const stablePrefix = isAnimating
+    ? fromFormatted.slice(0, commonPrefixLength)
+    : settledFormatted;
+
+  const previousSuffix = isAnimating ? fromFormatted.slice(commonPrefixLength) : "";
+  const nextSuffix = isAnimating ? toFormatted.slice(commonPrefixLength) : "";
+
+  const suffixWidthCh = Math.max(previousSuffix.length, nextSuffix.length, 1);
 
   return (
     <div className="mt-6 mb-2 text-center">
@@ -252,27 +272,36 @@ function LiveVoteCounter({ value }: { value: number }) {
         </p>
 
         <div className="mt-2 flex items-center justify-center text-4xl md:text-5xl font-bold leading-none text-white tabular-nums">
-          <span>{visiblePrefix}</span>
+          <span>{stablePrefix}</span>
 
-          <span className="relative ml-[0.03em] inline-flex h-[1.18em] w-[1ch] overflow-hidden pr-[0.04em]">
-            {isAnimating ? (
+          {isAnimating ? (
+            <span
+              className="relative inline-flex overflow-hidden align-middle"
+              style={{
+                height: "1.28em",
+                minWidth: `${suffixWidthCh}ch`,
+                paddingRight: "0.06em",
+              }}
+            >
               <span
-                className="absolute left-0 top-0 flex w-full flex-col transition-transform duration-300 ease-out"
+                className="absolute left-0 top-0 flex w-full flex-col whitespace-pre text-center transition-transform duration-500 ease-out"
                 style={{ transform: "translateY(-50%)" }}
               >
-                <span className="flex h-[1.18em] items-center justify-center leading-none">
-                  {previousLastDigit}
+                <span
+                  className="flex items-center justify-center leading-none"
+                  style={{ height: "1.28em" }}
+                >
+                  {previousSuffix}
                 </span>
-                <span className="flex h-[1.18em] items-center justify-center leading-none">
-                  {displayValue < value ? String((Number(previousLastDigit) + 1) % 10) : String((Number(previousLastDigit) + 9) % 10)}
+                <span
+                  className="flex items-center justify-center leading-none"
+                  style={{ height: "1.28em" }}
+                >
+                  {nextSuffix}
                 </span>
               </span>
-            ) : (
-              <span className="flex h-[1.18em] w-full items-center justify-center leading-none">
-                {currentLastDigit}
-              </span>
-            )}
-          </span>
+            </span>
+          ) : null}
         </div>
       </div>
     </div>
