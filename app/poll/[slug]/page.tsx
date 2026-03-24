@@ -499,20 +499,10 @@ export default function PollPage() {
                 return (
                   <div
                     key={option.id}
-                    className={`rounded-2xl transition ${
-                      isSelected || isLeader ? "bg-gray-900/55" : "bg-transparent"
-                    }`}
+                    className="rounded-2xl"
                     style={{
-                      border: isSelected
-                        ? `3px solid ${optionColour}`
-                        : isLeader
-                        ? `2px solid ${optionColour}88`
-                        : "2px solid transparent",
-                      boxShadow: isSelected
-                        ? `0 0 0 1px ${optionColour}55, 0 0 18px ${optionColour}22`
-                        : isLeader
-                        ? `0 0 0 1px ${optionColour}22`
-                        : "none",
+                      border: isSelected ? `3px solid ${optionColour}` : "3px solid transparent",
+                      boxShadow: isSelected ? `0 0 0 1px ${optionColour}55, 0 0 18px ${optionColour}22` : "none",
                     }}
                   >
                     <div className="px-3 pt-3">
@@ -532,26 +522,27 @@ export default function PollPage() {
                       </div>
 
                       <div className="mt-2 flex justify-end">
-                        <span
-                          className="shrink-0 text-right text-sm font-semibold"
-                          style={{ color: isSelected || isLeader ? optionColour : "#d1d5db" }}
-                        >
+                        <span className="shrink-0 text-right text-sm font-semibold text-gray-300">
                           {percent}%
                         </span>
                       </div>
                     </div>
 
                     <div className="px-3 pb-3 pt-2">
-                      <div className="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
-                        <div
-                          className="h-4 transition-all"
-                          style={{
-                            width: `${percent}%`,
-                            backgroundColor: optionColour,
-                            opacity: isLeader ? 1 : 0.92,
-                            boxShadow: isLeader ? `0 0 12px ${optionColour}55` : "none",
-                          }}
-                        />
+                      <div
+                        className={`rounded-xl p-2 ${isLeader ? "bg-gray-900/55" : ""}`}
+                      >
+                        <div className="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
+                          <div
+                            className="h-4 transition-all"
+                            style={{
+                              width: `${percent}%`,
+                              backgroundColor: optionColour,
+                              opacity: isLeader ? 1 : 0.92,
+                              boxShadow: isLeader ? `0 0 12px ${optionColour}55` : "none",
+                            }}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>

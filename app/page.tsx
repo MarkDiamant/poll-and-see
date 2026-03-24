@@ -194,6 +194,7 @@ export default function Home() {
   const [featuredVoteCounts, setFeaturedVoteCounts] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(true);
   const [featuredPollVoted, setFeaturedPollVoted] = useState(false);
+  const [featuredSelectedOptionId, setFeaturedSelectedOptionId] = useState<number | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   const loadHomeData = useCallback(async () => {
@@ -235,12 +236,22 @@ export default function Home() {
       setFeaturedOptions([]);
       setFeaturedVoteCounts({});
       setFeaturedPollVoted(false);
+      setFeaturedSelectedOptionId(null);
       setLoading(false);
       return;
     }
 
     const savedVote = localStorage.getItem(`poll-voted-${chosenFeaturedPoll.id}`);
+    const savedSelectedOption = localStorage.getItem(`poll-selected-option-${chosenFeaturedPoll.id}`);
+
     setFeaturedPollVoted(savedVote === "true");
+
+    if (savedSelectedOption) {
+      const parsedOptionId = parseInt(savedSelectedOption, 10);
+      setFeaturedSelectedOptionId(Number.isNaN(parsedOptionId) ? null : parsedOptionId);
+    } else {
+      setFeaturedSelectedOptionId(null);
+    }
 
     const { data: optionsData } = await supabase
       .from("poll_options")
@@ -368,6 +379,11 @@ export default function Home() {
     0
   );
 
+  const highestFeaturedVoteCount = Math.max(
+    ...featuredOptions.map((option) => featuredVoteCounts[option.id] || 0),
+    0
+  );
+
   const categories = useMemo(() => {
     const uniqueCategories = Array.from(
       new Set(
@@ -469,21 +485,59 @@ export default function Home() {
                       totalFeaturedVotes > 0
                         ? Math.round((count / totalFeaturedVotes) * 100)
                         : 0;
+                    const isSelected =
+                      featuredPollVoted && featuredSelectedOptionId === option.id;
+                    const isLeader = count > 0 && count === highestFeaturedVoteCount;
+                    const optionColour = getOptionColour(index);
 
                     return (
-                      <div key={option.id}>
-                        <div className="flex justify-between mb-1 text-sm">
-                          <span>{option.option_text}</span>
-                          <span>{percent}%</span>
+                      <div
+                        key={option.id}
+                        className="rounded-2xl"
+                        style={{
+                          border: isSelected ? `3px solid ${optionColour}` : "3px solid transparent",
+                          boxShadow: isSelected ? `0 0 0 1px ${optionColour}55, 0 0 18px ${optionColour}22` : "none",
+                        }}
+                      >
+                        <div className="px-3 pt-3">
+                          <div className="flex items-start gap-2">
+                            {isSelected ? (
+                              <span
+                                className="mt-0.5 shrink-0 text-base font-bold"
+                                style={{ color: optionColour }}
+                              >
+                                ✓
+                              </span>
+                            ) : null}
+
+                            <span className="flex-1 min-w-0 leading-6 break-words text-white">
+                              {option.option_text}
+                            </span>
+                          </div>
+
+                          <div className="mt-2 flex justify-end">
+                            <span className="shrink-0 text-right text-sm font-semibold text-gray-300">
+                              {percent}%
+                            </span>
+                          </div>
                         </div>
-                        <div className="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
+
+                        <div className="px-3 pb-3 pt-2">
                           <div
-                            className="h-4"
-                            style={{
-                              width: `${percent}%`,
-                              backgroundColor: getOptionColour(index),
-                            }}
-                          />
+                            className={`rounded-xl p-2 ${isLeader ? "bg-gray-900/55" : ""}`}
+                          >
+                            <div className="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
+                              <div
+                                className="h-4 transition-all"
+                                style={{
+                                  width: `${percent}%`,
+                                  backgroundColor: optionColour,
+                                  opacity: isLeader ? 1 : 0.92,
+                                  boxShadow: isLeader ? `0 0 12px ${optionColour}55` : "none",
+                                }}
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
                     );
