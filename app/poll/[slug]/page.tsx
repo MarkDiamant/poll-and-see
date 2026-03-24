@@ -411,7 +411,6 @@ export default function PollPage() {
 
   const totalVotes = Object.values(voteCounts).reduce((sum, count) => sum + count, 0);
   const categoryColours = getCategoryColours(poll.category);
-  const highestVoteCount = Math.max(...options.map((option) => voteCounts[option.id] || 0), 0);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
@@ -493,7 +492,6 @@ export default function PollPage() {
                 const count = voteCounts[option.id] || 0;
                 const percent = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
                 const isSelected = selectedOptionId === option.id;
-                const isLeader = count > 0 && count === highestVoteCount;
                 const optionColour = getOptionColour(index);
 
                 return (
@@ -501,12 +499,7 @@ export default function PollPage() {
                     key={option.id}
                     className="rounded-2xl"
                     style={{
-                      backgroundColor: isLeader ? `${optionColour}1f` : "transparent",
-                      border: isSelected
-                        ? `3px solid ${optionColour}`
-                        : isLeader
-                        ? `1px solid ${optionColour}44`
-                        : "1px solid transparent",
+                      border: isSelected ? `3px solid ${optionColour}` : "3px solid transparent",
                       boxShadow: isSelected
                         ? `0 0 0 1px ${optionColour}33, 0 0 16px ${optionColour}18`
                         : "none",
@@ -542,8 +535,7 @@ export default function PollPage() {
                           style={{
                             width: `${percent}%`,
                             backgroundColor: optionColour,
-                            opacity: isLeader ? 1 : 0.92,
-                            boxShadow: isLeader ? `0 0 12px ${optionColour}44` : "none",
+                            opacity: 0.96,
                           }}
                         />
                       </div>

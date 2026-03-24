@@ -379,11 +379,6 @@ export default function Home() {
     0
   );
 
-  const highestFeaturedVoteCount = Math.max(
-    ...featuredOptions.map((option) => featuredVoteCounts[option.id] || 0),
-    0
-  );
-
   const categories = useMemo(() => {
     const uniqueCategories = Array.from(
       new Set(
@@ -487,7 +482,6 @@ export default function Home() {
                         : 0;
                     const isSelected =
                       featuredPollVoted && featuredSelectedOptionId === option.id;
-                    const isLeader = count > 0 && count === highestFeaturedVoteCount;
                     const optionColour = getOptionColour(index);
 
                     return (
@@ -495,12 +489,7 @@ export default function Home() {
                         key={option.id}
                         className="rounded-2xl"
                         style={{
-                          backgroundColor: isLeader ? `${optionColour}1f` : "transparent",
-                          border: isSelected
-                            ? `3px solid ${optionColour}`
-                            : isLeader
-                            ? `1px solid ${optionColour}44`
-                            : "1px solid transparent",
+                          border: isSelected ? `3px solid ${optionColour}` : "3px solid transparent",
                           boxShadow: isSelected
                             ? `0 0 0 1px ${optionColour}33, 0 0 16px ${optionColour}18`
                             : "none",
@@ -536,8 +525,7 @@ export default function Home() {
                               style={{
                                 width: `${percent}%`,
                                 backgroundColor: optionColour,
-                                opacity: isLeader ? 1 : 0.92,
-                                boxShadow: isLeader ? `0 0 12px ${optionColour}44` : "none",
+                                opacity: 0.96,
                               }}
                             />
                           </div>
