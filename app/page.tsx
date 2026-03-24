@@ -216,7 +216,7 @@ function LiveVoteCounter({ value }: { value: number }) {
   useEffect(() => {
     if (isAnimating || displayValue === value) return;
 
-    const stepDelay = Math.abs(value - displayValue) > 10 ? 180 : 320;
+    const stepDelay = Math.abs(value - displayValue) > 10 ? 180 : 340;
 
     stepTimeoutRef.current = setTimeout(() => {
       const direction = value > displayValue ? 1 : -1;
@@ -229,7 +229,7 @@ function LiveVoteCounter({ value }: { value: number }) {
       settleTimeoutRef.current = setTimeout(() => {
         setDisplayValue(nextValue);
         setIsAnimating(false);
-      }, 900);
+      }, 950);
     }, stepDelay);
 
     return () => {
@@ -276,13 +276,13 @@ function LiveVoteCounter({ value }: { value: number }) {
 
   return (
     <div className="mt-6 mb-2 text-center">
-      <div className="inline-flex h-[112px] min-w-[188px] flex-col items-center justify-center rounded-2xl border border-cyan-400/35 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.22),_rgba(8,15,30,0.98)_58%)] px-6 py-3 shadow-[0_0_34px_rgba(59,130,246,0.16)]">
+      <div className="inline-flex h-[116px] min-w-[210px] flex-col items-center justify-center rounded-2xl border border-cyan-400/45 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.18),_rgba(8,15,30,0.98)_56%)] px-6 py-3 shadow-[0_0_38px_rgba(34,211,238,0.16)]">
         <p className="text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-200">
           Total Votes Cast
         </p>
 
         <div
-          className="mt-3 flex h-[56px] items-center justify-center overflow-hidden text-4xl md:text-5xl font-bold leading-none text-white tabular-nums"
+          className="mt-3 flex h-[60px] items-center justify-center overflow-hidden text-4xl md:text-5xl font-bold leading-none text-white tabular-nums"
           style={{ minWidth: `${fixedWidthCh}ch` }}
         >
           <span className="whitespace-pre">{stablePrefix}</span>
@@ -291,7 +291,7 @@ function LiveVoteCounter({ value }: { value: number }) {
             <span
               className="relative inline-flex overflow-hidden whitespace-pre align-middle"
               style={{
-                height: "1.24em",
+                height: "1.26em",
                 minWidth: `${suffixWidthCh}ch`,
                 paddingRight: "0.03em",
               }}
@@ -299,19 +299,19 @@ function LiveVoteCounter({ value }: { value: number }) {
               <span
                 className="absolute left-0 top-0 flex w-full flex-col transition-transform ease-out"
                 style={{
-                  transform: "translateY(-1.24em)",
-                  transitionDuration: "900ms",
+                  transform: "translateY(-1.26em)",
+                  transitionDuration: "950ms",
                 }}
               >
                 <span
                   className="flex items-center justify-center leading-none"
-                  style={{ height: "1.24em" }}
+                  style={{ height: "1.26em" }}
                 >
                   {previousSuffix}
                 </span>
                 <span
                   className="flex items-center justify-center leading-none"
-                  style={{ height: "1.24em" }}
+                  style={{ height: "1.26em" }}
                 >
                   {nextSuffix}
                 </span>
