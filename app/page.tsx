@@ -24,6 +24,15 @@ type VoteInsertPayload = {
   option_id?: number;
 };
 
+type VoteCounts = Record<number, number>;
+
+type PollBundle = {
+  poll: Poll;
+  options: PollOption[];
+  voteCounts: VoteCounts;
+};
+
+const POLL_BUNDLE_CACHE_PREFIX = "poll-bundle-cache:";
 const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899"];
 
 const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: string; solid: string }> = {
@@ -202,6 +211,16 @@ function getCommonPrefixLength(a: string, b: string) {
   }
 
   return i;
+}
+
+function setCachedPollBundle(bundle: PollBundle) {
+  if (typeof window === "undefined") return;
+
+  try {
+    sessionStorage.setItem(`${POLL_BUNDLE_CACHE_PREFIX}${bundle.poll.slug}`, JSON.stringify(bundle));
+  } catch {
+    // ignore cache failures
+  }
 }
 
 function LiveVoteCounter({ value }: { value: number }) {
@@ -630,6 +649,68 @@ export default function Home() {
   }, [filteredPolls, featuredPoll]);
 
   const activePollCount = filteredPolls.length;
+
+  useEffect(() => {
+    if (loading) return;
+
+    const pollsToCache = [featuredPoll, ...livePolls.slice(0, 12)].filter(
+      (poll): poll is Poll => Boolean(poll)
+    );
+
+    const cachePollBundles = async () => {
+      await Promise.all(
+        pollsToCache.map(async (poll) => {
+          try {
+            const [{ data: optionsData }, { data: votesData }] = await Promise.all([
+              supabase
+                .from("poll_options")
+                .select("*")
+                .eq("poll_id", poll.id)
+                .order("id", { ascending: true }),
+              supabase
+                .from("votes")
+                .select("option_id")
+                .eq("poll_id", poll.id),
+            ]);
+
+            const counts: VoteCounts = {};
+            (votesData || []).forEach((vote: { option_id: number }) => {
+              counts[vote.option_id] = (counts[vote.option_id] || 0) + 1;
+            });
+
+            setCachedPollBundle({
+              poll,
+              options: (optionsData || []) as PollOption[],
+              voteCounts: counts,
+            });
+          } catch {
+            // ignore cache failures
+          }
+        })
+      );
+    };
+
+    const idleId =
+      "requestIdleCallback" in window
+        ? (window as Window & typeof globalThis & {
+            requestIdleCallback: (callback: IdleRequestCallback) => number;
+          }).requestIdleCallback(() => {
+            void cachePollBundles();
+          })
+        : window.setTimeout(() => {
+            void cachePollBundles();
+          }, 0);
+
+    return () => {
+      if ("cancelIdleCallback" in window) {
+        (window as Window & typeof globalThis & {
+          cancelIdleCallback: (handle: number) => void;
+        }).cancelIdleCallback(idleId as number);
+      } else {
+        clearTimeout(idleId as number);
+      }
+    };
+  }, [loading, featuredPoll, livePolls]);
 
   if (loading) {
     return (

@@ -29,6 +29,7 @@ type PollBundle = {
 
 const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899"];
 const GLOBAL_COOLDOWN_MS = 4000;
+const POLL_BUNDLE_CACHE_PREFIX = "poll-bundle-cache:";
 
 const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: string; solid: string }> = {
   All: { text: "#e5e7eb", bg: "rgba(31, 41, 55, 0.9)", border: "rgba(75, 85, 99, 1)", solid: "#374151" },
@@ -114,6 +115,28 @@ function markPollVotedLocally(pollId: number, optionId: number | null) {
   if (optionId !== null) {
     localStorage.setItem(getPollSelectedNewKey(pollId), String(optionId));
     localStorage.setItem(getPollSelectedOldKey(pollId), String(optionId));
+  }
+}
+
+function getCachedPollBundle(slug: string): PollBundle | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = sessionStorage.getItem(`${POLL_BUNDLE_CACHE_PREFIX}${slug}`);
+    if (!raw) return null;
+    return JSON.parse(raw) as PollBundle;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedPollBundle(bundle: PollBundle) {
+  if (typeof window === "undefined") return;
+
+  try {
+    sessionStorage.setItem(`${POLL_BUNDLE_CACHE_PREFIX}${bundle.poll.slug}`, JSON.stringify(bundle));
+  } catch {
+    // ignore cache failures
   }
 }
 
@@ -367,9 +390,14 @@ export default function PollPage() {
   const slug = String(params.slug);
 
   const [polls, setPolls] = useState<PollBundle[]>([]);
-  const [nextBundle, setNextBundle] = useState<PollBundle | null>(null);
   const pollRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const previousPollCountRef = useRef(0);
+  const preloadedQueueRef = useRef<PollBundle[]>([]);
+  const pollsRef = useRef<PollBundle[]>([]);
+
+  useEffect(() => {
+    pollsRef.current = polls;
+  }, [polls]);
 
   const loadBundle = async (pollId: number): Promise<PollBundle> => {
     const { data: pollData } = await supabase.from("polls").select("*").eq("id", pollId).single();
@@ -390,38 +418,44 @@ export default function PollPage() {
       counts[vote.option_id] = (counts[vote.option_id] || 0) + 1;
     });
 
-    return {
+    const bundle = {
       poll: pollData as Poll,
       options: (optionsData || []) as PollOption[],
       voteCounts: counts,
     };
+
+    setCachedPollBundle(bundle);
+    return bundle;
   };
 
-  const findNextBundle = async (excludeIds: number[], preferredCategory: string): Promise<PollBundle | null> => {
+  const preloadQueue = async (excludeIds: number[], preferredCategory: string) => {
     const { data } = await supabase.from("polls").select("*").order("id", { ascending: false });
 
     const pollList = (data || []) as Poll[];
-    const unseen = pollList.filter(
-      (poll) => !excludeIds.includes(poll.id) && !hasLocalVote(poll.id)
-    );
+    const unseen = pollList.filter((poll) => !excludeIds.includes(poll.id) && !hasLocalVote(poll.id));
 
-    const sameCategory = unseen.find((poll) => poll.category === preferredCategory);
-    const nextPoll = sameCategory || unseen[0];
+    const sameCategory = unseen.filter((poll) => poll.category === preferredCategory);
+    const otherCategories = unseen.filter((poll) => poll.category !== preferredCategory);
+    const ordered = [...sameCategory, ...otherCategories];
 
-    if (!nextPoll) return null;
-    return loadBundle(nextPoll.id);
+    const bundles = await Promise.all(ordered.map((poll) => loadBundle(poll.id)));
+    preloadedQueueRef.current = bundles;
   };
 
   useEffect(() => {
     const init = async () => {
+      const cached = getCachedPollBundle(slug);
+      if (cached) {
+        setPolls([cached]);
+      }
+
       const { data } = await supabase.from("polls").select("*").eq("slug", slug).single();
       if (!data) return;
 
       const firstBundle = await loadBundle(data.id);
       setPolls([firstBundle]);
 
-      const preloaded = await findNextBundle([firstBundle.poll.id], firstBundle.poll.category);
-      setNextBundle(preloaded);
+      void preloadQueue([firstBundle.poll.id], firstBundle.poll.category);
     };
 
     void init();
@@ -441,36 +475,37 @@ export default function PollPage() {
   }, [polls]);
 
   const handleVoteComplete = async (pollId: number, category: string) => {
-    if (nextBundle) {
-      const appendedBundle = nextBundle;
+    const currentShownIds = pollsRef.current.map((item) => item.poll.id);
+
+    while (preloadedQueueRef.current.length > 0) {
+      const next = preloadedQueueRef.current.shift();
+      if (!next) break;
+      if (currentShownIds.includes(next.poll.id)) continue;
+      if (hasLocalVote(next.poll.id)) continue;
 
       setPolls((current) => {
-        if (current.some((item) => item.poll.id === appendedBundle.poll.id)) return current;
-        return [...current, appendedBundle];
+        if (current.some((item) => item.poll.id === next.poll.id)) return current;
+        return [...current, next];
       });
 
-      setNextBundle(null);
-
-      const currentIds = polls.map((item) => item.poll.id);
-      const updatedIds = [...currentIds, appendedBundle.poll.id];
-      const upcoming = await findNextBundle(updatedIds, category);
-      setNextBundle(upcoming);
       return;
     }
 
-    const currentIds = [...polls.map((item) => item.poll.id), pollId];
-    const fallbackNext = await findNextBundle(currentIds, category);
+    await preloadQueue([...currentShownIds, pollId], category);
 
-    if (!fallbackNext) return;
+    while (preloadedQueueRef.current.length > 0) {
+      const next = preloadedQueueRef.current.shift();
+      if (!next) break;
+      if (currentShownIds.includes(next.poll.id)) continue;
+      if (hasLocalVote(next.poll.id)) continue;
 
-    setPolls((current) => {
-      if (current.some((item) => item.poll.id === fallbackNext.poll.id)) return current;
-      return [...current, fallbackNext];
-    });
+      setPolls((current) => {
+        if (current.some((item) => item.poll.id === next.poll.id)) return current;
+        return [...current, next];
+      });
 
-    const updatedIds = [...currentIds, fallbackNext.poll.id];
-    const upcoming = await findNextBundle(updatedIds, category);
-    setNextBundle(upcoming);
+      return;
+    }
   };
 
   return (
