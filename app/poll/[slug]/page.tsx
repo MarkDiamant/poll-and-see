@@ -445,24 +445,86 @@ function ResultOptions({
   );
 }
 
+function PollActions({
+  category,
+  onShare,
+  shareText,
+  onBack,
+}: {
+  category: string;
+  onShare: () => void;
+  shareText: string;
+  onBack: () => void;
+}) {
+  const categoryColours = getCategoryColours(category);
+
+  return (
+    <div className="mt-8 border-t border-gray-700 pt-6">
+      <div className="flex flex-wrap gap-3">
+        <button
+          onClick={onShare}
+          className="bg-white text-black px-4 py-2 rounded-xl font-medium hover:bg-gray-200 transition"
+        >
+          {shareText}
+        </button>
+
+        <Link
+          href={`/?category=${encodeURIComponent(category)}#live-polls`}
+          className="inline-flex items-center rounded-xl border px-4 py-2 font-medium text-white transition hover:bg-gray-800"
+          style={{
+            borderColor: categoryColours.border,
+            backgroundColor: categoryColours.bg,
+            color: categoryColours.text,
+          }}
+        >
+          See other {category} polls
+        </Link>
+
+        <button
+          onClick={onBack}
+          className="inline-flex items-center rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 font-medium text-white transition hover:bg-gray-800"
+        >
+          Back to all polls
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function InlineNextPoll({
   bundle,
+  remainingPollIds,
+  onVoteSuccess,
+  onBack,
 }: {
   bundle: PollBundle;
+  remainingPollIds: number[];
+  onVoteSuccess: (pollId: number, category: string) => Promise<void>;
+  onBack: () => void;
 }) {
   const [voteCounts, setVoteCounts] = useState<VoteCounts>(bundle.voteCounts);
   const [voted, setVoted] = useState(false);
   const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [errorText, setErrorText] = useState("");
+  const [shareText, setShareText] = useState("Share poll");
+  const [nextPollBundle, setNextPollBundle] = useState<PollBundle | null>(null);
+  const [loadingNextPoll, setLoadingNextPoll] = useState(false);
+  const [seenPollIds, setSeenPollIds] = useState<number[]>([]);
 
   const totalVotes = Object.values(voteCounts).reduce((sum, count) => sum + count, 0);
-  const categoryColours = getCategoryColours(bundle.poll.category);
 
   useEffect(() => {
     const savedVote = localStorage.getItem(`poll-voted-${bundle.poll.id}`);
     const savedSelectedOption = localStorage.getItem(`poll-selected-option-${bundle.poll.id}`);
 
+    setVoteCounts(bundle.voteCounts);
+    setSeenPollIds([bundle.poll.id]);
+    setNextPollBundle(null);
+    setLoadingNextPoll(false);
+    setErrorText("");
+    setShareText("Share poll");
+    setSubmitting(false);
     setVoted(savedVote === "true");
 
     if (savedSelectedOption) {
@@ -471,11 +533,103 @@ function InlineNextPoll({
     } else {
       setSelectedOptionId(null);
     }
-  }, [bundle.poll.id]);
+  }, [bundle]);
+
+  const loadNextPoll = useCallback(
+    async (currentPollId: number, currentCategory: string, excludeIds: number[]) => {
+      setLoadingNextPoll(true);
+
+      const availablePollIds = remainingPollIds.filter((id) => !excludeIds.includes(id));
+
+      if (availablePollIds.length === 0) {
+        setNextPollBundle(null);
+        setLoadingNextPoll(false);
+        return;
+      }
+
+      const { data: pollsData } = await supabase
+        .from("polls")
+        .select("id, question, description, category, slug")
+        .in("id", availablePollIds)
+        .order("id", { ascending: false });
+
+      const allPolls = ((pollsData || []) as Poll[]).filter(
+        (candidate) =>
+          candidate.id !== currentPollId &&
+          !excludeIds.includes(candidate.id) &&
+          localStorage.getItem(`poll-voted-${candidate.id}`) !== "true"
+      );
+
+      const sameCategory = allPolls.filter((candidate) => candidate.category === currentCategory);
+      const otherCategories = allPolls.filter((candidate) => candidate.category !== currentCategory);
+
+      const chosenPoll = sameCategory[0] || otherCategories[0] || null;
+
+      if (!chosenPoll) {
+        setNextPollBundle(null);
+        setLoadingNextPoll(false);
+        return;
+      }
+
+      const [{ data: optionsData }, { data: votesData }] = await Promise.all([
+        supabase
+          .from("poll_options")
+          .select("*")
+          .eq("poll_id", chosenPoll.id)
+          .order("id", { ascending: true }),
+        supabase
+          .from("votes")
+          .select("option_id")
+          .eq("poll_id", chosenPoll.id),
+      ]);
+
+      const counts: VoteCounts = {};
+      (votesData || []).forEach((vote) => {
+        counts[vote.option_id] = (counts[vote.option_id] || 0) + 1;
+      });
+
+      setNextPollBundle({
+        poll: chosenPoll,
+        options: (optionsData || []) as PollOption[],
+        voteCounts: counts,
+      });
+
+      setLoadingNextPoll(false);
+    },
+    [remainingPollIds]
+  );
 
   useEffect(() => {
-    setVoteCounts(bundle.voteCounts);
-  }, [bundle.voteCounts]);
+    if (!voted) return;
+    loadNextPoll(bundle.poll.id, bundle.poll.category, seenPollIds);
+  }, [voted, bundle.poll.id, bundle.poll.category, seenPollIds, loadNextPoll]);
+
+  const handleShare = async () => {
+    const url = `${window.location.origin}/poll/${bundle.poll.slug}`;
+    const text = `Vote on this poll: ${bundle.poll.question}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Poll & See",
+          text,
+          url,
+        });
+        return;
+      } catch {
+        // fall through to clipboard fallback
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareText("Link copied");
+      setTimeout(() => setShareText("Share poll"), 2000);
+    } catch {
+      setShareText("Could not copy");
+      setTimeout(() => setShareText("Share poll"), 2000);
+    }
+  };
 
   const handleVote = async (optionId: number) => {
     if (voted || submitting) return;
@@ -486,23 +640,30 @@ function InlineNextPoll({
       return;
     }
 
+    const previousVoteCounts = { ...voteCounts };
+    const previousSelectedOptionId = selectedOptionId;
+    const previousVoted = voted;
+
     setSubmitting(true);
     setErrorText("");
+    setVoteCounts((prev) => ({
+      ...prev,
+      [optionId]: (prev[optionId] || 0) + 1,
+    }));
+    setSelectedOptionId(optionId);
+    setVoted(true);
 
     try {
       await submitVote(bundle.poll.id, optionId);
 
-      setVoteCounts((prev) => ({
-        ...prev,
-        [optionId]: (prev[optionId] || 0) + 1,
-      }));
-
       recordClientVote();
       localStorage.setItem(`poll-voted-${bundle.poll.id}`, "true");
       localStorage.setItem(`poll-selected-option-${bundle.poll.id}`, String(optionId));
-      setSelectedOptionId(optionId);
-      setVoted(true);
+      await onVoteSuccess(bundle.poll.id, bundle.poll.category);
     } catch (error) {
+      setVoteCounts(previousVoteCounts);
+      setSelectedOptionId(previousSelectedOptionId);
+      setVoted(previousVoted);
       setErrorText(error instanceof Error ? error.message : "Could not submit vote.");
     } finally {
       setSubmitting(false);
@@ -510,79 +671,95 @@ function InlineNextPoll({
   };
 
   return (
-    <div className="bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
-      <div className="flex items-center justify-between mb-4">
-        <span
-          className="text-xs px-3 py-1 rounded-full"
-          style={{
-            color: categoryColours.text,
-            backgroundColor: categoryColours.bg,
-            border: `1px solid ${categoryColours.border}`,
-          }}
-        >
-          {bundle.poll.category}
-        </span>
-
-        <span className="text-sm text-gray-400">{totalVotes} votes</span>
-      </div>
-
-      <h2 className="text-2xl font-bold mb-4">{bundle.poll.question}</h2>
-      <p className="text-gray-300 mb-8">{bundle.poll.description}</p>
-
-      {!voted ? (
-        <>
-          <div className="flex flex-col gap-4">
-            {bundle.options.map((option) => (
-              <button
-                key={option.id}
-                onClick={() => handleVote(option.id)}
-                disabled={submitting}
-                className="py-3 rounded-xl font-medium text-white transition bg-gray-700 hover:bg-gray-600 disabled:opacity-70"
-              >
-                {submitting ? "Submitting..." : option.option_text}
-              </button>
-            ))}
-          </div>
-
-          <p className="mt-4 text-sm text-gray-400">Vote to see results</p>
-
-          {errorText ? (
-            <p className="mt-3 text-sm text-red-300">{errorText}</p>
-          ) : null}
-        </>
-      ) : (
-        <>
-          <ResultOptions
-            options={bundle.options}
-            voteCounts={voteCounts}
-            selectedOptionId={selectedOptionId}
-          />
-          <p className="text-sm text-gray-400 pt-4">You’ve voted.</p>
-        </>
-      )}
-
-      <div className="mt-8 border-t border-gray-700 pt-6">
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href={`/poll/${bundle.poll.slug}`}
-            className="inline-flex items-center rounded-xl bg-white px-4 py-2 font-medium text-black transition hover:bg-gray-200"
-          >
-            Open full poll
-          </Link>
-
-          <Link
-            href={`/?category=${encodeURIComponent(bundle.poll.category)}#live-polls`}
-            className="inline-flex items-center rounded-xl border px-4 py-2 font-medium text-white transition hover:bg-gray-800"
+    <div className="space-y-8">
+      <div className="bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
+        <div className="flex items-center justify-between mb-4">
+          <span
+            className="text-xs px-3 py-1 rounded-full"
             style={{
-              borderColor: categoryColours.border,
-              backgroundColor: categoryColours.bg,
-              color: categoryColours.text,
+              color: getCategoryColours(bundle.poll.category).text,
+              backgroundColor: getCategoryColours(bundle.poll.category).bg,
+              border: `1px solid ${getCategoryColours(bundle.poll.category).border}`,
             }}
           >
-            See other {bundle.poll.category} polls
-          </Link>
+            {bundle.poll.category}
+          </span>
+
+          <span className="text-sm text-gray-400">{totalVotes} votes</span>
         </div>
+
+        <h2 className="text-2xl font-bold mb-4">{bundle.poll.question}</h2>
+        <p className="text-gray-300 mb-8">{bundle.poll.description}</p>
+
+        {!voted ? (
+          <>
+            <div className="flex flex-col gap-4">
+              {bundle.options.map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => handleVote(option.id)}
+                  disabled={submitting}
+                  className="py-3 rounded-xl font-medium text-white transition bg-gray-700 hover:bg-gray-600 disabled:opacity-70"
+                >
+                  {option.option_text}
+                </button>
+              ))}
+            </div>
+
+            <p className="mt-4 text-sm text-gray-400">Vote to see results</p>
+
+            {errorText ? (
+              <p className="mt-3 text-sm text-red-300">{errorText}</p>
+            ) : null}
+          </>
+        ) : (
+          <>
+            <ResultOptions
+              options={bundle.options}
+              voteCounts={voteCounts}
+              selectedOptionId={selectedOptionId}
+            />
+            <p className="text-sm text-gray-400 pt-4">You’ve voted.</p>
+
+            <PollActions
+              category={bundle.poll.category}
+              onShare={handleShare}
+              shareText={shareText}
+              onBack={onBack}
+            />
+          </>
+        )}
       </div>
+
+      {voted ? (
+        <div>
+          {loadingNextPoll ? (
+            <div className="bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
+              <p className="text-gray-300">Loading another poll...</p>
+            </div>
+          ) : nextPollBundle ? (
+            <>
+              <h2 className="text-xl font-semibold mb-4">
+                {nextPollBundle.poll.category === bundle.poll.category
+                  ? `Another ${bundle.poll.category} poll`
+                  : "Another poll"}
+              </h2>
+
+              <InlineNextPoll
+                bundle={nextPollBundle}
+                remainingPollIds={remainingPollIds.filter((id) => id !== nextPollBundle.poll.id)}
+                onVoteSuccess={async (pollId, category) => {
+                  await onVoteSuccess(pollId, category);
+                  setSeenPollIds((prev) =>
+                    prev.includes(nextPollBundle.poll.id) ? prev : [...prev, nextPollBundle.poll.id]
+                  );
+                }}
+                onBack={onBack}
+              />
+            </>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -603,6 +780,39 @@ export default function PollPage() {
   const [errorText, setErrorText] = useState("");
   const [nextPollBundle, setNextPollBundle] = useState<PollBundle | null>(null);
   const [loadingNextPoll, setLoadingNextPoll] = useState(false);
+  const [remainingPollIds, setRemainingPollIds] = useState<number[]>([]);
+
+  const handleBack = useCallback(() => {
+    sessionStorage.setItem("restoreHomeScroll", "true");
+    router.push("/");
+  }, [router]);
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    const text = poll ? `Vote on this poll: ${poll.question}` : "Vote on this poll";
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Poll & See",
+          text,
+          url,
+        });
+        return;
+      } catch {
+        // fall through to clipboard fallback
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareText("Link copied");
+      setTimeout(() => setShareText("Share poll"), 2000);
+    } catch {
+      setShareText("Could not copy");
+      setTimeout(() => setShareText("Share poll"), 2000);
+    }
+  };
 
   const loadNextPoll = useCallback(async (currentPollId: number, currentCategory: string) => {
     setLoadingNextPoll(true);
@@ -615,18 +825,16 @@ export default function PollPage() {
 
     const allPolls = (pollsData || []) as Poll[];
 
-    const sameCategory = allPolls.filter((candidate) => candidate.category === currentCategory);
-    const otherCategories = allPolls.filter((candidate) => candidate.category !== currentCategory);
+    const unseenPolls = allPolls.filter(
+      (candidate) => localStorage.getItem(`poll-voted-${candidate.id}`) !== "true"
+    );
 
-    const pickUnvoted = (items: Poll[]) =>
-      items.find((candidate) => localStorage.getItem(`poll-voted-${candidate.id}`) !== "true");
+    const sameCategory = unseenPolls.filter((candidate) => candidate.category === currentCategory);
+    const otherCategories = unseenPolls.filter((candidate) => candidate.category !== currentCategory);
 
-    const chosenPoll =
-      pickUnvoted(sameCategory) ||
-      pickUnvoted(otherCategories) ||
-      sameCategory[0] ||
-      otherCategories[0] ||
-      null;
+    const chosenPoll = sameCategory[0] || otherCategories[0] || null;
+
+    setRemainingPollIds(unseenPolls.map((candidate) => candidate.id));
 
     if (!chosenPoll) {
       setNextPollBundle(null);
@@ -678,6 +886,7 @@ export default function PollPage() {
         setVoteCounts({});
         setSelectedOptionId(null);
         setNextPollBundle(null);
+        setRemainingPollIds([]);
         setLoading(false);
         return;
       }
@@ -741,61 +950,35 @@ export default function PollPage() {
       return;
     }
 
+    const previousVoteCounts = { ...voteCounts };
+    const previousSelectedOptionId = selectedOptionId;
+    const previousVoted = voted;
+
     setSubmitting(true);
     setErrorText("");
+    setVoteCounts((prev) => ({
+      ...prev,
+      [optionId]: (prev[optionId] || 0) + 1,
+    }));
+    setSelectedOptionId(optionId);
+    setVoted(true);
 
     try {
       await submitVote(poll.id, optionId);
 
-      setVoteCounts((prev) => ({
-        ...prev,
-        [optionId]: (prev[optionId] || 0) + 1,
-      }));
-
       recordClientVote();
       localStorage.setItem(`poll-voted-${poll.id}`, "true");
       localStorage.setItem(`poll-selected-option-${poll.id}`, String(optionId));
-      setSelectedOptionId(optionId);
-      setVoted(true);
 
       await loadNextPoll(poll.id, poll.category);
     } catch (error) {
+      setVoteCounts(previousVoteCounts);
+      setSelectedOptionId(previousSelectedOptionId);
+      setVoted(previousVoted);
       setErrorText(error instanceof Error ? error.message : "Could not submit vote.");
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const handleShare = async () => {
-    const url = window.location.href;
-    const text = poll ? `Vote on this poll: ${poll.question}` : "Vote on this poll";
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: "Poll & See",
-          text,
-          url,
-        });
-        return;
-      } catch {
-        // fall through to clipboard fallback
-      }
-    }
-
-    try {
-      await navigator.clipboard.writeText(url);
-      setShareText("Link copied");
-      setTimeout(() => setShareText("Share poll"), 2000);
-    } catch {
-      setShareText("Could not copy");
-      setTimeout(() => setShareText("Share poll"), 2000);
-    }
-  };
-
-  const handleBack = () => {
-    sessionStorage.setItem("restoreHomeScroll", "true");
-    router.push("/");
   };
 
   if (loading) {
@@ -957,7 +1140,7 @@ export default function PollPage() {
                     disabled={submitting}
                     className="py-3 rounded-xl font-medium text-white transition bg-gray-700 hover:bg-gray-600 disabled:opacity-70"
                   >
-                    {submitting ? "Submitting..." : option.option_text}
+                    {option.option_text}
                   </button>
                 ))}
               </div>
@@ -978,35 +1161,12 @@ export default function PollPage() {
 
               <p className="text-sm text-gray-400 pt-4">You’ve voted.</p>
 
-              <div className="mt-8 border-t border-gray-700 pt-6">
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    onClick={handleShare}
-                    className="bg-white text-black px-4 py-2 rounded-xl font-medium hover:bg-gray-200 transition"
-                  >
-                    {shareText}
-                  </button>
-
-                  <Link
-                    href={`/?category=${encodeURIComponent(poll.category)}#live-polls`}
-                    className="inline-flex items-center rounded-xl border px-4 py-2 font-medium text-white transition hover:bg-gray-800"
-                    style={{
-                      borderColor: categoryColours.border,
-                      backgroundColor: categoryColours.bg,
-                      color: categoryColours.text,
-                    }}
-                  >
-                    See other {poll.category} polls
-                  </Link>
-
-                  <button
-                    onClick={handleBack}
-                    className="inline-flex items-center rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 font-medium text-white transition hover:bg-gray-800"
-                  >
-                    Back to all polls
-                  </button>
-                </div>
-              </div>
+              <PollActions
+                category={poll.category}
+                onShare={handleShare}
+                shareText={shareText}
+                onBack={handleBack}
+              />
             </>
           )}
         </div>
@@ -1025,7 +1185,12 @@ export default function PollPage() {
                     : "Another poll"}
                 </h2>
 
-                <InlineNextPoll bundle={nextPollBundle} />
+                <InlineNextPoll
+                  bundle={nextPollBundle}
+                  remainingPollIds={remainingPollIds.filter((id) => id !== nextPollBundle.poll.id)}
+                  onVoteSuccess={async () => {}}
+                  onBack={handleBack}
+                />
               </>
             ) : null}
           </div>
