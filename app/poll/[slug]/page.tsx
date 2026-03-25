@@ -526,17 +526,15 @@ const loadBundle = async (pollId: number): Promise<PollBundle> => {
 
   ) => {
 
-    const { data } = await supabase
+const { data } = await supabase
+  .from("polls")
+  .select("*")
+  .neq("id", currentId)
+  .order("id", { ascending: false });
 
-      .from("polls")
+const pollsList = (data || []) as Poll[];
 
-      .select("*")
-
-      .neq("id", currentId)
-
-      .order("id", { ascending: false });
-
-    const unseen = data.filter(
+const unseen = pollsList.filter(
 
       (p) =>
 
