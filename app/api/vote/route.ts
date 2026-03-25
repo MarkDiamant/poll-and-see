@@ -3,9 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 const POLL_COOLDOWN_HOURS = 12;
-const GLOBAL_COOLDOWN_SECONDS = 4;
 const BURST_WINDOW_SECONDS = 120;
-const MAX_BURST_VOTES = 8;
+const MAX_BURST_VOTES = 25;
 
 function getIpAddress(request: NextRequest) {
   const forwardedFor = request.headers.get("x-forwarded-for");
@@ -56,19 +55,12 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const { data: optionRow, error: optionError } = await supabaseAdmin
+    const { data: optionRow } = await supabaseAdmin
       .from("poll_options")
       .select("id, poll_id")
       .eq("id", optionId)
       .eq("poll_id", pollId)
       .maybeSingle();
-
-    if (optionError) {
-      return NextResponse.json(
-        { error: "Could not validate vote option." },
-        { status: 500 }
-      );
-    }
 
     if (!optionRow) {
       return NextResponse.json(
@@ -85,19 +77,11 @@ export async function POST(request: NextRequest) {
       now.getTime() - POLL_COOLDOWN_HOURS * 60 * 60 * 1000
     ).toISOString();
 
-    const globalCooldownCutoff = new Date(
-      now.getTime() - GLOBAL_COOLDOWN_SECONDS * 1000
-    ).toISOString();
-
     const burstCutoff = new Date(
       now.getTime() - BURST_WINDOW_SECONDS * 1000
     ).toISOString();
 
-    const [
-      samePollRecentVoteResult,
-      rapidRecentVoteResult,
-      burstVotesResult,
-    ] = await Promise.all([
+    const [samePollRecentVote, burstVotes] = await Promise.all([
       supabaseAdmin
         .from("votes")
         .select("id")
@@ -109,41 +93,19 @@ export async function POST(request: NextRequest) {
 
       supabaseAdmin
         .from("votes")
-        .select("id")
-        .eq("ip_hash", ipHash)
-        .gte("created_at", globalCooldownCutoff)
-        .limit(1)
-        .maybeSingle(),
-
-      supabaseAdmin
-        .from("votes")
         .select("id", { count: "exact", head: true })
         .eq("ip_hash", ipHash)
         .gte("created_at", burstCutoff),
     ]);
 
-    if (samePollRecentVoteResult.error || rapidRecentVoteResult.error || burstVotesResult.error) {
+    if (samePollRecentVote.data) {
       return NextResponse.json(
-        { error: "Could not validate vote protection." },
-        { status: 500 }
-      );
-    }
-
-    if (samePollRecentVoteResult.data) {
-      return NextResponse.json(
-        { error: "You’ve already voted on this poll recently." },
+        { error: "You’ve already voted on this poll." },
         { status: 429 }
       );
     }
 
-    if (rapidRecentVoteResult.data) {
-      return NextResponse.json(
-        { error: "Please wait a few seconds before voting again." },
-        { status: 429 }
-      );
-    }
-
-    if ((burstVotesResult.count || 0) >= MAX_BURST_VOTES) {
+    if ((burstVotes.count || 0) >= MAX_BURST_VOTES) {
       return NextResponse.json(
         { error: "Too many votes too quickly. Please try again shortly." },
         { status: 429 }

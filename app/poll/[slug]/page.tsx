@@ -28,7 +28,7 @@ type PollBundle = {
 };
 
 const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899"];
-const GLOBAL_COOLDOWN_MS = 4000;
+const SAME_POLL_CLICK_GUARD_MS = 400;
 const POLL_BUNDLE_CACHE_PREFIX = "poll-bundle-cache:";
 
 const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: string; solid: string }> = {
@@ -69,14 +69,14 @@ function getCategoryColours(category: string) {
   return FALLBACK_CATEGORY_COLOURS[Math.abs(hash) % FALLBACK_CATEGORY_COLOURS.length];
 }
 
-function canVoteNow(): string | null {
-  const last = Number(localStorage.getItem("lastVote") || 0);
-  if (Date.now() - last < GLOBAL_COOLDOWN_MS) return "Please wait a few seconds before voting again.";
+function canVoteNow(pollId: number): string | null {
+  const last = Number(localStorage.getItem(`poll-last-click-${pollId}`) || 0);
+  if (Date.now() - last < SAME_POLL_CLICK_GUARD_MS) return "Please try again.";
   return null;
 }
 
-function recordVoteClient() {
-  localStorage.setItem("lastVote", String(Date.now()));
+function recordVoteClient(pollId: number) {
+  localStorage.setItem(`poll-last-click-${pollId}`, String(Date.now()));
 }
 
 function getPollVotedKey(pollId: number) {
@@ -241,12 +241,14 @@ function PollCard({
 
   const handleShare = async () => {
     const url = `${window.location.origin}/poll/${bundle.poll.slug}`;
-    const shareMessage = `${bundle.poll.question}\n\nVote and see what others think:\n\n${url}`;
+    const shareTextOnly = `${bundle.poll.question}\n\nVote and see what others think:`;
+    const copiedShareText = `${bundle.poll.question}\n\nVote and see what others think:\n\n${url}`;
 
     if (navigator.share) {
       try {
         await navigator.share({
-          text: shareMessage,
+          text: shareTextOnly,
+          url,
         });
         return;
       } catch {
@@ -255,7 +257,7 @@ function PollCard({
     }
 
     try {
-      await navigator.clipboard.writeText(shareMessage);
+      await navigator.clipboard.writeText(copiedShareText);
       setShareText("Link copied");
       setTimeout(() => setShareText("Share poll"), 2000);
     } catch {
@@ -267,7 +269,7 @@ function PollCard({
   const handleVote = async (optionId: number) => {
     if (voted) return;
 
-    const cooldownError = canVoteNow();
+    const cooldownError = canVoteNow(bundle.poll.id);
     if (cooldownError) {
       setError(cooldownError);
       return;
@@ -289,7 +291,7 @@ function PollCard({
     try {
       await submitVote(bundle.poll.id, optionId);
       markPollVotedLocally(bundle.poll.id, optionId);
-      recordVoteClient();
+      recordVoteClient(bundle.poll.id);
       onVoteComplete(bundle.poll.id, bundle.poll.category);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not submit vote.";
