@@ -690,25 +690,12 @@ export default function Home() {
       );
     };
 
-    const idleId =
-      "requestIdleCallback" in window
-        ? (window as Window & typeof globalThis & {
-            requestIdleCallback: (callback: IdleRequestCallback) => number;
-          }).requestIdleCallback(() => {
-            void cachePollBundles();
-          })
-        : window.setTimeout(() => {
-            void cachePollBundles();
-          }, 0);
+    const timeoutId = window.setTimeout(() => {
+      void cachePollBundles();
+    }, 0);
 
     return () => {
-      if ("cancelIdleCallback" in window) {
-        (window as Window & typeof globalThis & {
-          cancelIdleCallback: (handle: number) => void;
-        }).cancelIdleCallback(idleId as number);
-      } else {
-        clearTimeout(idleId as number);
-      }
+      clearTimeout(timeoutId);
     };
   }, [loading, featuredPoll, livePolls]);
 
