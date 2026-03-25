@@ -6,72 +6,94 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 type Poll = {
-  id:number;
-  question:string;
-  description:string;
-  category:string;
-  slug:string;
+  id: number;
+  question: string;
+  description: string;
+  category: string;
+  slug: string;
 };
 
 type PollOption = {
-  id:number;
-  poll_id:number;
-  option_text:string;
+  id: number;
+  poll_id: number;
+  option_text: string;
 };
 
-type VoteCounts = Record<number,number>;
+type VoteCounts = Record<number, number>;
 
 type PollBundle = {
-  poll:Poll;
-  options:PollOption[];
-  voteCounts:VoteCounts;
+  poll: Poll;
+  options: PollOption[];
+  voteCounts: VoteCounts;
 };
 
-const OPTION_COLOURS=["#2563eb","#22c55e","#fbbf24","#ec4899"];
-const GLOBAL_COOLDOWN=4000;
+const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899"];
+const GLOBAL_COOLDOWN_MS = 4000;
 
-function canVoteNow(){
-  const last=Number(localStorage.getItem("lastVote")||0);
-  if(Date.now()-last<GLOBAL_COOLDOWN){
-    return"Please wait a few seconds before voting again.";
+function canVoteNow(): string | null {
+  const last = Number(localStorage.getItem("lastVote") || 0);
+  if (Date.now() - last < GLOBAL_COOLDOWN_MS) {
+    return "Please wait a few seconds before voting again.";
   }
   return null;
 }
 
-function recordVoteClient(){
-  localStorage.setItem("lastVote",String(Date.now()));
+function recordVoteClient() {
+  localStorage.setItem("lastVote", String(Date.now()));
 }
 
-async function submitVote(pollId:number,optionId:number){
-  const r=await fetch("/api/vote",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({pollId,optionId})
+async function submitVote(pollId: number, optionId: number) {
+  const response = await fetch("/api/vote", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pollId, optionId }),
   });
-  const j=await r.json();
-  if(!r.ok)throw new Error(j.error||"Vote failed");
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Vote failed");
+  }
 }
 
-function ResultOptions({options,voteCounts,selectedOptionId}:{options:PollOption[];voteCounts:VoteCounts;selectedOptionId:number|null;}){
-  const total=Object.values(voteCounts).reduce((a:number,b:number)=>a+b,0);
+function ResultOptions({
+  options,
+  voteCounts,
+  selectedOptionId,
+}: {
+  options: PollOption[];
+  voteCounts: VoteCounts;
+  selectedOptionId: number | null;
+}) {
+  const total = Object.values(voteCounts).reduce((sum, count) => sum + count, 0);
 
-  return(
+  return (
     <div className="space-y-4">
-      {options.map((o,i)=>{
-        const count=voteCounts[o.id]||0;
-        const pct=total?Math.round((count/total)*100):0;
-        const colour=OPTION_COLOURS[i]||OPTION_COLOURS[0];
-        const selected=selectedOptionId===o.id;
+      {options.map((option, index) => {
+        const count = voteCounts[option.id] || 0;
+        const percent = total > 0 ? Math.round((count / total) * 100) : 0;
+        const colour = OPTION_COLOURS[index] || OPTION_COLOURS[0];
+        const isSelected = selectedOptionId === option.id;
 
-        return(
-          <div key={o.id} className="rounded-xl p-3 border" style={{borderColor:selected?colour:"transparent"}}>
+        return (
+          <div
+            key={option.id}
+            className="rounded-xl border p-3"
+            style={{ borderColor: isSelected ? colour : "transparent" }}
+          >
             <div className="flex justify-between text-white">
-              <span>{selected?"✓ ":""}{o.option_text}</span>
-              <span>{pct}%</span>
+              <span>
+                {isSelected ? "✓ " : ""}
+                {option.option_text}
+              </span>
+              <span>{percent}%</span>
             </div>
 
-            <div className="mt-2 h-3 bg-gray-700 rounded-full">
-              <div className="h-3 rounded-full" style={{width:pct+"%",background:colour}}/>
+            <div className="mt-2 h-3 rounded-full bg-gray-700">
+              <div
+                className="h-3 rounded-full"
+                style={{ width: `${percent}%`, background: colour }}
+              />
             </div>
           </div>
         );
@@ -80,256 +102,264 @@ function ResultOptions({options,voteCounts,selectedOptionId}:{options:PollOption
   );
 }
 
-function PollCard({bundle,showBackButton,onVoteComplete}:{bundle:PollBundle;showBackButton:boolean;onVoteComplete:(pollId:number,category:string)=>void;}){
+function PollCard({
+  bundle,
+  showBackButton,
+  onVoteComplete,
+}: {
+  bundle: PollBundle;
+  showBackButton: boolean;
+  onVoteComplete: (pollId: number, category: string) => void;
+}) {
+  const votedKey = `poll-voted-${bundle.poll.id}`;
+  const selectedOldKey = `poll-selected-option-${bundle.poll.id}`;
+  const selectedNewKey = `poll-selected-${bundle.poll.id}`;
 
-  const votedKey1="poll-voted-"+bundle.poll.id;
-  const votedKey2="poll-selected-option-"+bundle.poll.id;
-  const votedKey3="poll-selected-"+bundle.poll.id;
+  const initialVoted =
+    typeof window !== "undefined"
+      ? localStorage.getItem(votedKey) === "true" ||
+        localStorage.getItem(selectedOldKey) !== null ||
+        localStorage.getItem(selectedNewKey) !== null
+      : false;
 
-  const initialVoted=
-    typeof window!=="undefined"&&(
-      localStorage.getItem(votedKey1)==="true"||
-      localStorage.getItem(votedKey2)||
-      localStorage.getItem(votedKey3)
-    );
+  const initialSelectedRaw =
+    typeof window !== "undefined"
+      ? localStorage.getItem(selectedNewKey) || localStorage.getItem(selectedOldKey)
+      : null;
 
-  const initialSelected=
-    Number(
-      localStorage.getItem(votedKey3)||
-      localStorage.getItem(votedKey2)
-    );
+  const initialSelectedNumber = initialSelectedRaw ? Number(initialSelectedRaw) : null;
 
-  const[voted,setVoted]=useState<boolean>(initialVoted);
-  const[counts,setCounts]=useState(bundle.voteCounts);
-  const[selected,setSelected]=useState<number|null>(Number.isNaN(initialSelected)?null:initialSelected);
-  const[error,setError]=useState("");
+  const [voted, setVoted] = useState<boolean>(initialVoted);
+  const [counts, setCounts] = useState<VoteCounts>(bundle.voteCounts);
+  const [selected, setSelected] = useState<number | null>(
+    initialSelectedNumber !== null && !Number.isNaN(initialSelectedNumber)
+      ? initialSelectedNumber
+      : null
+  );
+  const [error, setError] = useState<string>("");
 
-  const share=async()=>{
-    const url=window.location.origin+"/poll/"+bundle.poll.slug;
-    await navigator.clipboard.writeText(url);
+  const totalVotes = Object.values(counts).reduce((sum, count) => sum + count, 0);
+
+  const handleShare = async () => {
+    const url = `${window.location.origin}/poll/${bundle.poll.slug}`;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // ignore
+    }
   };
 
-  const vote=async(optionId:number)=>{
+  const handleVote = async (optionId: number) => {
+    if (voted) return;
 
-    if(voted)return;
+    const cooldownError = canVoteNow();
+    if (cooldownError) {
+      setError(cooldownError);
+      return;
+    }
 
-    const err=canVoteNow();
-    if(err){setError(err);return;}
+    setError("");
+
+    const previousCounts = counts;
+    const previousSelected = selected;
+    const previousVoted = voted;
 
     setVoted(true);
     setSelected(optionId);
+    setCounts((current) => ({
+      ...current,
+      [optionId]: (current[optionId] || 0) + 1,
+    }));
 
-    setCounts(c=>({...c,[optionId]:(c[optionId]||0)+1}));
+    try {
+      await submitVote(bundle.poll.id, optionId);
 
-    try{
-
-      await submitVote(bundle.poll.id,optionId);
-
-      localStorage.setItem(votedKey1,"true");
-      localStorage.setItem(votedKey3,String(optionId));
-
+      localStorage.setItem(votedKey, "true");
+      localStorage.setItem(selectedNewKey, String(optionId));
+      localStorage.setItem(selectedOldKey, String(optionId));
       recordVoteClient();
 
-      onVoteComplete(bundle.poll.id,bundle.poll.category);
-
-    }catch{
-
-      setError("Could not submit vote");
-      setVoted(false);
-
+      onVoteComplete(bundle.poll.id, bundle.poll.category);
+    } catch (err) {
+      setCounts(previousCounts);
+      setSelected(previousSelected);
+      setVoted(previousVoted);
+      setError(err instanceof Error ? err.message : "Could not submit vote.");
     }
-
   };
 
-  const total=Object.values(counts).reduce((a,b)=>a+b,0);
-
-  return(
-
-    <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 mb-8">
-
-      <div className="flex justify-between mb-4">
-
-        <span className="text-gray-300 text-sm">
-          {bundle.poll.category}
-        </span>
-
-        <span className="text-gray-400 text-sm">
-          {total} votes
-        </span>
-
+  return (
+    <div className="mb-8 rounded-2xl border border-gray-700 bg-gray-800 p-6">
+      <div className="mb-4 flex justify-between">
+        <span className="text-sm text-gray-300">{bundle.poll.category}</span>
+        <span className="text-sm text-gray-400">{totalVotes} votes</span>
       </div>
 
-      <h2 className="text-2xl font-bold mb-3">
-        {bundle.poll.question}
-      </h2>
+      <h2 className="mb-3 text-2xl font-bold">{bundle.poll.question}</h2>
+      <p className="mb-6 text-gray-300">{bundle.poll.description}</p>
 
-      <p className="text-gray-300 mb-6">
-        {bundle.poll.description}
-      </p>
-
-      {!voted?(
+      {!voted ? (
         <div className="flex flex-col gap-3">
-
-          {bundle.options.map(o=>(
-            <button key={o.id} onClick={()=>vote(o.id)} className="bg-gray-700 hover:bg-gray-600 rounded-xl py-3 text-white">
-              {o.option_text}
+          {bundle.options.map((option) => (
+            <button
+              key={option.id}
+              onClick={() => handleVote(option.id)}
+              className="rounded-xl bg-gray-700 py-3 text-white hover:bg-gray-600"
+            >
+              {option.option_text}
             </button>
           ))}
 
-          {error&&(
-            <p className="text-red-300 text-sm">{error}</p>
-          )}
-
+          {error ? <p className="text-sm text-red-300">{error}</p> : null}
         </div>
-      ):(
+      ) : (
         <>
-          <ResultOptions options={bundle.options} voteCounts={counts} selectedOptionId={selected}/>
+          <ResultOptions
+            options={bundle.options}
+            voteCounts={counts}
+            selectedOptionId={selected}
+          />
 
-          <div className="flex gap-3 mt-6 flex-wrap">
-
-            <button onClick={share} className="bg-white text-black px-4 py-2 rounded-xl">
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              onClick={handleShare}
+              className="rounded-xl bg-white px-4 py-2 text-black"
+            >
               Share poll
             </button>
 
-            <Link href={"/?category="+bundle.poll.category} className="px-4 py-2 rounded-xl border border-gray-600">
+            <Link
+              href={`/?category=${encodeURIComponent(bundle.poll.category)}`}
+              className="rounded-xl border border-gray-600 px-4 py-2"
+            >
               See other {bundle.poll.category} polls
             </Link>
 
-            {showBackButton&&(
-              <Link href="/" className="px-4 py-2 rounded-xl border border-gray-600">
+            {showBackButton ? (
+              <Link href="/" className="rounded-xl border border-gray-600 px-4 py-2">
                 Go to all polls
               </Link>
-            )}
-
+            ) : null}
           </div>
         </>
       )}
-
     </div>
-
   );
-
 }
 
-export default function PollPage(){
+export default function PollPage() {
+  const params = useParams();
+  const slug = String(params.slug);
 
-  const{slug}=useParams();
+  const [polls, setPolls] = useState<PollBundle[]>([]);
 
-  const[polls,setPolls]=useState<PollBundle[]>([]);
+  const loadBundle = async (pollId: number): Promise<PollBundle> => {
+    const { data: pollData } = await supabase.from("polls").select("*").eq("id", pollId).single();
 
-  const loadBundle=async(pollId:number):Promise<PollBundle>=>{
+    const { data: optionsData } = await supabase
+      .from("poll_options")
+      .select("*")
+      .eq("poll_id", pollId);
 
-    const{data:poll}=await supabase.from("polls").select("*").eq("id",pollId).single();
+    const { data: votesData } = await supabase
+      .from("votes")
+      .select("option_id")
+      .eq("poll_id", pollId);
 
-    const{data:optionsData}=await supabase.from("poll_options").select("*").eq("poll_id",pollId);
+    const counts: VoteCounts = {};
 
-    const{data:votesData}=await supabase.from("votes").select("option_id").eq("poll_id",pollId);
-
-    const counts:VoteCounts={};
-
-    (votesData||[]).forEach((v:any)=>{
-      counts[v.option_id]=(counts[v.option_id]||0)+1;
+    (votesData || []).forEach((vote: { option_id: number }) => {
+      counts[vote.option_id] = (counts[vote.option_id] || 0) + 1;
     });
 
-    return{
-      poll:poll as Poll,
-      options:(optionsData||[]) as PollOption[],
-      voteCounts:counts
+    return {
+      poll: pollData as Poll,
+      options: (optionsData || []) as PollOption[],
+      voteCounts: counts,
     };
-
   };
 
-  useEffect(()=>{
+  useEffect(() => {
+    const init = async () => {
+      const { data } = await supabase.from("polls").select("*").eq("slug", slug).single();
 
-    const init=async()=>{
+      if (!data) return;
 
-      const{data}=await supabase.from("polls").select("*").eq("slug",slug).single();
-
-      if(!data)return;
-
-      const first=await loadBundle(data.id);
-
-      setPolls([first]);
-
+      const firstBundle = await loadBundle(data.id);
+      setPolls([firstBundle]);
     };
 
-    init();
+    void init();
+  }, [slug]);
 
-  },[slug]);
+  const loadNext = async (currentId: number, category: string) => {
+    const { data } = await supabase
+      .from("polls")
+      .select("*")
+      .neq("id", currentId)
+      .order("id", { ascending: false });
 
-  const loadNext=async(currentId:number,category:string)=>{
+    const pollList = (data || []) as Poll[];
 
-    const{data}=await supabase.from("polls").select("*").neq("id",currentId).order("id",{ascending:false});
+    const unseen = pollList.filter((poll) => !localStorage.getItem(`poll-voted-${poll.id}`));
 
-    const pollsList=(data||[]) as Poll[];
+    const sameCategory = unseen.find((poll) => poll.category === category);
+    const nextPoll = sameCategory || unseen[0];
 
-    const unseen=pollsList.filter(p=>!localStorage.getItem("poll-voted-"+p.id));
+    if (!nextPoll) return;
 
-    const same=unseen.find(p=>p.category===category);
+    const alreadyShown = polls.some((item) => item.poll.id === nextPoll.id);
+    if (alreadyShown) return;
 
-    const next=same||unseen[0];
-
-    if(!next)return;
-
-    const bundle=await loadBundle(next.id);
-
-    setPolls(p=>[...p,bundle]);
-
+    const nextBundle = await loadBundle(nextPoll.id);
+    setPolls((current) => [...current, nextBundle]);
   };
 
-  return(
-
+  return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
-
-      <header className="max-w-5xl mx-auto px-6 pt-6 flex justify-between">
-
+      <header className="mx-auto flex max-w-5xl justify-between px-6 pt-6">
         <Link href="/">
-          <img src="/logo.png" className="h-14"/>
+          <img src="/logo.png" alt="Poll & See" className="h-14" />
         </Link>
 
         <div className="flex gap-2">
-
-          <Link href="/" className="px-4 py-2 rounded-xl border border-gray-700">
+          <Link href="/" className="rounded-xl border border-gray-700 px-4 py-2">
             Home
           </Link>
 
-          <Link href="/submit-poll" className="bg-blue-600 px-4 py-2 rounded-xl">
+          <Link href="/submit-poll" className="rounded-xl bg-blue-600 px-4 py-2">
             Create poll
           </Link>
-
         </div>
-
       </header>
 
-      <section className="max-w-3xl mx-auto px-6 pt-4">
-
-        <Link href="/" className="text-blue-300 text-sm">
+      <section className="mx-auto max-w-3xl px-6 pt-4">
+        <Link href="/" className="text-sm text-blue-300">
           ← Back to polls
         </Link>
 
-        {polls.map((bundle,i)=>(
+        {polls.map((bundle, index) => (
           <PollCard
             key={bundle.poll.id}
             bundle={bundle}
-            showBackButton={i!==0}
-            onVoteComplete={(id,cat)=>loadNext(id,cat)}
+            showBackButton={index !== 0}
+            onVoteComplete={(pollId, category) => {
+              void loadNext(pollId, category);
+            }}
           />
         ))}
 
-        {polls.length>0&&(
-          <div className="text-center mt-6">
-
-            <Link href="/submit-poll" className="bg-blue-600 px-6 py-3 rounded-xl inline-block">
+        {polls.length > 0 ? (
+          <div className="mt-6 text-center">
+            <Link
+              href="/submit-poll"
+              className="inline-block rounded-xl bg-blue-600 px-6 py-3"
+            >
               Create your own poll
             </Link>
-
           </div>
-        )}
-
+        ) : null}
       </section>
-
     </main>
-
   );
-
 }
