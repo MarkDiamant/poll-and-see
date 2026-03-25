@@ -241,12 +241,12 @@ function PollCard({
 
   const handleShare = async () => {
     const url = `${window.location.origin}/poll/${bundle.poll.slug}`;
+    const shareMessage = `${bundle.poll.question}\n\nVote and see what others think:\n\n${url}`;
 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Poll & See",
-          text: `Vote on this poll: ${bundle.poll.question}`,
+          text: shareMessage,
           url,
         });
         return;
@@ -256,7 +256,7 @@ function PollCard({
     }
 
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(shareMessage);
       setShareText("Link copied");
       setTimeout(() => setShareText("Share poll"), 2000);
     } catch {
