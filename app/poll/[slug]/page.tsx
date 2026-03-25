@@ -247,7 +247,6 @@ function PollCard({
       try {
         await navigator.share({
           text: shareMessage,
-          url,
         });
         return;
       } catch {
