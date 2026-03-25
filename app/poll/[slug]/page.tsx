@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 type Poll = {
@@ -167,10 +167,8 @@ function ResultOptions({
                       ✓
                     </span>
                   ) : null}
-
                   <span className="min-w-0 break-words leading-6 text-white">{option.option_text}</span>
                 </div>
-
                 <span className="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-gray-300">
                   {percent}%
                 </span>
@@ -194,11 +192,11 @@ function ResultOptions({
 
 function PollCard({
   bundle,
-  showBackButton,
+  showGoToAllPolls,
   onVoteComplete,
 }: {
   bundle: PollBundle;
-  showBackButton: boolean;
+  showGoToAllPolls: boolean;
   onVoteComplete: (pollId: number, category: string) => void;
 }) {
   const [voted, setVoted] = useState<boolean>(false);
@@ -295,7 +293,7 @@ function PollCard({
     <div className="mb-8 rounded-2xl border border-gray-700 bg-gray-800 p-6">
       <div className="mb-4 flex items-center justify-between">
         <span
-          className="text-xs px-3 py-1 rounded-full"
+          className="rounded-full px-3 py-1 text-xs"
           style={{
             color: categoryColours.text,
             backgroundColor: categoryColours.bg,
@@ -322,13 +320,11 @@ function PollCard({
               {option.option_text}
             </button>
           ))}
-
           {error ? <p className="text-sm text-red-300">{error}</p> : null}
         </div>
       ) : (
         <>
           <ResultOptions options={bundle.options} voteCounts={counts} selectedOptionId={selected} />
-
           <p className="pt-4 text-sm text-gray-400">You’ve voted.</p>
 
           <div className="mt-6 flex flex-wrap gap-3">
@@ -351,9 +347,9 @@ function PollCard({
               See other {bundle.poll.category} polls
             </Link>
 
-            {showBackButton ? (
+            {showGoToAllPolls ? (
               <Link
-                href="/"
+                href="/#live-polls"
                 className="inline-flex items-center rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 font-medium text-white transition hover:bg-gray-800"
               >
                 Go to all polls
@@ -371,6 +367,9 @@ export default function PollPage() {
   const slug = String(params.slug);
 
   const [polls, setPolls] = useState<PollBundle[]>([]);
+  const [nextBundle, setNextBundle] = useState<PollBundle | null>(null);
+  const pollRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const previousPollCountRef = useRef(0);
 
   const loadBundle = async (pollId: number): Promise<PollBundle> => {
     const { data: pollData } = await supabase.from("polls").select("*").eq("id", pollId).single();
@@ -398,40 +397,81 @@ export default function PollPage() {
     };
   };
 
+  const findNextBundle = async (excludeIds: number[], preferredCategory: string): Promise<PollBundle | null> => {
+    const { data } = await supabase.from("polls").select("*").order("id", { ascending: false });
+
+    const pollList = (data || []) as Poll[];
+    const unseen = pollList.filter(
+      (poll) => !excludeIds.includes(poll.id) && !hasLocalVote(poll.id)
+    );
+
+    const sameCategory = unseen.find((poll) => poll.category === preferredCategory);
+    const nextPoll = sameCategory || unseen[0];
+
+    if (!nextPoll) return null;
+    return loadBundle(nextPoll.id);
+  };
+
   useEffect(() => {
     const init = async () => {
       const { data } = await supabase.from("polls").select("*").eq("slug", slug).single();
       if (!data) return;
+
       const firstBundle = await loadBundle(data.id);
       setPolls([firstBundle]);
+
+      const preloaded = await findNextBundle([firstBundle.poll.id], firstBundle.poll.category);
+      setNextBundle(preloaded);
     };
 
     void init();
   }, [slug]);
 
-  const loadNext = async (currentId: number, category: string) => {
-    const { data } = await supabase
-      .from("polls")
-      .select("*")
-      .neq("id", currentId)
-      .order("id", { ascending: false });
+  useEffect(() => {
+    if (polls.length > previousPollCountRef.current && polls.length > 1) {
+      const lastPollId = polls[polls.length - 1]?.poll.id;
+      if (lastPollId) {
+        requestAnimationFrame(() => {
+          pollRefs.current[lastPollId]?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      }
+    }
 
-    const pollList = (data || []) as Poll[];
-    const unseen = pollList.filter((poll) => !hasLocalVote(poll.id));
-    const sameCategory = unseen.find((poll) => poll.category === category);
-    const nextPoll = sameCategory || unseen[0];
+    previousPollCountRef.current = polls.length;
+  }, [polls]);
 
-    if (!nextPoll) return;
+  const handleVoteComplete = async (pollId: number, category: string) => {
+    if (nextBundle) {
+      const appendedBundle = nextBundle;
 
-    const nextBundle = await loadBundle(nextPoll.id);
+      setPolls((current) => {
+        if (current.some((item) => item.poll.id === appendedBundle.poll.id)) return current;
+        return [...current, appendedBundle];
+      });
+
+      setNextBundle(null);
+
+      const currentIds = polls.map((item) => item.poll.id);
+      const updatedIds = [...currentIds, appendedBundle.poll.id];
+      const upcoming = await findNextBundle(updatedIds, category);
+      setNextBundle(upcoming);
+      return;
+    }
+
+    const currentIds = [...polls.map((item) => item.poll.id), pollId];
+    const fallbackNext = await findNextBundle(currentIds, category);
+
+    if (!fallbackNext) return;
 
     setPolls((current) => {
-      if (current.some((item) => item.poll.id === nextBundle.poll.id)) return current;
-      return [...current, nextBundle];
+      if (current.some((item) => item.poll.id === fallbackNext.poll.id)) return current;
+      return [...current, fallbackNext];
     });
-  };
 
-  const allShownPollsVoted = polls.length > 0 && polls.every((bundle) => hasLocalVote(bundle.poll.id));
+    const updatedIds = [...currentIds, fallbackNext.poll.id];
+    const upcoming = await findNextBundle(updatedIds, category);
+    setNextBundle(upcoming);
+  };
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
@@ -468,18 +508,24 @@ export default function PollPage() {
           ← Back to polls
         </Link>
 
-        {polls.map((bundle, index) => (
-          <PollCard
+        {polls.map((bundle) => (
+          <div
             key={bundle.poll.id}
-            bundle={bundle}
-            showBackButton={index !== 0}
-            onVoteComplete={(pollId, category) => {
-              void loadNext(pollId, category);
+            ref={(el) => {
+              pollRefs.current[bundle.poll.id] = el;
             }}
-          />
+          >
+            <PollCard
+              bundle={bundle}
+              showGoToAllPolls={true}
+              onVoteComplete={(pollId, category) => {
+                void handleVoteComplete(pollId, category);
+              }}
+            />
+          </div>
         ))}
 
-        {allShownPollsVoted ? (
+        {polls.length > 1 ? (
           <div className="mt-6 text-center">
             <Link
               href="/submit-poll"
@@ -490,6 +536,10 @@ export default function PollPage() {
           </div>
         ) : null}
       </section>
+
+      <footer className="py-8 text-center text-sm text-gray-500">
+        © {new Date().getFullYear()} Poll & See
+      </footer>
     </main>
   );
 }
