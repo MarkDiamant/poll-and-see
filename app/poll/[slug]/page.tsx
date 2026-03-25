@@ -453,55 +453,44 @@ export default function PollPage() {
 
   const [polls, setPolls] = useState<PollBundle[]>([]);
 
-  const loadBundle = async (pollId: number) => {
+const loadBundle = async (pollId: number): Promise<PollBundle> => {
 
-    const { data: poll } = await supabase
+  const { data: poll } = await supabase
+    .from("polls")
+    .select("*")
+    .eq("id", pollId)
+    .single();
 
-      .from("polls")
+  const { data: optionsData } = await supabase
+    .from("poll_options")
+    .select("*")
+    .eq("poll_id", pollId);
 
-      .select("*")
+  const { data: votesData } = await supabase
+    .from("votes")
+    .select("option_id")
+    .eq("poll_id", pollId);
 
-      .eq("id", pollId)
+  const counts: VoteCounts = {};
 
-      .single();
+  (votesData || []).forEach((v: any) => {
 
-    const { data: options } = await supabase
+    counts[v.option_id] =
+      (counts[v.option_id] || 0) + 1;
 
-      .from("poll_options")
+  });
 
-      .select("*")
+  return {
 
-      .eq("poll_id", pollId);
+    poll: poll as Poll,
 
-    const { data: votes } = await supabase
+    options: (optionsData || []) as PollOption[],
 
-      .from("votes")
-
-      .select("option_id")
-
-      .eq("poll_id", pollId);
-
-    const counts: VoteCounts = {};
-
-    votes?.forEach((v) => {
-
-      counts[v.option_id] =
-
-        (counts[v.option_id] || 0) + 1;
-
-    });
-
-    return {
-
-      poll,
-
-      options,
-
-      voteCounts: counts,
-
-    };
+    voteCounts: counts,
 
   };
+
+};
 
   useEffect(() => {
 
