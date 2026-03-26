@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -354,7 +354,7 @@ function PollCard({
           <div className="mt-6 flex flex-wrap gap-3">
             <button
               onClick={handleShare}
-              className="rounded-xl bg-white px-4 py-2 font-medium text-black transition hover:bg-gray-200"
+              className="cursor-pointer rounded-xl bg-white px-4 py-2 font-medium text-black transition hover:bg-gray-200"
             >
               {shareText}
             </button>
@@ -388,6 +388,7 @@ function PollCard({
 
 export default function PollPage() {
   const params = useParams();
+  const router = useRouter();
   const slug = String(params.slug);
 
   const [polls, setPolls] = useState<PollBundle[]>([]);
@@ -399,6 +400,11 @@ export default function PollPage() {
   useEffect(() => {
     pollsRef.current = polls;
   }, [polls]);
+
+  const handleBack = () => {
+    sessionStorage.setItem("restoreHomeScroll", "true");
+    router.push("/");
+  };
 
   const loadBundle = async (pollId: number): Promise<PollBundle> => {
     const { data: pollData } = await supabase.from("polls").select("*").eq("id", pollId).single();
@@ -540,13 +546,13 @@ export default function PollPage() {
       </header>
 
       <section className="mx-auto max-w-3xl px-6 pt-2 pb-8">
-      <button
-  type="button"
-  onClick={() => window.history.back()}
-  className="text-sm text-blue-300"
->
-  ← Back to polls
-</button>
+        <button
+          type="button"
+          onClick={handleBack}
+          className="cursor-pointer text-sm text-blue-300"
+        >
+          ← Back to polls
+        </button>
 
         {polls.map((bundle) => (
           <div
