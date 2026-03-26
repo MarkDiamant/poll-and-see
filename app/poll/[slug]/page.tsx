@@ -540,9 +540,12 @@ export default function PollPage() {
       </header>
 
       <section className="mx-auto max-w-3xl px-6 pt-2 pb-8">
-        <Link href="/" className="text-sm text-blue-300">
-          ← Back to polls
-        </Link>
+      <Link
+  href="/#live-polls"
+  className="text-sm text-blue-300"
+>
+  ← Back to polls
+</Link>
 
         {polls.map((bundle) => (
           <div

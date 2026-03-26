@@ -2,9 +2,9 @@ import { createHash } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const POLL_COOLDOWN_HOURS = 12;
+const POLL_COOLDOWN_HOURS = 24 * 365;
 const BURST_WINDOW_SECONDS = 120;
-const MAX_BURST_VOTES = 25;
+const MAX_BURST_VOTES = 50;
 
 function getIpAddress(request: NextRequest) {
   const forwardedFor = request.headers.get("x-forwarded-for");
