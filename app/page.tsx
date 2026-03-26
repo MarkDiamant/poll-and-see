@@ -453,24 +453,7 @@ export default function Home() {
     loadHomeData();
   }, [loadHomeData]);
 
-  useEffect(() => {
-    const handleFocus = () => loadHomeData();
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        loadHomeData();
-      }
-    };
-
-    window.addEventListener("focus", handleFocus);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener("focus", handleFocus);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [loadHomeData]);
-
-  useEffect(() => {
+   useEffect(() => {
     const handleScroll = () => {
       sessionStorage.setItem("homeScrollY", String(window.scrollY));
     };
@@ -842,7 +825,7 @@ export default function Home() {
             )}
           </div>
 
-          <div className="bg-gray-800 rounded-2xl p-6 shadow-lg">
+          <div className="bg-gray-800 rounded-2xl p-6 shadow-lg flex flex-col justify-center">
             <h3 className="text-xl font-semibold mb-4">About</h3>
             <p className="text-gray-300 mb-4">
               Vote on real questions. Compare your answer. See how others think.
