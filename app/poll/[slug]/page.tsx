@@ -540,12 +540,13 @@ export default function PollPage() {
       </header>
 
       <section className="mx-auto max-w-3xl px-6 pt-2 pb-8">
-      <Link
-  href="/#live-polls"
+      <button
+  type="button"
+  onClick={() => window.history.back()}
   className="text-sm text-blue-300"
 >
   ← Back to polls
-</Link>
+</button>
 
         {polls.map((bundle) => (
           <div
