@@ -366,6 +366,12 @@ export default function Home() {
   const [featuredPollVoted, setFeaturedPollVoted] = useState(false);
   const [featuredSelectedOptionId, setFeaturedSelectedOptionId] = useState<number | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [subscriberEmail, setSubscriberEmail] = useState("");
+  const [subscriberCategory, setSubscriberCategory] = useState("All polls");
+  const [subscribeLoading, setSubscribeLoading] = useState(false);
+  const [subscribeMessage, setSubscribeMessage] = useState("");
+  const [subscribeError, setSubscribeError] = useState("");
 
   const loadHomeData = useCallback(async () => {
     setLoading(true);
@@ -453,7 +459,7 @@ export default function Home() {
     loadHomeData();
   }, [loadHomeData]);
 
-   useEffect(() => {
+  useEffect(() => {
     const handleScroll = () => {
       sessionStorage.setItem("homeScrollY", String(window.scrollY));
     };
@@ -602,6 +608,47 @@ export default function Home() {
     sessionStorage.setItem("homeScrollY", String(window.scrollY));
   };
 
+  const handleSubscribe = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!subscriberEmail.trim()) {
+      setSubscribeError("Enter an email address.");
+      setSubscribeMessage("");
+      return;
+    }
+
+    setSubscribeLoading(true);
+    setSubscribeError("");
+    setSubscribeMessage("");
+
+    try {
+      const response = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: subscriberEmail.trim(),
+          categoryPreference: subscriberCategory === "All polls" ? null : subscriberCategory,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Could not subscribe.");
+      }
+
+      setSubscribeMessage("Subscribed.");
+      setSubscriberEmail("");
+      setSubscriberCategory("All polls");
+    } catch (error) {
+      setSubscribeError(error instanceof Error ? error.message : "Could not subscribe.");
+    } finally {
+      setSubscribeLoading(false);
+    }
+  };
+
   const totalFeaturedVotes = Object.values(featuredVoteCounts).reduce(
     (sum, count) => sum + count,
     0
@@ -627,11 +674,21 @@ export default function Home() {
     return polls.filter((poll) => poll.category === selectedCategory);
   }, [polls, selectedCategory]);
 
-  const livePolls = useMemo(() => {
-    return filteredPolls.filter((poll) => poll.id !== featuredPoll?.id);
-  }, [filteredPolls, featuredPoll]);
+  const searchedPolls = useMemo(() => {
+    const trimmed = searchTerm.trim().toLowerCase();
 
-  const activePollCount = filteredPolls.length;
+    if (!trimmed) {
+      return filteredPolls;
+    }
+
+    return filteredPolls.filter((poll) => poll.question.toLowerCase().includes(trimmed));
+  }, [filteredPolls, searchTerm]);
+
+  const livePolls = useMemo(() => {
+    return searchedPolls.filter((poll) => poll.id !== featuredPoll?.id);
+  }, [searchedPolls, featuredPoll]);
+
+  const activePollCount = searchedPolls.length;
 
   useEffect(() => {
     if (loading) return;
@@ -673,12 +730,25 @@ export default function Home() {
       );
     };
 
-    const timeoutId = window.setTimeout(() => {
-      void cachePollBundles();
-    }, 0);
+    const idleId =
+      "requestIdleCallback" in window
+        ? (window as Window & typeof globalThis & {
+            requestIdleCallback: (callback: IdleRequestCallback) => number;
+          }).requestIdleCallback(() => {
+            void cachePollBundles();
+          })
+        : window.setTimeout(() => {
+            void cachePollBundles();
+          }, 0);
 
     return () => {
-      clearTimeout(timeoutId);
+      if ("cancelIdleCallback" in window) {
+        (window as Window & typeof globalThis & {
+          cancelIdleCallback: (handle: number) => void;
+        }).cancelIdleCallback(idleId as number);
+      } else {
+        clearTimeout(idleId as number);
+      }
     };
   }, [loading, featuredPoll, livePolls]);
 
@@ -835,7 +905,55 @@ export default function Home() {
               From everyday opinions to testing ideas, create a poll and see what people really think.
             </p>
 
-            <div className="border-t border-gray-700 pt-4">
+            <div className="mb-4 rounded-xl border border-gray-700 bg-gray-900/60 p-4">
+              <p className="text-sm text-gray-300 mb-3">Be first to vote on new polls</p>
+
+              <form onSubmit={handleSubscribe} className="space-y-3">
+                <input
+                  type="email"
+                  value={subscriberEmail}
+                  onChange={(event) => setSubscriberEmail(event.target.value)}
+                  placeholder="Email address"
+                  required
+                  className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
+                />
+
+                <select
+                  value={subscriberCategory}
+                  onChange={(event) => setSubscriberCategory(event.target.value)}
+                  className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none transition focus:border-gray-500"
+                >
+                  <option>All polls</option>
+                  <option>Business</option>
+                  <option>Community</option>
+                  <option>Education</option>
+                  <option>Finance</option>
+                  <option>Fun</option>
+                  <option>General</option>
+                  <option>Lifestyle</option>
+                </select>
+
+                <button
+                  type="submit"
+                  disabled={subscribeLoading}
+                  className="w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-70"
+                >
+                  {subscribeLoading ? "Subscribing..." : "Subscribe"}
+                </button>
+              </form>
+
+              <p className="mt-2 text-xs text-gray-500">Unsubscribe anytime.</p>
+
+              {subscribeMessage ? (
+                <p className="mt-2 text-sm text-green-300">{subscribeMessage}</p>
+              ) : null}
+
+              {subscribeError ? (
+                <p className="mt-2 text-sm text-red-300">{subscribeError}</p>
+              ) : null}
+            </div>
+
+            <div className="border-t border-gray-700 pt-4 mt-auto">
               <Link
                 href="/submit-poll"
                 className="block w-full text-center rounded-xl bg-blue-600 py-3 font-medium text-white transition hover:bg-blue-500"
@@ -854,6 +972,16 @@ export default function Home() {
             <span className="text-base text-gray-300 font-medium">
               {activePollCount} active polls
             </span>
+          </div>
+
+          <div className="mt-4">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search polls..."
+              className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
+            />
           </div>
 
           <div className="mt-4 grid grid-cols-6 gap-2 lg:flex lg:flex-nowrap lg:gap-2">
