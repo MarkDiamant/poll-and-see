@@ -70,6 +70,7 @@ export async function POST(request: NextRequest) {
       );
 
     if (error) {
+      console.error("Subscribe error:", error);
       return NextResponse.json(
         { error: "Could not subscribe right now." },
         { status: 500 }
@@ -77,7 +78,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (error) {
+    console.error("Subscribe route error:", error);
     return NextResponse.json(
       { error: "Could not subscribe right now." },
       { status: 500 }

@@ -658,12 +658,14 @@ export default function Home() {
         return current.includes("All polls") ? [] : ["All polls"];
       }
 
-      const withoutAll = current.filter((item) => item !== "All polls");
-      const isSelected = withoutAll.includes(category);
+      if (current.includes("All polls")) {
+        return SIGNUP_CATEGORIES.filter((item) => item !== category);
+      }
 
+      const isSelected = current.includes(category);
       const next = isSelected
-        ? withoutAll.filter((item) => item !== category)
-        : [...withoutAll, category];
+        ? current.filter((item) => item !== category)
+        : [...current, category];
 
       if (next.length === 0) {
         return ["All polls"];
@@ -708,7 +710,7 @@ export default function Home() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Could not subscribe.");
+        throw new Error(data.error || "Could not subscribe right now.");
       }
 
       setSubscribeMessage("Subscribed.");
@@ -716,7 +718,7 @@ export default function Home() {
       setSubscriberCategories(["All polls"]);
       setIsCategoryMenuOpen(false);
     } catch (error) {
-      setSubscribeError(error instanceof Error ? error.message : "Could not subscribe.");
+      setSubscribeError(error instanceof Error ? error.message : "Could not subscribe right now.");
     } finally {
       setSubscribeLoading(false);
     }
@@ -892,7 +894,7 @@ export default function Home() {
 
                 <p className="mb-4 text-gray-300">{featuredPoll.description}</p>
 
-                <div className="mb-5 space-y-3">
+                <div className="mb-5 space-y-2">
                   {featuredOptions.map((option, index) => {
                     const count = featuredVoteCounts[option.id] || 0;
                     const percent =
@@ -1052,15 +1054,6 @@ export default function Home() {
               {subscribeError ? (
                 <p className="mt-2 text-sm text-red-300">{subscribeError}</p>
               ) : null}
-            </div>
-
-            <div className="mt-auto border-t border-gray-700 pt-3">
-              <Link
-                href="/submit-poll"
-                className="block w-full rounded-xl bg-blue-600 py-3 text-center font-medium text-white transition hover:bg-blue-500"
-              >
-                Create a Poll
-              </Link>
             </div>
           </div>
         </div>
