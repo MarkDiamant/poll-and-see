@@ -334,14 +334,14 @@ function LiveVoteCounter({ value }: { value: number }) {
   const suffixWidthCh = Math.max(previousSuffix.length, nextSuffix.length, 1);
 
   return (
-    <div className="mb-2 mt-6 text-center">
-      <div className="inline-flex h-[116px] min-w-[214px] flex-col items-center justify-center rounded-2xl border border-cyan-400/55 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.22),_rgba(8,15,30,0.98)_56%)] px-6 py-3 shadow-[0_0_44px_rgba(34,211,238,0.20)]">
+    <div className="mb-1 mt-4 text-center">
+      <div className="inline-flex h-[104px] min-w-[206px] flex-col items-center justify-center rounded-2xl border border-cyan-400/55 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.22),_rgba(8,15,30,0.98)_56%)] px-6 py-3 shadow-[0_0_44px_rgba(34,211,238,0.20)]">
         <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-cyan-100 md:text-[11px]">
           Total Votes Cast
         </p>
 
         <div
-          className="mt-3 flex h-[62px] items-center justify-center overflow-hidden text-4xl font-bold leading-none text-white tabular-nums md:text-5xl"
+          className="mt-2 flex h-[56px] items-center justify-center overflow-hidden text-4xl font-bold leading-none text-white tabular-nums md:text-5xl"
           style={{ minWidth: `${fixedWidthCh}ch` }}
         >
           <span className="whitespace-pre">{stablePrefix}</span>
@@ -655,17 +655,25 @@ export default function Home() {
   const toggleSubscriberCategory = (category: string) => {
     setSubscriberCategories((current) => {
       if (category === "All polls") {
-        return ["All polls"];
+        return current.includes("All polls") ? [] : ["All polls"];
       }
 
       const withoutAll = current.filter((item) => item !== "All polls");
+      const isSelected = withoutAll.includes(category);
 
-      if (withoutAll.includes(category)) {
-        const next = withoutAll.filter((item) => item !== category);
-        return next.length === 0 ? ["All polls"] : next;
+      const next = isSelected
+        ? withoutAll.filter((item) => item !== category)
+        : [...withoutAll, category];
+
+      if (next.length === 0) {
+        return ["All polls"];
       }
 
-      return [...withoutAll, category];
+      if (next.length === SIGNUP_CATEGORIES.length) {
+        return ["All polls"];
+      }
+
+      return next;
     });
   };
 
@@ -831,7 +839,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
-      <header className="mx-auto max-w-6xl px-4 pb-4 pt-5 md:px-6">
+      <header className="mx-auto max-w-6xl px-4 pb-3 pt-4 md:px-6">
         <div className="flex items-center justify-between gap-4">
           <Link href="/" aria-label="Go to homepage" className="shrink-0">
             <img
@@ -859,15 +867,15 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="mx-auto max-w-6xl px-6 pb-8 pt-4">
-        <div className="mb-10 text-center">
-          <h1 className="mb-3 text-4xl font-bold md:text-5xl">Poll & See</h1>
+      <section className="mx-auto max-w-6xl px-6 pb-6 pt-1">
+        <div className="mb-5 text-center">
+          <h1 className="mb-2 text-4xl font-bold md:text-5xl">Poll & See</h1>
           <p className="text-lg text-gray-300">See what people really think</p>
           <LiveVoteCounter value={totalVoteCount} />
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-3">
-          <div className="rounded-2xl bg-gray-800 p-6 shadow-lg lg:col-span-2">
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="rounded-2xl bg-gray-800 p-5 shadow-lg lg:col-span-2">
             <div className="mb-4 flex items-center justify-between">
               <span className="rounded-full bg-blue-500/10 px-3 py-1 text-sm text-blue-300">
                 Featured Poll
@@ -880,11 +888,11 @@ export default function Home() {
 
             {featuredPoll ? (
               <>
-                <h2 className="mb-3 text-2xl font-semibold">{featuredPoll.question}</h2>
+                <h2 className="mb-2 text-2xl font-semibold">{featuredPoll.question}</h2>
 
-                <p className="mb-6 text-gray-300">{featuredPoll.description}</p>
+                <p className="mb-4 text-gray-300">{featuredPoll.description}</p>
 
-                <div className="mb-6 space-y-4">
+                <div className="mb-5 space-y-3">
                   {featuredOptions.map((option, index) => {
                     const count = featuredVoteCounts[option.id] || 0;
                     const percent =
@@ -958,18 +966,16 @@ export default function Home() {
             )}
           </div>
 
-          <div className="flex flex-col justify-center rounded-2xl bg-gray-800 p-6 shadow-lg">
-            <h3 className="mb-4 text-xl font-semibold">About</h3>
-
-            <p className="mb-4 text-gray-300">
+          <div className="flex flex-col justify-center rounded-2xl bg-gray-800 p-5 shadow-lg">
+            <p className="mb-3 text-gray-300">
               Vote on real questions. Compare your answer. See how others think.
             </p>
 
-            <p className="mb-4 text-gray-300">
+            <p className="mb-3 text-gray-300">
               From everyday opinions to testing ideas, create a poll and see what people really think.
             </p>
 
-            <div className="mb-4 rounded-xl border border-gray-700 bg-gray-900/60 p-4">
+            <div className="mb-3 rounded-xl border border-gray-700 bg-gray-900/60 p-3">
               <p className="mb-1 text-sm font-medium text-white">Stay updated with new polls</p>
               <p className="mb-3 text-xs text-gray-400">Get new polls by email, max once per day</p>
 
@@ -987,7 +993,7 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => setIsCategoryMenuOpen((current) => !current)}
-                    className="flex w-full items-center justify-between rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 pr-5 text-left text-sm text-white outline-none transition hover:border-gray-500"
+                    className="flex w-full items-center justify-between rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 pr-6 text-left text-sm text-white outline-none transition hover:border-gray-500"
                   >
                     <span className="truncate">{getCategorySummary(subscriberCategories)}</span>
                     <span className="ml-4 shrink-0 text-gray-400">▾</span>
@@ -1016,7 +1022,7 @@ export default function Home() {
                           className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-white transition hover:bg-gray-800"
                         >
                           <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 text-xs">
-                            {!subscriberCategories.includes("All polls") &&
+                            {subscriberCategories.includes("All polls") ||
                             subscriberCategories.includes(category)
                               ? "✓"
                               : ""}
@@ -1048,7 +1054,7 @@ export default function Home() {
               ) : null}
             </div>
 
-            <div className="mt-auto border-t border-gray-700 pt-4">
+            <div className="mt-auto border-t border-gray-700 pt-3">
               <Link
                 href="/submit-poll"
                 className="block w-full rounded-xl bg-blue-600 py-3 text-center font-medium text-white transition hover:bg-blue-500"
@@ -1062,7 +1068,7 @@ export default function Home() {
 
       <section id="live-polls" className="mx-auto max-w-6xl scroll-mt-6 px-6 pb-12">
         <div className="mb-5">
-          <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[auto_minmax(280px,420px)_auto] lg:items-center lg:gap-4">
+          <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[auto_minmax(240px,380px)_auto] lg:items-center lg:gap-4">
             <h3 className="text-2xl font-semibold">Live Polls</h3>
 
             <div className="w-full lg:justify-self-center">
@@ -1071,7 +1077,7 @@ export default function Home() {
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder="Search polls..."
-                className="mx-auto h-11 w-full rounded-xl border border-gray-700 bg-gray-800 px-4 text-sm text-white outline-none transition placeholder:text-sm placeholder:text-gray-500 focus:border-gray-500"
+                className="mx-auto h-10 w-full rounded-xl border border-gray-700 bg-gray-800 px-4 text-sm text-white outline-none transition placeholder:text-base placeholder:text-gray-400 focus:border-gray-500"
               />
             </div>
 
