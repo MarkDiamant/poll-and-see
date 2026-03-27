@@ -384,19 +384,35 @@ export async function GET(request:NextRequest){
 
 
 
-  const {data:polls} = await supabase
+  const { data: polls, error: pollsError } = await supabase
     .from("polls")
     .select("id,question,category,slug,created_at,poll_options")
     .gte("created_at",cutoff)
     .order("created_at",{ascending:false})
 
+  if (pollsError) {
+    console.error("Polls query error:", pollsError)
+    return NextResponse.json(
+      { error: "Could not load polls.", details: pollsError.message },
+      { status: 500 }
+    )
+  }
 
-  const {data:subs} = await supabase
+  const { data: subs, error: subsError } = await supabase
     .from("subscribers")
-    .select("email,category_preferences")
+    .select("email,category_preferences,is_active")
     .eq("is_active",true)
 
+  if (subsError) {
+    console.error("Subscribers query error:", subsError)
+    return NextResponse.json(
+      { error: "Could not load subscribers.", details: subsError.message },
+      { status: 500 }
+    )
+  }
 
+  console.log("Digest polls found:", polls?.length || 0)
+  console.log("Digest subscribers found:", subs?.length || 0)
 
   let sent = 0
 
