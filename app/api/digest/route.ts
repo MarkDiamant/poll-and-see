@@ -12,7 +12,7 @@ type PollRow = {
 type SubscriberRow = {
   id: number;
   email: string;
-  category_preference: string | null;
+  category_preferences: string[] | null;
   is_active: boolean;
 };
 
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
           .order("created_at", { ascending: false }),
         supabaseAdmin
           .from("subscribers")
-          .select("id, email, category_preference, is_active")
+          .select("id, email, category_preferences, is_active")
           .eq("is_active", true),
       ]);
 
@@ -106,9 +106,12 @@ export async function GET(request: NextRequest) {
     let sent = 0;
 
     for (const subscriber of subscribers) {
-      const matchingPolls = subscriber.category_preference
-        ? polls.filter((poll) => poll.category === subscriber.category_preference)
-        : polls;
+      const matchingPolls =
+        subscriber.category_preferences && subscriber.category_preferences.length > 0
+          ? polls.filter((poll) =>
+              subscriber.category_preferences?.includes(poll.category)
+            )
+          : polls;
 
       if (matchingPolls.length === 0) {
         continue;

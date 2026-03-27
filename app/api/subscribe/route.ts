@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+const ALLOWED_CATEGORIES = [
+  "Business",
+  "Community",
+  "Education",
+  "Finance",
+  "Fun",
+  "General",
+  "Lifestyle",
+];
+
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
@@ -19,10 +29,16 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const email = String(body.email || "").trim().toLowerCase();
-    const categoryPreferenceRaw = body.categoryPreference;
-    const categoryPreference =
-      typeof categoryPreferenceRaw === "string" && categoryPreferenceRaw.trim()
-        ? categoryPreferenceRaw.trim()
+
+    const rawPreferences = Array.isArray(body.categoryPreferences)
+      ? body.categoryPreferences
+      : null;
+
+    const categoryPreferences =
+      rawPreferences && rawPreferences.length > 0
+        ? rawPreferences
+            .map((value) => String(value).trim())
+            .filter((value) => ALLOWED_CATEGORIES.includes(value))
         : null;
 
     if (!email || !isValidEmail(email)) {
@@ -44,7 +60,10 @@ export async function POST(request: NextRequest) {
       .upsert(
         {
           email,
-          category_preference: categoryPreference,
+          category_preferences:
+            categoryPreferences && categoryPreferences.length > 0
+              ? categoryPreferences
+              : null,
           is_active: true,
         },
         { onConflict: "email" }

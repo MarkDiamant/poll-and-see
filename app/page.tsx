@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 type Poll = {
@@ -40,6 +40,15 @@ type IdleWindow = Window &
 
 const POLL_BUNDLE_CACHE_PREFIX = "poll-bundle-cache:";
 const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899"];
+const SIGNUP_CATEGORIES = [
+  "Business",
+  "Community",
+  "Education",
+  "Finance",
+  "Fun",
+  "General",
+  "Lifestyle",
+];
 
 const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: string; solid: string }> = {
   All: {
@@ -229,6 +238,18 @@ function setCachedPollBundle(bundle: PollBundle) {
   }
 }
 
+function getCategorySummary(selected: string[]) {
+  if (selected.length === 0 || selected.includes("All polls")) {
+    return "All polls";
+  }
+
+  if (selected.length <= 2) {
+    return selected.join(", ");
+  }
+
+  return `${selected.length} categories selected`;
+}
+
 function LiveVoteCounter({ value }: { value: number }) {
   const [displayValue, setDisplayValue] = useState(value);
   const [animationFrom, setAnimationFrom] = useState(value);
@@ -313,14 +334,14 @@ function LiveVoteCounter({ value }: { value: number }) {
   const suffixWidthCh = Math.max(previousSuffix.length, nextSuffix.length, 1);
 
   return (
-    <div className="mt-6 mb-2 text-center">
+    <div className="mb-2 mt-6 text-center">
       <div className="inline-flex h-[116px] min-w-[214px] flex-col items-center justify-center rounded-2xl border border-cyan-400/55 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.22),_rgba(8,15,30,0.98)_56%)] px-6 py-3 shadow-[0_0_44px_rgba(34,211,238,0.20)]">
-        <p className="text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-100">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-cyan-100 md:text-[11px]">
           Total Votes Cast
         </p>
 
         <div
-          className="mt-3 flex h-[62px] items-center justify-center overflow-hidden text-4xl md:text-5xl font-bold leading-none text-white tabular-nums"
+          className="mt-3 flex h-[62px] items-center justify-center overflow-hidden text-4xl font-bold leading-none text-white tabular-nums md:text-5xl"
           style={{ minWidth: `${fixedWidthCh}ch` }}
         >
           <span className="whitespace-pre">{stablePrefix}</span>
@@ -374,10 +395,13 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [subscriberEmail, setSubscriberEmail] = useState("");
-  const [subscriberCategory, setSubscriberCategory] = useState("All polls");
+  const [subscriberCategories, setSubscriberCategories] = useState<string[]>(["All polls"]);
   const [subscribeLoading, setSubscribeLoading] = useState(false);
   const [subscribeMessage, setSubscribeMessage] = useState("");
   const [subscribeError, setSubscribeError] = useState("");
+  const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
+
+  const categoryMenuRef = useRef<HTMLDivElement | null>(null);
 
   const loadHomeData = useCallback(async () => {
     setLoading(true);
@@ -464,6 +488,20 @@ export default function Home() {
   useEffect(() => {
     loadHomeData();
   }, [loadHomeData]);
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (categoryMenuRef.current && !categoryMenuRef.current.contains(event.target as Node)) {
+        setIsCategoryMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -614,7 +652,24 @@ export default function Home() {
     sessionStorage.setItem("homeScrollY", String(window.scrollY));
   };
 
-  const handleSubscribe = async (event: React.FormEvent<HTMLFormElement>) => {
+  const toggleSubscriberCategory = (category: string) => {
+    setSubscriberCategories((current) => {
+      if (category === "All polls") {
+        return ["All polls"];
+      }
+
+      const withoutAll = current.filter((item) => item !== "All polls");
+
+      if (withoutAll.includes(category)) {
+        const next = withoutAll.filter((item) => item !== category);
+        return next.length === 0 ? ["All polls"] : next;
+      }
+
+      return [...withoutAll, category];
+    });
+  };
+
+  const handleSubscribe = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!subscriberEmail.trim()) {
@@ -628,6 +683,9 @@ export default function Home() {
     setSubscribeMessage("");
 
     try {
+      const selectedPreferences =
+        subscriberCategories.includes("All polls") ? null : subscriberCategories;
+
       const response = await fetch("/api/subscribe", {
         method: "POST",
         headers: {
@@ -635,7 +693,7 @@ export default function Home() {
         },
         body: JSON.stringify({
           email: subscriberEmail.trim(),
-          categoryPreference: subscriberCategory === "All polls" ? null : subscriberCategory,
+          categoryPreferences: selectedPreferences,
         }),
       });
 
@@ -647,7 +705,8 @@ export default function Home() {
 
       setSubscribeMessage("Subscribed.");
       setSubscriberEmail("");
-      setSubscriberCategory("All polls");
+      setSubscriberCategories(["All polls"]);
+      setIsCategoryMenuOpen(false);
     } catch (error) {
       setSubscribeError(error instanceof Error ? error.message : "Could not subscribe.");
     } finally {
@@ -763,7 +822,7 @@ export default function Home() {
   if (loading) {
     return (
       <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
-        <section className="max-w-6xl mx-auto px-6 pt-10 pb-12">
+        <section className="mx-auto max-w-6xl px-6 pb-12 pt-10">
           <p>Loading...</p>
         </section>
       </main>
@@ -772,27 +831,27 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
-      <header className="max-w-6xl mx-auto px-4 md:px-6 pt-5 pb-4">
+      <header className="mx-auto max-w-6xl px-4 pb-4 pt-5 md:px-6">
         <div className="flex items-center justify-between gap-4">
           <Link href="/" aria-label="Go to homepage" className="shrink-0">
             <img
               src="/logo.png"
               alt="Poll & See"
-              className="h-12 md:h-16 w-auto object-contain block"
+              className="block h-12 w-auto object-contain md:h-16"
             />
           </Link>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex shrink-0 items-center gap-2">
             <Link
               href="/"
-              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-gray-800"
+              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm font-medium text-white transition hover:bg-gray-800 md:px-5"
             >
               Home
             </Link>
 
             <Link
               href="/submit-poll"
-              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-blue-500"
+              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-3 text-sm font-medium text-white transition hover:bg-blue-500 md:px-5"
             >
               Create Poll
             </Link>
@@ -800,17 +859,17 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="max-w-6xl mx-auto px-6 pt-4 pb-8">
-        <div className="text-center mb-10">
-          <h1 className="text-4xl md:text-5xl font-bold mb-3">Poll & See</h1>
+      <section className="mx-auto max-w-6xl px-6 pb-8 pt-4">
+        <div className="mb-10 text-center">
+          <h1 className="mb-3 text-4xl font-bold md:text-5xl">Poll & See</h1>
           <p className="text-lg text-gray-300">See what people really think</p>
           <LiveVoteCounter value={totalVoteCount} />
         </div>
 
         <div className="grid gap-8 lg:grid-cols-3">
-          <div className="lg:col-span-2 bg-gray-800 rounded-2xl p-6 shadow-lg">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-sm text-blue-300 bg-blue-500/10 px-3 py-1 rounded-full">
+          <div className="rounded-2xl bg-gray-800 p-6 shadow-lg lg:col-span-2">
+            <div className="mb-4 flex items-center justify-between">
+              <span className="rounded-full bg-blue-500/10 px-3 py-1 text-sm text-blue-300">
                 Featured Poll
               </span>
 
@@ -821,15 +880,11 @@ export default function Home() {
 
             {featuredPoll ? (
               <>
-                <h2 className="text-2xl font-semibold mb-3">
-                  {featuredPoll.question}
-                </h2>
+                <h2 className="mb-3 text-2xl font-semibold">{featuredPoll.question}</h2>
 
-                <p className="text-gray-300 mb-6">
-                  {featuredPoll.description}
-                </p>
+                <p className="mb-6 text-gray-300">{featuredPoll.description}</p>
 
-                <div className="space-y-4 mb-6">
+                <div className="mb-6 space-y-4">
                   {featuredOptions.map((option, index) => {
                     const count = featuredVoteCounts[option.id] || 0;
                     const percent =
@@ -853,7 +908,7 @@ export default function Home() {
                       >
                         <div className="px-3 pt-3">
                           <div className="grid grid-cols-[1fr_auto] items-start gap-x-3">
-                            <div className="flex items-start gap-2 min-w-0">
+                            <div className="flex min-w-0 items-start gap-2">
                               {isSelected ? (
                                 <span
                                   className="mt-0.5 shrink-0 text-base font-bold"
@@ -863,7 +918,7 @@ export default function Home() {
                                 </span>
                               ) : null}
 
-                              <span className="min-w-0 leading-6 break-words text-white">
+                              <span className="min-w-0 break-words leading-6 text-white">
                                 {option.option_text}
                               </span>
                             </div>
@@ -875,7 +930,7 @@ export default function Home() {
                         </div>
 
                         <div className="px-3 pb-3 pt-2">
-                          <div className="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
+                          <div className="h-4 w-full overflow-hidden rounded-full bg-gray-700">
                             <div
                               className="h-4 transition-all"
                               style={{
@@ -893,7 +948,7 @@ export default function Home() {
 
                 <Link
                   href={`/poll/${featuredPoll.slug}`}
-                  className="inline-block bg-white text-black px-5 py-3 rounded-xl font-medium hover:bg-gray-200 transition"
+                  className="inline-block rounded-xl bg-white px-5 py-3 font-medium text-black transition hover:bg-gray-200"
                 >
                   {featuredPollVoted ? "View poll" : "Vote on featured poll"}
                 </Link>
@@ -903,18 +958,20 @@ export default function Home() {
             )}
           </div>
 
-          <div className="bg-gray-800 rounded-2xl p-6 shadow-lg flex flex-col justify-center">
-            <h3 className="text-xl font-semibold mb-4">About</h3>
-            <p className="text-gray-300 mb-4">
+          <div className="flex flex-col justify-center rounded-2xl bg-gray-800 p-6 shadow-lg">
+            <h3 className="mb-4 text-xl font-semibold">About</h3>
+
+            <p className="mb-4 text-gray-300">
               Vote on real questions. Compare your answer. See how others think.
             </p>
 
-            <p className="text-gray-300 mb-4">
+            <p className="mb-4 text-gray-300">
               From everyday opinions to testing ideas, create a poll and see what people really think.
             </p>
 
             <div className="mb-4 rounded-xl border border-gray-700 bg-gray-900/60 p-4">
-              <p className="text-sm text-gray-300 mb-3">Be first to vote on new polls</p>
+              <p className="mb-1 text-sm font-medium text-white">Stay updated with new polls</p>
+              <p className="mb-3 text-xs text-gray-400">Get new polls by email, max once per day</p>
 
               <form onSubmit={handleSubscribe} className="space-y-3">
                 <input
@@ -926,20 +983,50 @@ export default function Home() {
                   className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
                 />
 
-                <select
-                  value={subscriberCategory}
-                  onChange={(event) => setSubscriberCategory(event.target.value)}
-                  className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none transition focus:border-gray-500"
-                >
-                  <option>All polls</option>
-                  <option>Business</option>
-                  <option>Community</option>
-                  <option>Education</option>
-                  <option>Finance</option>
-                  <option>Fun</option>
-                  <option>General</option>
-                  <option>Lifestyle</option>
-                </select>
+                <div ref={categoryMenuRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsCategoryMenuOpen((current) => !current)}
+                    className="flex w-full items-center justify-between rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 pr-5 text-left text-sm text-white outline-none transition hover:border-gray-500"
+                  >
+                    <span className="truncate">{getCategorySummary(subscriberCategories)}</span>
+                    <span className="ml-4 shrink-0 text-gray-400">▾</span>
+                  </button>
+
+                  {isCategoryMenuOpen ? (
+                    <div className="absolute z-20 mt-2 w-full rounded-xl border border-gray-700 bg-gray-900 p-2 shadow-xl">
+                      <button
+                        type="button"
+                        onClick={() => toggleSubscriberCategory("All polls")}
+                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-white transition hover:bg-gray-800"
+                      >
+                        <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 text-xs">
+                          {subscriberCategories.includes("All polls") ? "✓" : ""}
+                        </span>
+                        <span>All polls</span>
+                      </button>
+
+                      <div className="my-1 border-t border-gray-800" />
+
+                      {SIGNUP_CATEGORIES.map((category) => (
+                        <button
+                          key={category}
+                          type="button"
+                          onClick={() => toggleSubscriberCategory(category)}
+                          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-white transition hover:bg-gray-800"
+                        >
+                          <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 text-xs">
+                            {!subscriberCategories.includes("All polls") &&
+                            subscriberCategories.includes(category)
+                              ? "✓"
+                              : ""}
+                          </span>
+                          <span>{category}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
 
                 <button
                   type="submit"
@@ -961,10 +1048,10 @@ export default function Home() {
               ) : null}
             </div>
 
-            <div className="border-t border-gray-700 pt-4 mt-auto">
+            <div className="mt-auto border-t border-gray-700 pt-4">
               <Link
                 href="/submit-poll"
-                className="block w-full text-center rounded-xl bg-blue-600 py-3 font-medium text-white transition hover:bg-blue-500"
+                className="block w-full rounded-xl bg-blue-600 py-3 text-center font-medium text-white transition hover:bg-blue-500"
               >
                 Create a Poll
               </Link>
@@ -973,23 +1060,24 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="live-polls" className="max-w-6xl mx-auto px-6 pb-12 scroll-mt-6">
+      <section id="live-polls" className="mx-auto max-w-6xl scroll-mt-6 px-6 pb-12">
         <div className="mb-5">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[auto_minmax(280px,420px)_auto] lg:items-center lg:gap-4">
             <h3 className="text-2xl font-semibold">Live Polls</h3>
-            <span className="text-base text-gray-300 font-medium">
+
+            <div className="w-full lg:justify-self-center">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Search polls..."
+                className="mx-auto h-11 w-full rounded-xl border border-gray-700 bg-gray-800 px-4 text-sm text-white outline-none transition placeholder:text-sm placeholder:text-gray-500 focus:border-gray-500"
+              />
+            </div>
+
+            <span className="text-base font-medium text-gray-300 lg:justify-self-end">
               {activePollCount} active polls
             </span>
-          </div>
-
-          <div className="mt-4">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Search polls..."
-              className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
-            />
           </div>
 
           <div className="mt-4 grid grid-cols-6 gap-2 lg:flex lg:flex-nowrap lg:gap-2">
@@ -1042,11 +1130,11 @@ export default function Home() {
                   id={`poll-card-${poll.slug}`}
                   href={`/poll/${poll.slug}`}
                   onClick={() => handlePollClick(poll)}
-                  className="bg-gray-800 rounded-2xl p-5 shadow-lg transition border border-gray-700 hover:border-gray-500"
+                  className="rounded-2xl border border-gray-700 bg-gray-800 p-5 shadow-lg transition hover:border-gray-500"
                 >
                   <div className="mb-3">
                     <span
-                      className="text-xs px-2 py-1 rounded-full"
+                      className="rounded-full px-2 py-1 text-xs"
                       style={{
                         color: categoryColours.text,
                         backgroundColor: categoryColours.bg,
@@ -1057,8 +1145,8 @@ export default function Home() {
                     </span>
                   </div>
 
-                  <h4 className="text-lg font-semibold mb-2">{poll.question}</h4>
-                  <p className="text-sm text-gray-300 mb-4">{poll.description}</p>
+                  <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
+                  <p className="mb-4 text-sm text-gray-300">{poll.description}</p>
 
                   <div className="flex items-center justify-between text-sm text-gray-400">
                     <span>View poll</span>
@@ -1069,15 +1157,13 @@ export default function Home() {
             })}
           </div>
         ) : (
-          <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
-            <p className="text-gray-300">
-              No polls found in this category.
-            </p>
+          <div className="rounded-2xl border border-gray-700 bg-gray-800 p-6">
+            <p className="text-gray-300">No polls found in this category.</p>
           </div>
         )}
       </section>
 
-      <footer className="text-center text-sm text-gray-500 py-8">
+      <footer className="py-8 text-center text-sm text-gray-500">
         © {new Date().getFullYear()} Poll & See
       </footer>
     </main>
