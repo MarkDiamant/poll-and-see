@@ -30,15 +30,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const email = String(body.email || "").trim().toLowerCase();
 
-    const rawPreferences = Array.isArray(body.categoryPreferences)
-      ? body.categoryPreferences
+    const rawPreferences: unknown[] | null = Array.isArray(body.categoryPreferences)
+      ? (body.categoryPreferences as unknown[])
       : null;
 
     const categoryPreferences =
       rawPreferences && rawPreferences.length > 0
         ? rawPreferences
-            .map((value) => String(value).trim())
-            .filter((value) => ALLOWED_CATEGORIES.includes(value))
+            .map((value: unknown) => String(value).trim())
+            .filter((value: string) => ALLOWED_CATEGORIES.includes(value))
         : null;
 
     if (!email || !isValidEmail(email)) {
