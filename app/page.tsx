@@ -32,6 +32,12 @@ type PollBundle = {
   voteCounts: VoteCounts;
 };
 
+type IdleWindow = Window &
+  typeof globalThis & {
+    requestIdleCallback?: (callback: IdleRequestCallback) => number;
+    cancelIdleCallback?: (handle: number) => void;
+  };
+
 const POLL_BUNDLE_CACHE_PREFIX = "poll-bundle-cache:";
 const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899"];
 
@@ -730,24 +736,26 @@ export default function Home() {
       );
     };
 
-    const idleId =
-      "requestIdleCallback" in window
-        ? (window as Window & typeof globalThis & {
-            requestIdleCallback: (callback: IdleRequestCallback) => number;
-          }).requestIdleCallback(() => {
-            void cachePollBundles();
-          })
-        : window.setTimeout(() => {
-            void cachePollBundles();
-          }, 0);
+    const idleWindow = window as IdleWindow;
+    let idleHandle: number | null = null;
+    let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
+
+    if (typeof idleWindow.requestIdleCallback === "function") {
+      idleHandle = idleWindow.requestIdleCallback(() => {
+        void cachePollBundles();
+      });
+    } else {
+      timeoutHandle = setTimeout(() => {
+        void cachePollBundles();
+      }, 0);
+    }
 
     return () => {
-      if ("cancelIdleCallback" in window) {
-        (window as Window & typeof globalThis & {
-          cancelIdleCallback: (handle: number) => void;
-        }).cancelIdleCallback(idleId as number);
-      } else {
-        clearTimeout(idleId as number);
+      if (idleHandle !== null && typeof idleWindow.cancelIdleCallback === "function") {
+        idleWindow.cancelIdleCallback(idleHandle);
+      }
+      if (timeoutHandle !== null) {
+        clearTimeout(timeoutHandle);
       }
     };
   }, [loading, featuredPoll, livePolls]);
