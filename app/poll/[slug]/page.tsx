@@ -374,11 +374,11 @@ function PollCard({
           <ResultOptions options={bundle.options} voteCounts={counts} selectedOptionId={selected} />
           <p className="pt-4 text-sm text-gray-400">You’ve voted.</p>
 
-          <div className="mt-6 space-y-3">
-            <div className="grid grid-cols-2 gap-3">
+          <div className="mt-6">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-start">
               <button
                 onClick={handleShare}
-                className="cursor-pointer rounded-xl bg-white px-4 py-2 font-medium text-black transition hover:bg-gray-200"
+                className="cursor-pointer rounded-xl bg-white px-3 py-2 text-sm font-medium text-black transition hover:bg-gray-200 sm:px-4"
               >
                 {shareText}
               </button>
@@ -386,19 +386,15 @@ function PollCard({
               {showGoToAllPolls ? (
                 <Link
                   href="/#live-polls"
-                  className="inline-flex items-center justify-center rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 font-medium text-white transition hover:bg-gray-800"
+                  className="inline-flex items-center justify-center rounded-xl border border-gray-700 bg-gray-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-gray-800 sm:px-4"
                 >
                   Go to all polls
                 </Link>
-              ) : (
-                <div />
-              )}
-            </div>
+              ) : null}
 
-            <div className="flex justify-center">
               <Link
                 href={`/?category=${encodeURIComponent(bundle.poll.category)}#live-polls`}
-                className="inline-flex items-center justify-center rounded-xl border px-4 py-2 font-medium transition hover:bg-gray-800"
+                className="col-span-2 mt-2 inline-flex items-center justify-center rounded-xl border px-4 py-2 text-sm font-medium transition hover:bg-gray-800 sm:col-auto sm:mt-0"
                 style={{
                   borderColor: categoryColours.border,
                   backgroundColor: categoryColours.bg,
@@ -597,7 +593,7 @@ export default function PollPage() {
       const lastPollId = polls[polls.length - 1]?.poll.id;
       if (lastPollId) {
         requestAnimationFrame(() => {
-          pollRefs.current[lastPollId]?.scrollIntoView({ behavior: "smooth", block: "start" });
+          pollRefs.current[lastPollId]?.scrollIntoView({ behavior: "auto", block: "start" });
         });
       }
     }
