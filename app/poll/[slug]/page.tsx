@@ -334,18 +334,50 @@ function PollCard({
       <p className="mb-6 text-gray-300">{bundle.poll.description}</p>
 
       {!voted ? (
-        <div className="flex flex-col gap-3">
-          {bundle.options.map((option) => (
+        <>
+          <div className="flex flex-col gap-3">
+            {bundle.options.map((option) => (
+              <button
+                key={option.id}
+                onClick={() => handleVote(option.id)}
+                className="rounded-xl bg-gray-700 py-3 text-white transition hover:bg-gray-600"
+              >
+                {option.option_text}
+              </button>
+            ))}
+            {error ? <p className="text-sm text-red-300">{error}</p> : null}
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-3">
             <button
-              key={option.id}
-              onClick={() => handleVote(option.id)}
-              className="rounded-xl bg-gray-700 py-3 text-white transition hover:bg-gray-600"
+              onClick={handleShare}
+              className="cursor-pointer rounded-xl bg-white px-4 py-2 font-medium text-black transition hover:bg-gray-200"
             >
-              {option.option_text}
+              {shareText}
             </button>
-          ))}
-          {error ? <p className="text-sm text-red-300">{error}</p> : null}
-        </div>
+
+            <Link
+              href={`/?category=${encodeURIComponent(bundle.poll.category)}#live-polls`}
+              className="inline-flex items-center rounded-xl border px-4 py-2 font-medium transition hover:bg-gray-800"
+              style={{
+                borderColor: categoryColours.border,
+                backgroundColor: categoryColours.bg,
+                color: categoryColours.text,
+              }}
+            >
+              See other {bundle.poll.category} polls
+            </Link>
+
+            {showGoToAllPolls ? (
+              <Link
+                href="/#live-polls"
+                className="inline-flex items-center rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 font-medium text-white transition hover:bg-gray-800"
+              >
+                Go to all polls
+              </Link>
+            ) : null}
+          </div>
+        </>
       ) : (
         <>
           <ResultOptions options={bundle.options} voteCounts={counts} selectedOptionId={selected} />
