@@ -978,8 +978,8 @@ export default function Home() {
             </p>
 
             <div className="mb-3 rounded-xl border border-gray-700 bg-gray-900/60 p-3">
-              <p className="mb-1 text-sm font-medium text-white">Stay updated with new polls</p>
-              <p className="mb-3 text-xs text-gray-400">Get new polls by email, max once per day</p>
+              <p className="mb-1 text-sm font-medium text-white">Get new polls by email</p>
+              <p className="mb-3 text-xs text-gray-400">Max once per day. Unsubscribe anytime.</p>
 
               <form onSubmit={handleSubscribe} className="space-y-3">
                 <input
@@ -1044,8 +1044,6 @@ export default function Home() {
                   {subscribeLoading ? "Subscribing..." : "Subscribe"}
                 </button>
               </form>
-
-              <p className="mt-2 text-xs text-gray-500">Unsubscribe anytime.</p>
 
               {subscribeMessage ? (
                 <p className="mt-2 text-sm text-green-300">{subscribeMessage}</p>
