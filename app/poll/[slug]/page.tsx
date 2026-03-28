@@ -31,7 +31,10 @@ const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899"];
 const SAME_POLL_CLICK_GUARD_MS = 400;
 const POLL_BUNDLE_CACHE_PREFIX = "poll-bundle-cache:";
 
-const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: string; solid: string }> = {
+const CATEGORY_COLOURS: Record<
+  string,
+  { text: string; bg: string; border: string; solid: string }
+> = {
   All: { text: "#e5e7eb", bg: "rgba(31, 41, 55, 0.9)", border: "rgba(75, 85, 99, 1)", solid: "#374151" },
   Business: { text: "#93c5fd", bg: "rgba(37, 99, 235, 0.12)", border: "rgba(37, 99, 235, 0.55)", solid: "#2563eb" },
   Community: { text: "#fca5a5", bg: "rgba(239, 68, 68, 0.12)", border: "rgba(239, 68, 68, 0.55)", solid: "#ef4444" },
@@ -65,7 +68,9 @@ function getCategoryColours(category: string) {
   if (!trimmed) return CATEGORY_COLOURS.All;
   if (CATEGORY_COLOURS[trimmed]) return CATEGORY_COLOURS[trimmed];
   let hash = 0;
-  for (let i = 0; i < trimmed.length; i += 1) hash = trimmed.charCodeAt(i) + ((hash << 5) - hash);
+  for (let i = 0; i < trimmed.length; i += 1) {
+    hash = trimmed.charCodeAt(i) + ((hash << 5) - hash);
+  }
   return FALLBACK_CATEGORY_COLOURS[Math.abs(hash) % FALLBACK_CATEGORY_COLOURS.length];
 }
 
@@ -397,6 +402,11 @@ export default function PollPage() {
   const preloadedQueueRef = useRef<PollBundle[]>([]);
   const pollsRef = useRef<PollBundle[]>([]);
 
+  const [subscriberEmail, setSubscriberEmail] = useState("");
+  const [subscribeLoading, setSubscribeLoading] = useState(false);
+  const [subscribeMessage, setSubscribeMessage] = useState("");
+  const [subscribeError, setSubscribeError] = useState("");
+
   useEffect(() => {
     pollsRef.current = polls;
   }, [polls]);
@@ -404,6 +414,46 @@ export default function PollPage() {
   const handleBack = () => {
     sessionStorage.setItem("restoreHomeScroll", "true");
     router.push("/");
+  };
+
+  const handleSubscribe = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!subscriberEmail.trim()) {
+      setSubscribeError("Enter an email address.");
+      setSubscribeMessage("");
+      return;
+    }
+
+    setSubscribeLoading(true);
+    setSubscribeError("");
+    setSubscribeMessage("");
+
+    try {
+      const response = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: subscriberEmail.trim(),
+          categoryPreferences: null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Could not subscribe right now.");
+      }
+
+      setSubscribeMessage("Subscribed.");
+      setSubscriberEmail("");
+    } catch (error) {
+      setSubscribeError(error instanceof Error ? error.message : "Could not subscribe right now.");
+    } finally {
+      setSubscribeLoading(false);
+    }
   };
 
   const loadBundle = async (pollId: number): Promise<PollBundle> => {
@@ -554,7 +604,7 @@ export default function PollPage() {
           ← Back to polls
         </button>
 
-        {polls.map((bundle) => (
+        {polls.map((bundle, index) => (
           <div
             key={bundle.poll.id}
             ref={(el) => {
@@ -568,6 +618,40 @@ export default function PollPage() {
                 void handleVoteComplete(pollId, category);
               }}
             />
+
+            {index === 0 ? (
+              <div className="mb-8 mt-4 max-w-md rounded-xl border border-gray-700 bg-gray-900/70 p-4">
+                <p className="mb-1 text-sm font-medium text-white">Get new polls by email</p>
+                <p className="mb-3 text-xs text-gray-400">Max once per day. Unsubscribe anytime.</p>
+
+                <form onSubmit={handleSubscribe} className="flex flex-col gap-2 sm:flex-row">
+                  <input
+                    type="email"
+                    value={subscriberEmail}
+                    onChange={(event) => setSubscriberEmail(event.target.value)}
+                    placeholder="Email address"
+                    required
+                    className="flex-1 rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
+                  />
+
+                  <button
+                    type="submit"
+                    disabled={subscribeLoading}
+                    className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-70"
+                  >
+                    {subscribeLoading ? "Subscribing..." : "Subscribe"}
+                  </button>
+                </form>
+
+                {subscribeMessage ? (
+                  <p className="mt-2 text-sm text-green-300">{subscribeMessage}</p>
+                ) : null}
+
+                {subscribeError ? (
+                  <p className="mt-2 text-sm text-red-300">{subscribeError}</p>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         ))}
 
@@ -582,50 +666,7 @@ export default function PollPage() {
           </div>
         ) : null}
       </section>
-<div className="mt-10 rounded-2xl border border-gray-700 bg-gray-800 p-5">
-<p className="mb-2 text-white font-medium">
-Get new polls by email
-</p>
 
-<p className="mb-3 text-sm text-gray-400">
-Max once per day. Unsubscribe anytime.
-</p>
-
-<form
-onSubmit={async e=>{
-e.preventDefault()
-
-const form=e.target as HTMLFormElement
-const email=(form.elements.namedItem("email") as HTMLInputElement).value
-
-await fetch("/api/subscribe",{
-method:"POST",
-headers:{ "Content-Type":"application/json"},
-body:JSON.stringify({email})
-})
-
-form.reset()
-}}
-className="flex gap-2 flex-col sm:flex-row"
->
-
-<input
-name="email"
-type="email"
-required
-placeholder="Email address"
-className="flex-1 rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white"
-/>
-
-<button
-className="rounded-xl bg-white px-4 py-3 text-sm font-medium text-black"
->
-Subscribe
-</button>
-
-</form>
-
-</div>
       <footer className="py-8 text-center text-sm text-gray-500">
         © {new Date().getFullYear()} Poll & See
       </footer>
