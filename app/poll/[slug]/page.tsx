@@ -161,6 +161,29 @@ function setCachedPollBundle(bundle: PollBundle) {
   }
 }
 
+function smoothScrollToElement(element: HTMLElement, duration = 650, topOffset = 12) {
+  const startY = window.scrollY;
+  const targetY = element.getBoundingClientRect().top + window.scrollY - topOffset;
+  const distance = targetY - startY;
+  const startTime = performance.now();
+
+  const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+
+  function step(currentTime: number) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = easeOutCubic(progress);
+
+    window.scrollTo(0, startY + distance * eased);
+
+    if (progress < 1) {
+      window.requestAnimationFrame(step);
+    }
+  }
+
+  window.requestAnimationFrame(step);
+}
+
 async function submitVote(pollId: number, optionId: number) {
   const response = await fetch("/api/vote", {
     method: "POST",
@@ -377,7 +400,7 @@ function PollCard({
             <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-start">
               <button
                 onClick={handleShare}
-                className="cursor-pointer rounded-xl bg-white px-3 py-2 text-sm font-medium text-black transition hover:bg-gray-200 sm:px-4"
+                className="inline-flex h-10 items-center justify-center cursor-pointer rounded-xl bg-white px-3 py-0 text-sm font-medium leading-none text-black transition hover:bg-gray-200 sm:px-4"
               >
                 {shareText}
               </button>
@@ -385,7 +408,7 @@ function PollCard({
               {showGoToAllPolls ? (
                 <Link
                   href="/#live-polls"
-                  className="inline-flex items-center justify-center rounded-xl border border-gray-700 bg-gray-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-gray-800 sm:px-4"
+                  className="inline-flex h-10 items-center justify-center rounded-xl border border-gray-700 bg-gray-900 px-3 py-0 text-sm font-medium leading-none text-white transition hover:bg-gray-800 sm:px-4"
                 >
                   Go to all polls
                 </Link>
@@ -393,7 +416,7 @@ function PollCard({
 
               <Link
                 href={`/?category=${encodeURIComponent(bundle.poll.category)}#live-polls`}
-                className="col-span-2 mt-2 inline-flex items-center justify-center rounded-xl border px-4 py-2 text-sm font-medium transition hover:bg-gray-800 sm:col-auto sm:mt-0"
+                className="col-span-2 mt-2 inline-flex h-10 items-center justify-center rounded-xl border px-4 py-0 text-sm font-medium leading-none transition hover:bg-gray-800 sm:col-auto sm:mt-0"
                 style={{
                   borderColor: categoryColours.border,
                   backgroundColor: categoryColours.bg,
@@ -417,6 +440,7 @@ export default function PollPage() {
 
   const [polls, setPolls] = useState<PollBundle[]>([]);
   const pollRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const subscribeBoxRef = useRef<HTMLDivElement | null>(null);
   const previousPollCountRef = useRef(0);
   const preloadedQueueRef = useRef<PollBundle[]>([]);
   const pollsRef = useRef<PollBundle[]>([]);
@@ -589,11 +613,13 @@ export default function PollPage() {
 
   useEffect(() => {
     if (polls.length > previousPollCountRef.current && polls.length > 1) {
-      const lastPollId = polls[polls.length - 1]?.poll.id;
-      if (lastPollId) {
-        requestAnimationFrame(() => {
-          pollRefs.current[lastPollId]?.scrollIntoView({ behavior: "auto", block: "start" });
-        });
+      if (polls.length === 2 && subscribeBoxRef.current) {
+        smoothScrollToElement(subscribeBoxRef.current, 650, 8);
+      } else {
+        const lastPollId = polls[polls.length - 1]?.poll.id;
+        if (lastPollId && pollRefs.current[lastPollId]) {
+          smoothScrollToElement(pollRefs.current[lastPollId] as HTMLElement, 650, 8);
+        }
       }
     }
 
@@ -689,7 +715,7 @@ export default function PollPage() {
             />
 
             {index === 0 ? (
-              <div className="mb-8 mt-4 flex justify-center">
+              <div ref={subscribeBoxRef} className="mb-8 mt-4 flex justify-center">
                 <div className="w-full max-w-md rounded-xl border border-gray-700 bg-gray-900/70 p-4">
                   <p className="mb-1 text-sm font-medium text-white">Get new polls by email</p>
                   <p className="mb-3 text-xs text-gray-400">Max once per day. Unsubscribe anytime.</p>
