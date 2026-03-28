@@ -31,10 +31,7 @@ const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899"];
 const SAME_POLL_CLICK_GUARD_MS = 400;
 const POLL_BUNDLE_CACHE_PREFIX = "poll-bundle-cache:";
 
-const CATEGORY_COLOURS: Record<
-  string,
-  { text: string; bg: string; border: string; solid: string }
-> = {
+const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: string; solid: string }> = {
   All: { text: "#e5e7eb", bg: "rgba(31, 41, 55, 0.9)", border: "rgba(75, 85, 99, 1)", solid: "#374151" },
   Business: { text: "#93c5fd", bg: "rgba(37, 99, 235, 0.12)", border: "rgba(37, 99, 235, 0.55)", solid: "#2563eb" },
   Community: { text: "#fca5a5", bg: "rgba(239, 68, 68, 0.12)", border: "rgba(239, 68, 68, 0.55)", solid: "#ef4444" },
@@ -68,9 +65,7 @@ function getCategoryColours(category: string) {
   if (!trimmed) return CATEGORY_COLOURS.All;
   if (CATEGORY_COLOURS[trimmed]) return CATEGORY_COLOURS[trimmed];
   let hash = 0;
-  for (let i = 0; i < trimmed.length; i += 1) {
-    hash = trimmed.charCodeAt(i) + ((hash << 5) - hash);
-  }
+  for (let i = 0; i < trimmed.length; i += 1) hash = trimmed.charCodeAt(i) + ((hash << 5) - hash);
   return FALLBACK_CATEGORY_COLOURS[Math.abs(hash) % FALLBACK_CATEGORY_COLOURS.length];
 }
 
@@ -620,36 +615,38 @@ export default function PollPage() {
             />
 
             {index === 0 ? (
-              <div className="mb-8 mt-4 max-w-md rounded-xl border border-gray-700 bg-gray-900/70 p-4">
-                <p className="mb-1 text-sm font-medium text-white">Get new polls by email</p>
-                <p className="mb-3 text-xs text-gray-400">Max once per day. Unsubscribe anytime.</p>
+              <div className="mb-8 mt-4 flex justify-center">
+                <div className="w-full max-w-md rounded-xl border border-gray-700 bg-gray-900/70 p-4">
+                  <p className="mb-1 text-sm font-medium text-white">Get new polls by email</p>
+                  <p className="mb-3 text-xs text-gray-400">Max once per day. Unsubscribe anytime.</p>
 
-                <form onSubmit={handleSubscribe} className="flex flex-col gap-2 sm:flex-row">
-                  <input
-                    type="email"
-                    value={subscriberEmail}
-                    onChange={(event) => setSubscriberEmail(event.target.value)}
-                    placeholder="Email address"
-                    required
-                    className="flex-1 rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
-                  />
+                  <form onSubmit={handleSubscribe} className="flex flex-col gap-2 sm:flex-row">
+                    <input
+                      type="email"
+                      value={subscriberEmail}
+                      onChange={(event) => setSubscriberEmail(event.target.value)}
+                      placeholder="Email address"
+                      required
+                      className="flex-1 rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
+                    />
 
-                  <button
-                    type="submit"
-                    disabled={subscribeLoading}
-                    className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-70"
-                  >
-                    {subscribeLoading ? "Subscribing..." : "Subscribe"}
-                  </button>
-                </form>
+                    <button
+                      type="submit"
+                      disabled={subscribeLoading}
+                      className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-70"
+                    >
+                      {subscribeLoading ? "Subscribing..." : "Subscribe"}
+                    </button>
+                  </form>
 
-                {subscribeMessage ? (
-                  <p className="mt-2 text-sm text-green-300">{subscribeMessage}</p>
-                ) : null}
+                  {subscribeMessage ? (
+                    <p className="mt-2 text-sm text-green-300">{subscribeMessage}</p>
+                  ) : null}
 
-                {subscribeError ? (
-                  <p className="mt-2 text-sm text-red-300">{subscribeError}</p>
-                ) : null}
+                  {subscribeError ? (
+                    <p className="mt-2 text-sm text-red-300">{subscribeError}</p>
+                  ) : null}
+                </div>
               </div>
             ) : null}
           </div>
