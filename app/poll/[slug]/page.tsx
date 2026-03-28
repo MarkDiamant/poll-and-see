@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 type Poll = {
@@ -30,6 +30,15 @@ type PollBundle = {
 const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899"];
 const SAME_POLL_CLICK_GUARD_MS = 400;
 const POLL_BUNDLE_CACHE_PREFIX = "poll-bundle-cache:";
+const SIGNUP_CATEGORIES = [
+  "Business",
+  "Community",
+  "Education",
+  "Finance",
+  "Fun",
+  "General",
+  "Lifestyle",
+];
 
 const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: string; solid: string }> = {
   All: { text: "#e5e7eb", bg: "rgba(31, 41, 55, 0.9)", border: "rgba(75, 85, 99, 1)", solid: "#374151" },
@@ -67,6 +76,18 @@ function getCategoryColours(category: string) {
   let hash = 0;
   for (let i = 0; i < trimmed.length; i += 1) hash = trimmed.charCodeAt(i) + ((hash << 5) - hash);
   return FALLBACK_CATEGORY_COLOURS[Math.abs(hash) % FALLBACK_CATEGORY_COLOURS.length];
+}
+
+function getCategorySummary(selected: string[]) {
+  if (selected.length === 0 || selected.includes("All polls")) {
+    return "All polls";
+  }
+
+  if (selected.length <= 2) {
+    return selected.join(", ");
+  }
+
+  return `${selected.length} categories selected`;
 }
 
 function canVoteNow(pollId: number): string | null {
@@ -340,42 +361,12 @@ function PollCard({
               <button
                 key={option.id}
                 onClick={() => handleVote(option.id)}
-                className="rounded-xl bg-gray-700 py-3 text-white transition hover:bg-gray-600"
+                className="cursor-pointer rounded-xl bg-gray-700 py-3 text-white transition hover:bg-gray-600"
               >
                 {option.option_text}
               </button>
             ))}
             {error ? <p className="text-sm text-red-300">{error}</p> : null}
-          </div>
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            <button
-              onClick={handleShare}
-              className="cursor-pointer rounded-xl bg-white px-4 py-2 font-medium text-black transition hover:bg-gray-200"
-            >
-              {shareText}
-            </button>
-
-            <Link
-              href={`/?category=${encodeURIComponent(bundle.poll.category)}#live-polls`}
-              className="inline-flex items-center rounded-xl border px-4 py-2 font-medium transition hover:bg-gray-800"
-              style={{
-                borderColor: categoryColours.border,
-                backgroundColor: categoryColours.bg,
-                color: categoryColours.text,
-              }}
-            >
-              See other {bundle.poll.category} polls
-            </Link>
-
-            {showGoToAllPolls ? (
-              <Link
-                href="/#live-polls"
-                className="inline-flex items-center rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 font-medium text-white transition hover:bg-gray-800"
-              >
-                Go to all polls
-              </Link>
-            ) : null}
           </div>
         </>
       ) : (
@@ -383,34 +374,40 @@ function PollCard({
           <ResultOptions options={bundle.options} voteCounts={counts} selectedOptionId={selected} />
           <p className="pt-4 text-sm text-gray-400">You’ve voted.</p>
 
-          <div className="mt-6 flex flex-wrap gap-3">
-            <button
-              onClick={handleShare}
-              className="cursor-pointer rounded-xl bg-white px-4 py-2 font-medium text-black transition hover:bg-gray-200"
-            >
-              {shareText}
-            </button>
-
-            <Link
-              href={`/?category=${encodeURIComponent(bundle.poll.category)}#live-polls`}
-              className="inline-flex items-center rounded-xl border px-4 py-2 font-medium transition hover:bg-gray-800"
-              style={{
-                borderColor: categoryColours.border,
-                backgroundColor: categoryColours.bg,
-                color: categoryColours.text,
-              }}
-            >
-              See other {bundle.poll.category} polls
-            </Link>
-
-            {showGoToAllPolls ? (
-              <Link
-                href="/#live-polls"
-                className="inline-flex items-center rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 font-medium text-white transition hover:bg-gray-800"
+          <div className="mt-6 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={handleShare}
+                className="cursor-pointer rounded-xl bg-white px-4 py-2 font-medium text-black transition hover:bg-gray-200"
               >
-                Go to all polls
+                {shareText}
+              </button>
+
+              {showGoToAllPolls ? (
+                <Link
+                  href="/#live-polls"
+                  className="inline-flex items-center justify-center rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 font-medium text-white transition hover:bg-gray-800"
+                >
+                  Go to all polls
+                </Link>
+              ) : (
+                <div />
+              )}
+            </div>
+
+            <div className="flex justify-center">
+              <Link
+                href={`/?category=${encodeURIComponent(bundle.poll.category)}#live-polls`}
+                className="inline-flex items-center justify-center rounded-xl border px-4 py-2 font-medium transition hover:bg-gray-800"
+                style={{
+                  borderColor: categoryColours.border,
+                  backgroundColor: categoryColours.bg,
+                  color: categoryColours.text,
+                }}
+              >
+                See other {bundle.poll.category} polls
               </Link>
-            ) : null}
+            </div>
           </div>
         </>
       )}
@@ -430,20 +427,65 @@ export default function PollPage() {
   const pollsRef = useRef<PollBundle[]>([]);
 
   const [subscriberEmail, setSubscriberEmail] = useState("");
+  const [subscriberCategories, setSubscriberCategories] = useState<string[]>(["All polls"]);
   const [subscribeLoading, setSubscribeLoading] = useState(false);
   const [subscribeMessage, setSubscribeMessage] = useState("");
   const [subscribeError, setSubscribeError] = useState("");
+  const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
+
+  const categoryMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     pollsRef.current = polls;
   }, [polls]);
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (categoryMenuRef.current && !categoryMenuRef.current.contains(event.target as Node)) {
+        setIsCategoryMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, []);
 
   const handleBack = () => {
     sessionStorage.setItem("restoreHomeScroll", "true");
     router.push("/");
   };
 
-  const handleSubscribe = async (event: React.FormEvent<HTMLFormElement>) => {
+  const toggleSubscriberCategory = (category: string) => {
+    setSubscriberCategories((current) => {
+      if (category === "All polls") {
+        return current.includes("All polls") ? [] : ["All polls"];
+      }
+
+      if (current.includes("All polls")) {
+        return SIGNUP_CATEGORIES.filter((item) => item !== category);
+      }
+
+      const isSelected = current.includes(category);
+      const next = isSelected
+        ? current.filter((item) => item !== category)
+        : [...current, category];
+
+      if (next.length === 0) {
+        return ["All polls"];
+      }
+
+      if (next.length === SIGNUP_CATEGORIES.length) {
+        return ["All polls"];
+      }
+
+      return next;
+    });
+  };
+
+  const handleSubscribe = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!subscriberEmail.trim()) {
@@ -457,6 +499,9 @@ export default function PollPage() {
     setSubscribeMessage("");
 
     try {
+      const selectedPreferences =
+        subscriberCategories.includes("All polls") ? null : subscriberCategories;
+
       const response = await fetch("/api/subscribe", {
         method: "POST",
         headers: {
@@ -464,7 +509,7 @@ export default function PollPage() {
         },
         body: JSON.stringify({
           email: subscriberEmail.trim(),
-          categoryPreferences: null,
+          categoryPreferences: selectedPreferences,
         }),
       });
 
@@ -476,6 +521,8 @@ export default function PollPage() {
 
       setSubscribeMessage("Subscribed.");
       setSubscriberEmail("");
+      setSubscriberCategories(["All polls"]);
+      setIsCategoryMenuOpen(false);
     } catch (error) {
       setSubscribeError(error instanceof Error ? error.message : "Could not subscribe right now.");
     } finally {
@@ -652,20 +699,65 @@ export default function PollPage() {
                   <p className="mb-1 text-sm font-medium text-white">Get new polls by email</p>
                   <p className="mb-3 text-xs text-gray-400">Max once per day. Unsubscribe anytime.</p>
 
-                  <form onSubmit={handleSubscribe} className="flex flex-col gap-2 sm:flex-row">
+                  <form onSubmit={handleSubscribe} className="space-y-3">
                     <input
                       type="email"
                       value={subscriberEmail}
                       onChange={(event) => setSubscriberEmail(event.target.value)}
                       placeholder="Email address"
                       required
-                      className="flex-1 rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
+                      className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
                     />
+
+                    <div ref={categoryMenuRef} className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setIsCategoryMenuOpen((current) => !current)}
+                        className="flex w-full items-center justify-between rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-left text-sm text-white transition hover:border-gray-500"
+                      >
+                        <span className="truncate">{getCategorySummary(subscriberCategories)}</span>
+                        <span className="ml-4 shrink-0 text-gray-400">▾</span>
+                      </button>
+
+                      {isCategoryMenuOpen ? (
+                        <div className="absolute z-20 mt-2 w-full rounded-lg border border-gray-700 bg-gray-900 p-2 shadow-xl">
+                          <button
+                            type="button"
+                            onClick={() => toggleSubscriberCategory("All polls")}
+                            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-white transition hover:bg-gray-800"
+                          >
+                            <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 text-xs">
+                              {subscriberCategories.includes("All polls") ? "✓" : ""}
+                            </span>
+                            <span>All polls</span>
+                          </button>
+
+                          <div className="my-1 border-t border-gray-800" />
+
+                          {SIGNUP_CATEGORIES.map((category) => (
+                            <button
+                              key={category}
+                              type="button"
+                              onClick={() => toggleSubscriberCategory(category)}
+                              className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-white transition hover:bg-gray-800"
+                            >
+                              <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 text-xs">
+                                {subscriberCategories.includes("All polls") ||
+                                subscriberCategories.includes(category)
+                                  ? "✓"
+                                  : ""}
+                              </span>
+                              <span>{category}</span>
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
 
                     <button
                       type="submit"
                       disabled={subscribeLoading}
-                      className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-70"
+                      className="w-full rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-70"
                     >
                       {subscribeLoading ? "Subscribing..." : "Subscribe"}
                     </button>
