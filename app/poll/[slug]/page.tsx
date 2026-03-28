@@ -582,7 +582,50 @@ export default function PollPage() {
           </div>
         ) : null}
       </section>
+<div className="mt-10 rounded-2xl border border-gray-700 bg-gray-800 p-5">
+<p className="mb-2 text-white font-medium">
+Get new polls by email
+</p>
 
+<p className="mb-3 text-sm text-gray-400">
+Max once per day. Unsubscribe anytime.
+</p>
+
+<form
+onSubmit={async e=>{
+e.preventDefault()
+
+const form=e.target as HTMLFormElement
+const email=(form.elements.namedItem("email") as HTMLInputElement).value
+
+await fetch("/api/subscribe",{
+method:"POST",
+headers:{ "Content-Type":"application/json"},
+body:JSON.stringify({email})
+})
+
+form.reset()
+}}
+className="flex gap-2 flex-col sm:flex-row"
+>
+
+<input
+name="email"
+type="email"
+required
+placeholder="Email address"
+className="flex-1 rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white"
+/>
+
+<button
+className="rounded-xl bg-white px-4 py-3 text-sm font-medium text-black"
+>
+Subscribe
+</button>
+
+</form>
+
+</div>
       <footer className="py-8 text-center text-sm text-gray-500">
         © {new Date().getFullYear()} Poll & See
       </footer>
