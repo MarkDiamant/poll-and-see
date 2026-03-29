@@ -190,6 +190,11 @@ export default function SubmitPollPage() {
 
   const suggestedCategory = question.trim() ? suggestCategory(question) : "";
 
+  const inputClasses =
+    "w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 text-white outline-none transition focus:border-gray-500";
+  const textareaClasses =
+    "w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 text-white outline-none transition focus:border-gray-500";
+
   const updateOption = (index: number, value: string) => {
     const next = [...options];
     next[index] = value;
@@ -337,20 +342,29 @@ export default function SubmitPollPage() {
           ← Back to homepage
         </Link>
 
-        <div className="mt-6 bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
-          <h1 className="text-3xl font-bold mb-3">Create a Poll</h1>
+        <div className="mt-6">
+          <h1 className="text-3xl font-bold">Create a Poll</h1>
 
-          <p className="text-gray-300 mb-8">
-            Want to know what people really think? Create your poll.
-          </p>
+          <div className="mt-5 space-y-3 text-gray-300">
+            <p className="text-base text-white">
+              Ask a question. Share the link. Watch votes come in live.
+            </p>
+            <p>
+              Share with your contacts, team or community to see what people really think.
+            </p>
+            <p>Most polls are live within 24 hours.</p>
+            <p className="text-sm text-gray-400">Takes under 30 seconds.</p>
+          </div>
+        </div>
 
+        <div className="mt-9 bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm mb-2">Name</label>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3"
+                className={inputClasses}
               />
             </div>
 
@@ -360,7 +374,7 @@ export default function SubmitPollPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3"
+                className={inputClasses}
               />
             </div>
 
@@ -370,19 +384,19 @@ export default function SubmitPollPage() {
                 maxLength={100}
                 value={question}
                 onChange={(e) => handleQuestionChange(e.target.value)}
-                className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3"
+                className={inputClasses}
               />
               <p className="mt-1 text-xs text-gray-400">{question.length}/100</p>
             </div>
 
             <div>
-              <label className="block text-sm mb-2">Poll Description (optional)</label>
+              <label className="block text-sm mb-2">Optional description</label>
               <textarea
                 maxLength={200}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3"
-                rows={4}
+                className={textareaClasses}
+                rows={3}
               />
               <p className="mt-1 text-xs text-gray-400">{description.length}/200</p>
             </div>
@@ -392,7 +406,7 @@ export default function SubmitPollPage() {
               <select
                 value={category}
                 onChange={(e) => handleCategoryChange(e.target.value)}
-                className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 text-white"
+                className={inputClasses}
               >
                 <option value="">Select category</option>
                 {CATEGORY_OPTIONS.map((c) => (
@@ -419,14 +433,14 @@ export default function SubmitPollPage() {
                       maxLength={40}
                       value={option}
                       onChange={(e) => updateOption(i, e.target.value)}
-                      className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3"
+                      className={inputClasses}
                       placeholder={`Option ${i + 1}`}
                     />
                     {canRemoveOption && (
                       <button
                         type="button"
                         onClick={() => removeOption(i)}
-                        className="px-3 bg-gray-700 rounded-xl whitespace-nowrap"
+                        className="px-3 bg-gray-700 rounded-xl whitespace-nowrap transition hover:bg-gray-600"
                       >
                         Remove
                       </button>
@@ -455,7 +469,7 @@ export default function SubmitPollPage() {
                 }
               }}
               disabled={submitting}
-              className="bg-white text-black px-5 py-3 rounded-xl font-medium hover:bg-gray-200 transition disabled:opacity-60"
+              className="rounded-xl bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-500 disabled:opacity-60"
             >
               {messageType === "success"
                 ? "Create another poll"
