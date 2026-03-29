@@ -337,12 +337,8 @@ export default function SubmitPollPage() {
         </div>
       </header>
 
-      <section className="max-w-3xl mx-auto px-6 pt-6 pb-12">
-        <Link href="/" className="text-sm text-blue-300 hover:underline">
-          ← Back to homepage
-        </Link>
-
-        <div className="mt-6 text-center">
+      <section className="max-w-3xl mx-auto px-6 pt-1 pb-12">
+        <div className="text-center">
           <h1 className="text-4xl font-bold md:text-[4.25rem]">Create a Poll</h1>
 
           <div className="mt-6 space-y-3">
@@ -352,7 +348,6 @@ export default function SubmitPollPage() {
             <p className="text-gray-300">
               Share with your contacts, team or community to see what people really think.
             </p>
-            <p className="text-gray-300">Most polls are live within 24 hours.</p>
           </div>
         </div>
 
@@ -466,6 +461,16 @@ export default function SubmitPollPage() {
                   + Add option
                 </button>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm text-gray-400">
+                Most polls are reviewed within 24 hours.
+              </p>
+              <p className="text-sm text-gray-400">
+                Please note: wording may be lightly edited while keeping your question and
+                options as close as possible to your original meaning.
+              </p>
             </div>
 
             <button
