@@ -509,7 +509,7 @@ export default function Home() {
     const handleScroll = () => {
       sessionStorage.setItem("homeScrollY", String(window.scrollY));
 
-      const triggerPoint = window.innerWidth < 768 ? 1200 : 900;
+      const triggerPoint = window.innerWidth < 768 ? 2200 : 1700;
       setShowTopButton(window.scrollY > triggerPoint);
     };
 
