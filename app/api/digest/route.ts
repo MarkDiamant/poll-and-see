@@ -549,7 +549,6 @@ export async function GET(request: NextRequest) {
       supabaseAdmin
         .from("polls")
         .select("id, question, description, category, slug, created_at")
-        .eq("status", "approved")
         .gte("created_at", cutoff)
         .order("created_at", { ascending: false }),
       supabaseAdmin
