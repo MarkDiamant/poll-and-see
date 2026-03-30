@@ -836,14 +836,29 @@ export default function Home() {
   }, [loading, featuredPoll, livePolls]);
 
   if (loading) {
-    return (
-      <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
-        <section className="mx-auto max-w-6xl px-6 pb-12 pt-10 min-h-[60vh]">
-          <p>Loading...</p>
-        </section>
-      </main>
-    );
-  }
+  return (
+    <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
+      <section className="mx-auto max-w-6xl px-6 pb-12 pt-10">
+
+        <div className="animate-pulse">
+
+          <div className="mb-6 h-12 w-48 rounded-xl bg-gray-800"></div>
+
+          <div className="mb-4 h-6 w-64 rounded bg-gray-800"></div>
+
+          <div className="mb-10 h-24 w-full rounded-2xl bg-gray-800"></div>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="h-72 rounded-2xl bg-gray-800 lg:col-span-2"></div>
+            <div className="h-72 rounded-2xl bg-gray-800"></div>
+          </div>
+
+        </div>
+
+      </section>
+    </main>
+  );
+}
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
