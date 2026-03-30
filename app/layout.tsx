@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Poll & See",
-  description: "See what people really think",
+  description:
+    "Create and vote on opinion polls across business, finance, education, lifestyle and community topics. See what people really think.",
   icons: {
     icon: "/favicon.ico",
   },

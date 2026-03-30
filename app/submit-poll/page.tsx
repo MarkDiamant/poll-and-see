@@ -504,8 +504,30 @@ export default function SubmitPollPage() {
         </div>
       </section>
 
-      <footer className="text-center text-sm text-gray-500 py-8">
-        © {new Date().getFullYear()} Poll & See
+      <footer className="py-8 text-center text-sm text-gray-500">
+        <div className="mx-auto max-w-6xl px-6">
+          <p className="mb-3">
+            Poll & See is an online platform for creating and voting on opinion polls across
+            business, finance, education, lifestyle and community topics.
+          </p>
+
+          <div className="mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+            <Link href="/about" className="hover:text-gray-300">
+              About
+            </Link>
+            <Link href="/privacy" className="hover:text-gray-300">
+              Privacy
+            </Link>
+            <Link href="/terms" className="hover:text-gray-300">
+              Terms
+            </Link>
+            <Link href="/contact" className="hover:text-gray-300">
+              Contact
+            </Link>
+          </div>
+
+          <p>© {new Date().getFullYear()} Poll & See</p>
+        </div>
       </footer>
     </main>
   );
