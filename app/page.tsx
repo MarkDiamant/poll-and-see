@@ -831,15 +831,14 @@ export default function Home() {
   }, [loading, featuredPoll, livePolls]);
 
   if (loading) {
-    return (
-      <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
-        <section className="mx-auto max-w-6xl px-6 pb-12 pt-10">
-          <p>Loading...</p>
-        </section>
-        <Footer />
-      </main>
-    );
-  }
+  return (
+    <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
+      <section className="mx-auto max-w-6xl px-6 pb-12 pt-10 min-h-[60vh]">
+        <p>Loading...</p>
+      </section>
+    </main>
+  );
+}
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
