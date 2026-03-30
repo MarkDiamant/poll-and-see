@@ -401,6 +401,7 @@ export default function Home() {
   const [subscribeMessage, setSubscribeMessage] = useState("");
   const [subscribeError, setSubscribeError] = useState("");
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
+  const [showTopButton, setShowTopButton] = useState(false);
 
   const categoryMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -507,6 +508,12 @@ export default function Home() {
   useEffect(() => {
     const handleScroll = () => {
       sessionStorage.setItem("homeScrollY", String(window.scrollY));
+
+      if (window.scrollY > 700) {
+        setShowTopButton(true);
+      } else {
+        setShowTopButton(false);
+      }
     };
 
     window.addEventListener("scroll", handleScroll);
@@ -831,14 +838,14 @@ export default function Home() {
   }, [loading, featuredPoll, livePolls]);
 
   if (loading) {
-  return (
-    <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
-      <section className="mx-auto max-w-6xl px-6 pb-12 pt-10 min-h-[60vh]">
-        <p>Loading...</p>
-      </section>
-    </main>
-  );
-}
+    return (
+      <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
+        <section className="mx-auto max-w-6xl px-6 pb-12 pt-10 min-h-[60vh]">
+          <p>Loading...</p>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
@@ -1162,6 +1169,20 @@ export default function Home() {
       </section>
 
       <Footer />
+
+      {showTopButton && (
+        <button
+          onClick={() =>
+            window.scrollTo({
+              top: 0,
+              behavior: "smooth",
+            })
+          }
+          className="fixed bottom-6 right-6 z-50 rounded-xl border border-gray-700 bg-gray-800 px-4 py-2 text-sm text-white transition hover:bg-gray-700"
+        >
+          Top
+        </button>
+      )}
     </main>
   );
 }
