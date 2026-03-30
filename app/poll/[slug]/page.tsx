@@ -20,6 +20,11 @@ type PollOption = {
   option_text: string;
 };
 
+type VoteInsertPayload = {
+  poll_id?: number;
+  option_id?: number;
+};
+
 type VoteCounts = Record<number, number>;
 
 type PollBundle = {
@@ -262,10 +267,12 @@ function PollCard({
   bundle,
   showGoToAllPolls,
   onVoteComplete,
+  totalVoteCount,
 }: {
   bundle: PollBundle;
   showGoToAllPolls: boolean;
   onVoteComplete: (pollId: number, category: string) => void;
+  totalVoteCount: number;
 }) {
   const [voted, setVoted] = useState<boolean>(false);
   const [counts, setCounts] = useState<VoteCounts>(bundle.voteCounts);
@@ -395,7 +402,9 @@ function PollCard({
       ) : (
         <>
           <ResultOptions options={bundle.options} voteCounts={counts} selectedOptionId={selected} />
-          <p className="pt-4 text-sm text-gray-400">You’ve voted.</p>
+          <p className="pt-4 text-sm text-gray-400">
+            Your vote is part of {totalVoteCount.toLocaleString()} total votes across all polls.
+          </p>
 
           <div className="mt-6">
             <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-start">
@@ -452,6 +461,7 @@ export default function PollPage() {
   const [subscribeMessage, setSubscribeMessage] = useState("");
   const [subscribeError, setSubscribeError] = useState("");
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
+  const [totalVoteCount, setTotalVoteCount] = useState(0);
 
   const categoryMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -470,6 +480,42 @@ export default function PollPage() {
 
     return () => {
       document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, []);
+
+  useEffect(() => {
+    const loadTotalVoteCount = async () => {
+      const { count } = await supabase.from("votes").select("*", { count: "exact", head: true });
+
+      if (typeof count === "number") {
+        setTotalVoteCount(count);
+      }
+    };
+
+    void loadTotalVoteCount();
+
+    const channel = supabase
+      .channel("poll-page-live-total-votes")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "votes",
+        },
+        () => {
+          setTotalVoteCount((prev) => prev + 1);
+        }
+      )
+      .subscribe();
+
+    const interval = setInterval(() => {
+      void loadTotalVoteCount();
+    }, 2000);
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
     };
   }, []);
 
@@ -713,104 +759,9 @@ export default function PollPage() {
               onVoteComplete={(pollId, category) => {
                 void handleVoteComplete(pollId, category);
               }}
+              totalVoteCount={totalVoteCount}
             />
 
             {index === 0 ? (
               <div ref={subscribeBoxRef} className="mb-8 mt-4 flex justify-center">
-                <div className="w-full max-w-md rounded-xl border border-gray-700 bg-gray-900/70 p-4">
-                  <p className="mb-1 text-sm font-medium text-white">Get new polls by email</p>
-                  <p className="mb-3 text-xs text-gray-400">Max once per day. Unsubscribe anytime.</p>
-
-                  <form onSubmit={handleSubscribe} className="space-y-3">
-                    <input
-                      type="email"
-                      value={subscriberEmail}
-                      onChange={(event) => setSubscriberEmail(event.target.value)}
-                      placeholder="Email address"
-                      required
-                      className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
-                    />
-
-                    <div ref={categoryMenuRef} className="relative">
-                      <button
-                        type="button"
-                        onClick={() => setIsCategoryMenuOpen((current) => !current)}
-                        className="flex w-full items-center justify-between rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-left text-sm text-white transition hover:border-gray-500"
-                      >
-                        <span className="truncate">{getCategorySummary(subscriberCategories)}</span>
-                        <span className="ml-4 shrink-0 text-gray-400">▾</span>
-                      </button>
-
-                      {isCategoryMenuOpen ? (
-                        <div className="absolute z-20 mt-2 w-full rounded-lg border border-gray-700 bg-gray-900 p-2 shadow-xl">
-                          <button
-                            type="button"
-                            onClick={() => toggleSubscriberCategory("All polls")}
-                            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-white transition hover:bg-gray-800"
-                          >
-                            <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 text-xs">
-                              {subscriberCategories.includes("All polls") ? "✓" : ""}
-                            </span>
-                            <span>All polls</span>
-                          </button>
-
-                          <div className="my-1 border-t border-gray-800" />
-
-                          {SIGNUP_CATEGORIES.map((category) => (
-                            <button
-                              key={category}
-                              type="button"
-                              onClick={() => toggleSubscriberCategory(category)}
-                              className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-white transition hover:bg-gray-800"
-                            >
-                              <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 text-xs">
-                                {subscriberCategories.includes("All polls") ||
-                                subscriberCategories.includes(category)
-                                  ? "✓"
-                                  : ""}
-                              </span>
-                              <span>{category}</span>
-                            </button>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={subscribeLoading}
-                      className="w-full rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-70"
-                    >
-                      {subscribeLoading ? "Subscribing..." : "Subscribe"}
-                    </button>
-                  </form>
-
-                  {subscribeMessage ? (
-                    <p className="mt-2 text-sm text-green-300">{subscribeMessage}</p>
-                  ) : null}
-
-                  {subscribeError ? (
-                    <p className="mt-2 text-sm text-red-300">{subscribeError}</p>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
-          </div>
-        ))}
-
-        {polls.length > 1 ? (
-          <div className="mt-6 text-center">
-            <Link
-              href="/submit-poll"
-              className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-500"
-            >
-              Create your own poll
-            </Link>
-          </div>
-        ) : null}
-      </section>
-
-      <Footer />
-    </main>
-  );
-}
+                <div className="w-full max
