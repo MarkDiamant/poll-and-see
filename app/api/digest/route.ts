@@ -142,7 +142,12 @@ function escapeHtml(value: string) {
 
 function getLookbackHours(now: Date) {
   const utcDay = now.getUTCDay();
-  return utcDay === 0 ? 48 : 24;
+
+  if (utcDay === 0) {
+    return 48;
+  }
+
+  return 24;
 }
 
 function buildDigestEmail(params: {
@@ -509,6 +514,7 @@ export async function GET(request: NextRequest) {
   try {
     const secret = request.nextUrl.searchParams.get("secret");
     const digestSecret = process.env.DIGEST_SECRET;
+    const dryRun = request.nextUrl.searchParams.get("dryRun") === "1";
 
     if (!digestSecret || secret !== digestSecret) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
@@ -543,6 +549,7 @@ export async function GET(request: NextRequest) {
       supabaseAdmin
         .from("polls")
         .select("id, question, description, category, slug, created_at")
+        .eq("status", "approved")
         .gte("created_at", cutoff)
         .order("created_at", { ascending: false }),
       supabaseAdmin
@@ -571,7 +578,14 @@ export async function GET(request: NextRequest) {
     const subscribers = (subscribersData || []) as SubscriberRow[];
 
     if (polls.length === 0 || subscribers.length === 0) {
-      return NextResponse.json({ ok: true, sent: 0 });
+      return NextResponse.json({
+        ok: true,
+        sent: 0,
+        dryRun,
+        lookbackHours,
+        pollCount: polls.length,
+        subscriberCount: subscribers.length,
+      });
     }
 
     const pollIds = polls.map((poll) => poll.id);
@@ -604,6 +618,32 @@ export async function GET(request: NextRequest) {
       ...poll,
       options: optionsByPollId.get(poll.id) || [],
     }));
+
+    if (dryRun) {
+      const subscriberMatches = subscribers.map((subscriber) => {
+        const matchingPolls =
+          subscriber.category_preferences && subscriber.category_preferences.length > 0
+            ? pollsWithOptions.filter((poll) =>
+                subscriber.category_preferences?.includes(poll.category)
+              )
+            : pollsWithOptions;
+
+        return {
+          email: subscriber.email,
+          matchingPollCount: matchingPolls.length,
+        };
+      });
+
+      return NextResponse.json({
+        ok: true,
+        dryRun: true,
+        lookbackHours,
+        cutoff,
+        pollCount: pollsWithOptions.length,
+        subscriberCount: subscribers.length,
+        subscriberMatches,
+      });
+    }
 
     let sent = 0;
 
@@ -643,6 +683,8 @@ export async function GET(request: NextRequest) {
       ok: true,
       sent,
       lookbackHours,
+      pollCount: pollsWithOptions.length,
+      subscriberCount: subscribers.length,
     });
   } catch (error) {
     console.error("Digest send error:", error);
