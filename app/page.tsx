@@ -509,13 +509,11 @@ export default function Home() {
     const handleScroll = () => {
       sessionStorage.setItem("homeScrollY", String(window.scrollY));
 
-      if (window.scrollY > 700) {
-        setShowTopButton(true);
-      } else {
-        setShowTopButton(false);
-      }
+      const triggerPoint = window.innerWidth < 768 ? 1200 : 900;
+      setShowTopButton(window.scrollY > triggerPoint);
     };
 
+    handleScroll();
     window.addEventListener("scroll", handleScroll);
 
     return () => {
@@ -1178,9 +1176,9 @@ export default function Home() {
               behavior: "smooth",
             })
           }
-          className="fixed bottom-6 right-6 z-50 rounded-xl border border-gray-700 bg-gray-800 px-4 py-2 text-sm text-white transition hover:bg-gray-700"
+          className="fixed bottom-5 right-5 z-50 rounded-2xl border border-gray-700 bg-gray-800 px-4 py-3 text-sm font-medium text-white shadow-lg transition hover:bg-gray-700 md:bottom-6 md:right-8 md:px-5"
         >
-          Top
+          Back to top
         </button>
       )}
     </main>
