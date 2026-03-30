@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import Footer from "@/components/Footer";
 
 type Poll = {
   id: number;
@@ -809,9 +810,7 @@ export default function PollPage() {
         ) : null}
       </section>
 
-      <footer className="py-8 text-center text-sm text-gray-500">
-        © {new Date().getFullYear()} Poll & See
-      </footer>
+      <Footer />
     </main>
   );
 }

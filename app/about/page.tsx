@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Footer from "@/components/Footer";
 
 export default function AboutPage() {
   return (
@@ -31,7 +32,7 @@ export default function AboutPage() {
         </div>
       </header>
 
-      <section className="mx-auto max-w-3xl px-6 pb-12 pt-6">
+      <section className="mx-auto max-w-3xl px-6 pb-10 pt-6">
         <div className="rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-lg">
           <h1 className="mb-6 text-3xl font-bold">About</h1>
 
@@ -50,31 +51,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <footer className="py-8 text-center text-sm text-gray-500">
-        <div className="mx-auto max-w-6xl px-6">
-          <p className="mb-3">
-            Poll & See is an online platform for creating and voting on opinion polls across
-            business, finance, education, lifestyle and community topics.
-          </p>
-
-          <div className="mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-            <Link href="/about" className="hover:text-gray-300">
-              About
-            </Link>
-            <Link href="/privacy" className="hover:text-gray-300">
-              Privacy
-            </Link>
-            <Link href="/terms" className="hover:text-gray-300">
-              Terms
-            </Link>
-            <Link href="/contact" className="hover:text-gray-300">
-              Contact
-            </Link>
-          </div>
-
-          <p>© {new Date().getFullYear()} Poll & See</p>
-        </div>
-      </footer>
+      <Footer />
     </main>
   );
 }

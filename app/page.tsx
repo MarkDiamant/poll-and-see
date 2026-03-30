@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import Footer from "@/components/Footer";
 
 type Poll = {
   id: number;
@@ -835,6 +836,7 @@ export default function Home() {
         <section className="mx-auto max-w-6xl px-6 pb-12 pt-10">
           <p>Loading...</p>
         </section>
+        <Footer />
       </main>
     );
   }
@@ -1057,7 +1059,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="live-polls" className="mx-auto max-w-6xl scroll-mt-6 px-6 pb-12">
+      <section id="live-polls" className="mx-auto max-w-6xl scroll-mt-6 px-6 pb-6">
         <div className="mb-5">
           <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[auto_minmax(240px,380px)_auto] lg:items-center lg:gap-4">
             <h3 className="text-2xl font-semibold">Live Polls</h3>
@@ -1160,31 +1162,7 @@ export default function Home() {
         )}
       </section>
 
-      <footer className="py-8 text-center text-sm text-gray-500">
-        <div className="mx-auto max-w-6xl px-6">
-          <p className="mb-3">
-            Poll & See is an online platform for creating and voting on opinion polls across
-            business, finance, education, lifestyle and community topics.
-          </p>
-
-          <div className="mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-            <Link href="/about" className="hover:text-gray-300">
-              About
-            </Link>
-            <Link href="/privacy" className="hover:text-gray-300">
-              Privacy
-            </Link>
-            <Link href="/terms" className="hover:text-gray-300">
-              Terms
-            </Link>
-            <Link href="/contact" className="hover:text-gray-300">
-              Contact
-            </Link>
-          </div>
-
-          <p>© {new Date().getFullYear()} Poll & See</p>
-        </div>
-      </footer>
+      <Footer />
     </main>
   );
 }
