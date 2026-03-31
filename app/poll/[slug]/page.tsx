@@ -58,7 +58,7 @@ const RELATED_CATEGORY_ORDER: Record<string, string[]> = {
   Politics: ["General", "Community", "Business"],
   Sport: ["Fun", "Lifestyle", "General"],
   Sports: ["Fun", "Lifestyle", "General"],
-  Tech: ["Business", "General", "Finance"],
+  Tech: ["Business", "Finance", "General"],
 };
 
 const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: string; solid: string }> = {
@@ -111,6 +111,11 @@ function getCategorySummary(selected: string[]) {
   return `${selected.length} categories selected`;
 }
 
+function getPriorityCategories(anchorCategory: string) {
+  const related = RELATED_CATEGORY_ORDER[anchorCategory] || [];
+  return [anchorCategory, ...related];
+}
+
 function canVoteNow(pollId: number): string | null {
   const last = Number(localStorage.getItem(`poll-last-click-${pollId}`) || 0);
   if (Date.now() - last < SAME_POLL_CLICK_GUARD_MS) return "Please try again.";
@@ -131,6 +136,10 @@ function getPollSelectedOldKey(pollId: number) {
 
 function getPollSelectedNewKey(pollId: number) {
   return `poll-selected-${pollId}`;
+}
+
+function getPollFlowAnchorCategoryKey(slug: string) {
+  return `poll-flow-anchor-category-${slug}`;
 }
 
 function hasLocalVote(pollId: number): boolean {
@@ -475,6 +484,7 @@ export default function PollPage() {
   const [subscribeError, setSubscribeError] = useState("");
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
   const [totalVoteCount, setTotalVoteCount] = useState(0);
+  const [anchorCategory, setAnchorCategory] = useState("");
 
   const categoryMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -638,15 +648,28 @@ export default function PollPage() {
     return bundle;
   };
 
-  const preloadQueue = async (excludeIds: number[], preferredCategory: string) => {
+  const preloadQueue = async (excludeIds: number[], flowAnchorCategory: string) => {
     const { data } = await supabase.from("polls").select("*").order("id", { ascending: false });
 
     const pollList = (data || []) as Poll[];
     const unseen = pollList.filter((poll) => !excludeIds.includes(poll.id) && !hasLocalVote(poll.id));
 
-    const sameCategory = unseen.filter((poll) => poll.category === preferredCategory);
-    const otherCategories = unseen.filter((poll) => poll.category !== preferredCategory);
-    const ordered = [...sameCategory, ...otherCategories];
+    const priorityCategories = getPriorityCategories(flowAnchorCategory);
+    const ordered: Poll[] = [];
+    const usedPollIds = new Set<number>();
+
+    for (const category of priorityCategories) {
+      const matches = unseen.filter((poll) => poll.category === category);
+      for (const poll of matches) {
+        if (!usedPollIds.has(poll.id)) {
+          ordered.push(poll);
+          usedPollIds.add(poll.id);
+        }
+      }
+    }
+
+    const remaining = unseen.filter((poll) => !usedPollIds.has(poll.id));
+    ordered.push(...remaining);
 
     const bundles = await Promise.all(ordered.map((poll) => loadBundle(poll.id)));
     preloadedQueueRef.current = bundles;
@@ -662,10 +685,16 @@ export default function PollPage() {
       const { data } = await supabase.from("polls").select("*").eq("slug", slug).single();
       if (!data) return;
 
+      const storedAnchorCategory = sessionStorage.getItem(getPollFlowAnchorCategoryKey(slug));
+      const resolvedAnchorCategory = storedAnchorCategory || data.category;
+
+      setAnchorCategory(resolvedAnchorCategory);
+      sessionStorage.setItem(getPollFlowAnchorCategoryKey(slug), resolvedAnchorCategory);
+
       const firstBundle = await loadBundle(data.id);
       setPolls([firstBundle]);
 
-      void preloadQueue([firstBundle.poll.id], firstBundle.poll.category);
+      void preloadQueue([firstBundle.poll.id], resolvedAnchorCategory);
     };
 
     void init();
@@ -686,8 +715,9 @@ export default function PollPage() {
     previousPollCountRef.current = polls.length;
   }, [polls]);
 
-  const handleVoteComplete = async (pollId: number, category: string) => {
+  const handleVoteComplete = async (pollId: number) => {
     const currentShownIds = pollsRef.current.map((item) => item.poll.id);
+    const flowAnchorCategory = anchorCategory || pollsRef.current[0]?.poll.category || "";
 
     while (preloadedQueueRef.current.length > 0) {
       const next = preloadedQueueRef.current.shift();
@@ -703,7 +733,7 @@ export default function PollPage() {
       return;
     }
 
-    await preloadQueue([...currentShownIds, pollId], category);
+    await preloadQueue([...currentShownIds, pollId], flowAnchorCategory);
 
     while (preloadedQueueRef.current.length > 0) {
       const next = preloadedQueueRef.current.shift();
@@ -769,8 +799,8 @@ export default function PollPage() {
             <PollCard
               bundle={bundle}
               showGoToAllPolls={true}
-              onVoteComplete={(pollId, category) => {
-                void handleVoteComplete(pollId, category);
+              onVoteComplete={(pollId) => {
+                void handleVoteComplete(pollId);
               }}
               totalVoteCount={totalVoteCount}
             />
