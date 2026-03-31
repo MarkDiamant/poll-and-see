@@ -512,13 +512,21 @@ async function sendEmail(params: {
 
 export async function GET(request: NextRequest) {
   try {
-    const secret = request.nextUrl.searchParams.get("secret");
-    const digestSecret = process.env.DIGEST_SECRET;
-    const dryRun = request.nextUrl.searchParams.get("dryRun") === "1";
+    const authHeader = request.headers.get("authorization");
+const cronSecret = process.env.CRON_SECRET;
+const legacySecret = request.nextUrl.searchParams.get("secret");
+const digestSecret = process.env.DIGEST_SECRET;
+const dryRun = request.nextUrl.searchParams.get("dryRun") === "1";
 
-    if (!digestSecret || secret !== digestSecret) {
-      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-    }
+const isValidCronRequest =
+  cronSecret && authHeader === `Bearer ${cronSecret}`;
+
+const isValidManualRequest =
+  digestSecret && legacySecret === digestSecret;
+
+if (!isValidCronRequest && !isValidManualRequest) {
+  return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+}
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
