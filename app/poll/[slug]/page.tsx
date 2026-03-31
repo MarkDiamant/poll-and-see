@@ -46,6 +46,21 @@ const SIGNUP_CATEGORIES = [
   "Lifestyle",
 ];
 
+const RELATED_CATEGORY_ORDER: Record<string, string[]> = {
+  Business: ["Finance", "General", "Community"],
+  Finance: ["Business", "General", "Community"],
+  Community: ["General", "Lifestyle", "Business"],
+  General: ["Community", "Lifestyle", "Business"],
+  Lifestyle: ["Fun", "General", "Community"],
+  Fun: ["Lifestyle", "General", "Community"],
+  Education: ["General", "Community", "Lifestyle"],
+  Health: ["Lifestyle", "General", "Community"],
+  Politics: ["General", "Community", "Business"],
+  Sport: ["Fun", "Lifestyle", "General"],
+  Sports: ["Fun", "Lifestyle", "General"],
+  Tech: ["Business", "General", "Finance"],
+};
+
 const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: string; solid: string }> = {
   All: { text: "#e5e7eb", bg: "rgba(31, 41, 55, 0.9)", border: "rgba(75, 85, 99, 1)", solid: "#374151" },
   Business: { text: "#93c5fd", bg: "rgba(37, 99, 235, 0.12)", border: "rgba(37, 99, 235, 0.55)", solid: "#2563eb" },
