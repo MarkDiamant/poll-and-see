@@ -116,6 +116,22 @@ function getPriorityCategories(anchorCategory: string) {
   return [anchorCategory, ...related];
 }
 
+function getGroupedRemainingPolls(remaining: Poll[]) {
+  const categoryOrder: string[] = [];
+  const pollsByCategory = new Map<string, Poll[]>();
+
+  for (const poll of remaining) {
+    if (!pollsByCategory.has(poll.category)) {
+      pollsByCategory.set(poll.category, []);
+      categoryOrder.push(poll.category);
+    }
+
+    pollsByCategory.get(poll.category)!.push(poll);
+  }
+
+  return categoryOrder.flatMap((category) => pollsByCategory.get(category) || []);
+}
+
 function canVoteNow(pollId: number): string | null {
   const last = Number(localStorage.getItem(`poll-last-click-${pollId}`) || 0);
   if (Date.now() - last < SAME_POLL_CLICK_GUARD_MS) return "Please try again.";
@@ -669,7 +685,8 @@ export default function PollPage() {
     }
 
     const remaining = unseen.filter((poll) => !usedPollIds.has(poll.id));
-    ordered.push(...remaining);
+    const groupedRemaining = getGroupedRemainingPolls(remaining);
+    ordered.push(...groupedRemaining);
 
     const bundles = await Promise.all(ordered.map((poll) => loadBundle(poll.id)));
     preloadedQueueRef.current = bundles;
@@ -692,9 +709,19 @@ export default function PollPage() {
       sessionStorage.setItem(getPollFlowAnchorCategoryKey(slug), resolvedAnchorCategory);
 
       const firstBundle = await loadBundle(data.id);
+      const firstPollAlreadyVoted = hasLocalVote(firstBundle.poll.id);
+
       setPolls([firstBundle]);
 
-      void preloadQueue([firstBundle.poll.id], resolvedAnchorCategory);
+      await preloadQueue([firstBundle.poll.id], resolvedAnchorCategory);
+
+      if (firstPollAlreadyVoted && preloadedQueueRef.current.length > 0) {
+        const next = preloadedQueueRef.current.shift();
+
+        if (next && !hasLocalVote(next.poll.id)) {
+          setPolls([firstBundle, next]);
+        }
+      }
     };
 
     void init();
