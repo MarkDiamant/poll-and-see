@@ -408,87 +408,113 @@ export default function Home() {
   const loadHomeData = useCallback(async () => {
     setLoading(true);
 
-    const [{ data: pollsData }, { count: votesCount }] = await Promise.all([
-      supabase
+    try {
+      const pollsResult = await supabase
         .from("polls")
         .select("id, question, description, category, slug, featured")
-        .order("id", { ascending: false }),
-      supabase.from("votes").select("*", { count: "exact", head: true }),
-    ]);
+        .order("id", { ascending: false });
 
-    const safePolls = pollsData || [];
-    setPolls(safePolls);
-    setTotalVoteCount(votesCount || 0);
+      if (pollsResult.error) {
+        throw pollsResult.error;
+      }
 
-    const availableCategories = [
-      "All",
-      ...Array.from(
-        new Set(
-          safePolls
-            .map((poll) => poll.category?.trim())
-            .filter((category): category is string => Boolean(category))
-        )
-      ).sort((a, b) => a.localeCompare(b)),
-    ];
+      const safePolls = pollsResult.data || [];
+      setPolls(safePolls);
 
-    const params = new URLSearchParams(window.location.search);
-    const queryCategory = params.get("category");
-    const savedCategory = sessionStorage.getItem("selectedPollCategory");
-    const preferredCategory = queryCategory || savedCategory || "All";
+      const availableCategories = [
+        "All",
+        ...Array.from(
+          new Set(
+            safePolls
+              .map((poll) => poll.category?.trim())
+              .filter((category): category is string => Boolean(category))
+          )
+        ).sort((a, b) => a.localeCompare(b)),
+      ];
 
-    if (availableCategories.includes(preferredCategory)) {
-      setSelectedCategory(preferredCategory);
-    } else {
-      setSelectedCategory("All");
-    }
+      const params = new URLSearchParams(window.location.search);
+      const queryCategory = params.get("category");
+      const savedCategory = sessionStorage.getItem("selectedPollCategory");
+      const preferredCategory = queryCategory || savedCategory || "All";
 
-    const chosenFeaturedPoll = safePolls.find((p) => p.featured) || safePolls[0];
+      if (availableCategories.includes(preferredCategory)) {
+        setSelectedCategory(preferredCategory);
+      } else {
+        setSelectedCategory("All");
+      }
 
-    if (!chosenFeaturedPoll) {
+      const chosenFeaturedPoll = safePolls.find((p) => p.featured) || safePolls[0];
+
+      if (!chosenFeaturedPoll) {
+        setFeaturedOptions([]);
+        setFeaturedVoteCounts({});
+        setFeaturedPollVoted(false);
+        setFeaturedSelectedOptionId(null);
+        return;
+      }
+
+      const savedVote = localStorage.getItem(`poll-voted-${chosenFeaturedPoll.id}`);
+      const savedSelectedOption = localStorage.getItem(`poll-selected-option-${chosenFeaturedPoll.id}`);
+
+      setFeaturedPollVoted(savedVote === "true");
+
+      if (savedSelectedOption) {
+        const parsedOptionId = parseInt(savedSelectedOption, 10);
+        setFeaturedSelectedOptionId(Number.isNaN(parsedOptionId) ? null : parsedOptionId);
+      } else {
+        setFeaturedSelectedOptionId(null);
+      }
+
+      const [totalVotesResult, featuredOptionsResult, featuredVotesResult] = await Promise.allSettled([
+        supabase.from("votes").select("*", { count: "exact", head: true }),
+        supabase
+          .from("poll_options")
+          .select("*")
+          .eq("poll_id", chosenFeaturedPoll.id)
+          .order("id", { ascending: true }),
+        supabase
+          .from("votes")
+          .select("option_id")
+          .eq("poll_id", chosenFeaturedPoll.id),
+      ]);
+
+      if (totalVotesResult.status === "fulfilled" && !totalVotesResult.value.error) {
+        setTotalVoteCount(totalVotesResult.value.count || 0);
+      } else {
+        console.error("Homepage total vote count query failed", totalVotesResult);
+      }
+
+      if (featuredOptionsResult.status === "fulfilled" && !featuredOptionsResult.value.error) {
+        setFeaturedOptions(featuredOptionsResult.value.data || []);
+      } else {
+        setFeaturedOptions([]);
+        console.error("Homepage featured options query failed", featuredOptionsResult);
+      }
+
+      if (featuredVotesResult.status === "fulfilled" && !featuredVotesResult.value.error) {
+        const counts: Record<number, number> = {};
+        (featuredVotesResult.value.data || []).forEach((vote) => {
+          counts[vote.option_id] = (counts[vote.option_id] || 0) + 1;
+        });
+        setFeaturedVoteCounts(counts);
+      } else {
+        setFeaturedVoteCounts({});
+        console.error("Homepage featured vote counts query failed", featuredVotesResult);
+      }
+    } catch (error) {
+      console.error("Homepage polls query failed", error);
+      setPolls([]);
       setFeaturedOptions([]);
       setFeaturedVoteCounts({});
       setFeaturedPollVoted(false);
       setFeaturedSelectedOptionId(null);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const savedVote = localStorage.getItem(`poll-voted-${chosenFeaturedPoll.id}`);
-    const savedSelectedOption = localStorage.getItem(`poll-selected-option-${chosenFeaturedPoll.id}`);
-
-    setFeaturedPollVoted(savedVote === "true");
-
-    if (savedSelectedOption) {
-      const parsedOptionId = parseInt(savedSelectedOption, 10);
-      setFeaturedSelectedOptionId(Number.isNaN(parsedOptionId) ? null : parsedOptionId);
-    } else {
-      setFeaturedSelectedOptionId(null);
-    }
-
-    const [{ data: optionsData }, { data: votesData }] = await Promise.all([
-      supabase
-        .from("poll_options")
-        .select("*")
-        .eq("poll_id", chosenFeaturedPoll.id)
-        .order("id", { ascending: true }),
-      supabase
-        .from("votes")
-        .select("option_id")
-        .eq("poll_id", chosenFeaturedPoll.id),
-    ]);
-
-    const counts: Record<number, number> = {};
-    (votesData || []).forEach((vote) => {
-      counts[vote.option_id] = (counts[vote.option_id] || 0) + 1;
-    });
-
-    setFeaturedOptions(optionsData || []);
-    setFeaturedVoteCounts(counts);
-    setLoading(false);
   }, []);
 
   useEffect(() => {
-    loadHomeData();
+    void loadHomeData();
   }, [loadHomeData]);
 
   useEffect(() => {
@@ -597,46 +623,6 @@ export default function Home() {
 
     return () => {
       supabase.removeChannel(channel);
-    };
-  }, [featuredPoll?.id]);
-
-  useEffect(() => {
-    const syncVoteCount = async () => {
-      const { count } = await supabase.from("votes").select("*", { count: "exact", head: true });
-
-      if (typeof count === "number") {
-        setTotalVoteCount(count);
-      }
-    };
-
-    const interval = setInterval(syncVoteCount, 2000);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!featuredPoll?.id) return;
-
-    const syncFeaturedVotes = async () => {
-      const { data } = await supabase
-        .from("votes")
-        .select("option_id")
-        .eq("poll_id", featuredPoll.id);
-
-      const counts: Record<number, number> = {};
-      (data || []).forEach((vote) => {
-        counts[vote.option_id] = (counts[vote.option_id] || 0) + 1;
-      });
-
-      setFeaturedVoteCounts(counts);
-    };
-
-    const interval = setInterval(syncFeaturedVotes, 2000);
-
-    return () => {
-      clearInterval(interval);
     };
   }, [featuredPoll?.id]);
 
@@ -836,29 +822,22 @@ export default function Home() {
   }, [loading, featuredPoll, livePolls]);
 
   if (loading) {
-  return (
-    <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
-      <section className="mx-auto max-w-6xl px-6 pb-12 pt-10">
-
-        <div className="animate-pulse">
-
-          <div className="mb-6 h-12 w-48 rounded-xl bg-gray-800"></div>
-
-          <div className="mb-4 h-6 w-64 rounded bg-gray-800"></div>
-
-          <div className="mb-10 h-24 w-full rounded-2xl bg-gray-800"></div>
-
-          <div className="grid gap-6 lg:grid-cols-3">
-            <div className="h-72 rounded-2xl bg-gray-800 lg:col-span-2"></div>
-            <div className="h-72 rounded-2xl bg-gray-800"></div>
+    return (
+      <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
+        <section className="mx-auto max-w-6xl px-6 pb-12 pt-10">
+          <div className="animate-pulse">
+            <div className="mb-6 h-12 w-48 rounded-xl bg-gray-800"></div>
+            <div className="mb-4 h-6 w-64 rounded bg-gray-800"></div>
+            <div className="mb-10 h-24 w-full rounded-2xl bg-gray-800"></div>
+            <div className="grid gap-6 lg:grid-cols-3">
+              <div className="h-72 rounded-2xl bg-gray-800 lg:col-span-2"></div>
+              <div className="h-72 rounded-2xl bg-gray-800"></div>
+            </div>
           </div>
-
-        </div>
-
-      </section>
-    </main>
-  );
-}
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
