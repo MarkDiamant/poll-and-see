@@ -446,7 +446,7 @@ function PollCard({
             <button
               key={option.id}
               onClick={() => handleVote(option.id)}
-              className="overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600"
+              className="cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600"
             >
               {option.image_url ? (
                 <div className="overflow-hidden bg-gray-900">
@@ -536,6 +536,63 @@ export default function PollPage() {
     pollsRef.current = polls;
   }, [polls]);
 
+  const syncTotalVoteCount = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("site_stats")
+        .select("total_votes")
+        .eq("key", "global")
+        .single();
+
+      if (!error) {
+        setTotalVoteCount(data?.total_votes || 0);
+      }
+    } catch {
+      // ignore sync failures
+    }
+  };
+
+  const syncDisplayedPolls = async () => {
+    try {
+      const currentPolls = pollsRef.current;
+      if (currentPolls.length === 0) return;
+
+      const refreshed = await Promise.all(
+        currentPolls.map(async (bundle) => {
+          const { data, error } = await supabase
+            .from("poll_options")
+            .select("id, poll_id, option_text, vote_count, image_url")
+            .eq("poll_id", bundle.poll.id)
+            .order("id", { ascending: true });
+
+          if (error || !data) {
+            return bundle;
+          }
+
+          const options = data as PollOption[];
+          const voteCounts: VoteCounts = {};
+
+          options.forEach((option) => {
+            voteCounts[option.id] = option.vote_count || 0;
+          });
+
+          const nextBundle = {
+            ...bundle,
+            options,
+            voteCounts,
+          };
+
+          setCachedPollBundle(nextBundle);
+          return nextBundle;
+        })
+      );
+
+      setPolls(refreshed);
+    } catch {
+      // ignore sync failures
+    }
+  };
+
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
       if (categoryMenuRef.current && !categoryMenuRef.current.contains(event.target as Node)) {
@@ -589,6 +646,37 @@ export default function PollPage() {
 
     return () => {
       supabase.removeChannel(channel);
+    };
+  }, []);
+
+  useEffect(() => {
+    const syncNow = () => {
+      void syncTotalVoteCount();
+      void syncDisplayedPolls();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        syncNow();
+      }
+    };
+
+    const handleFocus = () => {
+      syncNow();
+    };
+
+    const handlePageShow = () => {
+      syncNow();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("pageshow", handlePageShow);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("pageshow", handlePageShow);
     };
   }, []);
 

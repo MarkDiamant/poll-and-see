@@ -407,6 +407,46 @@ export default function Home() {
 
   const categoryMenuRef = useRef<HTMLDivElement | null>(null);
 
+  const syncTotalVoteCount = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("site_stats")
+        .select("total_votes")
+        .eq("key", "global")
+        .single();
+
+      if (!error) {
+        setTotalVoteCount(data?.total_votes || 0);
+      }
+    } catch {
+      // ignore sync failures
+    }
+  }, []);
+
+  const syncFeaturedVoteCounts = useCallback(async (pollId: number) => {
+    try {
+      const { data, error } = await supabase
+        .from("poll_options")
+        .select("id, poll_id, option_text, vote_count, image_url")
+        .eq("poll_id", pollId)
+        .order("id", { ascending: true });
+
+      if (error) return;
+
+      const options = (data || []) as PollOption[];
+      const counts: Record<number, number> = {};
+
+      options.forEach((option) => {
+        counts[option.id] = option.vote_count || 0;
+      });
+
+      setFeaturedOptions(options);
+      setFeaturedVoteCounts(counts);
+    } catch {
+      // ignore sync failures
+    }
+  }, []);
+
   const loadHomeData = useCallback(async () => {
     setLoading(true);
 
@@ -628,6 +668,40 @@ export default function Home() {
       supabase.removeChannel(channel);
     };
   }, [featuredPoll?.id]);
+
+  useEffect(() => {
+    const syncNow = () => {
+      void syncTotalVoteCount();
+
+      if (featuredPoll?.id) {
+        void syncFeaturedVoteCounts(featuredPoll.id);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        syncNow();
+      }
+    };
+
+    const handleFocus = () => {
+      syncNow();
+    };
+
+    const handlePageShow = () => {
+      syncNow();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("pageshow", handlePageShow);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, [featuredPoll?.id, syncFeaturedVoteCounts, syncTotalVoteCount]);
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
