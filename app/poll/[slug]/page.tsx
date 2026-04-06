@@ -391,9 +391,10 @@ function PollCard({
       [optionId]: (current[optionId] || 0) + 1,
     }));
 
+    markPollVotedLocally(bundle.poll.id, optionId);
+
     try {
       await submitVote(bundle.poll.id, optionId);
-      markPollVotedLocally(bundle.poll.id, optionId);
       recordVoteClient(bundle.poll.id);
       onVoteComplete(bundle.poll.id, bundle.poll.category);
     } catch (err) {
@@ -408,6 +409,10 @@ function PollCard({
         onVoteComplete(bundle.poll.id, bundle.poll.category);
         return;
       }
+
+            localStorage.removeItem(getPollVotedKey(bundle.poll.id));
+      localStorage.removeItem(getPollSelectedOldKey(bundle.poll.id));
+      localStorage.removeItem(getPollSelectedNewKey(bundle.poll.id));
 
       setCounts(previousCounts);
       setSelected(previousSelected);
