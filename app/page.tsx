@@ -633,6 +633,10 @@ export default function Home() {
       if (featuredPoll?.id) void syncFeaturedVoteCounts(featuredPoll.id);
     };
 
+    syncNow();
+
+    const interval = setInterval(syncNow, 5000);
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") syncNow();
     };
@@ -645,6 +649,7 @@ export default function Home() {
     window.addEventListener("pageshow", handlePageShow);
 
     return () => {
+      clearInterval(interval);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("focus", handleFocus);
       window.removeEventListener("pageshow", handlePageShow);

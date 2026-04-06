@@ -597,10 +597,7 @@ export default function PollPage() {
     };
 
     document.addEventListener("mousedown", handleOutsideClick);
-
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
-    };
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
   useEffect(() => {
@@ -651,6 +648,10 @@ export default function PollPage() {
       void syncDisplayedPolls();
     };
 
+    syncNow();
+
+    const interval = setInterval(syncNow, 5000);
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         syncNow();
@@ -670,6 +671,7 @@ export default function PollPage() {
     window.addEventListener("pageshow", handlePageShow);
 
     return () => {
+      clearInterval(interval);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("focus", handleFocus);
       window.removeEventListener("pageshow", handlePageShow);
