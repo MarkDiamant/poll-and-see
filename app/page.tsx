@@ -768,22 +768,17 @@ export default function Home() {
       await Promise.all(
         pollsToCache.map(async (poll) => {
           try {
-            const [{ data: optionsData }, { data: votesData }] = await Promise.all([
-              supabase
-                .from("poll_options")
-                .select("*")
-                .eq("poll_id", poll.id)
-                .order("id", { ascending: true }),
-              supabase
-                .from("votes")
-                .select("option_id")
-                .eq("poll_id", poll.id),
-            ]);
+            const { data: optionsData } = await supabase
+  .from("poll_options")
+  .select("id, poll_id, option_text, vote_count")
+  .eq("poll_id", poll.id)
+  .order("id", { ascending: true });
 
-            const counts: VoteCounts = {};
-            (votesData || []).forEach((vote: { option_id: number }) => {
-              counts[vote.option_id] = (counts[vote.option_id] || 0) + 1;
-            });
+const counts: VoteCounts = {};
+
+(optionsData || []).forEach((option: any) => {
+  counts[option.id] = option.vote_count || 0;
+});
 
             setCachedPollBundle({
               poll,
