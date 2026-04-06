@@ -18,6 +18,7 @@ type PollOption = {
   id: number;
   poll_id: number;
   option_text: string;
+  vote_count: number;
 };
 
 type VoteInsertPayload = {
@@ -36,6 +37,7 @@ type PollBundle = {
 const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899"];
 const SAME_POLL_CLICK_GUARD_MS = 400;
 const POLL_BUNDLE_CACHE_PREFIX = "poll-bundle-cache:";
+const PRELOAD_QUEUE_LIMIT = 8;
 const SIGNUP_CATEGORIES = [
   "Business",
   "Community",
@@ -524,10 +526,21 @@ export default function PollPage() {
 
   useEffect(() => {
     const loadTotalVoteCount = async () => {
-      const { count } = await supabase.from("votes").select("*", { count: "exact", head: true });
+      try {
+        const { data, error } = await supabase
+          .from("site_stats")
+          .select("total_votes")
+          .eq("key", "global")
+          .single();
 
-      if (typeof count === "number") {
-        setTotalVoteCount(count);
+        if (error) {
+          console.error("Poll page total vote count query failed", error);
+          return;
+        }
+
+        setTotalVoteCount(data?.total_votes || 0);
+      } catch (error) {
+        console.error("Poll page total vote count query failed", error);
       }
     };
 
@@ -548,12 +561,7 @@ export default function PollPage() {
       )
       .subscribe();
 
-    const interval = setInterval(() => {
-      void loadTotalVoteCount();
-    }, 2000);
-
     return () => {
-      clearInterval(interval);
       supabase.removeChannel(channel);
     };
   }, []);
@@ -636,27 +644,37 @@ export default function PollPage() {
   };
 
   const loadBundle = async (pollId: number): Promise<PollBundle> => {
-    const { data: pollData } = await supabase.from("polls").select("*").eq("id", pollId).single();
+    const [pollResult, optionsResult] = await Promise.all([
+      supabase
+        .from("polls")
+        .select("id, question, description, category, slug")
+        .eq("id", pollId)
+        .single(),
+      supabase
+        .from("poll_options")
+        .select("id, poll_id, option_text, vote_count")
+        .eq("poll_id", pollId)
+        .order("id", { ascending: true }),
+    ]);
 
-    const { data: optionsData } = await supabase
-      .from("poll_options")
-      .select("*")
-      .eq("poll_id", pollId)
-      .order("id", { ascending: true });
+    if (pollResult.error || !pollResult.data) {
+      throw pollResult.error || new Error("Poll not found");
+    }
 
-    const { data: votesData } = await supabase
-      .from("votes")
-      .select("option_id")
-      .eq("poll_id", pollId);
+    if (optionsResult.error) {
+      throw optionsResult.error;
+    }
 
+    const options = (optionsResult.data || []) as PollOption[];
     const counts: VoteCounts = {};
-    (votesData || []).forEach((vote: { option_id: number }) => {
-      counts[vote.option_id] = (counts[vote.option_id] || 0) + 1;
+
+    options.forEach((option) => {
+      counts[option.id] = option.vote_count || 0;
     });
 
     const bundle = {
-      poll: pollData as Poll,
-      options: (optionsData || []) as PollOption[],
+      poll: pollResult.data as Poll,
+      options,
       voteCounts: counts,
     };
 
@@ -665,31 +683,49 @@ export default function PollPage() {
   };
 
   const preloadQueue = async (excludeIds: number[], flowAnchorCategory: string) => {
-    const { data } = await supabase.from("polls").select("*").order("id", { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from("polls")
+        .select("id, question, description, category, slug")
+        .order("id", { ascending: false });
 
-    const pollList = (data || []) as Poll[];
-    const unseen = pollList.filter((poll) => !excludeIds.includes(poll.id) && !hasLocalVote(poll.id));
+      if (error) {
+        console.error("Poll page preload poll list query failed", error);
+        preloadedQueueRef.current = [];
+        return;
+      }
 
-    const priorityCategories = getPriorityCategories(flowAnchorCategory);
-    const ordered: Poll[] = [];
-    const usedPollIds = new Set<number>();
+      const pollList = (data || []) as Poll[];
+      const unseen = pollList.filter((poll) => !excludeIds.includes(poll.id) && !hasLocalVote(poll.id));
 
-    for (const category of priorityCategories) {
-      const matches = unseen.filter((poll) => poll.category === category);
-      for (const poll of matches) {
-        if (!usedPollIds.has(poll.id)) {
-          ordered.push(poll);
-          usedPollIds.add(poll.id);
+      const priorityCategories = getPriorityCategories(flowAnchorCategory);
+      const ordered: Poll[] = [];
+      const usedPollIds = new Set<number>();
+
+      for (const category of priorityCategories) {
+        const matches = unseen.filter((poll) => poll.category === category);
+        for (const poll of matches) {
+          if (!usedPollIds.has(poll.id)) {
+            ordered.push(poll);
+            usedPollIds.add(poll.id);
+          }
         }
       }
+
+      const remaining = unseen.filter((poll) => !usedPollIds.has(poll.id));
+      const groupedRemaining = getGroupedRemainingPolls(remaining);
+      ordered.push(...groupedRemaining);
+
+      const limitedPolls = ordered.slice(0, PRELOAD_QUEUE_LIMIT);
+      const bundleResults = await Promise.allSettled(limitedPolls.map((poll) => loadBundle(poll.id)));
+
+      preloadedQueueRef.current = bundleResults
+        .filter((result): result is PromiseFulfilledResult<PollBundle> => result.status === "fulfilled")
+        .map((result) => result.value);
+    } catch (error) {
+      console.error("Poll page preload queue failed", error);
+      preloadedQueueRef.current = [];
     }
-
-    const remaining = unseen.filter((poll) => !usedPollIds.has(poll.id));
-    const groupedRemaining = getGroupedRemainingPolls(remaining);
-    ordered.push(...groupedRemaining);
-
-    const bundles = await Promise.all(ordered.map((poll) => loadBundle(poll.id)));
-    preloadedQueueRef.current = bundles;
   };
 
   useEffect(() => {
@@ -699,28 +735,40 @@ export default function PollPage() {
         setPolls([cached]);
       }
 
-      const { data } = await supabase.from("polls").select("*").eq("slug", slug).single();
-      if (!data) return;
+      try {
+        const { data, error } = await supabase
+          .from("polls")
+          .select("id, question, description, category, slug")
+          .eq("slug", slug)
+          .single();
 
-      const storedAnchorCategory = sessionStorage.getItem(getPollFlowAnchorCategoryKey(slug));
-      const resolvedAnchorCategory = storedAnchorCategory || data.category;
-
-      setAnchorCategory(resolvedAnchorCategory);
-      sessionStorage.setItem(getPollFlowAnchorCategoryKey(slug), resolvedAnchorCategory);
-
-      const firstBundle = await loadBundle(data.id);
-      const firstPollAlreadyVoted = hasLocalVote(firstBundle.poll.id);
-
-      setPolls([firstBundle]);
-
-      await preloadQueue([firstBundle.poll.id], resolvedAnchorCategory);
-
-      if (firstPollAlreadyVoted && preloadedQueueRef.current.length > 0) {
-        const next = preloadedQueueRef.current.shift();
-
-        if (next && !hasLocalVote(next.poll.id)) {
-          setPolls([firstBundle, next]);
+        if (error || !data) {
+          console.error("Poll page initial poll query failed", error);
+          return;
         }
+
+        const storedAnchorCategory = sessionStorage.getItem(getPollFlowAnchorCategoryKey(slug));
+        const resolvedAnchorCategory = storedAnchorCategory || data.category;
+
+        setAnchorCategory(resolvedAnchorCategory);
+        sessionStorage.setItem(getPollFlowAnchorCategoryKey(slug), resolvedAnchorCategory);
+
+        const firstBundle = await loadBundle(data.id);
+        const firstPollAlreadyVoted = hasLocalVote(firstBundle.poll.id);
+
+        setPolls([firstBundle]);
+
+        await preloadQueue([firstBundle.poll.id], resolvedAnchorCategory);
+
+        if (firstPollAlreadyVoted && preloadedQueueRef.current.length > 0) {
+          const next = preloadedQueueRef.current.shift();
+
+          if (next && !hasLocalVote(next.poll.id)) {
+            setPolls([firstBundle, next]);
+          }
+        }
+      } catch (error) {
+        console.error("Poll page init failed", error);
       }
     };
 
