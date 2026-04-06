@@ -55,20 +55,12 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const { data: optionRow, error: optionError } = await supabaseAdmin
+    const { data: optionRow } = await supabaseAdmin
       .from("poll_options")
       .select("id, poll_id")
       .eq("id", optionId)
       .eq("poll_id", pollId)
-      .limit(1)
       .maybeSingle();
-
-    if (optionError) {
-      return NextResponse.json(
-        { error: "Could not validate vote option." },
-        { status: 500 }
-      );
-    }
 
     if (!optionRow) {
       return NextResponse.json(
@@ -89,7 +81,7 @@ export async function POST(request: NextRequest) {
       now.getTime() - BURST_WINDOW_SECONDS * 1000
     ).toISOString();
 
-    const [samePollRecentVoteResult, burstVotesResult] = await Promise.all([
+    const [samePollRecentVote, burstVotes] = await Promise.all([
       supabaseAdmin
         .from("votes")
         .select("id")
@@ -101,34 +93,19 @@ export async function POST(request: NextRequest) {
 
       supabaseAdmin
         .from("votes")
-        .select("id")
+        .select("id", { count: "exact", head: true })
         .eq("ip_hash", ipHash)
-        .gte("created_at", burstCutoff)
-        .limit(MAX_BURST_VOTES),
+        .gte("created_at", burstCutoff),
     ]);
 
-    if (samePollRecentVoteResult.error) {
-      return NextResponse.json(
-        { error: "Could not validate vote history." },
-        { status: 500 }
-      );
-    }
-
-    if (burstVotesResult.error) {
-      return NextResponse.json(
-        { error: "Could not validate vote rate." },
-        { status: 500 }
-      );
-    }
-
-    if (samePollRecentVoteResult.data) {
+    if (samePollRecentVote.data) {
       return NextResponse.json(
         { error: "You’ve already voted on this poll." },
         { status: 429 }
       );
     }
 
-    if ((burstVotesResult.data?.length || 0) >= MAX_BURST_VOTES) {
+    if ((burstVotes.count || 0) >= MAX_BURST_VOTES) {
       return NextResponse.json(
         { error: "Too many votes too quickly. Please try again shortly." },
         { status: 429 }

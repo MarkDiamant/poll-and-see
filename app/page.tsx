@@ -18,7 +18,6 @@ type PollOption = {
   id: number;
   poll_id: number;
   option_text: string;
-  vote_count: number;
 };
 
 type VoteInsertPayload = {
@@ -451,7 +450,6 @@ export default function Home() {
         setFeaturedVoteCounts({});
         setFeaturedPollVoted(false);
         setFeaturedSelectedOptionId(null);
-        setTotalVoteCount(0);
         return;
       }
 
@@ -467,40 +465,41 @@ export default function Home() {
         setFeaturedSelectedOptionId(null);
       }
 
-      const [siteStatsResult, featuredOptionsResult] = await Promise.allSettled([
-        supabase
-          .from("site_stats")
-          .select("total_votes")
-          .eq("key", "global")
-          .single(),
+      const [totalVotesResult, featuredOptionsResult, featuredVotesResult] = await Promise.allSettled([
+        supabase.from("votes").select("*", { count: "exact", head: true }),
         supabase
           .from("poll_options")
-          .select("id, poll_id, option_text, vote_count")
+          .select("*")
           .eq("poll_id", chosenFeaturedPoll.id)
           .order("id", { ascending: true }),
+        supabase
+          .from("votes")
+          .select("option_id")
+          .eq("poll_id", chosenFeaturedPoll.id),
       ]);
 
-      if (siteStatsResult.status === "fulfilled" && !siteStatsResult.value.error) {
-        setTotalVoteCount(siteStatsResult.value.data?.total_votes || 0);
+      if (totalVotesResult.status === "fulfilled" && !totalVotesResult.value.error) {
+        setTotalVoteCount(totalVotesResult.value.count || 0);
       } else {
-        setTotalVoteCount(0);
-        console.error("Homepage site stats query failed", siteStatsResult);
+        console.error("Homepage total vote count query failed", totalVotesResult);
       }
 
       if (featuredOptionsResult.status === "fulfilled" && !featuredOptionsResult.value.error) {
-        const options = (featuredOptionsResult.value.data || []) as PollOption[];
-        const counts: Record<number, number> = {};
-
-        options.forEach((option) => {
-          counts[option.id] = option.vote_count || 0;
-        });
-
-        setFeaturedOptions(options);
-        setFeaturedVoteCounts(counts);
+        setFeaturedOptions(featuredOptionsResult.value.data || []);
       } else {
         setFeaturedOptions([]);
-        setFeaturedVoteCounts({});
         console.error("Homepage featured options query failed", featuredOptionsResult);
+      }
+
+      if (featuredVotesResult.status === "fulfilled" && !featuredVotesResult.value.error) {
+        const counts: Record<number, number> = {};
+        (featuredVotesResult.value.data || []).forEach((vote) => {
+          counts[vote.option_id] = (counts[vote.option_id] || 0) + 1;
+        });
+        setFeaturedVoteCounts(counts);
+      } else {
+        setFeaturedVoteCounts({});
+        console.error("Homepage featured vote counts query failed", featuredVotesResult);
       }
     } catch (error) {
       console.error("Homepage polls query failed", error);
@@ -509,7 +508,6 @@ export default function Home() {
       setFeaturedVoteCounts({});
       setFeaturedPollVoted(false);
       setFeaturedSelectedOptionId(null);
-      setTotalVoteCount(0);
     } finally {
       setLoading(false);
     }
@@ -770,22 +768,26 @@ export default function Home() {
       await Promise.all(
         pollsToCache.map(async (poll) => {
           try {
-            const { data: optionsData } = await supabase
-              .from("poll_options")
-              .select("id, poll_id, option_text, vote_count")
-              .eq("poll_id", poll.id)
-              .order("id", { ascending: true });
+            const [{ data: optionsData }, { data: votesData }] = await Promise.all([
+              supabase
+                .from("poll_options")
+                .select("*")
+                .eq("poll_id", poll.id)
+                .order("id", { ascending: true }),
+              supabase
+                .from("votes")
+                .select("option_id")
+                .eq("poll_id", poll.id),
+            ]);
 
-            const options = (optionsData || []) as PollOption[];
             const counts: VoteCounts = {};
-
-            options.forEach((option) => {
-              counts[option.id] = option.vote_count || 0;
+            (votesData || []).forEach((vote: { option_id: number }) => {
+              counts[vote.option_id] = (counts[vote.option_id] || 0) + 1;
             });
 
             setCachedPollBundle({
               poll,
-              options,
+              options: (optionsData || []) as PollOption[],
               voteCounts: counts,
             });
           } catch {
