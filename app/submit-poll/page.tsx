@@ -463,9 +463,14 @@ export default function SubmitPollPage() {
                 />
                 <span>This poll uses images</span>
               </label>
-              <p className="mt-2 text-xs text-gray-400">
-                Paste a direct image link for each option. If image mode is enabled, all options must include an image.
-              </p>
+              <div className="mt-2 space-y-1">
+  <p className="text-xs text-gray-400">
+    Paste a direct image link for each option. If image mode is enabled, all options must include an image.
+  </p>
+  <p className="text-xs text-gray-400">
+    Recommended: square images work best (1:1 ratio)
+  </p>
+</div>
             </div>
 
             <div>
