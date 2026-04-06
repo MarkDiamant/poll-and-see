@@ -173,20 +173,25 @@ function suggestCategory(question: string): Category {
   return "General";
 }
 
+function createEmptyOption() {
+  return { text: "", imageUrl: "" };
+}
+
 export default function SubmitPollPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [question, setQuestion] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<Category>("");
-  const [options, setOptions] = useState(["", ""]);
+  const [usesImages, setUsesImages] = useState(false);
+  const [options, setOptions] = useState([createEmptyOption(), createEmptyOption()]);
 
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "">("");
   const [categoryTouched, setCategoryTouched] = useState(false);
 
-  const canAddOption = useMemo(() => options.length < 4, [options.length]);
+  const canAddOption = useMemo(() => options.length < 8, [options.length]);
   const canRemoveOption = useMemo(() => options.length > 2, [options.length]);
 
   const suggestedCategory = question.trim() ? suggestCategory(question) : "";
@@ -196,14 +201,20 @@ export default function SubmitPollPage() {
   const textareaClasses =
     "w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500";
 
-  const updateOption = (index: number, value: string) => {
+  const updateOptionText = (index: number, value: string) => {
     const next = [...options];
-    next[index] = value;
+    next[index] = { ...next[index], text: value };
+    setOptions(next);
+  };
+
+  const updateOptionImageUrl = (index: number, value: string) => {
+    const next = [...options];
+    next[index] = { ...next[index], imageUrl: value };
     setOptions(next);
   };
 
   const addOption = () => {
-    if (options.length < 4) setOptions([...options, ""]);
+    if (options.length < 8) setOptions([...options, createEmptyOption()]);
   };
 
   const removeOption = (index: number) => {
@@ -215,7 +226,8 @@ export default function SubmitPollPage() {
     setQuestion("");
     setDescription("");
     setCategory("");
-    setOptions(["", ""]);
+    setOptions([createEmptyOption(), createEmptyOption()]);
+    setUsesImages(false);
     setCategoryTouched(false);
   };
 
@@ -235,7 +247,10 @@ export default function SubmitPollPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const cleanedOptions = options.map((o) => o.trim());
+    const cleanedOptions = options.map((option) => ({
+      text: option.text.trim(),
+      imageUrl: option.imageUrl.trim(),
+    }));
 
     if (!name.trim() || !email.trim() || !question.trim() || !category.trim()) {
       setMessageType("error");
@@ -261,22 +276,32 @@ export default function SubmitPollPage() {
       return;
     }
 
-    if (cleanedOptions.length > 4) {
+    if (cleanedOptions.length > 8) {
       setMessageType("error");
-      setMessage("Maximum 4 options allowed.");
+      setMessage("Maximum 8 options allowed.");
       return;
     }
 
-    if (cleanedOptions.some((o) => !o)) {
+    if (cleanedOptions.some((option) => !option.text)) {
       setMessageType("error");
       setMessage("Options cannot be empty.");
       return;
     }
 
-    if (cleanedOptions.some((o) => o.length > 40)) {
+    if (cleanedOptions.some((option) => option.text.length > 60)) {
       setMessageType("error");
-      setMessage("Each option must be 40 characters or fewer.");
+      setMessage("Each option must be 60 characters or fewer.");
       return;
+    }
+
+    if (usesImages) {
+      const hasMissingImageUrl = cleanedOptions.some((option) => !option.imageUrl);
+
+      if (hasMissingImageUrl) {
+        setMessageType("error");
+        setMessage("If image mode is enabled, every option must include an image URL.");
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -290,7 +315,10 @@ export default function SubmitPollPage() {
         question: question.trim(),
         description: description.trim() || null,
         category: category.trim(),
-        options: cleanedOptions,
+        options: cleanedOptions.map((option) => option.text),
+        option_image_urls: usesImages
+          ? cleanedOptions.map((option) => option.imageUrl)
+          : null,
       },
     ]);
 
@@ -423,31 +451,62 @@ export default function SubmitPollPage() {
             </div>
 
             <div>
-              <label className="block text-sm mb-2">Poll Options (2–4 inputs)</label>
+              <label className="inline-flex items-center gap-3 text-sm">
+                <input
+                  type="checkbox"
+                  checked={usesImages}
+                  onChange={(e) => setUsesImages(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-600 bg-gray-900 text-blue-600 focus:ring-blue-500"
+                />
+                <span>This poll uses images</span>
+              </label>
+              <p className="mt-2 text-xs text-gray-400">
+                Paste a direct image link for each option. If image mode is enabled, all options must include an image.
+              </p>
+            </div>
 
-              <div className="space-y-3">
+            <div>
+              <label className="block text-sm mb-2">Poll Options (2–8 inputs)</label>
+
+              <div className="space-y-4">
                 {options.map((option, i) => {
                   const optionPlaceholder =
                     i === 0 ? "Yes" : i === 1 ? "No" : i === 2 ? "Depends" : `Option ${i + 1}`;
 
                   return (
-                    <div key={i} className="flex gap-2">
-                      <input
-                        maxLength={40}
-                        value={option}
-                        onChange={(e) => updateOption(i, e.target.value)}
-                        className={inputClasses}
-                        placeholder={optionPlaceholder}
-                      />
-                      {canRemoveOption && (
-                        <button
-                          type="button"
-                          onClick={() => removeOption(i)}
-                          className="px-3 bg-gray-700 rounded-xl whitespace-nowrap transition hover:bg-gray-600"
-                        >
-                          Remove
-                        </button>
-                      )}
+                    <div key={i} className="space-y-2">
+                      <div className="flex gap-2">
+                        <input
+                          maxLength={60}
+                          value={option.text}
+                          onChange={(e) => updateOptionText(i, e.target.value)}
+                          className={inputClasses}
+                          placeholder={optionPlaceholder}
+                        />
+                        {canRemoveOption && (
+                          <button
+                            type="button"
+                            onClick={() => removeOption(i)}
+                            className="px-3 bg-gray-700 rounded-xl whitespace-nowrap transition hover:bg-gray-600"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+
+                      {usesImages ? (
+                        <div>
+                          <input
+                            value={option.imageUrl}
+                            onChange={(e) => updateOptionImageUrl(i, e.target.value)}
+                            className={inputClasses}
+                            placeholder="https://example.com/image.jpg"
+                          />
+                          <p className="mt-1 text-xs text-gray-400">
+                            Direct image URL (jpg, png, webp etc.)
+                          </p>
+                        </div>
+                      ) : null}
                     </div>
                   );
                 })}
