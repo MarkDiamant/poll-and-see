@@ -201,6 +201,8 @@ export default function SubmitPollPage() {
     "w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500";
   const textareaClasses =
     "w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500";
+  const checkboxClasses =
+    "h-5 w-5 rounded border-gray-600 bg-gray-900 text-blue-600 focus:ring-blue-500";
 
   const updateOptionText = (index: number, value: string) => {
     const next = [...options];
@@ -459,18 +461,21 @@ export default function SubmitPollPage() {
                   type="checkbox"
                   checked={usesImages}
                   onChange={(e) => setUsesImages(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-600 bg-gray-900 text-blue-600 focus:ring-blue-500"
+                  className={checkboxClasses}
                 />
                 <span>This poll uses images</span>
               </label>
-              <div className="mt-2 space-y-1">
-  <p className="text-xs text-gray-400">
-    Paste a direct image link for each option. If image mode is enabled, all options must include an image.
-  </p>
-  <p className="text-xs text-gray-400">
-    Recommended: square images work best (1:1 ratio)
-  </p>
-</div>
+
+              {usesImages ? (
+                <div className="mt-2 space-y-1">
+                  <p className="text-xs text-gray-400">
+                    Paste a direct image link into each option. All options must include an image.
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    Recommended: square images work best (1:1 ratio).
+                  </p>
+                </div>
+              ) : null}
             </div>
 
             <div>
@@ -532,14 +537,14 @@ export default function SubmitPollPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm">
+              <label className="inline-flex items-center gap-3 text-sm">
                 <input
                   type="checkbox"
                   checked={isPrivate}
                   onChange={(e) => setIsPrivate(e.target.checked)}
-                  className="accent-blue-600"
+                  className={checkboxClasses}
                 />
-                Make this poll private
+                <span>Make this poll private</span>
               </label>
 
               <p className="text-xs text-gray-400">
