@@ -184,6 +184,7 @@ export default function SubmitPollPage() {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<Category>("");
   const [usesImages, setUsesImages] = useState(false);
+  const [isPrivate, setIsPrivate] = useState(false);
   const [options, setOptions] = useState([createEmptyOption(), createEmptyOption()]);
 
   const [submitting, setSubmitting] = useState(false);
@@ -228,6 +229,7 @@ export default function SubmitPollPage() {
     setCategory("");
     setOptions([createEmptyOption(), createEmptyOption()]);
     setUsesImages(false);
+    setIsPrivate(false);
     setCategoryTouched(false);
   };
 
@@ -319,6 +321,7 @@ export default function SubmitPollPage() {
         option_image_urls: usesImages
           ? cleanedOptions.map((option) => option.imageUrl)
           : null,
+        is_private: isPrivate,
       },
     ]);
 
@@ -372,10 +375,10 @@ export default function SubmitPollPage() {
 
           <div className="mt-6 space-y-3">
             <p className="text-lg text-white">
-              Ask a question. Share the link. Watch votes come in live.
+              Ask a question. Share the link. Watch responses come in live.
             </p>
             <p className="text-gray-300">
-              Share with your contacts, team or community to see what people really think.
+              Share with your contacts, team or community to quickly see what people really think.
             </p>
           </div>
         </div>
@@ -416,7 +419,7 @@ export default function SubmitPollPage() {
             </div>
 
             <div>
-              <label className="block text-sm mb-2">Optional description</label>
+              <label className="block text-sm mb-2">Description (optional)</label>
               <textarea
                 maxLength={200}
                 value={description}
@@ -521,6 +524,22 @@ export default function SubmitPollPage() {
                   + Add option
                 </button>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={isPrivate}
+                  onChange={(e) => setIsPrivate(e.target.checked)}
+                  className="accent-blue-600"
+                />
+                Make this poll private
+              </label>
+
+              <p className="text-xs text-gray-400">
+                Private polls are accessible only via direct link and will not appear on the homepage.
+              </p>
             </div>
 
             <div className="space-y-2">

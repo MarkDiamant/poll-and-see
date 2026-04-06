@@ -12,6 +12,7 @@ type Poll = {
   description: string;
   category: string;
   slug: string;
+  is_private?: boolean;
 };
 
 type PollOption = {
@@ -20,11 +21,6 @@ type PollOption = {
   option_text: string;
   vote_count: number;
   image_url?: string | null;
-};
-
-type VoteInsertPayload = {
-  poll_id?: number;
-  option_id?: number;
 };
 
 type VoteCounts = Record<number, number>;
@@ -761,7 +757,7 @@ export default function PollPage() {
     const [pollResult, optionsResult] = await Promise.all([
       supabase
         .from("polls")
-        .select("id, question, description, category, slug")
+        .select("id, question, description, category, slug, is_private")
         .eq("id", pollId)
         .single(),
       supabase
@@ -800,7 +796,8 @@ export default function PollPage() {
     try {
       const { data, error } = await supabase
         .from("polls")
-        .select("id, question, description, category, slug")
+        .select("id, question, description, category, slug, is_private")
+        .eq("is_private", false)
         .order("id", { ascending: false });
 
       if (error) {
@@ -852,7 +849,7 @@ export default function PollPage() {
       try {
         const { data, error } = await supabase
           .from("polls")
-          .select("id, question, description, category, slug")
+          .select("id, question, description, category, slug, is_private")
           .eq("slug", slug)
           .single();
 
