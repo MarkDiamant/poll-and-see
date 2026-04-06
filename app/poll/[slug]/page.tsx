@@ -330,7 +330,7 @@ function PollCard({
   const [counts, setCounts] = useState<VoteCounts>(bundle.voteCounts);
   const [selected, setSelected] = useState<number | null>(null);
   const [error, setError] = useState<string>("");
-  const [shareText, setShareText] = useState("Share poll");
+  const [shareText, setShareText] = useState("Share poll link");
 
   const totalVotes = Object.values(counts).reduce((sum, count) => sum + count, 0);
   const categoryColours = getCategoryColours(bundle.poll.category);
@@ -340,7 +340,7 @@ function PollCard({
     setSelected(getLocalSelectedOption(bundle.poll.id));
     setCounts(bundle.voteCounts);
     setError("");
-    setShareText("Share poll");
+    setShareText("Share poll link");
   }, [bundle]);
 
   const handleShare = async () => {
@@ -363,9 +363,9 @@ function PollCard({
     try {
       await navigator.clipboard.writeText(copiedShareText);
       setShareText("Link copied");
-      setTimeout(() => setShareText("Share poll"), 2000);
+      setTimeout(() => setShareText("Share poll link"), 2000);
     } catch {
-      setShareText("Share poll");
+      setShareText("Share poll link");
     }
   };
 
