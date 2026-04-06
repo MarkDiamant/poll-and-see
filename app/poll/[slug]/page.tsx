@@ -33,8 +33,7 @@ type PollBundle = {
   voteCounts: VoteCounts;
 };
 
-const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899"];
-const SAME_POLL_CLICK_GUARD_MS = 400;
+const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899", "#8b5cf6", "#14b8a6", "#f97316", "#ef4444"];const SAME_POLL_CLICK_GUARD_MS = 400;
 const POLL_BUNDLE_CACHE_PREFIX = "poll-bundle-cache:";
 const SIGNUP_CATEGORIES = [
   "Business",
