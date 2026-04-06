@@ -18,6 +18,8 @@ type PollOption = {
   id: number;
   poll_id: number;
   option_text: string;
+  vote_count: number;
+  image_url?: string | null;
 };
 
 type VoteInsertPayload = {
@@ -40,7 +42,7 @@ type IdleWindow = Window &
   };
 
 const POLL_BUNDLE_CACHE_PREFIX = "poll-bundle-cache:";
-const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899"];
+const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899", "#8b5cf6", "#14b8a6", "#f97316", "#ef4444"];
 const SIGNUP_CATEGORIES = [
   "Business",
   "Community",
@@ -450,6 +452,7 @@ export default function Home() {
         setFeaturedVoteCounts({});
         setFeaturedPollVoted(false);
         setFeaturedSelectedOptionId(null);
+        setTotalVoteCount(0);
         return;
       }
 
@@ -465,41 +468,40 @@ export default function Home() {
         setFeaturedSelectedOptionId(null);
       }
 
-      const [totalVotesResult, featuredOptionsResult, featuredVotesResult] = await Promise.allSettled([
-        supabase.from("votes").select("*", { count: "exact", head: true }),
+      const [siteStatsResult, featuredOptionsResult] = await Promise.allSettled([
+        supabase
+          .from("site_stats")
+          .select("total_votes")
+          .eq("key", "global")
+          .single(),
         supabase
           .from("poll_options")
-          .select("*")
+          .select("id, poll_id, option_text, vote_count, image_url")
           .eq("poll_id", chosenFeaturedPoll.id)
           .order("id", { ascending: true }),
-        supabase
-          .from("votes")
-          .select("option_id")
-          .eq("poll_id", chosenFeaturedPoll.id),
       ]);
 
-      if (totalVotesResult.status === "fulfilled" && !totalVotesResult.value.error) {
-        setTotalVoteCount(totalVotesResult.value.count || 0);
+      if (siteStatsResult.status === "fulfilled" && !siteStatsResult.value.error) {
+        setTotalVoteCount(siteStatsResult.value.data?.total_votes || 0);
       } else {
-        console.error("Homepage total vote count query failed", totalVotesResult);
+        setTotalVoteCount(0);
+        console.error("Homepage site stats query failed", siteStatsResult);
       }
 
       if (featuredOptionsResult.status === "fulfilled" && !featuredOptionsResult.value.error) {
-        setFeaturedOptions(featuredOptionsResult.value.data || []);
-      } else {
-        setFeaturedOptions([]);
-        console.error("Homepage featured options query failed", featuredOptionsResult);
-      }
-
-      if (featuredVotesResult.status === "fulfilled" && !featuredVotesResult.value.error) {
+        const options = (featuredOptionsResult.value.data || []) as PollOption[];
         const counts: Record<number, number> = {};
-        (featuredVotesResult.value.data || []).forEach((vote) => {
-          counts[vote.option_id] = (counts[vote.option_id] || 0) + 1;
+
+        options.forEach((option) => {
+          counts[option.id] = option.vote_count || 0;
         });
+
+        setFeaturedOptions(options);
         setFeaturedVoteCounts(counts);
       } else {
+        setFeaturedOptions([]);
         setFeaturedVoteCounts({});
-        console.error("Homepage featured vote counts query failed", featuredVotesResult);
+        console.error("Homepage featured options query failed", featuredOptionsResult);
       }
     } catch (error) {
       console.error("Homepage polls query failed", error);
@@ -508,6 +510,7 @@ export default function Home() {
       setFeaturedVoteCounts({});
       setFeaturedPollVoted(false);
       setFeaturedSelectedOptionId(null);
+      setTotalVoteCount(0);
     } finally {
       setLoading(false);
     }
@@ -769,20 +772,21 @@ export default function Home() {
         pollsToCache.map(async (poll) => {
           try {
             const { data: optionsData } = await supabase
-  .from("poll_options")
-  .select("id, poll_id, option_text, vote_count")
-  .eq("poll_id", poll.id)
-  .order("id", { ascending: true });
+              .from("poll_options")
+              .select("id, poll_id, option_text, vote_count, image_url")
+              .eq("poll_id", poll.id)
+              .order("id", { ascending: true });
 
-const counts: VoteCounts = {};
+            const options = (optionsData || []) as PollOption[];
+            const counts: VoteCounts = {};
 
-(optionsData || []).forEach((option: any) => {
-  counts[option.id] = option.vote_count || 0;
-});
+            options.forEach((option) => {
+              counts[option.id] = option.vote_count || 0;
+            });
 
             setCachedPollBundle({
               poll,
-              options: (optionsData || []) as PollOption[],
+              options,
               voteCounts: counts,
             });
           } catch {
@@ -912,6 +916,19 @@ const counts: VoteCounts = {};
                         }}
                       >
                         <div className="px-3 pt-3">
+                          {option.image_url ? (
+                            <div className="mb-3 overflow-hidden rounded-xl bg-gray-900">
+                              <img
+                                src={option.image_url}
+                                alt={option.option_text}
+                                loading="lazy"
+                                width={1200}
+                                height={675}
+                                className="h-40 w-full object-cover md:h-48"
+                              />
+                            </div>
+                          ) : null}
+
                           <div className="grid grid-cols-[1fr_auto] items-start gap-x-3">
                             <div className="flex min-w-0 items-start gap-2">
                               {isSelected ? (
