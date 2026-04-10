@@ -273,14 +273,14 @@ function ResultOptions({
           >
             <div className="px-3 pt-3">
               {option.image_url ? (
-                <div className="mb-3 overflow-hidden rounded-xl bg-gray-900">
+                <div className="mb-3 overflow-hidden rounded-xl bg-gray-900 md:max-w-[480px]">
                   <img
                     src={option.image_url}
                     alt={option.option_text}
                     loading="lazy"
                     width={1200}
                     height={675}
-                    className="w-full object-contain aspect-square h-auto"
+                    className="aspect-square h-auto w-full object-contain"
                   />
                 </div>
               ) : null}
@@ -334,6 +334,7 @@ function PollCard({
 
   const totalVotes = Object.values(counts).reduce((sum, count) => sum + count, 0);
   const categoryColours = getCategoryColours(bundle.poll.category);
+  const hasImageOptions = bundle.options.some((option) => Boolean(option.image_url));
 
   useEffect(() => {
     setVoted(hasLocalVote(bundle.poll.id));
@@ -439,7 +440,11 @@ function PollCard({
       </div>
 
       <h2 className="mb-3 text-2xl font-bold">{bundle.poll.question}</h2>
-      <p className="mb-6 text-gray-300">{bundle.poll.description}</p>
+      <p className="mb-3 text-gray-300">{bundle.poll.description}</p>
+
+      {hasImageOptions ? (
+        <p className="mb-6 text-sm text-gray-400 md:text-base">Tap an image to vote</p>
+      ) : null}
 
       {!voted ? (
         <div className="flex flex-col gap-3">
@@ -450,14 +455,14 @@ function PollCard({
               className="cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600"
             >
               {option.image_url ? (
-                <div className="overflow-hidden bg-gray-900">
+                <div className="overflow-hidden bg-gray-900 md:max-w-[480px]">
                   <img
                     src={option.image_url}
                     alt={option.option_text}
                     loading="lazy"
                     width={1200}
                     height={675}
-                    className="w-full object-contain aspect-square h-auto"
+                    className="aspect-square h-auto w-full object-contain"
                   />
                 </div>
               ) : null}
