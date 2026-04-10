@@ -280,7 +280,7 @@ function ResultOptions({
                     loading="lazy"
                     width={1200}
                     height={675}
-                    className="h-40 w-full object-cover md:h-48"
+                    className="w-full object-contain aspect-square h-auto"
                   />
                 </div>
               ) : null}
@@ -410,7 +410,7 @@ function PollCard({
         return;
       }
 
-            localStorage.removeItem(getPollVotedKey(bundle.poll.id));
+      localStorage.removeItem(getPollVotedKey(bundle.poll.id));
       localStorage.removeItem(getPollSelectedOldKey(bundle.poll.id));
       localStorage.removeItem(getPollSelectedNewKey(bundle.poll.id));
 
@@ -457,7 +457,7 @@ function PollCard({
                     loading="lazy"
                     width={1200}
                     height={675}
-                    className="h-40 w-full object-cover md:h-48"
+                    className="w-full object-contain aspect-square h-auto"
                   />
                 </div>
               ) : null}
