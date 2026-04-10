@@ -263,15 +263,15 @@ function ResultOptions({
         const isSelected = selectedOptionId === option.id;
 
         return (
-          <div
-            key={option.id}
-            className="rounded-xl"
-            style={{
-              border: isSelected ? `3px solid ${colour}` : "3px solid transparent",
-              boxShadow: isSelected ? `0 0 0 1px ${colour}33, 0 0 16px ${colour}18` : "none",
-            }}
-          >
-            <div className="px-3 pt-3 md:max-w-[480px]">
+  <div
+    key={option.id}
+    className={option.image_url ? "rounded-xl md:max-w-[480px]" : "rounded-xl"}
+    style={{
+      border: isSelected ? `3px solid ${colour}` : "3px solid transparent",
+      boxShadow: isSelected ? `0 0 0 1px ${colour}33, 0 0 16px ${colour}18` : "none",
+    }}
+  >
+    <div className="px-3 pt-3">
               {option.image_url ? (
                 <div className="mb-3 overflow-hidden rounded-xl bg-gray-900 md:max-w-[480px]">
                   <img
@@ -445,14 +445,18 @@ function PollCard({
       {!voted ? (
         <div className="flex flex-col gap-3">
   {hasImageOptions ? (
-    <p className="mb-1 text-sm text-gray-300 md:text-base">Tap an image to vote</p>
+    <p className="mt-1 mb-2 text-sm text-gray-300 md:text-sm">
+      Tap an image to vote
+    </p>
   ) : null}
 
   {bundle.options.map((option) => (
     <button
       key={option.id}
       onClick={() => handleVote(option.id)}
-      className="cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600 md:max-w-[480px]"
+      className={option.image_url
+        ? "cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600 md:max-w-[480px]"
+        : "cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600"}
     >
       {option.image_url ? (
         <div className="overflow-hidden bg-gray-900">
