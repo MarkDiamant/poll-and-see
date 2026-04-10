@@ -271,7 +271,7 @@ function ResultOptions({
               boxShadow: isSelected ? `0 0 0 1px ${colour}33, 0 0 16px ${colour}18` : "none",
             }}
           >
-            <div className="px-3 pt-3">
+            <div className="px-3 pt-3 md:max-w-[480px]">
               {option.image_url ? (
                 <div className="mb-3 overflow-hidden rounded-xl bg-gray-900 md:max-w-[480px]">
                   <img
@@ -442,35 +442,35 @@ function PollCard({
       <h2 className="mb-3 text-2xl font-bold">{bundle.poll.question}</h2>
       <p className="mb-3 text-gray-300">{bundle.poll.description}</p>
 
-      {hasImageOptions ? (
-        <p className="mb-6 text-sm text-gray-400 md:text-base">Tap an image to vote</p>
-      ) : null}
-
       {!voted ? (
         <div className="flex flex-col gap-3">
-          {bundle.options.map((option) => (
-            <button
-              key={option.id}
-              onClick={() => handleVote(option.id)}
-              className="cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600"
-            >
-              {option.image_url ? (
-                <div className="overflow-hidden bg-gray-900 md:max-w-[480px]">
-                  <img
-                    src={option.image_url}
-                    alt={option.option_text}
-                    loading="lazy"
-                    width={1200}
-                    height={675}
-                    className="aspect-square h-auto w-full object-contain"
-                  />
-                </div>
-              ) : null}
-              <div className="px-4 py-3">{option.option_text}</div>
-            </button>
-          ))}
-          {error ? <p className="text-sm text-red-300">{error}</p> : null}
+  {hasImageOptions ? (
+    <p className="mb-1 text-sm text-gray-300 md:text-base">Tap an image to vote</p>
+  ) : null}
+
+  {bundle.options.map((option) => (
+    <button
+      key={option.id}
+      onClick={() => handleVote(option.id)}
+      className="cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600 md:max-w-[480px]"
+    >
+      {option.image_url ? (
+        <div className="overflow-hidden bg-gray-900">
+          <img
+            src={option.image_url}
+            alt={option.option_text}
+            loading="lazy"
+            width={1200}
+            height={675}
+            className="aspect-square h-auto w-full object-contain"
+          />
         </div>
+      ) : null}
+      <div className="px-4 py-3">{option.option_text}</div>
+    </button>
+  ))}
+  {error ? <p className="text-sm text-red-300">{error}</p> : null}
+</div>
       ) : (
         <>
           <ResultOptions options={bundle.options} voteCounts={counts} selectedOptionId={selected} />
