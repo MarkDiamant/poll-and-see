@@ -445,7 +445,7 @@ function PollCard({
       {!voted ? (
         <div className="flex flex-col gap-3">
   {hasImageOptions ? (
-    <p className="mt-1 mb-2 text-sm text-gray-300 md:text-sm">
+    <p className="mt-[6px] mb-[8px] text-[13px] text-gray-300 opacity-80">
       Tap an image to vote
     </p>
   ) : null}
