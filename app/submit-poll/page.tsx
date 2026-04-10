@@ -417,7 +417,7 @@ export default function SubmitPollPage() {
                 className={inputClasses}
                 placeholder="e.g. Should school fees come before holidays when money is tight?"
               />
-              <p className="mt-1 text-xs text-gray-400">{question.length}/100</p>
+              <p className="mt-1 text-sm text-gray-400 md:text-base">{question.length}/100</p>
             </div>
 
             <div>
@@ -430,7 +430,7 @@ export default function SubmitPollPage() {
                 rows={3}
                 placeholder="Add context if helpful (optional)"
               />
-              <p className="mt-1 text-xs text-gray-400">{description.length}/200</p>
+              <p className="mt-1 text-sm text-gray-400 md:text-base">{description.length}/200</p>
             </div>
 
             <div>
@@ -449,7 +449,7 @@ export default function SubmitPollPage() {
               </select>
 
               {suggestedCategory && !categoryTouched && (
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-sm text-gray-400 md:text-base">
                   Suggested category: {suggestedCategory}
                 </p>
               )}
@@ -468,11 +468,11 @@ export default function SubmitPollPage() {
 
               {usesImages ? (
                 <div className="mt-2 space-y-1">
-                  <p className="text-xs text-gray-400">
+                  <p className="text-sm text-gray-400 md:text-base">
                     Paste a direct image link into each option. All options must include an image.
                   </p>
-                  <p className="text-xs text-gray-400">
-                    Recommended: square images work best (1:1 ratio).
+                  <p className="text-sm text-gray-400 md:text-base">
+                    Best results: square images (1:1), minimal empty space. Ideal size 700×700 or 1000×1000 px.
                   </p>
                 </div>
               ) : null}
@@ -515,7 +515,7 @@ export default function SubmitPollPage() {
                             className={inputClasses}
                             placeholder="https://example.com/image.jpg"
                           />
-                          <p className="mt-1 text-xs text-gray-400">
+                          <p className="mt-1 text-sm text-gray-400 md:text-base">
                             Direct image URL (jpg, png, webp etc.)
                           </p>
                         </div>
@@ -547,7 +547,7 @@ export default function SubmitPollPage() {
                 <span>Make this poll private</span>
               </label>
 
-              <p className="text-xs text-gray-400">
+              <p className="text-sm text-gray-400 md:text-base">
                 Private polls are accessible only via direct link and will not appear on the homepage.
               </p>
             </div>
