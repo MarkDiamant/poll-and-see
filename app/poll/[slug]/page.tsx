@@ -35,7 +35,7 @@ const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899", "#8b5cf6", "
 const SAME_POLL_CLICK_GUARD_MS = 400;
 const POLL_BUNDLE_CACHE_PREFIX = "poll-bundle-cache:";
 const PRELOAD_QUEUE_LIMIT = 8;
-const INLINE_SUBSCRIBE_VOTE_THRESHOLD = 5;
+const INLINE_SUBSCRIBE_VOTE_THRESHOLD = 3;
 const INLINE_SUBSCRIBE_VOTE_COUNT_KEY = "poll-flow-vote-count";
 const INLINE_SUBSCRIBE_SHOWN_KEY = "poll-flow-inline-subscribe-shown";
 const POLL_FLOW_COUNTED_VOTE_PREFIX = "poll-flow-counted-vote-";
@@ -577,7 +577,9 @@ export default function PollPage() {
   const [polls, setPolls] = useState<PollBundle[]>([]);
   const [showInlineSubscribe, setShowInlineSubscribe] = useState(false);
   const pollRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const inlineSubscribeBoxRef = useRef<HTMLDivElement | null>(null);
   const previousPollCountRef = useRef(0);
+  const previousShowInlineSubscribeRef = useRef(false);
   const preloadedQueueRef = useRef<PollBundle[]>([]);
   const pollsRef = useRef<PollBundle[]>([]);
 
@@ -820,7 +822,6 @@ export default function PollPage() {
       }
 
       markEmailSubscribedLocally();
-      setShowInlineSubscribe(false);
       setSubscribeMessage("Subscribed.");
       setSubscriberEmail("");
       setSubscriberCategories(["All polls"]);
@@ -965,7 +966,29 @@ export default function PollPage() {
     void init();
   }, [slug]);
 
+  let votedPollsSeen = 0;
+  let inlineSubscribeInsertAfterIndex = -1;
+
+  for (let i = 0; i < polls.length; i += 1) {
+    if (hasLocalVote(polls[i].poll.id)) {
+      votedPollsSeen += 1;
+      if (votedPollsSeen === INLINE_SUBSCRIBE_VOTE_THRESHOLD) {
+        inlineSubscribeInsertAfterIndex = i;
+        break;
+      }
+    }
+  }
+
   useEffect(() => {
+    const inlineSubscribeJustOpened = showInlineSubscribe && !previousShowInlineSubscribeRef.current;
+
+    if (inlineSubscribeJustOpened && inlineSubscribeBoxRef.current) {
+      smoothScrollToElement(inlineSubscribeBoxRef.current, 650, 8);
+      previousShowInlineSubscribeRef.current = showInlineSubscribe;
+      previousPollCountRef.current = polls.length;
+      return;
+    }
+
     if (polls.length > previousPollCountRef.current && polls.length > 1) {
       const lastPollId = polls[polls.length - 1]?.poll.id;
       if (lastPollId && pollRefs.current[lastPollId]) {
@@ -973,8 +996,9 @@ export default function PollPage() {
       }
     }
 
+    previousShowInlineSubscribeRef.current = showInlineSubscribe;
     previousPollCountRef.current = polls.length;
-  }, [polls]);
+  }, [polls, showInlineSubscribe]);
 
   const handleVoteComplete = async (pollId: number) => {
     const countedVotes = recordInlineSubscribeVote(pollId);
@@ -1021,19 +1045,6 @@ export default function PollPage() {
       return;
     }
   };
-
-  let votedPollsSeen = 0;
-  let inlineSubscribeInsertAfterIndex = -1;
-
-  for (let i = 0; i < polls.length; i += 1) {
-    if (hasLocalVote(polls[i].poll.id)) {
-      votedPollsSeen += 1;
-      if (votedPollsSeen === INLINE_SUBSCRIBE_VOTE_THRESHOLD) {
-        inlineSubscribeInsertAfterIndex = i;
-        break;
-      }
-    }
-  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
@@ -1093,7 +1104,7 @@ export default function PollPage() {
             {showInlineSubscribe &&
             (index === inlineSubscribeInsertAfterIndex ||
               (inlineSubscribeInsertAfterIndex === -1 && index === polls.length - 1)) ? (
-              <div className="mb-8 mt-4 flex justify-center">
+              <div ref={inlineSubscribeBoxRef} className="mb-8 mt-4 flex justify-center">
                 <div className="w-full max-w-md rounded-xl border border-gray-700 bg-gray-900/70 p-4">
                   <p className="mb-1 text-base font-medium text-white md:text-lg">Enjoying these polls?</p>
                   <p className="mb-1 text-sm text-gray-200">
