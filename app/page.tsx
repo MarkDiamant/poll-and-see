@@ -43,6 +43,7 @@ type IdleWindow = Window &
   };
 
 const POLL_BUNDLE_CACHE_PREFIX = "poll-bundle-cache:";
+const POLL_EMAIL_SUBSCRIBED_KEY = "poll-email-subscribed";
 const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899", "#8b5cf6", "#14b8a6", "#f97316", "#ef4444"];
 const SIGNUP_CATEGORIES = [
   "Business",
@@ -729,6 +730,7 @@ export default function Home() {
         throw new Error(data.error || "Could not subscribe right now.");
       }
 
+      localStorage.setItem(POLL_EMAIL_SUBSCRIBED_KEY, "true");
       setSubscribeMessage("Subscribed.");
       setSubscriberEmail("");
       setSubscriberCategories(["All polls"]);
@@ -997,8 +999,11 @@ export default function Home() {
             </p>
 
             <div className="mb-3 rounded-xl border border-gray-700 bg-gray-900/60 p-3">
-              <p className="mb-1 text-sm font-medium text-white">Get new polls by email</p>
-              <p className="mb-3 text-xs text-gray-400">Max once per day. Unsubscribe anytime.</p>
+              <p className="mb-1 text-base font-medium text-white md:text-lg">Enjoying these polls?</p>
+              <p className="mb-1 text-sm text-gray-200">
+                Get new polls by email. Choose what you want to see.
+              </p>
+              <p className="mb-3 text-sm text-gray-300">Max once per day. Unsubscribe anytime.</p>
 
               <form onSubmit={handleSubscribe} className="space-y-3">
                 <input

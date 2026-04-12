@@ -35,6 +35,11 @@ const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899", "#8b5cf6", "
 const SAME_POLL_CLICK_GUARD_MS = 400;
 const POLL_BUNDLE_CACHE_PREFIX = "poll-bundle-cache:";
 const PRELOAD_QUEUE_LIMIT = 8;
+const INLINE_SUBSCRIBE_VOTE_THRESHOLD = 5;
+const INLINE_SUBSCRIBE_VOTE_COUNT_KEY = "poll-flow-vote-count";
+const INLINE_SUBSCRIBE_SHOWN_KEY = "poll-flow-inline-subscribe-shown";
+const POLL_FLOW_COUNTED_VOTE_PREFIX = "poll-flow-counted-vote-";
+const POLL_EMAIL_SUBSCRIBED_KEY = "poll-email-subscribed";
 const SIGNUP_CATEGORIES = [
   "Business",
   "Community",
@@ -157,6 +162,10 @@ function getPollFlowAnchorCategoryKey(slug: string) {
   return `poll-flow-anchor-category-${slug}`;
 }
 
+function getPollFlowCountedVoteKey(pollId: number) {
+  return `${POLL_FLOW_COUNTED_VOTE_PREFIX}${pollId}`;
+}
+
 function hasLocalVote(pollId: number): boolean {
   if (typeof window === "undefined") return false;
   return (
@@ -204,6 +213,47 @@ function setCachedPollBundle(bundle: PollBundle) {
   } catch {
     // ignore cache failures
   }
+}
+
+function getInlineSubscribeVoteCount() {
+  if (typeof window === "undefined") return 0;
+  const raw = sessionStorage.getItem(INLINE_SUBSCRIBE_VOTE_COUNT_KEY);
+  const parsed = Number(raw || 0);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function recordInlineSubscribeVote(pollId: number) {
+  if (typeof window === "undefined") return 0;
+
+  const countedKey = getPollFlowCountedVoteKey(pollId);
+  if (sessionStorage.getItem(countedKey) === "true") {
+    return getInlineSubscribeVoteCount();
+  }
+
+  sessionStorage.setItem(countedKey, "true");
+  const next = getInlineSubscribeVoteCount() + 1;
+  sessionStorage.setItem(INLINE_SUBSCRIBE_VOTE_COUNT_KEY, String(next));
+  return next;
+}
+
+function hasShownInlineSubscribeThisSession() {
+  if (typeof window === "undefined") return false;
+  return sessionStorage.getItem(INLINE_SUBSCRIBE_SHOWN_KEY) === "true";
+}
+
+function markInlineSubscribeShownThisSession() {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem(INLINE_SUBSCRIBE_SHOWN_KEY, "true");
+}
+
+function hasEmailSubscribedLocally() {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(POLL_EMAIL_SUBSCRIBED_KEY) === "true";
+}
+
+function markEmailSubscribedLocally() {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(POLL_EMAIL_SUBSCRIBED_KEY, "true");
 }
 
 function smoothScrollToElement(element: HTMLElement, duration = 650, topOffset = 12) {
@@ -263,15 +313,15 @@ function ResultOptions({
         const isSelected = selectedOptionId === option.id;
 
         return (
-  <div
-    key={option.id}
-    className={option.image_url ? "rounded-xl md:max-w-[480px]" : "rounded-xl"}
-    style={{
-      border: isSelected ? `3px solid ${colour}` : "3px solid transparent",
-      boxShadow: isSelected ? `0 0 0 1px ${colour}33, 0 0 16px ${colour}18` : "none",
-    }}
-  >
-    <div className="px-3 pt-3">
+          <div
+            key={option.id}
+            className={option.image_url ? "rounded-xl md:max-w-[480px]" : "rounded-xl"}
+            style={{
+              border: isSelected ? `3px solid ${colour}` : "3px solid transparent",
+              boxShadow: isSelected ? `0 0 0 1px ${colour}33, 0 0 16px ${colour}18` : "none",
+            }}
+          >
+            <div className="px-3 pt-3">
               {option.image_url ? (
                 <div className="mb-3 overflow-hidden rounded-xl bg-gray-900 md:max-w-[480px]">
                   <img
@@ -444,37 +494,37 @@ function PollCard({
 
       {!voted ? (
         <div className="flex flex-col gap-3">
-  {hasImageOptions ? (
-  <p className="mt-[6px] mb-[8px] text-sm text-gray-300 opacity-80">
-    Tap an image to vote
-  </p>
-) : null}
+          {hasImageOptions ? (
+            <p className="mt-[6px] mb-[8px] text-sm text-gray-300 opacity-80">
+              Tap an image to vote
+            </p>
+          ) : null}
 
-  {bundle.options.map((option) => (
-    <button
-      key={option.id}
-      onClick={() => handleVote(option.id)}
-      className={option.image_url
-        ? "cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600 md:max-w-[480px]"
-        : "cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600"}
-    >
-      {option.image_url ? (
-        <div className="overflow-hidden bg-gray-900">
-          <img
-            src={option.image_url}
-            alt={option.option_text}
-            loading="lazy"
-            width={1200}
-            height={675}
-            className="aspect-square h-auto w-full object-contain"
-          />
+          {bundle.options.map((option) => (
+            <button
+              key={option.id}
+              onClick={() => handleVote(option.id)}
+              className={option.image_url
+                ? "cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600 md:max-w-[480px]"
+                : "cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600"}
+            >
+              {option.image_url ? (
+                <div className="overflow-hidden bg-gray-900">
+                  <img
+                    src={option.image_url}
+                    alt={option.option_text}
+                    loading="lazy"
+                    width={1200}
+                    height={675}
+                    className="aspect-square h-auto w-full object-contain"
+                  />
+                </div>
+              ) : null}
+              <div className="px-4 py-3">{option.option_text}</div>
+            </button>
+          ))}
+          {error ? <p className="text-sm text-red-300">{error}</p> : null}
         </div>
-      ) : null}
-      <div className="px-4 py-3">{option.option_text}</div>
-    </button>
-  ))}
-  {error ? <p className="text-sm text-red-300">{error}</p> : null}
-</div>
       ) : (
         <>
           <ResultOptions options={bundle.options} voteCounts={counts} selectedOptionId={selected} />
@@ -525,8 +575,8 @@ export default function PollPage() {
   const slug = String(params.slug);
 
   const [polls, setPolls] = useState<PollBundle[]>([]);
+  const [showInlineSubscribe, setShowInlineSubscribe] = useState(false);
   const pollRefs = useRef<Record<number, HTMLDivElement | null>>({});
-  const subscribeBoxRef = useRef<HTMLDivElement | null>(null);
   const previousPollCountRef = useRef(0);
   const preloadedQueueRef = useRef<PollBundle[]>([]);
   const pollsRef = useRef<PollBundle[]>([]);
@@ -545,6 +595,17 @@ export default function PollPage() {
   useEffect(() => {
     pollsRef.current = polls;
   }, [polls]);
+
+  useEffect(() => {
+    if (
+      !hasEmailSubscribedLocally() &&
+      !hasShownInlineSubscribeThisSession() &&
+      getInlineSubscribeVoteCount() >= INLINE_SUBSCRIBE_VOTE_THRESHOLD
+    ) {
+      markInlineSubscribeShownThisSession();
+      setShowInlineSubscribe(true);
+    }
+  }, []);
 
   const syncTotalVoteCount = async () => {
     try {
@@ -758,6 +819,8 @@ export default function PollPage() {
         throw new Error(data.error || "Could not subscribe right now.");
       }
 
+      markEmailSubscribedLocally();
+      setShowInlineSubscribe(false);
       setSubscribeMessage("Subscribed.");
       setSubscriberEmail("");
       setSubscriberCategories(["All polls"]);
@@ -904,13 +967,9 @@ export default function PollPage() {
 
   useEffect(() => {
     if (polls.length > previousPollCountRef.current && polls.length > 1) {
-      if (polls.length === 2 && subscribeBoxRef.current) {
-        smoothScrollToElement(subscribeBoxRef.current, 650, 8);
-      } else {
-        const lastPollId = polls[polls.length - 1]?.poll.id;
-        if (lastPollId && pollRefs.current[lastPollId]) {
-          smoothScrollToElement(pollRefs.current[lastPollId] as HTMLElement, 650, 8);
-        }
+      const lastPollId = polls[polls.length - 1]?.poll.id;
+      if (lastPollId && pollRefs.current[lastPollId]) {
+        smoothScrollToElement(pollRefs.current[lastPollId] as HTMLElement, 650, 8);
       }
     }
 
@@ -918,6 +977,17 @@ export default function PollPage() {
   }, [polls]);
 
   const handleVoteComplete = async (pollId: number) => {
+    const countedVotes = recordInlineSubscribeVote(pollId);
+
+    if (
+      countedVotes >= INLINE_SUBSCRIBE_VOTE_THRESHOLD &&
+      !hasEmailSubscribedLocally() &&
+      !hasShownInlineSubscribeThisSession()
+    ) {
+      markInlineSubscribeShownThisSession();
+      setShowInlineSubscribe(true);
+    }
+
     const currentShownIds = pollsRef.current.map((item) => item.poll.id);
     const flowAnchorCategory = anchorCategory || pollsRef.current[0]?.poll.category || "";
 
@@ -951,6 +1021,19 @@ export default function PollPage() {
       return;
     }
   };
+
+  let votedPollsSeen = 0;
+  let inlineSubscribeInsertAfterIndex = -1;
+
+  for (let i = 0; i < polls.length; i += 1) {
+    if (hasLocalVote(polls[i].poll.id)) {
+      votedPollsSeen += 1;
+      if (votedPollsSeen === INLINE_SUBSCRIBE_VOTE_THRESHOLD) {
+        inlineSubscribeInsertAfterIndex = i;
+        break;
+      }
+    }
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
@@ -1007,11 +1090,16 @@ export default function PollPage() {
               totalVoteCount={totalVoteCount}
             />
 
-            {index === 0 ? (
-              <div ref={subscribeBoxRef} className="mb-8 mt-4 flex justify-center">
+            {showInlineSubscribe &&
+            (index === inlineSubscribeInsertAfterIndex ||
+              (inlineSubscribeInsertAfterIndex === -1 && index === polls.length - 1)) ? (
+              <div className="mb-8 mt-4 flex justify-center">
                 <div className="w-full max-w-md rounded-xl border border-gray-700 bg-gray-900/70 p-4">
-                  <p className="mb-1 text-sm font-medium text-white">Get new polls by email</p>
-                  <p className="mb-3 text-xs text-gray-400">Max once per day. Unsubscribe anytime.</p>
+                  <p className="mb-1 text-base font-medium text-white md:text-lg">Enjoying these polls?</p>
+                  <p className="mb-1 text-sm text-gray-200">
+                    Get new polls by email. Choose what you want to see.
+                  </p>
+                  <p className="mb-3 text-sm text-gray-300">Max once per day. Unsubscribe anytime.</p>
 
                   <form onSubmit={handleSubscribe} className="space-y-3">
                     <input
