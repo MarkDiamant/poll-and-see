@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { FormEvent, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Footer from "@/components/Footer";
 
@@ -13,6 +13,7 @@ type Poll = {
   category: string;
   slug: string;
   is_private?: boolean;
+  created_at?: string | null;
 };
 
 type PollOption = {
@@ -24,6 +25,7 @@ type PollOption = {
 };
 
 type VoteCounts = Record<number, number>;
+type BadgeLabel = "New" | "Trending" | "Popular";
 
 type PollBundle = {
   poll: Poll;
@@ -79,6 +81,24 @@ const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: strin
   Sport: { text: "#c4b5fd", bg: "rgba(139, 92, 246, 0.12)", border: "rgba(139, 92, 246, 0.55)", solid: "#8b5cf6" },
   Sports: { text: "#c4b5fd", bg: "rgba(139, 92, 246, 0.12)", border: "rgba(139, 92, 246, 0.55)", solid: "#8b5cf6" },
   Tech: { text: "#f9a8d4", bg: "rgba(217, 70, 239, 0.12)", border: "rgba(217, 70, 239, 0.55)", solid: "#d946ef" },
+};
+
+const BADGE_COLOURS: Record<BadgeLabel, { text: string; bg: string; border: string }> = {
+  New: {
+    text: "#86efac",
+    bg: "rgba(34, 197, 94, 0.12)",
+    border: "rgba(34, 197, 94, 0.55)",
+  },
+  Trending: {
+    text: "#fcd34d",
+    bg: "rgba(234, 179, 8, 0.12)",
+    border: "rgba(234, 179, 8, 0.55)",
+  },
+  Popular: {
+    text: "#c4b5fd",
+    bg: "rgba(139, 92, 246, 0.12)",
+    border: "rgba(139, 92, 246, 0.55)",
+  },
 };
 
 const FALLBACK_CATEGORY_COLOURS = [
@@ -256,6 +276,49 @@ function markEmailSubscribedLocally() {
   localStorage.setItem(POLL_EMAIL_SUBSCRIBED_KEY, "true");
 }
 
+function getBadgeLabel(
+  poll: Poll,
+  trendingIds: Set<number>,
+  popularIds: Set<number>
+): BadgeLabel | null {
+  const now = Date.now();
+  const fortyEightHoursAgo = now - 48 * 60 * 60 * 1000;
+
+  if (poll.created_at) {
+    const createdAtTime = new Date(poll.created_at).getTime();
+    if (!Number.isNaN(createdAtTime) && createdAtTime >= fortyEightHoursAgo) {
+      return "New";
+    }
+  }
+
+  if (trendingIds.has(poll.id)) {
+    return "Trending";
+  }
+
+  if (popularIds.has(poll.id)) {
+    return "Popular";
+  }
+
+  return null;
+}
+
+function BadgePill({ label }: { label: BadgeLabel }) {
+  const colours = BADGE_COLOURS[label];
+
+  return (
+    <span
+      className="rounded-full px-2 py-1 text-xs"
+      style={{
+        color: colours.text,
+        backgroundColor: colours.bg,
+        border: `1px solid ${colours.border}`,
+      }}
+    >
+      {label}
+    </span>
+  );
+}
+
 function smoothScrollToElement(element: HTMLElement, duration = 650, topOffset = 12) {
   const startY = window.scrollY;
   const targetY = element.getBoundingClientRect().top + window.scrollY - topOffset;
@@ -367,11 +430,13 @@ function ResultOptions({
 
 function PollCard({
   bundle,
+  badgeLabel,
   showGoToAllPolls,
   onVoteComplete,
   totalVoteCount,
 }: {
   bundle: PollBundle;
+  badgeLabel: BadgeLabel | null;
   showGoToAllPolls: boolean;
   onVoteComplete: (pollId: number, category: string) => void;
   totalVoteCount: number;
@@ -475,6 +540,10 @@ function PollCard({
   return (
     <div className="mb-8 rounded-2xl border border-gray-700 bg-gray-800 p-6">
       <div className="mb-4 flex items-center justify-between">
+        <span className="text-sm text-gray-400">{totalVotes} votes</span>
+      </div>
+
+      <div className="mb-3 flex flex-wrap gap-2">
         <span
           className="rounded-full px-3 py-1 text-xs"
           style={{
@@ -485,8 +554,7 @@ function PollCard({
         >
           {bundle.poll.category}
         </span>
-
-        <span className="text-sm text-gray-400">{totalVotes} votes</span>
+        {badgeLabel ? <BadgePill label={badgeLabel} /> : null}
       </div>
 
       <h2 className="mb-3 text-2xl font-bold">{bundle.poll.question}</h2>
@@ -576,6 +644,11 @@ export default function PollPage() {
 
   const [polls, setPolls] = useState<PollBundle[]>([]);
   const [showInlineSubscribe, setShowInlineSubscribe] = useState(false);
+  const [trendingPollIds, setTrendingPollIds] = useState<number[]>([]);
+  const [popularPollIds, setPopularPollIds] = useState<number[]>([]);
+  const [votesLast24, setVotesLast24] = useState(0);
+  const [showActivityIndicator, setShowActivityIndicator] = useState(false);
+
   const pollRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const inlineSubscribeBoxRef = useRef<HTMLDivElement | null>(null);
   const previousPollCountRef = useRef(0);
@@ -606,6 +679,78 @@ export default function PollPage() {
     ) {
       markInlineSubscribeShownThisSession();
       setShowInlineSubscribe(true);
+    }
+  }, []);
+
+  const trendingIdSet = new Set(trendingPollIds);
+  const popularIdSet = new Set(popularPollIds);
+
+  const syncVoteDerivedData = useCallback(async () => {
+    try {
+      const now = new Date();
+      const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString();
+      const twentyFourHoursAgoMs = now.getTime() - 24 * 60 * 60 * 1000;
+
+      const [recentVotesResult, optionTotalsResult] = await Promise.all([
+        supabase
+          .from("votes")
+          .select("poll_id, created_at")
+          .gte("created_at", fortyEightHoursAgo),
+        supabase
+          .from("poll_options")
+          .select("poll_id, vote_count"),
+      ]);
+
+      if (recentVotesResult.error) {
+        console.error("Poll page recent votes query failed", recentVotesResult.error);
+      }
+
+      if (optionTotalsResult.error) {
+        console.error("Poll page option totals query failed", optionTotalsResult.error);
+      }
+
+      const recentCounts: Record<number, number> = {};
+      let last24Total = 0;
+
+      (recentVotesResult.data || []).forEach((vote) => {
+        const pollId = Number(vote.poll_id);
+        recentCounts[pollId] = (recentCounts[pollId] || 0) + 1;
+
+        const createdAtTime = new Date(vote.created_at).getTime();
+        if (!Number.isNaN(createdAtTime) && createdAtTime >= twentyFourHoursAgoMs) {
+          last24Total += 1;
+        }
+      });
+
+      const totalVoteCounts: Record<number, number> = {};
+      (optionTotalsResult.data || []).forEach((option) => {
+        const pollId = Number(option.poll_id);
+        totalVoteCounts[pollId] = (totalVoteCounts[pollId] || 0) + (option.vote_count || 0);
+      });
+
+      const trendingIds = Object.entries(recentCounts)
+        .sort((a, b) => {
+          const diff = Number(b[1]) - Number(a[1]);
+          if (diff !== 0) return diff;
+          return Number(b[0]) - Number(a[0]);
+        })
+        .slice(0, 5)
+        .map(([pollId]) => Number(pollId));
+
+      const popularIds = Object.entries(totalVoteCounts)
+        .sort((a, b) => {
+          const diff = Number(b[1]) - Number(a[1]);
+          if (diff !== 0) return diff;
+          return Number(b[0]) - Number(a[0]);
+        })
+        .slice(0, 10)
+        .map(([pollId]) => Number(pollId));
+
+      setTrendingPollIds(trendingIds);
+      setPopularPollIds(popularIds);
+      setVotesLast24(last24Total);
+    } catch (error) {
+      console.error("Poll page vote-derived data query failed", error);
     }
   }, []);
 
@@ -698,6 +843,7 @@ export default function PollPage() {
     };
 
     void loadTotalVoteCount();
+    void syncVoteDerivedData();
 
     const channel = supabase
       .channel("poll-page-live-total-votes")
@@ -717,17 +863,18 @@ export default function PollPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [syncVoteDerivedData]);
 
   useEffect(() => {
     const syncNow = () => {
       void syncTotalVoteCount();
       void syncDisplayedPolls();
+      void syncVoteDerivedData();
     };
 
     syncNow();
 
-    const interval = setInterval(syncNow, 5000);
+    const interval = setInterval(syncNow, 25000);
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
@@ -753,7 +900,37 @@ export default function PollPage() {
       window.removeEventListener("focus", handleFocus);
       window.removeEventListener("pageshow", handlePageShow);
     };
-  }, []);
+  }, [syncVoteDerivedData]);
+
+  useEffect(() => {
+    if (votesLast24 < 100) {
+      setShowActivityIndicator(false);
+      return;
+    }
+
+    let hideTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const showIndicator = () => {
+      setShowActivityIndicator(true);
+
+      if (hideTimeout) {
+        clearTimeout(hideTimeout);
+      }
+
+      hideTimeout = setTimeout(() => {
+        setShowActivityIndicator(false);
+      }, 5000);
+    };
+
+    const initialTimeout = setTimeout(showIndicator, 1200);
+    const interval = setInterval(showIndicator, 25000);
+
+    return () => {
+      clearTimeout(initialTimeout);
+      clearInterval(interval);
+      if (hideTimeout) clearTimeout(hideTimeout);
+    };
+  }, [votesLast24]);
 
   const handleBack = () => {
     sessionStorage.setItem("restoreHomeScroll", "true");
@@ -837,7 +1014,7 @@ export default function PollPage() {
     const [pollResult, optionsResult] = await Promise.all([
       supabase
         .from("polls")
-        .select("id, question, description, category, slug, is_private")
+        .select("id, question, description, category, slug, is_private, created_at")
         .eq("id", pollId)
         .single(),
       supabase
@@ -876,7 +1053,7 @@ export default function PollPage() {
     try {
       const { data, error } = await supabase
         .from("polls")
-        .select("id, question, description, category, slug, is_private")
+        .select("id, question, description, category, slug, is_private, created_at")
         .eq("is_private", false)
         .order("id", { ascending: false });
 
@@ -929,7 +1106,7 @@ export default function PollPage() {
       try {
         const { data, error } = await supabase
           .from("polls")
-          .select("id, question, description, category, slug, is_private")
+          .select("id, question, description, category, slug, is_private, created_at")
           .eq("slug", slug)
           .single();
 
@@ -1085,109 +1262,114 @@ export default function PollPage() {
           ← Back to polls
         </button>
 
-        {polls.map((bundle, index) => (
-          <div
-            key={bundle.poll.id}
-            ref={(el) => {
-              pollRefs.current[bundle.poll.id] = el;
-            }}
-          >
-            <PollCard
-              bundle={bundle}
-              showGoToAllPolls={true}
-              onVoteComplete={(pollId) => {
-                void handleVoteComplete(pollId);
+        {polls.map((bundle, index) => {
+          const badgeLabel = getBadgeLabel(bundle.poll, trendingIdSet, popularIdSet);
+
+          return (
+            <div
+              key={bundle.poll.id}
+              ref={(el) => {
+                pollRefs.current[bundle.poll.id] = el;
               }}
-              totalVoteCount={totalVoteCount}
-            />
+            >
+              <PollCard
+                bundle={bundle}
+                badgeLabel={badgeLabel}
+                showGoToAllPolls={true}
+                onVoteComplete={(pollId) => {
+                  void handleVoteComplete(pollId);
+                }}
+                totalVoteCount={totalVoteCount}
+              />
 
-            {showInlineSubscribe &&
-            (index === inlineSubscribeInsertAfterIndex ||
-              (inlineSubscribeInsertAfterIndex === -1 && index === polls.length - 1)) ? (
-              <div ref={inlineSubscribeBoxRef} className="mb-8 mt-4 flex justify-center">
-                <div className="w-full max-w-md rounded-xl border border-gray-700 bg-gray-900/70 p-4">
-                  <p className="mb-1 text-base font-medium text-white md:text-lg">Enjoying these polls?</p>
-                  <p className="mb-1 text-sm text-gray-200">
-                    Get new polls by email. Choose what you want to see.
-                  </p>
-                  <p className="mb-3 text-sm text-gray-300">Max once per day. Unsubscribe anytime.</p>
+              {showInlineSubscribe &&
+              (index === inlineSubscribeInsertAfterIndex ||
+                (inlineSubscribeInsertAfterIndex === -1 && index === polls.length - 1)) ? (
+                <div ref={inlineSubscribeBoxRef} className="mb-8 mt-4 flex justify-center">
+                  <div className="w-full max-w-md rounded-xl border border-gray-700 bg-gray-900/70 p-4">
+                    <p className="mb-1 text-base font-medium text-white md:text-lg">Enjoying these polls?</p>
+                    <p className="mb-1 text-sm text-gray-200">
+                      Get new polls by email. Choose what you want to see.
+                    </p>
+                    <p className="mb-3 text-sm text-gray-300">Max once per day. Unsubscribe anytime.</p>
 
-                  <form onSubmit={handleSubscribe} className="space-y-3">
-                    <input
-                      type="email"
-                      value={subscriberEmail}
-                      onChange={(event) => setSubscriberEmail(event.target.value)}
-                      placeholder="Email address"
-                      required
-                      className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
-                    />
+                    <form onSubmit={handleSubscribe} className="space-y-3">
+                      <input
+                        type="email"
+                        value={subscriberEmail}
+                        onChange={(event) => setSubscriberEmail(event.target.value)}
+                        placeholder="Email address"
+                        required
+                        className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
+                      />
 
-                    <div ref={categoryMenuRef} className="relative">
-                      <button
-                        type="button"
-                        onClick={() => setIsCategoryMenuOpen((current) => !current)}
-                        className="flex w-full items-center justify-between rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-left text-sm text-white transition hover:border-gray-500"
-                      >
-                        <span className="truncate">{getCategorySummary(subscriberCategories)}</span>
-                        <span className="ml-4 shrink-0 text-gray-400">▾</span>
-                      </button>
+                      <div ref={categoryMenuRef} className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setIsCategoryMenuOpen((current) => !current)}
+                          className="flex w-full items-center justify-between rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-left text-sm text-white transition hover:border-gray-500"
+                        >
+                          <span className="truncate">{getCategorySummary(subscriberCategories)}</span>
+                          <span className="ml-4 shrink-0 text-gray-400">▾</span>
+                        </button>
 
-                      {isCategoryMenuOpen ? (
-                        <div className="absolute z-20 mt-2 w-full rounded-lg border border-gray-700 bg-gray-900 p-2 shadow-xl">
-                          <button
-                            type="button"
-                            onClick={() => toggleSubscriberCategory("All polls")}
-                            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-white transition hover:bg-gray-800"
-                          >
-                            <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 text-xs">
-                              {subscriberCategories.includes("All polls") ? "✓" : ""}
-                            </span>
-                            <span>All polls</span>
-                          </button>
-
-                          <div className="my-1 border-t border-gray-800" />
-
-                          {SIGNUP_CATEGORIES.map((category) => (
+                        {isCategoryMenuOpen ? (
+                          <div className="absolute z-20 mt-2 w-full rounded-lg border border-gray-700 bg-gray-900 p-2 shadow-xl">
                             <button
-                              key={category}
                               type="button"
-                              onClick={() => toggleSubscriberCategory(category)}
+                              onClick={() => toggleSubscriberCategory("All polls")}
                               className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-white transition hover:bg-gray-800"
                             >
                               <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 text-xs">
-                                {subscriberCategories.includes("All polls") ||
-                                subscriberCategories.includes(category)
-                                  ? "✓"
-                                  : ""}
+                                {subscriberCategories.includes("All polls") ? "✓" : ""}
                               </span>
-                              <span>{category}</span>
+                              <span>All polls</span>
                             </button>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
 
-                    <button
-                      type="submit"
-                      disabled={subscribeLoading}
-                      className="w-full rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-70"
-                    >
-                      {subscribeLoading ? "Subscribing..." : "Subscribe"}
-                    </button>
-                  </form>
+                            <div className="my-1 border-t border-gray-800" />
 
-                  {subscribeMessage ? (
-                    <p className="mt-2 text-sm text-green-300">{subscribeMessage}</p>
-                  ) : null}
+                            {SIGNUP_CATEGORIES.map((category) => (
+                              <button
+                                key={category}
+                                type="button"
+                                onClick={() => toggleSubscriberCategory(category)}
+                                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-white transition hover:bg-gray-800"
+                              >
+                                <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 text-xs">
+                                  {subscriberCategories.includes("All polls") ||
+                                  subscriberCategories.includes(category)
+                                    ? "✓"
+                                    : ""}
+                                </span>
+                                <span>{category}</span>
+                              </button>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
 
-                  {subscribeError ? (
-                    <p className="mt-2 text-sm text-red-300">{subscribeError}</p>
-                  ) : null}
+                      <button
+                        type="submit"
+                        disabled={subscribeLoading}
+                        className="w-full rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-70"
+                      >
+                        {subscribeLoading ? "Subscribing..." : "Subscribe"}
+                      </button>
+                    </form>
+
+                    {subscribeMessage ? (
+                      <p className="mt-2 text-sm text-green-300">{subscribeMessage}</p>
+                    ) : null}
+
+                    {subscribeError ? (
+                      <p className="mt-2 text-sm text-red-300">{subscribeError}</p>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </div>
-        ))}
+              ) : null}
+            </div>
+          );
+        })}
 
         {polls.length > 1 ? (
           <div className="mt-6 text-center">
@@ -1202,6 +1384,18 @@ export default function PollPage() {
       </section>
 
       <Footer />
+
+      {votesLast24 >= 100 ? (
+        <div
+          className={`pointer-events-none fixed right-5 top-5 z-40 transition-opacity duration-700 md:right-8 md:top-6 ${
+            showActivityIndicator ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          <div className="rounded-xl border border-gray-700 bg-gray-900/90 px-4 py-3 shadow-lg backdrop-blur">
+            <p className="text-sm text-white">{votesLast24.toLocaleString()} votes in the last 24 hours</p>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

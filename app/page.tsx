@@ -13,6 +13,7 @@ type Poll = {
   slug: string;
   featured?: boolean;
   is_private?: boolean;
+  created_at?: string | null;
 };
 
 type PollOption = {
@@ -35,6 +36,8 @@ type PollBundle = {
   options: PollOption[];
   voteCounts: VoteCounts;
 };
+
+type BadgeLabel = "New" | "Trending" | "Popular";
 
 type IdleWindow = Window &
   typeof globalThis & {
@@ -133,6 +136,24 @@ const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: strin
     bg: "rgba(217, 70, 239, 0.12)",
     border: "rgba(217, 70, 239, 0.55)",
     solid: "#d946ef",
+  },
+};
+
+const BADGE_COLOURS: Record<BadgeLabel, { text: string; bg: string; border: string }> = {
+  New: {
+    text: "#86efac",
+    bg: "rgba(34, 197, 94, 0.12)",
+    border: "rgba(34, 197, 94, 0.55)",
+  },
+  Trending: {
+    text: "#fcd34d",
+    bg: "rgba(234, 179, 8, 0.12)",
+    border: "rgba(234, 179, 8, 0.55)",
+  },
+  Popular: {
+    text: "#c4b5fd",
+    bg: "rgba(139, 92, 246, 0.12)",
+    border: "rgba(139, 92, 246, 0.55)",
   },
 };
 
@@ -253,6 +274,49 @@ function getCategorySummary(selected: string[]) {
   }
 
   return `${selected.length} categories selected`;
+}
+
+function getBadgeLabel(
+  poll: Poll,
+  trendingIds: Set<number>,
+  popularIds: Set<number>
+): BadgeLabel | null {
+  const now = Date.now();
+  const fortyEightHoursAgo = now - 48 * 60 * 60 * 1000;
+
+  if (poll.created_at) {
+    const createdAtTime = new Date(poll.created_at).getTime();
+    if (!Number.isNaN(createdAtTime) && createdAtTime >= fortyEightHoursAgo) {
+      return "New";
+    }
+  }
+
+  if (trendingIds.has(poll.id)) {
+    return "Trending";
+  }
+
+  if (popularIds.has(poll.id)) {
+    return "Popular";
+  }
+
+  return null;
+}
+
+function BadgePill({ label }: { label: BadgeLabel }) {
+  const colours = BADGE_COLOURS[label];
+
+  return (
+    <span
+      className="rounded-full px-2 py-1 text-xs"
+      style={{
+        color: colours.text,
+        backgroundColor: colours.bg,
+        border: `1px solid ${colours.border}`,
+      }}
+    >
+      {label}
+    </span>
+  );
 }
 
 function LiveVoteCounter({ value }: { value: number }) {
@@ -388,6 +452,10 @@ export default function Home() {
   const [featuredOptions, setFeaturedOptions] = useState<PollOption[]>([]);
   const [featuredVoteCounts, setFeaturedVoteCounts] = useState<Record<number, number>>({});
   const [totalVoteCount, setTotalVoteCount] = useState(0);
+  const [votesLast24, setVotesLast24] = useState(0);
+  const [trendingPollIds, setTrendingPollIds] = useState<number[]>([]);
+  const [popularPollIds, setPopularPollIds] = useState<number[]>([]);
+  const [recentVoteCounts, setRecentVoteCounts] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(true);
   const [featuredPollVoted, setFeaturedPollVoted] = useState(false);
   const [featuredSelectedOptionId, setFeaturedSelectedOptionId] = useState<number | null>(null);
@@ -400,6 +468,7 @@ export default function Home() {
   const [subscribeError, setSubscribeError] = useState("");
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
   const [showTopButton, setShowTopButton] = useState(false);
+  const [showActivityIndicator, setShowActivityIndicator] = useState(false);
 
   const categoryMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -443,13 +512,95 @@ export default function Home() {
     }
   }, []);
 
+  const syncVoteDerivedData = useCallback(async (pollList: Poll[]) => {
+    if (pollList.length === 0) {
+      setTrendingPollIds([]);
+      setPopularPollIds([]);
+      setRecentVoteCounts({});
+      setVotesLast24(0);
+      return;
+    }
+
+    try {
+      const validPollIds = new Set(pollList.map((poll) => poll.id));
+      const now = new Date();
+      const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString();
+      const twentyFourHoursAgoMs = now.getTime() - 24 * 60 * 60 * 1000;
+
+      const [recentVotesResult, optionTotalsResult] = await Promise.all([
+        supabase
+          .from("votes")
+          .select("poll_id, created_at")
+          .gte("created_at", fortyEightHoursAgo),
+        supabase
+          .from("poll_options")
+          .select("poll_id, vote_count"),
+      ]);
+
+      if (recentVotesResult.error) {
+        console.error("Homepage recent votes query failed", recentVotesResult.error);
+      }
+
+      if (optionTotalsResult.error) {
+        console.error("Homepage option totals query failed", optionTotalsResult.error);
+      }
+
+      const recentCounts: Record<number, number> = {};
+      let last24Total = 0;
+
+      (recentVotesResult.data || []).forEach((vote) => {
+        const pollId = Number(vote.poll_id);
+        if (!validPollIds.has(pollId)) return;
+
+        recentCounts[pollId] = (recentCounts[pollId] || 0) + 1;
+
+        const createdAtTime = new Date(vote.created_at).getTime();
+        if (!Number.isNaN(createdAtTime) && createdAtTime >= twentyFourHoursAgoMs) {
+          last24Total += 1;
+        }
+      });
+
+      const totalVoteCounts: Record<number, number> = {};
+      (optionTotalsResult.data || []).forEach((option) => {
+        const pollId = Number(option.poll_id);
+        if (!validPollIds.has(pollId)) return;
+        totalVoteCounts[pollId] = (totalVoteCounts[pollId] || 0) + (option.vote_count || 0);
+      });
+
+      const trendingIds = Object.entries(recentCounts)
+        .sort((a, b) => {
+          const diff = Number(b[1]) - Number(a[1]);
+          if (diff !== 0) return diff;
+          return Number(b[0]) - Number(a[0]);
+        })
+        .slice(0, 5)
+        .map(([pollId]) => Number(pollId));
+
+      const popularIds = Object.entries(totalVoteCounts)
+        .sort((a, b) => {
+          const diff = Number(b[1]) - Number(a[1]);
+          if (diff !== 0) return diff;
+          return Number(b[0]) - Number(a[0]);
+        })
+        .slice(0, 10)
+        .map(([pollId]) => Number(pollId));
+
+      setRecentVoteCounts(recentCounts);
+      setTrendingPollIds(trendingIds);
+      setPopularPollIds(popularIds);
+      setVotesLast24(last24Total);
+    } catch (error) {
+      console.error("Homepage vote-derived data query failed", error);
+    }
+  }, []);
+
   const loadHomeData = useCallback(async () => {
     setLoading(true);
 
     try {
       const pollsResult = await supabase
         .from("polls")
-        .select("id, question, description, category, slug, featured, is_private")
+        .select("id, question, description, category, slug, featured, is_private, created_at")
         .eq("is_private", false)
         .order("id", { ascending: false });
 
@@ -489,7 +640,10 @@ export default function Home() {
         setFeaturedVoteCounts({});
         setFeaturedPollVoted(false);
         setFeaturedSelectedOptionId(null);
-        await syncTotalVoteCount();
+        await Promise.all([
+          syncTotalVoteCount(),
+          syncVoteDerivedData(safePolls),
+        ]);
         return;
       }
 
@@ -508,6 +662,7 @@ export default function Home() {
       await Promise.all([
         syncTotalVoteCount(),
         syncFeaturedVoteCounts(chosenFeaturedPoll.id),
+        syncVoteDerivedData(safePolls),
       ]);
     } catch (error) {
       console.error("Homepage polls query failed", error);
@@ -517,10 +672,14 @@ export default function Home() {
       setFeaturedPollVoted(false);
       setFeaturedSelectedOptionId(null);
       setTotalVoteCount(0);
+      setVotesLast24(0);
+      setTrendingPollIds([]);
+      setPopularPollIds([]);
+      setRecentVoteCounts({});
     } finally {
       setLoading(false);
     }
-  }, [syncFeaturedVoteCounts, syncTotalVoteCount]);
+  }, [syncFeaturedVoteCounts, syncTotalVoteCount, syncVoteDerivedData]);
 
   useEffect(() => {
     void loadHomeData();
@@ -632,11 +791,12 @@ export default function Home() {
     const syncNow = () => {
       void syncTotalVoteCount();
       if (featuredPoll?.id) void syncFeaturedVoteCounts(featuredPoll.id);
+      if (polls.length > 0) void syncVoteDerivedData(polls);
     };
 
     syncNow();
 
-    const interval = setInterval(syncNow, 5000);
+    const interval = setInterval(syncNow, 25000);
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") syncNow();
@@ -655,7 +815,37 @@ export default function Home() {
       window.removeEventListener("focus", handleFocus);
       window.removeEventListener("pageshow", handlePageShow);
     };
-  }, [featuredPoll?.id, syncFeaturedVoteCounts, syncTotalVoteCount]);
+  }, [featuredPoll?.id, polls, syncFeaturedVoteCounts, syncTotalVoteCount, syncVoteDerivedData]);
+
+  useEffect(() => {
+    if (votesLast24 < 100) {
+      setShowActivityIndicator(false);
+      return;
+    }
+
+    let hideTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const showIndicator = () => {
+      setShowActivityIndicator(true);
+
+      if (hideTimeout) {
+        clearTimeout(hideTimeout);
+      }
+
+      hideTimeout = setTimeout(() => {
+        setShowActivityIndicator(false);
+      }, 5000);
+    };
+
+    const initialTimeout = setTimeout(showIndicator, 1200);
+    const interval = setInterval(showIndicator, 25000);
+
+    return () => {
+      clearTimeout(initialTimeout);
+      clearInterval(interval);
+      if (hideTimeout) clearTimeout(hideTimeout);
+    };
+  }, [votesLast24]);
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
@@ -771,7 +961,18 @@ export default function Home() {
     return searchedPolls.filter((poll) => poll.id !== featuredPoll?.id);
   }, [searchedPolls, featuredPoll]);
 
+  const trendingPolls = useMemo(() => {
+    const pollMap = new Map(polls.map((poll) => [poll.id, poll]));
+    return trendingPollIds
+      .map((id) => pollMap.get(id))
+      .filter((poll): poll is Poll => Boolean(poll))
+      .slice(0, 5);
+  }, [polls, trendingPollIds]);
+
   const activePollCount = searchedPolls.length;
+  const trendingIdSet = useMemo(() => new Set(trendingPollIds), [trendingPollIds]);
+  const popularIdSet = useMemo(() => new Set(popularPollIds), [popularPollIds]);
+  const featuredBadge = featuredPoll ? getBadgeLabel(featuredPoll, trendingIdSet, popularIdSet) : null;
 
   useEffect(() => {
     if (loading) return;
@@ -841,10 +1042,7 @@ export default function Home() {
             <div className="mb-6 h-12 w-48 rounded-xl bg-gray-800" />
             <div className="mb-4 h-6 w-64 rounded bg-gray-800" />
             <div className="mb-10 h-24 w-full rounded-2xl bg-gray-800" />
-            <div className="grid gap-6 lg:grid-cols-3">
-              <div className="h-72 rounded-2xl bg-gray-800 lg:col-span-2" />
-              <div className="h-72 rounded-2xl bg-gray-800" />
-            </div>
+            <div className="h-72 rounded-2xl bg-gray-800" />
           </div>
         </section>
       </main>
@@ -881,203 +1079,261 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="mx-auto max-w-6xl px-6 pb-6 pt-1">
+      <section className="mx-auto max-w-4xl px-6 pb-6 pt-1">
         <div className="mb-5 text-center">
           <h1 className="mb-2 text-4xl font-bold md:text-5xl">Poll & See</h1>
           <p className="text-lg text-gray-300">See what people really think</p>
           <LiveVoteCounter value={totalVoteCount} />
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="rounded-2xl bg-gray-800 p-5 shadow-lg lg:col-span-2">
-            <div className="mb-4 flex items-center justify-between">
-              <span className="rounded-full bg-blue-500/10 px-3 py-1 text-sm text-blue-300">
-                Featured Poll
-              </span>
+        <div className="mb-6 text-center">
+          <p className="text-lg font-medium text-white md:text-xl">
+            Real questions. Anonymous opinions.
+          </p>
+          <p className="mt-2 text-gray-300">
+            From everyday dilemmas to testing ideas, create a poll and see what people really think.
+          </p>
+        </div>
 
-              {featuredPoll ? (
-                <span className="text-sm text-gray-400">{totalFeaturedVotes} votes</span>
-              ) : null}
-            </div>
+        <div className="rounded-2xl bg-gray-800 p-5 shadow-lg">
+          <div className="mb-4 flex items-center justify-between">
+            <span className="rounded-full bg-blue-500/10 px-3 py-1 text-sm text-blue-300">
+              Featured Poll
+            </span>
 
             {featuredPoll ? (
-              <>
-                <h2 className="mb-2 text-2xl font-semibold">{featuredPoll.question}</h2>
-                <p className="mb-4 text-gray-300">{featuredPoll.description}</p>
+              <span className="text-sm text-gray-400">{totalFeaturedVotes} votes</span>
+            ) : null}
+          </div>
 
-                <div className="mb-5 space-y-2">
-                  {featuredOptions.map((option, index) => {
-                    const count = featuredVoteCounts[option.id] || 0;
-                    const percent = totalFeaturedVotes > 0
-                      ? Math.round((count / totalFeaturedVotes) * 100)
-                      : 0;
-                    const isSelected = featuredPollVoted && featuredSelectedOptionId === option.id;
-                    const optionColour = getOptionColour(index);
+          {featuredPoll ? (
+            <>
+              <div className="mb-3 flex flex-wrap gap-2">
+                <span
+                  className="rounded-full px-2 py-1 text-xs"
+                  style={{
+                    color: getCategoryColours(featuredPoll.category).text,
+                    backgroundColor: getCategoryColours(featuredPoll.category).bg,
+                    border: `1px solid ${getCategoryColours(featuredPoll.category).border}`,
+                  }}
+                >
+                  {featuredPoll.category}
+                </span>
+                {featuredBadge ? <BadgePill label={featuredBadge} /> : null}
+              </div>
 
-                    return (
-                      <div
-                        key={option.id}
-                        className="rounded-2xl"
-                        style={{
-                          border: isSelected ? `3px solid ${optionColour}` : "3px solid transparent",
-                          boxShadow: isSelected
-                            ? `0 0 0 1px ${optionColour}33, 0 0 16px ${optionColour}18`
-                            : "none",
-                        }}
-                      >
-                        <div className="px-3 pt-3">
-                          {option.image_url ? (
-                            <div className="mb-3 overflow-hidden rounded-xl bg-gray-900">
-                              <img
-                                src={option.image_url}
-                                alt={option.option_text}
-                                loading="lazy"
-                                width={1200}
-                                height={675}
-                                className="h-40 w-full object-cover md:h-48"
-                              />
-                            </div>
-                          ) : null}
+              <h2 className="mb-2 text-2xl font-semibold">{featuredPoll.question}</h2>
+              <p className="mb-4 text-gray-300">{featuredPoll.description}</p>
 
-                          <div className="grid grid-cols-[1fr_auto] items-start gap-x-3">
-                            <div className="flex min-w-0 items-start gap-2">
-                              {isSelected ? (
-                                <span
-                                  className="mt-0.5 shrink-0 text-base font-bold"
-                                  style={{ color: optionColour }}
-                                >
-                                  ✓
-                                </span>
-                              ) : null}
-                              <span className="min-w-0 break-words leading-6 text-white">
-                                {option.option_text}
-                              </span>
-                            </div>
+              <div className="mb-5 space-y-2">
+                {featuredOptions.map((option, index) => {
+                  const count = featuredVoteCounts[option.id] || 0;
+                  const percent = totalFeaturedVotes > 0
+                    ? Math.round((count / totalFeaturedVotes) * 100)
+                    : 0;
+                  const isSelected = featuredPollVoted && featuredSelectedOptionId === option.id;
+                  const optionColour = getOptionColour(index);
 
-                            <span className="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-gray-300">
-                              {percent}%
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="px-3 pb-3 pt-2">
-                          <div className="h-4 w-full overflow-hidden rounded-full bg-gray-700">
-                            <div
-                              className="h-4 transition-all"
-                              style={{
-                                width: `${percent}%`,
-                                backgroundColor: optionColour,
-                                opacity: 0.96,
-                              }}
+                  return (
+                    <div
+                      key={option.id}
+                      className="rounded-2xl"
+                      style={{
+                        border: isSelected ? `3px solid ${optionColour}` : "3px solid transparent",
+                        boxShadow: isSelected
+                          ? `0 0 0 1px ${optionColour}33, 0 0 16px ${optionColour}18`
+                          : "none",
+                      }}
+                    >
+                      <div className="px-3 pt-3">
+                        {option.image_url ? (
+                          <div className="mb-3 overflow-hidden rounded-xl bg-gray-900">
+                            <img
+                              src={option.image_url}
+                              alt={option.option_text}
+                              loading="lazy"
+                              width={1200}
+                              height={675}
+                              className="h-40 w-full object-cover md:h-48"
                             />
                           </div>
+                        ) : null}
+
+                        <div className="grid grid-cols-[1fr_auto] items-start gap-x-3">
+                          <div className="flex min-w-0 items-start gap-2">
+                            {isSelected ? (
+                              <span
+                                className="mt-0.5 shrink-0 text-base font-bold"
+                                style={{ color: optionColour }}
+                              >
+                                ✓
+                              </span>
+                            ) : null}
+                            <span className="min-w-0 break-words leading-6 text-white">
+                              {option.option_text}
+                            </span>
+                          </div>
+
+                          <span className="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-gray-300">
+                            {percent}%
+                          </span>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
 
-                <Link
-                  href={`/poll/${featuredPoll.slug}`}
-                  className="inline-block rounded-xl bg-white px-5 py-3 font-medium text-black transition hover:bg-gray-200"
-                >
-                  {featuredPollVoted ? "View poll" : "Vote on featured poll"}
-                </Link>
-              </>
-            ) : (
-              <p className="text-gray-300">No polls found.</p>
-            )}
-          </div>
+                      <div className="px-3 pb-3 pt-2">
+                        <div className="h-4 w-full overflow-hidden rounded-full bg-gray-700">
+                          <div
+                            className="h-4 transition-all"
+                            style={{
+                              width: `${percent}%`,
+                              backgroundColor: optionColour,
+                              opacity: 0.96,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
 
-          <div className="flex flex-col justify-center rounded-2xl bg-gray-800 p-5 shadow-lg">
-            <p className="mb-3 text-gray-300">
-              Vote on real questions. Compare your answer. See how others think.
-            </p>
+              <Link
+                href={`/poll/${featuredPoll.slug}`}
+                className="inline-block rounded-xl bg-white px-5 py-3 font-medium text-black transition hover:bg-gray-200"
+              >
+                {featuredPollVoted ? "View poll" : "Vote on featured poll"}
+              </Link>
+            </>
+          ) : (
+            <p className="text-gray-300">No polls found.</p>
+          )}
+        </div>
 
-            <p className="mb-3 text-gray-300">
-              From everyday opinions to testing ideas, create a poll and see what people really think.
-            </p>
+        <div className="mt-6 rounded-xl border border-gray-700 bg-gray-900/60 p-4">
+          <p className="mb-1 text-base font-medium text-white md:text-lg">Enjoying these polls?</p>
+          <p className="mb-1 text-sm text-gray-200">
+            Get new polls by email. Choose what you want to see.
+          </p>
+          <p className="mb-3 text-sm text-gray-300">Max once per day. Unsubscribe anytime.</p>
 
-            <div className="mb-3 rounded-xl border border-gray-700 bg-gray-900/60 p-3">
-              <p className="mb-1 text-base font-medium text-white md:text-lg">Enjoying these polls?</p>
-              <p className="mb-1 text-sm text-gray-200">
-                Get new polls by email. Choose what you want to see.
-              </p>
-              <p className="mb-3 text-sm text-gray-300">Max once per day. Unsubscribe anytime.</p>
+          <form onSubmit={handleSubscribe} className="space-y-3">
+            <input
+              type="email"
+              value={subscriberEmail}
+              onChange={(event) => setSubscriberEmail(event.target.value)}
+              placeholder="Email address"
+              required
+              className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
+            />
 
-              <form onSubmit={handleSubscribe} className="space-y-3">
-                <input
-                  type="email"
-                  value={subscriberEmail}
-                  onChange={(event) => setSubscriberEmail(event.target.value)}
-                  placeholder="Email address"
-                  required
-                  className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
-                />
+            <div ref={categoryMenuRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setIsCategoryMenuOpen((current) => !current)}
+                className="flex w-full items-center justify-between rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 pr-6 text-left text-sm text-white outline-none transition hover:border-gray-500"
+              >
+                <span className="truncate">{getCategorySummary(subscriberCategories)}</span>
+                <span className="ml-4 shrink-0 text-gray-400">▾</span>
+              </button>
 
-                <div ref={categoryMenuRef} className="relative">
+              {isCategoryMenuOpen ? (
+                <div className="absolute z-20 mt-2 w-full rounded-xl border border-gray-700 bg-gray-900 p-2 shadow-xl">
                   <button
                     type="button"
-                    onClick={() => setIsCategoryMenuOpen((current) => !current)}
-                    className="flex w-full items-center justify-between rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 pr-6 text-left text-sm text-white outline-none transition hover:border-gray-500"
+                    onClick={() => toggleSubscriberCategory("All polls")}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-white transition hover:bg-gray-800"
                   >
-                    <span className="truncate">{getCategorySummary(subscriberCategories)}</span>
-                    <span className="ml-4 shrink-0 text-gray-400">▾</span>
+                    <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 text-xs">
+                      {subscriberCategories.includes("All polls") ? "✓" : ""}
+                    </span>
+                    <span>All polls</span>
                   </button>
 
-                  {isCategoryMenuOpen ? (
-                    <div className="absolute z-20 mt-2 w-full rounded-xl border border-gray-700 bg-gray-900 p-2 shadow-xl">
-                      <button
-                        type="button"
-                        onClick={() => toggleSubscriberCategory("All polls")}
-                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-white transition hover:bg-gray-800"
-                      >
-                        <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 text-xs">
-                          {subscriberCategories.includes("All polls") ? "✓" : ""}
-                        </span>
-                        <span>All polls</span>
-                      </button>
+                  <div className="my-1 border-t border-gray-800" />
 
-                      <div className="my-1 border-t border-gray-800" />
-
-                      {SIGNUP_CATEGORIES.map((category) => (
-                        <button
-                          key={category}
-                          type="button"
-                          onClick={() => toggleSubscriberCategory(category)}
-                          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-white transition hover:bg-gray-800"
-                        >
-                          <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 text-xs">
-                            {subscriberCategories.includes("All polls") ||
-                            subscriberCategories.includes(category)
-                              ? "✓"
-                              : ""}
-                          </span>
-                          <span>{category}</span>
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
+                  {SIGNUP_CATEGORIES.map((category) => (
+                    <button
+                      key={category}
+                      type="button"
+                      onClick={() => toggleSubscriberCategory(category)}
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-white transition hover:bg-gray-800"
+                    >
+                      <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 text-xs">
+                        {subscriberCategories.includes("All polls") ||
+                        subscriberCategories.includes(category)
+                          ? "✓"
+                          : ""}
+                      </span>
+                      <span>{category}</span>
+                    </button>
+                  ))}
                 </div>
-
-                <button
-                  type="submit"
-                  disabled={subscribeLoading}
-                  className="w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-70"
-                >
-                  {subscribeLoading ? "Subscribing..." : "Subscribe"}
-                </button>
-              </form>
-
-              {subscribeMessage ? (
-                <p className="mt-2 text-sm text-green-300">{subscribeMessage}</p>
-              ) : null}
-
-              {subscribeError ? (
-                <p className="mt-2 text-sm text-red-300">{subscribeError}</p>
               ) : null}
             </div>
+
+            <button
+              type="submit"
+              disabled={subscribeLoading}
+              className="w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-70"
+            >
+              {subscribeLoading ? "Subscribing..." : "Subscribe"}
+            </button>
+          </form>
+
+          {subscribeMessage ? (
+            <p className="mt-2 text-sm text-green-300">{subscribeMessage}</p>
+          ) : null}
+
+          {subscribeError ? (
+            <p className="mt-2 text-sm text-red-300">{subscribeError}</p>
+          ) : null}
+        </div>
+
+        <div className="mt-6 rounded-2xl bg-gray-800 p-5 shadow-lg">
+          <div className="mb-4">
+            <h3 className="text-2xl font-semibold">Trending now</h3>
+            <p className="mt-1 text-sm text-gray-300">Show top 5 polls by votes in the last 48 hours</p>
           </div>
+
+          {trendingPolls.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {trendingPolls.map((poll) => {
+                const categoryColours = getCategoryColours(poll.category);
+                const badgeLabel = getBadgeLabel(poll, trendingIdSet, popularIdSet);
+
+                return (
+                  <Link
+                    key={poll.id}
+                    href={`/poll/${poll.slug}`}
+                    onClick={() => handlePollClick(poll)}
+                    className="rounded-2xl border border-gray-700 bg-gray-900/60 p-4 transition hover:border-gray-500"
+                  >
+                    <div className="mb-3 flex flex-wrap gap-2">
+                      <span
+                        className="rounded-full px-2 py-1 text-xs"
+                        style={{
+                          color: categoryColours.text,
+                          backgroundColor: categoryColours.bg,
+                          border: `1px solid ${categoryColours.border}`,
+                        }}
+                      >
+                        {poll.category}
+                      </span>
+                      {badgeLabel ? <BadgePill label={badgeLabel} /> : null}
+                    </div>
+
+                    <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
+                    <p className="mb-3 text-sm text-gray-300">{poll.description}</p>
+                    <p className="text-sm text-gray-400">
+                      {recentVoteCounts[poll.id] || 0} votes in the last 48 hours
+                    </p>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-gray-300">No trending polls yet.</p>
+          )}
         </div>
       </section>
 
@@ -1144,6 +1400,7 @@ export default function Home() {
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {livePolls.map((poll) => {
               const categoryColours = getCategoryColours(poll.category);
+              const badgeLabel = getBadgeLabel(poll, trendingIdSet, popularIdSet);
 
               return (
                 <Link
@@ -1153,7 +1410,7 @@ export default function Home() {
                   onClick={() => handlePollClick(poll)}
                   className="rounded-2xl border border-gray-700 bg-gray-800 p-5 shadow-lg transition hover:border-gray-500"
                 >
-                  <div className="mb-3">
+                  <div className="mb-3 flex flex-wrap gap-2">
                     <span
                       className="rounded-full px-2 py-1 text-xs"
                       style={{
@@ -1164,6 +1421,7 @@ export default function Home() {
                     >
                       {poll.category}
                     </span>
+                    {badgeLabel ? <BadgePill label={badgeLabel} /> : null}
                   </div>
 
                   <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
@@ -1185,6 +1443,18 @@ export default function Home() {
       </section>
 
       <Footer />
+
+      {votesLast24 >= 100 ? (
+        <div
+          className={`pointer-events-none fixed right-5 top-5 z-40 transition-opacity duration-700 md:right-8 md:top-6 ${
+            showActivityIndicator ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          <div className="rounded-xl border border-gray-700 bg-gray-900/90 px-4 py-3 shadow-lg backdrop-blur">
+            <p className="text-sm text-white">{votesLast24.toLocaleString()} votes in the last 24 hours</p>
+          </div>
+        </div>
+      ) : null}
 
       {showTopButton && (
         <button
