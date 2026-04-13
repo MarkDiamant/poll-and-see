@@ -1220,6 +1220,7 @@ export default function Home() {
                     {trendingSectionBadgeLabel ? <StatusRibbon label={trendingSectionBadgeLabel} /> : null}
 
                     <div className="mb-3">
+                                          <div className="mb-3 flex items-start justify-between gap-3">
                       <span
                         className="rounded-full px-2 py-1 text-xs"
                         style={{
@@ -1230,12 +1231,17 @@ export default function Home() {
                       >
                         {poll.category}
                       </span>
+
+                      <span className="shrink-0 text-sm text-gray-400">
+                        {recentVoteCounts[poll.id] || 0} recent votes
+                      </span>
                     </div>
 
                     <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
                     <p className="mb-3 text-sm text-gray-300">{poll.description}</p>
-                                        <div className="flex items-center justify-end gap-1.5 text-sm text-gray-400 md:mt-auto">
-                      <span>{recentVoteCounts[poll.id] || 0} recent votes</span>
+
+                    <div className="flex items-center justify-end gap-1.5 text-sm text-gray-400 md:mt-auto">
+                      <span>View poll</span>
                       <span aria-hidden="true" className="text-base leading-none">
                         ›
                       </span>
