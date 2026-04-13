@@ -293,7 +293,7 @@ function getBadgeLabel(
 function StatusRibbon({ label }: { label: BadgeLabel }) {
   return (
     <span
-      className={`rounded-l-full px-3 py-1 text-[11px] font-semibold text-white ${STATUS_RIBBON_COLOURS[label]}`}
+      className={`inline-flex h-6 items-center justify-center rounded-l-full rounded-r-none px-3 text-[11px] font-semibold text-white ${STATUS_RIBBON_COLOURS[label]}`}
     >
       {label.toUpperCase()}
     </span>
@@ -1104,10 +1104,10 @@ export default function Home() {
   </span>
 
   {featuredBadge ? (
-    <span className="ml-auto">
-      <StatusRibbon label={featuredBadge} />
-    </span>
-  ) : null}
+  <span className="ml-auto -mr-5">
+    <StatusRibbon label={featuredBadge} />
+  </span>
+) : null}
 </div>
 
               <h2 className="mb-2 text-2xl font-semibold">{featuredPoll.question}</h2>
@@ -1413,7 +1413,7 @@ export default function Home() {
   </span>
 
   {badgeLabel ? (
-  <span className="ml-auto">
+  <span className="ml-auto -mr-5">
     <StatusRibbon label={badgeLabel} />
   </span>
 ) : null}
