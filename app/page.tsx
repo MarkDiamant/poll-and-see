@@ -1398,7 +1398,7 @@ export default function Home() {
                   id={`poll-card-${poll.slug}`}
                   href={`/poll/${poll.slug}`}
                   onClick={() => handlePollClick(poll)}
-                  className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 p-5 shadow-lg transition hover:border-gray-500"
+                  className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 p-5 shadow-lg transition hover:border-gray-500 md:flex md:min-h-[220px] md:flex-col"
                 >
                   
                   <div className="mb-3 flex items-center">
@@ -1420,12 +1420,12 @@ export default function Home() {
 ) : null}
 </div>
 
-                  <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
+                                    <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
                   <p className="mb-4 text-sm text-gray-300">{poll.description}</p>
 
-                  <div className="flex items-center justify-between text-sm text-gray-400">
+                  <div className="flex items-center justify-between text-sm text-gray-400 md:mt-auto">
                     <span>View poll</span>
-                    <span>→</span>
+                    <span aria-hidden="true">›</span>
                   </div>
                 </Link>
               );
