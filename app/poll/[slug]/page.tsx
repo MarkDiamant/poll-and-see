@@ -292,19 +292,15 @@ function getBadgeLabel(
 
 function StatusRibbon({ label }: { label: BadgeLabel }) {
   return (
-    <div className="pointer-events-none absolute right-0 top-0 overflow-hidden rounded-tr-2xl">
+    <div className="pointer-events-none absolute right-[-42px] top-[12px] z-10">
       <div
-        className={`px-3 py-1 text-[10px] font-semibold tracking-wide text-white shadow-md ${STATUS_RIBBON_COLOURS[label]}`}
-        style={{
-          transform: "translate(12%, -10%) rotate(32deg)",
-          width: 135,
-          textAlign: "center",
-        }}
+        className={`w-[170px] rotate-[35deg] px-3 py-1 text-center text-[10px] font-semibold tracking-wide text-white shadow-md ${STATUS_RIBBON_COLOURS[label]}`}
       >
         {label.toUpperCase()}
       </div>
     </div>
   );
+}
 }
 
 function smoothScrollToElement(element: HTMLElement, duration = 650, topOffset = 12) {
