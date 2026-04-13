@@ -961,13 +961,14 @@ export default function Home() {
     return searchedPolls.filter((poll) => poll.id !== featuredPoll?.id);
   }, [searchedPolls, featuredPoll]);
 
-  const trendingPolls = useMemo(() => {
+    const trendingPolls = useMemo(() => {
     const pollMap = new Map(polls.map((poll) => [poll.id, poll]));
     return trendingPollIds
       .map((id) => pollMap.get(id))
       .filter((poll): poll is Poll => Boolean(poll))
+      .filter((poll) => poll.id !== featuredPoll?.id)
       .slice(0, 5);
-  }, [polls, trendingPollIds]);
+  }, [polls, trendingPollIds, featuredPoll?.id]);
 
   const activePollCount = searchedPolls.length;
   const trendingIdSet = useMemo(() => new Set(trendingPollIds), [trendingPollIds]);
