@@ -1078,7 +1078,7 @@ export default function Home() {
         </div>
 
         <div className="relative rounded-2xl bg-gray-800 p-5 shadow-lg overflow-hidden">
-          <div className="mb-4 flex items-center justify-between pr-20">
+          <div className="mb-4 flex items-center justify-between pr-2">
             <span className="rounded-full bg-blue-500/10 px-3 py-1 text-sm text-blue-300">
               Featured Poll
             </span>
@@ -1090,20 +1090,25 @@ export default function Home() {
 
           {featuredPoll ? (
             <>
-              {featuredBadge ? <StatusRibbon label={featuredBadge} /> : null}
+              
+              <div className="mb-3 flex items-center">
+  <span
+    className="rounded-full px-2 py-1 text-xs"
+    style={{
+      color: getCategoryColours(featuredPoll.category).text,
+      backgroundColor: getCategoryColours(featuredPoll.category).bg,
+      border: `1px solid ${getCategoryColours(featuredPoll.category).border}`,
+    }}
+  >
+    {featuredPoll.category}
+  </span>
 
-              <div className="mb-3">
-                <span
-                  className="rounded-full px-2 py-1 text-xs"
-                  style={{
-                    color: getCategoryColours(featuredPoll.category).text,
-                    backgroundColor: getCategoryColours(featuredPoll.category).bg,
-                    border: `1px solid ${getCategoryColours(featuredPoll.category).border}`,
-                  }}
-                >
-                  {featuredPoll.category}
-                </span>
-              </div>
+  {featuredBadge ? (
+    <span className="ml-auto mr-[-4px]">
+      <StatusRibbon label={featuredBadge} />
+    </span>
+  ) : null}
+</div>
 
               <h2 className="mb-2 text-2xl font-semibold">{featuredPoll.question}</h2>
               <p className="mb-4 text-gray-300">{featuredPoll.description}</p>
@@ -1408,7 +1413,7 @@ export default function Home() {
   </span>
 
   {badgeLabel ? (
-  <span className="ml-auto mr-[-2px]">
+  <span className="ml-auto mr-[-4px]">
     <StatusRibbon label={badgeLabel} />
   </span>
 ) : null}
