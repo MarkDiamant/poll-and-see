@@ -292,9 +292,12 @@ function getBadgeLabel(
 
 function StatusRibbon({ label }: { label: BadgeLabel }) {
   return (
-    <div className="pointer-events-none absolute right-[-36px] top-[8px] z-10">
+    <div className="pointer-events-none absolute right-[-32px] top-[14px] z-10">
       <div
-        className={`w-[170px] rotate-[35deg] px-3 py-[0.18rem] text-center text-[11px] font-semibold tracking-wide text-white shadow-md ${STATUS_RIBBON_COLOURS[label]}`}
+        className={`w-[150px] rotate-[35deg] flex items-center justify-center text-[11.5px] font-semibold tracking-wide text-white shadow-md ${STATUS_RIBBON_COLOURS[label]}`}
+        style={{
+          height: "20px"
+        }}
       >
         {label.toUpperCase()}
       </div>
