@@ -1408,10 +1408,10 @@ export default function Home() {
   </span>
 
   {badgeLabel ? (
-    <span className="ml-auto">
-      <StatusRibbon label={badgeLabel} />
-    </span>
-  ) : null}
+  <span className="ml-auto mr-[-2px]">
+    <StatusRibbon label={badgeLabel} />
+  </span>
+) : null}
 </div>
 
                   <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>

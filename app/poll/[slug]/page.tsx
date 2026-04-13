@@ -534,10 +534,10 @@ function PollCard({
   </span>
 
   {badgeLabel ? (
-    <span className="ml-auto">
-      <StatusRibbon label={badgeLabel} />
-    </span>
-  ) : null}
+  <span className="ml-auto mr-[-2px]">
+    <StatusRibbon label={badgeLabel} />
+  </span>
+) : null}
 </div>
 
       <h2 className="mb-3 text-2xl font-bold">{bundle.poll.question}</h2>
