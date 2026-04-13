@@ -292,16 +292,11 @@ function getBadgeLabel(
 
 function StatusRibbon({ label }: { label: BadgeLabel }) {
   return (
-    <div className="pointer-events-none absolute right-[-18px] top-[18px] z-10">
-      <div
-        className={`w-[118px] rotate-[35deg] flex items-center justify-center text-[11px] font-semibold tracking-wide text-white shadow-sm ${STATUS_RIBBON_COLOURS[label]}`}
-        style={{
-          height: "18px"
-        }}
-      >
-        {label.toUpperCase()}
-      </div>
-    </div>
+    <span
+      className={`rounded-l-full px-3 py-1 text-[11px] font-semibold text-white ${STATUS_RIBBON_COLOURS[label]}`}
+    >
+      {label.toUpperCase()}
+    </span>
   );
 }
 
@@ -1399,20 +1394,25 @@ export default function Home() {
                   onClick={() => handlePollClick(poll)}
                   className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 p-5 shadow-lg transition hover:border-gray-500"
                 >
-                  {badgeLabel ? <StatusRibbon label={badgeLabel} /> : null}
+                  
+                  <div className="mb-3 flex items-center">
+  <span
+    className="rounded-full px-2 py-1 text-xs"
+    style={{
+      color: categoryColours.text,
+      backgroundColor: categoryColours.bg,
+      border: `1px solid ${categoryColours.border}`,
+    }}
+  >
+    {poll.category}
+  </span>
 
-                  <div className="mb-3">
-                    <span
-                      className="rounded-full px-2 py-1 text-xs"
-                      style={{
-                        color: categoryColours.text,
-                        backgroundColor: categoryColours.bg,
-                        border: `1px solid ${categoryColours.border}`,
-                      }}
-                    >
-                      {poll.category}
-                    </span>
-                  </div>
+  {badgeLabel ? (
+    <span className="ml-auto">
+      <StatusRibbon label={badgeLabel} />
+    </span>
+  ) : null}
+</div>
 
                   <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
                   <p className="mb-4 text-sm text-gray-300">{poll.description}</p>

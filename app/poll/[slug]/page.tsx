@@ -293,7 +293,7 @@ function getBadgeLabel(
 function StatusRibbon({ label }: { label: BadgeLabel }) {
   return (
     <span
-      className={`ml-auto rounded-l-full px-3 py-1 text-[11px] font-semibold text-white ${STATUS_RIBBON_COLOURS[label]}`}
+      className={`rounded-l-full px-3 py-1 text-[11px] font-semibold text-white ${STATUS_RIBBON_COLOURS[label]}`}
     >
       {label.toUpperCase()}
     </span>
