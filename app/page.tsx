@@ -1234,9 +1234,12 @@ export default function Home() {
 
                     <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
                     <p className="mb-3 text-sm text-gray-300">{poll.description}</p>
-                    <p className="text-sm text-gray-400 md:mt-auto">
-                      {recentVoteCounts[poll.id] || 0} recent votes
-                    </p>
+                                        <div className="flex items-center justify-end gap-1.5 text-sm text-gray-400 md:mt-auto">
+                      <span>{recentVoteCounts[poll.id] || 0} recent votes</span>
+                      <span aria-hidden="true" className="text-base leading-none">
+                        ›
+                      </span>
+                    </div>
                   </Link>
                 );
               })}
@@ -1423,9 +1426,11 @@ export default function Home() {
                                     <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
                   <p className="mb-4 text-sm text-gray-300">{poll.description}</p>
 
-                  <div className="flex items-center justify-between text-sm text-gray-400 md:mt-auto">
+                                    <div className="flex items-center justify-end gap-1.5 text-sm text-gray-400 md:mt-auto">
                     <span>View poll</span>
-                    <span aria-hidden="true">›</span>
+                    <span aria-hidden="true" className="text-base leading-none">
+                      ›
+                    </span>
                   </div>
                 </Link>
               );
