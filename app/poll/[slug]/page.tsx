@@ -83,24 +83,6 @@ const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: strin
   Tech: { text: "#f9a8d4", bg: "rgba(217, 70, 239, 0.12)", border: "rgba(217, 70, 239, 0.55)", solid: "#d946ef" },
 };
 
-const BADGE_COLOURS: Record<BadgeLabel, { text: string; bg: string; border: string }> = {
-  New: {
-    text: "#f8fafc",
-    bg: "rgba(15, 23, 42, 0.92)",
-    border: "rgba(148, 163, 184, 0.45)",
-  },
-  Trending: {
-    text: "#f8fafc",
-    bg: "rgba(30, 41, 59, 0.92)",
-    border: "rgba(250, 204, 21, 0.45)",
-  },
-  Popular: {
-    text: "#f8fafc",
-    bg: "rgba(17, 24, 39, 0.92)",
-    border: "rgba(96, 165, 250, 0.42)",
-  },
-};
-
 const FALLBACK_CATEGORY_COLOURS = [
   { text: "#93c5fd", bg: "rgba(37, 99, 235, 0.12)", border: "rgba(37, 99, 235, 0.55)", solid: "#2563eb" },
   { text: "#fca5a5", bg: "rgba(239, 68, 68, 0.12)", border: "rgba(239, 68, 68, 0.55)", solid: "#ef4444" },
@@ -113,6 +95,12 @@ const FALLBACK_CATEGORY_COLOURS = [
   { text: "#c4b5fd", bg: "rgba(139, 92, 246, 0.12)", border: "rgba(139, 92, 246, 0.55)", solid: "#8b5cf6" },
   { text: "#f9a8d4", bg: "rgba(217, 70, 239, 0.12)", border: "rgba(217, 70, 239, 0.55)", solid: "#d946ef" },
 ];
+
+const STATUS_RIBBON_COLOURS: Record<BadgeLabel, string> = {
+  New: "bg-emerald-600/95",
+  Trending: "bg-amber-500/95",
+  Popular: "bg-blue-600/95",
+};
 
 function getCategoryColours(category: string) {
   const trimmed = category?.trim();
@@ -302,20 +290,20 @@ function getBadgeLabel(
   return null;
 }
 
-function BadgePill({ label }: { label: BadgeLabel }) {
-  const colours = BADGE_COLOURS[label];
-
+function StatusRibbon({ label }: { label: BadgeLabel }) {
   return (
-    <span
-      className="rounded-full px-2.5 py-1 text-[11px] font-medium tracking-[0.01em]"
-      style={{
-        color: colours.text,
-        backgroundColor: colours.bg,
-        border: `1px solid ${colours.border}`,
-      }}
-    >
-      {label}
-    </span>
+    <div className="pointer-events-none absolute right-0 top-0 overflow-hidden rounded-tr-2xl">
+      <div
+        className={`px-3 py-1 text-[10px] font-semibold tracking-wide text-white shadow-md ${STATUS_RIBBON_COLOURS[label]}`}
+        style={{
+          transform: "translate(30%, -30%) rotate(45deg)",
+          width: 120,
+          textAlign: "center",
+        }}
+      >
+        {label.toUpperCase()}
+      </div>
+    </div>
   );
 }
 
@@ -538,24 +526,25 @@ function PollCard({
   };
 
   return (
-    <div className="mb-8 rounded-2xl border border-gray-700 bg-gray-800 p-6">
+    <div className="relative mb-8 overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 p-6">
+      {badgeLabel ? <StatusRibbon label={badgeLabel} /> : null}
+
       <div className="mb-4 flex items-center justify-between">
         <span className="text-sm text-gray-400">{totalVotes} votes</span>
       </div>
 
-      <div className="mb-3 flex items-start justify-between gap-3">
-  <span
-    className="rounded-full px-3 py-1 text-xs"
-    style={{
-      color: categoryColours.text,
-      backgroundColor: categoryColours.bg,
-      border: `1px solid ${categoryColours.border}`,
-    }}
-  >
-    {bundle.poll.category}
-  </span>
-  {badgeLabel ? <BadgePill label={badgeLabel} /> : null}
-</div>
+      <div className="mb-3">
+        <span
+          className="rounded-full px-3 py-1 text-xs"
+          style={{
+            color: categoryColours.text,
+            backgroundColor: categoryColours.bg,
+            border: `1px solid ${categoryColours.border}`,
+          }}
+        >
+          {bundle.poll.category}
+        </span>
+      </div>
 
       <h2 className="mb-3 text-2xl font-bold">{bundle.poll.question}</h2>
       <p className="mb-3 text-gray-300">{bundle.poll.description}</p>
@@ -563,7 +552,7 @@ function PollCard({
       {!voted ? (
         <div className="flex flex-col gap-3">
           {hasImageOptions ? (
-            <p className="mt-[6px] mb-[8px] text-sm text-gray-300 opacity-80">
+            <p className="mb-[8px] mt-[6px] text-sm text-gray-300 opacity-80">
               Tap an image to vote
             </p>
           ) : null}
@@ -572,9 +561,11 @@ function PollCard({
             <button
               key={option.id}
               onClick={() => handleVote(option.id)}
-              className={option.image_url
-                ? "cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600 md:max-w-[480px]"
-                : "cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600"}
+              className={
+                option.image_url
+                  ? "cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600 md:max-w-[480px]"
+                  : "cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600"
+              }
             >
               {option.image_url ? (
                 <div className="overflow-hidden bg-gray-900">
@@ -1386,18 +1377,18 @@ export default function PollPage() {
       <Footer />
 
       {votesLast24 >= 100 ? (
-  <div
-    className={`pointer-events-none fixed right-5 top-5 z-40 transition-opacity duration-700 md:left-1/2 md:right-auto md:top-6 md:-translate-x-[-360px] ${
-      showActivityIndicator ? "opacity-100" : "opacity-0"
-    }`}
-  >
-    <div className="rounded-xl border border-blue-400/50 bg-blue-950/80 px-4 py-3 shadow-[0_0_24px_rgba(59,130,246,0.18)] backdrop-blur md:rounded-2xl md:px-5 md:py-4">
-      <p className="text-sm font-medium text-blue-50 md:text-base">
-        {votesLast24.toLocaleString()} votes in the last 24 hours
-      </p>
-    </div>
-  </div>
-) : null}
+        <div
+          className={`pointer-events-none fixed right-5 top-20 z-40 transition-opacity duration-700 md:left-1/2 md:right-auto md:top-24 md:-translate-x-[-360px] ${
+            showActivityIndicator ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          <div className="rounded-xl border border-blue-400/50 bg-blue-950/80 px-4 py-3 shadow-[0_0_24px_rgba(59,130,246,0.18)] backdrop-blur md:rounded-2xl md:px-5 md:py-4">
+            <p className="text-sm font-medium text-blue-50 md:text-base">
+              {votesLast24.toLocaleString()} votes in the last 24 hours
+            </p>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
