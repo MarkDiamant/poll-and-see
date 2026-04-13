@@ -1209,6 +1209,53 @@ export default function Home() {
           )}
         </div>
 
+        <div className="mt-6 rounded-2xl bg-gray-800 p-5 shadow-lg">
+          <div className="mb-4">
+            <h3 className="text-2xl font-semibold">Trending now</h3>
+          </div>
+
+          {trendingPolls.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {trendingPolls.map((poll) => {
+                const categoryColours = getCategoryColours(poll.category);
+                const badgeLabel = getBadgeLabel(poll, trendingIdSet, popularIdSet);
+                const trendingSectionBadgeLabel = badgeLabel === "Trending" ? null : badgeLabel;
+
+                return (
+                  <Link
+                    key={poll.id}
+                    href={`/poll/${poll.slug}`}
+                    onClick={() => handlePollClick(poll)}
+                    className="rounded-2xl border border-gray-700 bg-gray-900/60 p-4 transition hover:border-gray-500"
+                  >
+                    <div className="mb-3 flex flex-wrap gap-2">
+                      <span
+                        className="rounded-full px-2 py-1 text-xs"
+                        style={{
+                          color: categoryColours.text,
+                          backgroundColor: categoryColours.bg,
+                          border: `1px solid ${categoryColours.border}`,
+                        }}
+                      >
+                        {poll.category}
+                      </span>
+                      {trendingSectionBadgeLabel ? <BadgePill label={trendingSectionBadgeLabel} /> : null}
+                    </div>
+
+                    <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
+                    <p className="mb-3 text-sm text-gray-300">{poll.description}</p>
+                    <p className="text-sm text-gray-400">
+                      {recentVoteCounts[poll.id] || 0} votes in the last 48 hours
+                    </p>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-gray-300">No trending polls yet.</p>
+          )}
+        </div>
+
         <div className="mt-6 rounded-xl border border-gray-700 bg-gray-900/60 p-4">
           <p className="mb-1 text-base font-medium text-white md:text-lg">Enjoying these polls?</p>
           <p className="mb-1 text-sm text-gray-200">
@@ -1268,54 +1315,7 @@ export default function Home() {
                     </button>
                   ))}
                 </div>
-              
-        <div className="mt-6 rounded-2xl bg-gray-800 p-5 shadow-lg">
-          <div className="mb-4">
-  <h3 className="text-2xl font-semibold">Trending now</h3>
-</div>
-
-          {trendingPolls.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              {trendingPolls.map((poll) => {
-                const categoryColours = getCategoryColours(poll.category);
-                const badgeLabel = getBadgeLabel(poll, trendingIdSet, popularIdSet);
-const trendingSectionBadgeLabel = badgeLabel === "Trending" ? null : badgeLabel;
-
-                return (
-                  <Link
-                    key={poll.id}
-                    href={`/poll/${poll.slug}`}
-                    onClick={() => handlePollClick(poll)}
-                    className="rounded-2xl border border-gray-700 bg-gray-900/60 p-4 transition hover:border-gray-500"
-                  >
-                    <div className="mb-3 flex flex-wrap gap-2">
-                      <span
-                        className="rounded-full px-2 py-1 text-xs"
-                        style={{
-                          color: categoryColours.text,
-                          backgroundColor: categoryColours.bg,
-                          border: `1px solid ${categoryColours.border}`,
-                        }}
-                      >
-                        {poll.category}
-                      </span>
-                      {trendingSectionBadgeLabel ? <BadgePill label={trendingSectionBadgeLabel} /> : null}
-                    </div>
-
-                    <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
-                    <p className="mb-3 text-sm text-gray-300">{poll.description}</p>
-                    <p className="text-sm text-gray-400">
-                      {recentVoteCounts[poll.id] || 0} votes in the last 48 hours
-                    </p>
-                  </Link>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="text-gray-300">No trending polls yet.</p>
-          )}
-        </div>
-        ) : null}
+              ) : null}
             </div>
 
             <button
@@ -1445,18 +1445,18 @@ const trendingSectionBadgeLabel = badgeLabel === "Trending" ? null : badgeLabel;
       <Footer />
 
       {votesLast24 >= 100 ? (
-  <div
-    className={`pointer-events-none fixed right-5 top-5 z-40 transition-opacity duration-700 md:right-8 md:top-6 ${
-      showActivityIndicator ? "opacity-100" : "opacity-0"
-    }`}
-  >
-    <div className="rounded-xl border border-blue-400/50 bg-blue-950/80 px-4 py-3 shadow-[0_0_24px_rgba(59,130,246,0.18)] backdrop-blur">
-      <p className="text-sm font-medium text-blue-50">
-        {votesLast24.toLocaleString()} votes in the last 24 hours
-      </p>
-    </div>
-  </div>
-) : null}
+        <div
+          className={`pointer-events-none fixed right-5 top-5 z-40 transition-opacity duration-700 md:right-8 md:top-6 ${
+            showActivityIndicator ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          <div className="rounded-xl border border-blue-400/50 bg-blue-950/80 px-4 py-3 shadow-[0_0_24px_rgba(59,130,246,0.18)] backdrop-blur">
+            <p className="text-sm font-medium text-blue-50">
+              {votesLast24.toLocaleString()} votes in the last 24 hours
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       {showTopButton && (
         <button
