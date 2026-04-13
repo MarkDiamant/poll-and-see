@@ -967,7 +967,7 @@ export default function Home() {
       .map((id) => pollMap.get(id))
       .filter((poll): poll is Poll => Boolean(poll))
       .filter((poll) => poll.id !== featuredPoll?.id)
-      .slice(0, 5);
+      .slice(0, 4);
   }, [polls, trendingPollIds, featuredPoll?.id]);
 
   const activePollCount = searchedPolls.length;
