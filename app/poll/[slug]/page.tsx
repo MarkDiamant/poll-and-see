@@ -922,8 +922,8 @@ export default function PollPage() {
       }, 5000);
     };
 
-    const initialTimeout = setTimeout(showIndicator, 1200);
-    const interval = setInterval(showIndicator, 25000);
+    const initialTimeout = setTimeout(showIndicator, 5000);
+    const interval = setInterval(showIndicator, 75000);
 
     return () => {
       clearTimeout(initialTimeout);
@@ -1386,16 +1386,18 @@ export default function PollPage() {
       <Footer />
 
       {votesLast24 >= 100 ? (
-        <div
-          className={`pointer-events-none fixed right-5 top-5 z-40 transition-opacity duration-700 md:right-8 md:top-6 ${
-            showActivityIndicator ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          <div className="rounded-xl border border-gray-700 bg-gray-900/90 px-4 py-3 shadow-lg backdrop-blur">
-            <p className="text-sm text-white">{votesLast24.toLocaleString()} votes in the last 24 hours</p>
-          </div>
-        </div>
-      ) : null}
+  <div
+    className={`pointer-events-none fixed right-5 top-5 z-40 transition-opacity duration-700 md:right-8 md:top-6 ${
+      showActivityIndicator ? "opacity-100" : "opacity-0"
+    }`}
+  >
+    <div className="rounded-xl border border-blue-400/50 bg-blue-950/80 px-4 py-3 shadow-[0_0_24px_rgba(59,130,246,0.18)] backdrop-blur">
+      <p className="text-sm font-medium text-blue-50">
+        {votesLast24.toLocaleString()} votes in the last 24 hours
+      </p>
+    </div>
+  </div>
+) : null}
     </main>
   );
 }

@@ -837,8 +837,8 @@ export default function Home() {
       }, 5000);
     };
 
-    const initialTimeout = setTimeout(showIndicator, 1200);
-    const interval = setInterval(showIndicator, 25000);
+    const initialTimeout = setTimeout(showIndicator, 5000);
+    const interval = setInterval(showIndicator, 75000);
 
     return () => {
       clearTimeout(initialTimeout);
@@ -1268,38 +1268,18 @@ export default function Home() {
                     </button>
                   ))}
                 </div>
-              ) : null}
-            </div>
-
-            <button
-              type="submit"
-              disabled={subscribeLoading}
-              className="w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-70"
-            >
-              {subscribeLoading ? "Subscribing..." : "Subscribe"}
-            </button>
-          </form>
-
-          {subscribeMessage ? (
-            <p className="mt-2 text-sm text-green-300">{subscribeMessage}</p>
-          ) : null}
-
-          {subscribeError ? (
-            <p className="mt-2 text-sm text-red-300">{subscribeError}</p>
-          ) : null}
-        </div>
-
+              
         <div className="mt-6 rounded-2xl bg-gray-800 p-5 shadow-lg">
           <div className="mb-4">
-            <h3 className="text-2xl font-semibold">Trending now</h3>
-            <p className="mt-1 text-sm text-gray-300">Show top 5 polls by votes in the last 48 hours</p>
-          </div>
+  <h3 className="text-2xl font-semibold">Trending now</h3>
+</div>
 
           {trendingPolls.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2">
               {trendingPolls.map((poll) => {
                 const categoryColours = getCategoryColours(poll.category);
                 const badgeLabel = getBadgeLabel(poll, trendingIdSet, popularIdSet);
+const trendingSectionBadgeLabel = badgeLabel === "Trending" ? null : badgeLabel;
 
                 return (
                   <Link
@@ -1319,7 +1299,7 @@ export default function Home() {
                       >
                         {poll.category}
                       </span>
-                      {badgeLabel ? <BadgePill label={badgeLabel} /> : null}
+                      {trendingSectionBadgeLabel ? <BadgePill label={trendingSectionBadgeLabel} /> : null}
                     </div>
 
                     <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
@@ -1334,6 +1314,26 @@ export default function Home() {
           ) : (
             <p className="text-gray-300">No trending polls yet.</p>
           )}
+        </div>
+        ) : null}
+            </div>
+
+            <button
+              type="submit"
+              disabled={subscribeLoading}
+              className="w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-70"
+            >
+              {subscribeLoading ? "Subscribing..." : "Subscribe"}
+            </button>
+          </form>
+
+          {subscribeMessage ? (
+            <p className="mt-2 text-sm text-green-300">{subscribeMessage}</p>
+          ) : null}
+
+          {subscribeError ? (
+            <p className="mt-2 text-sm text-red-300">{subscribeError}</p>
+          ) : null}
         </div>
       </section>
 
@@ -1445,16 +1445,18 @@ export default function Home() {
       <Footer />
 
       {votesLast24 >= 100 ? (
-        <div
-          className={`pointer-events-none fixed right-5 top-5 z-40 transition-opacity duration-700 md:right-8 md:top-6 ${
-            showActivityIndicator ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          <div className="rounded-xl border border-gray-700 bg-gray-900/90 px-4 py-3 shadow-lg backdrop-blur">
-            <p className="text-sm text-white">{votesLast24.toLocaleString()} votes in the last 24 hours</p>
-          </div>
-        </div>
-      ) : null}
+  <div
+    className={`pointer-events-none fixed right-5 top-5 z-40 transition-opacity duration-700 md:right-8 md:top-6 ${
+      showActivityIndicator ? "opacity-100" : "opacity-0"
+    }`}
+  >
+    <div className="rounded-xl border border-blue-400/50 bg-blue-950/80 px-4 py-3 shadow-[0_0_24px_rgba(59,130,246,0.18)] backdrop-blur">
+      <p className="text-sm font-medium text-blue-50">
+        {votesLast24.toLocaleString()} votes in the last 24 hours
+      </p>
+    </div>
+  </div>
+) : null}
 
       {showTopButton && (
         <button
