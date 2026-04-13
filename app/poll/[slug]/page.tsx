@@ -98,8 +98,8 @@ const FALLBACK_CATEGORY_COLOURS = [
 
 const STATUS_RIBBON_COLOURS: Record<BadgeLabel, string> = {
   New: "bg-emerald-600/95",
-  Trending: "bg-amber-500/95",
-  Popular: "bg-blue-600/95",
+  Trending: "bg-amber-400/95",
+  Popular: "bg-blue-500/95",
 };
 
 function getCategoryColours(category: string) {
@@ -293,7 +293,7 @@ function getBadgeLabel(
 function StatusRibbon({ label }: { label: BadgeLabel }) {
   return (
     <span
-      className={`inline-flex h-6 items-center justify-center rounded-l-full rounded-r-none px-3 text-[12px] font-semibold text-white ${STATUS_RIBBON_COLOURS[label]}`}
+      className={`inline-flex h-6 items-center justify-center rounded-l-full rounded-r-none px-3 leading-none text-[12px] font-semibold text-white ${STATUS_RIBBON_COLOURS[label]}`}
     >
       {label.toUpperCase()}
     </span>
