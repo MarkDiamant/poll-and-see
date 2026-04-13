@@ -294,6 +294,7 @@ function StatusRibbon({ label }: { label: BadgeLabel }) {
   return (
     <span
       className={`inline-flex h-6 items-center justify-center rounded-l-full rounded-r-none px-3 leading-none text-[12px] font-semibold text-white ${STATUS_RIBBON_COLOURS[label]}`}
+      style={{ paddingTop: "1px" }}
     >
       {label.toUpperCase()}
     </span>
