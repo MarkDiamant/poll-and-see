@@ -292,16 +292,11 @@ function getBadgeLabel(
 
 function StatusRibbon({ label }: { label: BadgeLabel }) {
   return (
-    <div className="pointer-events-none absolute right-[-18px] top-[18px] z-10">
-      <div
-        className={`w-[118px] rotate-[35deg] flex items-center justify-center text-[11px] font-semibold tracking-wide text-white shadow-sm ${STATUS_RIBBON_COLOURS[label]}`}
-        style={{
-          height: "18px"
-        }}
-      >
-        {label.toUpperCase()}
-      </div>
-    </div>
+    <span
+      className={`ml-auto rounded-l-full px-3 py-1 text-[11px] font-semibold text-white ${STATUS_RIBBON_COLOURS[label]}`}
+    >
+      {label.toUpperCase()}
+    </span>
   );
 }
 
@@ -525,24 +520,25 @@ function PollCard({
 
   return (
     <div className="relative mb-8 overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 p-6">
-      {badgeLabel ? <StatusRibbon label={badgeLabel} /> : null}
+      
+      <div className="mb-3 flex items-center">
+  <span
+    className="rounded-full px-3 py-1 text-xs"
+    style={{
+      color: categoryColours.text,
+      backgroundColor: categoryColours.bg,
+      border: `1px solid ${categoryColours.border}`,
+    }}
+  >
+    {bundle.poll.category}
+  </span>
 
-      <div className="mb-4 flex items-center justify-between">
-        <span className="text-sm text-gray-400">{totalVotes} votes</span>
-      </div>
-
-      <div className="mb-3">
-        <span
-          className="rounded-full px-3 py-1 text-xs"
-          style={{
-            color: categoryColours.text,
-            backgroundColor: categoryColours.bg,
-            border: `1px solid ${categoryColours.border}`,
-          }}
-        >
-          {bundle.poll.category}
-        </span>
-      </div>
+  {badgeLabel ? (
+    <span className="ml-auto">
+      <StatusRibbon label={badgeLabel} />
+    </span>
+  ) : null}
+</div>
 
       <h2 className="mb-3 text-2xl font-bold">{bundle.poll.question}</h2>
       <p className="mb-3 text-gray-300">{bundle.poll.description}</p>
