@@ -1201,7 +1201,7 @@ export default function Home() {
         <div className="mt-6 rounded-2xl bg-gray-800 p-5 shadow-lg">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h3 className="text-2xl font-semibold">Trending now</h3>
-            <span className="inline-block -mr-5 scale-110 origin-right"><StatusRibbon label="Trending" /></span>
+            <span className="inline-block -mr-5 scale-125 origin-right"><StatusRibbon label="Trending" /></span>
           </div>
 
           {trendingPolls.length > 0 ? (
