@@ -1227,7 +1227,7 @@ export default function Home() {
                     key={poll.id}
                     href={`/poll/${poll.slug}`}
                     onClick={() => handlePollClick(poll)}
-                    className="rounded-2xl border border-gray-700 bg-gray-900/60 p-4 transition hover:border-gray-500"
+                    className="rounded-2xl border border-gray-700 bg-gray-900/60 p-4 transition hover:border-gray-500 md:flex md:min-h-[220px] md:flex-col"
                   >
                     <div className="mb-3 flex flex-wrap gap-2">
                       <span
@@ -1245,9 +1245,9 @@ export default function Home() {
 
                     <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
                     <p className="mb-3 text-sm text-gray-300">{poll.description}</p>
-                    <p className="text-sm text-gray-400">
-                      {recentVoteCounts[poll.id] || 0} votes in the last 48 hours
-                    </p>
+                    <p className="text-sm text-gray-400 md:mt-auto">
+  {recentVoteCounts[poll.id] || 0} recent votes
+</p>
                   </Link>
                 );
               })}
