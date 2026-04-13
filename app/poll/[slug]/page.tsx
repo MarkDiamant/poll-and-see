@@ -85,19 +85,19 @@ const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: strin
 
 const BADGE_COLOURS: Record<BadgeLabel, { text: string; bg: string; border: string }> = {
   New: {
-    text: "#86efac",
-    bg: "rgba(34, 197, 94, 0.12)",
-    border: "rgba(34, 197, 94, 0.55)",
+    text: "#f8fafc",
+    bg: "rgba(15, 23, 42, 0.92)",
+    border: "rgba(148, 163, 184, 0.45)",
   },
   Trending: {
-    text: "#fcd34d",
-    bg: "rgba(234, 179, 8, 0.12)",
-    border: "rgba(234, 179, 8, 0.55)",
+    text: "#f8fafc",
+    bg: "rgba(30, 41, 59, 0.92)",
+    border: "rgba(250, 204, 21, 0.45)",
   },
   Popular: {
-    text: "#c4b5fd",
-    bg: "rgba(139, 92, 246, 0.12)",
-    border: "rgba(139, 92, 246, 0.55)",
+    text: "#f8fafc",
+    bg: "rgba(17, 24, 39, 0.92)",
+    border: "rgba(96, 165, 250, 0.42)",
   },
 };
 
@@ -307,7 +307,7 @@ function BadgePill({ label }: { label: BadgeLabel }) {
 
   return (
     <span
-      className="rounded-full px-2 py-1 text-xs"
+      className="rounded-full px-2.5 py-1 text-[11px] font-medium tracking-[0.01em]"
       style={{
         color: colours.text,
         backgroundColor: colours.bg,
@@ -543,19 +543,19 @@ function PollCard({
         <span className="text-sm text-gray-400">{totalVotes} votes</span>
       </div>
 
-      <div className="mb-3 flex flex-wrap gap-2">
-        <span
-          className="rounded-full px-3 py-1 text-xs"
-          style={{
-            color: categoryColours.text,
-            backgroundColor: categoryColours.bg,
-            border: `1px solid ${categoryColours.border}`,
-          }}
-        >
-          {bundle.poll.category}
-        </span>
-        {badgeLabel ? <BadgePill label={badgeLabel} /> : null}
-      </div>
+      <div className="mb-3 flex items-start justify-between gap-3">
+  <span
+    className="rounded-full px-3 py-1 text-xs"
+    style={{
+      color: categoryColours.text,
+      backgroundColor: categoryColours.bg,
+      border: `1px solid ${categoryColours.border}`,
+    }}
+  >
+    {bundle.poll.category}
+  </span>
+  {badgeLabel ? <BadgePill label={badgeLabel} /> : null}
+</div>
 
       <h2 className="mb-3 text-2xl font-bold">{bundle.poll.question}</h2>
       <p className="mb-3 text-gray-300">{bundle.poll.description}</p>
@@ -1387,12 +1387,12 @@ export default function PollPage() {
 
       {votesLast24 >= 100 ? (
   <div
-    className={`pointer-events-none fixed right-5 top-5 z-40 transition-opacity duration-700 md:right-8 md:top-6 ${
+    className={`pointer-events-none fixed right-5 top-5 z-40 transition-opacity duration-700 md:left-1/2 md:right-auto md:top-6 md:-translate-x-[-360px] ${
       showActivityIndicator ? "opacity-100" : "opacity-0"
     }`}
   >
-    <div className="rounded-xl border border-blue-400/50 bg-blue-950/80 px-4 py-3 shadow-[0_0_24px_rgba(59,130,246,0.18)] backdrop-blur">
-      <p className="text-sm font-medium text-blue-50">
+    <div className="rounded-xl border border-blue-400/50 bg-blue-950/80 px-4 py-3 shadow-[0_0_24px_rgba(59,130,246,0.18)] backdrop-blur md:rounded-2xl md:px-5 md:py-4">
+      <p className="text-sm font-medium text-blue-50 md:text-base">
         {votesLast24.toLocaleString()} votes in the last 24 hours
       </p>
     </div>
