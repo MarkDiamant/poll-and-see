@@ -1080,8 +1080,8 @@ export default function Home() {
 
         <div className="relative rounded-2xl bg-gray-800 p-5 shadow-lg overflow-hidden">
           <div className="mb-4 flex items-center justify-between pr-2">
-            <span className="rounded-full bg-blue-500/10 px-3 py-1 text-sm text-blue-300">
-              Featured Poll
+            <span className="-ml-5 inline-flex h-9 items-center rounded-r-full bg-white px-4 text-sm font-semibold tracking-[0.04em] text-black">
+              FEATURED POLL
             </span>
 
             {featuredPoll ? (
