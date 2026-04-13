@@ -534,7 +534,7 @@ function PollCard({
   </span>
 
   {badgeLabel ? (
-  <span className="ml-auto mr-[-2px]">
+  <span className="ml-auto">
     <StatusRibbon label={badgeLabel} />
   </span>
 ) : null}

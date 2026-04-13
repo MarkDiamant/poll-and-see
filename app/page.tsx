@@ -1104,7 +1104,7 @@ export default function Home() {
   </span>
 
   {featuredBadge ? (
-    <span className="ml-auto mr-[-4px]">
+    <span className="ml-auto">
       <StatusRibbon label={featuredBadge} />
     </span>
   ) : null}
@@ -1413,7 +1413,7 @@ export default function Home() {
   </span>
 
   {badgeLabel ? (
-  <span className="ml-auto mr-[-4px]">
+  <span className="ml-auto">
     <StatusRibbon label={badgeLabel} />
   </span>
 ) : null}
