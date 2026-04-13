@@ -139,24 +139,6 @@ const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: strin
   },
 };
 
-const BADGE_COLOURS: Record<BadgeLabel, { text: string; bg: string; border: string }> = {
-  New: {
-    text: "#f8fafc",
-    bg: "rgba(15, 23, 42, 0.92)",
-    border: "rgba(148, 163, 184, 0.45)",
-  },
-  Trending: {
-    text: "#f8fafc",
-    bg: "rgba(30, 41, 59, 0.92)",
-    border: "rgba(250, 204, 21, 0.45)",
-  },
-  Popular: {
-    text: "#f8fafc",
-    bg: "rgba(17, 24, 39, 0.92)",
-    border: "rgba(96, 165, 250, 0.42)",
-  },
-};
-
 const FALLBACK_CATEGORY_COLOURS = [
   {
     text: "#93c5fd",
@@ -219,6 +201,12 @@ const FALLBACK_CATEGORY_COLOURS = [
     solid: "#d946ef",
   },
 ];
+
+const STATUS_RIBBON_COLOURS: Record<BadgeLabel, string> = {
+  New: "bg-emerald-600/95",
+  Trending: "bg-amber-500/95",
+  Popular: "bg-blue-600/95",
+};
 
 const getOptionColour = (index: number) => {
   return OPTION_COLOURS[index] || OPTION_COLOURS[OPTION_COLOURS.length - 1];
@@ -302,20 +290,20 @@ function getBadgeLabel(
   return null;
 }
 
-function BadgePill({ label }: { label: BadgeLabel }) {
-  const colours = BADGE_COLOURS[label];
-
+function StatusRibbon({ label }: { label: BadgeLabel }) {
   return (
-    <span
-      className="rounded-full px-2.5 py-1 text-[11px] font-medium tracking-[0.01em]"
-      style={{
-        color: colours.text,
-        backgroundColor: colours.bg,
-        border: `1px solid ${colours.border}`,
-      }}
-    >
-      {label}
-    </span>
+    <div className="pointer-events-none absolute right-0 top-0 overflow-hidden rounded-tr-2xl">
+      <div
+        className={`px-3 py-1 text-[10px] font-semibold tracking-wide text-white shadow-md ${STATUS_RIBBON_COLOURS[label]}`}
+        style={{
+          transform: "translate(30%, -30%) rotate(45deg)",
+          width: 120,
+          textAlign: "center",
+        }}
+      >
+        {label.toUpperCase()}
+      </div>
+    </div>
   );
 }
 
@@ -961,7 +949,7 @@ export default function Home() {
     return searchedPolls.filter((poll) => poll.id !== featuredPoll?.id);
   }, [searchedPolls, featuredPoll]);
 
-    const trendingPolls = useMemo(() => {
+  const trendingPolls = useMemo(() => {
     const pollMap = new Map(polls.map((poll) => [poll.id, poll]));
     return trendingPollIds
       .map((id) => pollMap.get(id))
@@ -1096,7 +1084,7 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="rounded-2xl bg-gray-800 p-5 shadow-lg">
+        <div className="relative rounded-2xl bg-gray-800 p-5 shadow-lg overflow-hidden">
           <div className="mb-4 flex items-center justify-between">
             <span className="rounded-full bg-blue-500/10 px-3 py-1 text-sm text-blue-300">
               Featured Poll
@@ -1109,19 +1097,20 @@ export default function Home() {
 
           {featuredPoll ? (
             <>
-              <div className="mb-3 flex items-start justify-between gap-3">
-  <span
-    className="rounded-full px-2 py-1 text-xs"
-    style={{
-      color: getCategoryColours(featuredPoll.category).text,
-      backgroundColor: getCategoryColours(featuredPoll.category).bg,
-      border: `1px solid ${getCategoryColours(featuredPoll.category).border}`,
-    }}
-  >
-    {featuredPoll.category}
-  </span>
-  {featuredBadge ? <BadgePill label={featuredBadge} /> : null}
-</div>
+              {featuredBadge ? <StatusRibbon label={featuredBadge} /> : null}
+
+              <div className="mb-3">
+                <span
+                  className="rounded-full px-2 py-1 text-xs"
+                  style={{
+                    color: getCategoryColours(featuredPoll.category).text,
+                    backgroundColor: getCategoryColours(featuredPoll.category).bg,
+                    border: `1px solid ${getCategoryColours(featuredPoll.category).border}`,
+                  }}
+                >
+                  {featuredPoll.category}
+                </span>
+              </div>
 
               <h2 className="mb-2 text-2xl font-semibold">{featuredPoll.question}</h2>
               <p className="mb-4 text-gray-300">{featuredPoll.description}</p>
@@ -1227,9 +1216,11 @@ export default function Home() {
                     key={poll.id}
                     href={`/poll/${poll.slug}`}
                     onClick={() => handlePollClick(poll)}
-                    className="rounded-2xl border border-gray-700 bg-gray-900/60 p-4 transition hover:border-gray-500 md:flex md:min-h-[220px] md:flex-col"
+                    className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gray-900/60 p-4 transition hover:border-gray-500 md:flex md:min-h-[220px] md:flex-col"
                   >
-                    <div className="mb-3 flex flex-wrap gap-2">
+                    {trendingSectionBadgeLabel ? <StatusRibbon label={trendingSectionBadgeLabel} /> : null}
+
+                    <div className="mb-3">
                       <span
                         className="rounded-full px-2 py-1 text-xs"
                         style={{
@@ -1240,14 +1231,13 @@ export default function Home() {
                       >
                         {poll.category}
                       </span>
-                      {trendingSectionBadgeLabel ? <BadgePill label={trendingSectionBadgeLabel} /> : null}
                     </div>
 
                     <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
                     <p className="mb-3 text-sm text-gray-300">{poll.description}</p>
                     <p className="text-sm text-gray-400 md:mt-auto">
-  {recentVoteCounts[poll.id] || 0} recent votes
-</p>
+                      {recentVoteCounts[poll.id] || 0} recent votes
+                    </p>
                   </Link>
                 );
               })}
@@ -1409,21 +1399,22 @@ export default function Home() {
                   id={`poll-card-${poll.slug}`}
                   href={`/poll/${poll.slug}`}
                   onClick={() => handlePollClick(poll)}
-                  className="rounded-2xl border border-gray-700 bg-gray-800 p-5 shadow-lg transition hover:border-gray-500"
+                  className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 p-5 shadow-lg transition hover:border-gray-500"
                 >
-                  <div className="mb-3 flex items-start justify-between gap-3">
-  <span
-    className="rounded-full px-2 py-1 text-xs"
-    style={{
-      color: categoryColours.text,
-      backgroundColor: categoryColours.bg,
-      border: `1px solid ${categoryColours.border}`,
-    }}
-  >
-    {poll.category}
-  </span>
-  {badgeLabel ? <BadgePill label={badgeLabel} /> : null}
-</div>
+                  {badgeLabel ? <StatusRibbon label={badgeLabel} /> : null}
+
+                  <div className="mb-3">
+                    <span
+                      className="rounded-full px-2 py-1 text-xs"
+                      style={{
+                        color: categoryColours.text,
+                        backgroundColor: categoryColours.bg,
+                        border: `1px solid ${categoryColours.border}`,
+                      }}
+                    >
+                      {poll.category}
+                    </span>
+                  </div>
 
                   <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
                   <p className="mb-4 text-sm text-gray-300">{poll.description}</p>
@@ -1446,18 +1437,18 @@ export default function Home() {
       <Footer />
 
       {votesLast24 >= 100 ? (
-  <div
-    className={`pointer-events-none fixed right-5 top-5 z-40 transition-opacity duration-700 md:left-1/2 md:right-auto md:top-6 md:-translate-x-[-360px] ${
-      showActivityIndicator ? "opacity-100" : "opacity-0"
-    }`}
-  >
-    <div className="rounded-xl border border-blue-400/50 bg-blue-950/80 px-4 py-3 shadow-[0_0_24px_rgba(59,130,246,0.18)] backdrop-blur md:rounded-2xl md:px-5 md:py-4">
-      <p className="text-sm font-medium text-blue-50 md:text-base">
-        {votesLast24.toLocaleString()} votes in the last 24 hours
-      </p>
-    </div>
-  </div>
-) : null}
+        <div
+          className={`pointer-events-none fixed right-5 top-20 z-40 transition-opacity duration-700 md:left-1/2 md:right-auto md:top-24 md:-translate-x-[-360px] ${
+            showActivityIndicator ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          <div className="rounded-xl border border-blue-400/50 bg-blue-950/80 px-4 py-3 shadow-[0_0_24px_rgba(59,130,246,0.18)] backdrop-blur md:rounded-2xl md:px-5 md:py-4">
+            <p className="text-sm font-medium text-blue-50 md:text-base">
+              {votesLast24.toLocaleString()} votes in the last 24 hours
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       {showTopButton && (
         <button
