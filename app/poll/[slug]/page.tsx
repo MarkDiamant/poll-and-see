@@ -301,7 +301,6 @@ function StatusRibbon({ label }: { label: BadgeLabel }) {
     </div>
   );
 }
-}
 
 function smoothScrollToElement(element: HTMLElement, duration = 650, topOffset = 12) {
   const startY = window.scrollY;
