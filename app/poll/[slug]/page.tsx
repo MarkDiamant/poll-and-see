@@ -294,7 +294,7 @@ function StatusRibbon({ label }: { label: BadgeLabel }) {
   return (
     <span
       className={`inline-flex h-6 items-center justify-center rounded-l-full rounded-r-none px-3 leading-none text-[12px] font-semibold text-white ${STATUS_RIBBON_COLOURS[label]}`}
-      style={{ paddingTop: "1px" }}
+      style={{ paddingTop: label === "Trending" ? "2px" : "1px" }}
     >
       {label.toUpperCase()}
     </span>
@@ -535,7 +535,7 @@ function PollCard({
   </span>
 
   {badgeLabel ? (
-  <span className="ml-auto -mr-6">
+  <span className="ml-auto -mr-7">
     <StatusRibbon label={badgeLabel} />
   </span>
 ) : null}
