@@ -294,7 +294,7 @@ function StatusRibbon({ label }: { label: BadgeLabel }) {
   return (
     <div className="pointer-events-none absolute right-[-42px] top-[12px] z-10">
       <div
-        className={`w-[170px] rotate-[35deg] px-3 py-1 text-center text-[10px] font-semibold tracking-wide text-white shadow-md ${STATUS_RIBBON_COLOURS[label]}`}
+        className={`w-[178px] rotate-[35deg] px-3 py-1 text-center text-[11px] font-semibold tracking-wide text-white shadow-md ${STATUS_RIBBON_COLOURS[label]}`}
       >
         {label.toUpperCase()}
       </div>
@@ -1080,7 +1080,7 @@ export default function Home() {
         </div>
 
         <div className="relative rounded-2xl bg-gray-800 p-5 shadow-lg overflow-hidden">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex items-center justify-between pr-20">
             <span className="rounded-full bg-blue-500/10 px-3 py-1 text-sm text-blue-300">
               Featured Poll
             </span>

@@ -294,7 +294,7 @@ function StatusRibbon({ label }: { label: BadgeLabel }) {
   return (
     <div className="pointer-events-none absolute right-[-42px] top-[12px] z-10">
       <div
-        className={`w-[170px] rotate-[35deg] px-3 py-1 text-center text-[10px] font-semibold tracking-wide text-white shadow-md ${STATUS_RIBBON_COLOURS[label]}`}
+        className={`w-[178px] rotate-[35deg] px-3 py-1 text-center text-[11px] font-semibold tracking-wide text-white shadow-md ${STATUS_RIBBON_COLOURS[label]}`}
       >
         {label.toUpperCase()}
       </div>
