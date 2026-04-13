@@ -1219,8 +1219,7 @@ export default function Home() {
                   >
                     {trendingSectionBadgeLabel ? <StatusRibbon label={trendingSectionBadgeLabel} /> : null}
 
-                    <div className="mb-3">
-                                          <div className="mb-3 flex items-start justify-between gap-3">
+                       <div className="mb-3 flex items-start justify-between gap-3">
                       <span
                         className="rounded-full px-2 py-1 text-xs"
                         style={{
