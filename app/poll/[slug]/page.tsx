@@ -296,7 +296,7 @@ function StatusRibbon({ label }: { label: BadgeLabel }) {
       <div
         className={`px-3 py-1 text-[10px] font-semibold tracking-wide text-white shadow-md ${STATUS_RIBBON_COLOURS[label]}`}
         style={{
-          transform: "translate(16%, -12%) rotate(32deg)",
+          transform: "translate(12%, -10%) rotate(32deg)",
           width: 135,
           textAlign: "center",
         }}
