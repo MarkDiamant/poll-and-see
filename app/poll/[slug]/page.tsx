@@ -430,6 +430,7 @@ function PollCard({
   const [shareText, setShareText] = useState("Share poll link");
 
   const totalVotes = Object.values(counts).reduce((sum, count) => sum + count, 0);
+  const voteLabel = `${totalVotes.toLocaleString()} ${totalVotes === 1 ? "vote" : "votes"}`;
   const categoryColours = getCategoryColours(bundle.poll.category);
   const hasImageOptions = bundle.options.some((option) => Boolean(option.image_url));
 
@@ -522,24 +523,28 @@ function PollCard({
   return (
     <div className="relative mb-8 overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 p-6">
       
-      <div className="mb-3 flex items-center">
-  <span
-    className="rounded-full px-3 py-1 text-xs"
-    style={{
-      color: categoryColours.text,
-      backgroundColor: categoryColours.bg,
-      border: `1px solid ${categoryColours.border}`,
-    }}
-  >
-    {bundle.poll.category}
-  </span>
+            <div className="mb-3 flex items-center gap-3">
+        <span
+          className="rounded-full px-3 py-1 text-xs"
+          style={{
+            color: categoryColours.text,
+            backgroundColor: categoryColours.bg,
+            border: `1px solid ${categoryColours.border}`,
+          }}
+        >
+          {bundle.poll.category}
+        </span>
 
-  {badgeLabel ? (
-  <span className="ml-auto -mr-7">
-    <StatusRibbon label={badgeLabel} />
-  </span>
-) : null}
-</div>
+        <span className="ml-auto text-sm text-gray-400">
+          {voteLabel}
+        </span>
+
+        {badgeLabel ? (
+          <span className="-mr-7 shrink-0">
+            <StatusRibbon label={badgeLabel} />
+          </span>
+        ) : null}
+      </div>
 
       <h2 className="mb-3 text-2xl font-bold">{bundle.poll.question}</h2>
       <p className="mb-3 text-gray-300">{bundle.poll.description}</p>
