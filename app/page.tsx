@@ -527,14 +527,15 @@ export default function Home() {
         console.error("Homepage option totals query failed", optionTotalsResult.error);
       }
 
-      const recentCounts: Record<number, number> = {};
+           const recentCounts: Record<number, number> = {};
       let last24Total = 0;
 
       (recentVotesResult.data || []).forEach((vote) => {
         const pollId = Number(vote.poll_id);
-        if (!validPollIds.has(pollId)) return;
 
-        recentCounts[pollId] = (recentCounts[pollId] || 0) + 1;
+        if (validPollIds.has(pollId)) {
+          recentCounts[pollId] = (recentCounts[pollId] || 0) + 1;
+        }
 
         const createdAtTime = new Date(vote.created_at).getTime();
         if (!Number.isNaN(createdAtTime) && createdAtTime >= twentyFourHoursAgoMs) {
