@@ -1218,8 +1218,7 @@ export default function Home() {
                     onClick={() => handlePollClick(poll)}
                     className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gray-900/60 p-4 transition hover:border-gray-500 md:flex md:min-h-[220px] md:flex-col"
                   >
-                    {trendingSectionBadgeLabel ? <StatusRibbon label={trendingSectionBadgeLabel} /> : null}
-
+                
                        <div className="mb-3 flex items-start justify-between gap-3">
                       <span
                         className="rounded-full px-2 py-1 text-xs"
