@@ -25,7 +25,7 @@ type PollOption = {
 };
 
 type VoteCounts = Record<number, number>;
-type BadgeLabel = "New" | "Trending" | "Popular";
+type BadgeLabel = "New" | "Trending" | "Popular" | "Private";
 
 type PollBundle = {
   poll: Poll;
@@ -100,6 +100,7 @@ const STATUS_RIBBON_COLOURS: Record<BadgeLabel, string> = {
   New: "bg-emerald-600/95",
   Trending: "bg-amber-400/95",
   Popular: "bg-blue-500/95",
+  Private: "bg-slate-500/95",
 };
 
 function getCategoryColours(category: string) {
@@ -271,6 +272,10 @@ function getBadgeLabel(
 ): BadgeLabel | null {
   const now = Date.now();
   const fortyEightHoursAgo = now - 48 * 60 * 60 * 1000;
+
+  if (poll.is_private) {
+    return "Private";
+  }
 
   if (poll.created_at) {
     const createdAtTime = new Date(poll.created_at).getTime();
@@ -546,7 +551,12 @@ function PollCard({
         ) : null}
       </div>
 
-      <h2 className="mb-3 text-2xl font-bold">{bundle.poll.question}</h2>
+            <h2 className="mb-2 text-2xl font-bold">{bundle.poll.question}</h2>
+
+      {bundle.poll.is_private ? (
+        <p className="mb-3 text-sm text-gray-400">Shared via private link only</p>
+      ) : null}
+
       <p className="mb-3 text-gray-300">{bundle.poll.description}</p>
 
       {!voted ? (
