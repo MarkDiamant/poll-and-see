@@ -8,6 +8,7 @@ type PollRow = {
   category: string;
   slug: string;
   created_at: string;
+  is_private?: boolean | null;
 };
 
 type PollOptionRow = {
@@ -554,9 +555,10 @@ if (!isValidCronRequest && !isValidManualRequest) {
       { data: pollsData, error: pollsError },
       { data: subscribersData, error: subscribersError },
     ] = await Promise.all([
-      supabaseAdmin
+            supabaseAdmin
         .from("polls")
-        .select("id, question, description, category, slug, created_at")
+        .select("id, question, description, category, slug, created_at, is_private")
+        .eq("is_private", false)
         .gte("created_at", cutoff)
         .order("created_at", { ascending: false }),
       supabaseAdmin
@@ -581,7 +583,7 @@ if (!isValidCronRequest && !isValidManualRequest) {
       );
     }
 
-    const polls = (pollsData || []) as PollRow[];
+        const polls = ((pollsData || []) as PollRow[]).filter((poll) => poll.is_private !== true);
     const subscribers = (subscribersData || []) as SubscriberRow[];
 
     if (polls.length === 0 || subscribers.length === 0) {
