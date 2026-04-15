@@ -268,10 +268,6 @@ function getBadgeLabel(
   poll: Poll,
   trendingIds: Set<number>,
   popularIds: Set<number>
-function getBadgeLabel(
-  poll: Poll,
-  trendingIds: Set<number>,
-  popularIds: Set<number>
 ): BadgeLabel | null {
   const now = Date.now();
   const fortyEightHoursAgo = now - 48 * 60 * 60 * 1000;
