@@ -431,6 +431,7 @@ function LiveVoteCounter({ value }: { value: number }) {
 
 export default function Home() {
   const [polls, setPolls] = useState<Poll[]>([]);
+  const [totalPollCount, setTotalPollCount] = useState(0);
   const [featuredOptions, setFeaturedOptions] = useState<PollOption[]>([]);
   const [featuredVoteCounts, setFeaturedVoteCounts] = useState<Record<number, number>>({});
   const [totalVoteCount, setTotalVoteCount] = useState(0);
@@ -581,18 +582,30 @@ export default function Home() {
     setLoading(true);
 
     try {
-      const pollsResult = await supabase
-        .from("polls")
-        .select("id, question, description, category, slug, featured, is_private, created_at")
-        .eq("is_private", false)
-        .order("id", { ascending: false });
+          const [pollsResult, totalPollCountResult] = await Promise.all([
+        supabase
+          .from("polls")
+          .select("id, question, description, category, slug, featured, is_private, created_at")
+          .eq("is_private", false)
+          .order("id", { ascending: false }),
+        supabase
+          .from("site_stats")
+          .select("total_polls")
+          .eq("key", "global")
+          .single(),
+      ]);
 
       if (pollsResult.error) {
         throw pollsResult.error;
       }
 
+      if (totalPollCountResult.error) {
+        throw totalPollCountResult.error;
+      }
+
       const safePolls = (pollsResult.data || []) as Poll[];
       setPolls(safePolls);
+       setTotalPollCount(totalPollCountResult.data?.total_polls || 0);
 
       const availableCategories = [
         "All",
@@ -650,6 +663,7 @@ export default function Home() {
     } catch (error) {
       console.error("Homepage polls query failed", error);
       setPolls([]);
+      setTotalPollCount(0);
       setFeaturedOptions([]);
       setFeaturedVoteCounts({});
       setFeaturedPollVoted(false);
@@ -953,7 +967,7 @@ export default function Home() {
       .slice(0, 4);
   }, [polls, trendingPollIds, featuredPoll?.id]);
 
-  const activePollCount = searchedPolls.length;
+  const activePollCount = totalPollCount;
   const trendingIdSet = useMemo(() => new Set(trendingPollIds), [trendingPollIds]);
   const popularIdSet = useMemo(() => new Set(popularPollIds), [popularPollIds]);
   const featuredBadge = featuredPoll ? getBadgeLabel(featuredPoll, trendingIdSet, popularIdSet) : null;
