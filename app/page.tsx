@@ -352,7 +352,7 @@ function LiveVoteCounter({ value }: { value: number }) {
       if (settleTimeoutRef.current) clearTimeout(settleTimeoutRef.current);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, []);
+   }, []);
 
   const settledFormatted = displayValue.toLocaleString();
   const fromFormatted = animationFrom.toLocaleString();
@@ -839,7 +839,7 @@ export default function Home() {
     clearTimeout(initialTimeout);
     if (hideTimeout) clearTimeout(hideTimeout);
   };
-}, []);
+}, [votesLast24 >= 100]);
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
 

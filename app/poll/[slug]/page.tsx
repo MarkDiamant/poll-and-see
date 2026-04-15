@@ -928,7 +928,7 @@ export default function PollPage() {
     clearTimeout(initialTimeout);
     if (hideTimeout) clearTimeout(hideTimeout);
   };
-}, []);
+}, [votesLast24 >= 100]);
 
   const handleBack = () => {
     sessionStorage.setItem("restoreHomeScroll", "true");
