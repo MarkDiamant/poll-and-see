@@ -8,7 +8,6 @@ type PollRow = {
   category: string;
   slug: string;
   created_at: string;
-  is_private?: boolean | null;
 };
 
 type PollOptionRow = {
@@ -16,6 +15,7 @@ type PollOptionRow = {
   poll_id: number;
   option_text: string;
   created_at: string;
+  image_url?: string | null;
 };
 
 type SubscriberRow = {
@@ -25,8 +25,13 @@ type SubscriberRow = {
   is_active: boolean;
 };
 
+type DigestPollOption = {
+  text: string;
+  imageUrl?: string | null;
+};
+
 type PollWithOptions = PollRow & {
-  options: string[];
+  options: DigestPollOption[];
 };
 
 const CATEGORY_COLOURS: Record<
@@ -141,6 +146,10 @@ function escapeHtml(value: string) {
     .replace(/'/g, "&#39;");
 }
 
+function escapeHtmlAttribute(value: string) {
+  return escapeHtml(value);
+}
+
 function getLookbackHours(now: Date) {
   const utcDay = now.getUTCDay();
 
@@ -162,11 +171,37 @@ function buildDigestEmail(params: {
     .map((poll) => {
       const pollUrl = `${params.appBaseUrl}/poll/${poll.slug}`;
       const categoryColours = getCategoryColours(poll.category);
+      const hasImageOptions = poll.options.some((option) => Boolean(option.imageUrl));
 
-      const optionsHtml = poll.options
-        .slice(0, 4)
-        .map(
-          (option) => `
+      const optionsHtml = hasImageOptions
+        ? poll.options
+            .slice(0, 4)
+            .map((option) => {
+              const imageHtml = option.imageUrl
+                ? `
+            <tr>
+              <td style="padding: 0 0 12px 0;">
+                <img
+                  src="${escapeHtmlAttribute(option.imageUrl)}"
+                  alt="${escapeHtmlAttribute(option.text)}"
+                  width="600"
+                  style="
+                    display: block;
+                    width: 100%;
+                    max-width: 600px;
+                    height: auto;
+                    border: 0;
+                    border-radius: 14px;
+                    background: #111827;
+                  "
+                />
+              </td>
+            </tr>
+          `
+                : "";
+
+              return `
+            ${imageHtml}
             <tr>
               <td style="padding: 0 0 12px 0;">
                 <a
@@ -184,13 +219,41 @@ function buildDigestEmail(params: {
                     text-decoration: none;
                   "
                 >
-                  ${escapeHtml(option)}
+                  ${escapeHtml(option.text)}
+                </a>
+              </td>
+            </tr>
+          `;
+            })
+            .join("")
+        : poll.options
+            .slice(0, 4)
+            .map(
+              (option) => `
+            <tr>
+              <td style="padding: 0 0 12px 0;">
+                <a
+                  href="${pollUrl}"
+                  style="
+                    display: block;
+                    background: #374151;
+                    border-radius: 14px;
+                    padding: 14px 16px;
+                    font-family: Arial, sans-serif;
+                    font-size: 15px;
+                    line-height: 22px;
+                    color: #ffffff;
+                    text-align: center;
+                    text-decoration: none;
+                  "
+                >
+                  ${escapeHtml(option.text)}
                 </a>
               </td>
             </tr>
           `
-        )
-        .join("");
+            )
+            .join("");
 
       const descriptionHtml = poll.description?.trim()
         ? `
@@ -204,6 +267,25 @@ function buildDigestEmail(params: {
             "
           >
             ${escapeHtml(poll.description)}
+          </div>
+        `
+        : "";
+
+      const viewPollHtml = hasImageOptions
+        ? `
+          <div style="padding: 4px 0 0 0;">
+            <a
+              href="${pollUrl}"
+              style="
+                font-family: Arial, sans-serif;
+                font-size: 14px;
+                line-height: 20px;
+                color: #9ca3af;
+                text-decoration: underline;
+              "
+            >
+              View poll
+            </a>
           </div>
         `
         : "";
@@ -272,6 +354,8 @@ function buildDigestEmail(params: {
                   >
                     ${optionsHtml}
                   </table>
+
+                  ${viewPollHtml}
                 </td>
               </tr>
             </table>
@@ -285,7 +369,7 @@ function buildDigestEmail(params: {
     .map((poll) => {
       const pollUrl = `${params.appBaseUrl}/poll/${poll.slug}`;
       const descriptionText = poll.description?.trim() ? `${poll.description}\n\n` : "";
-      const optionsText = poll.options.map((option) => `• ${option}`).join("\n");
+      const optionsText = poll.options.map((option) => `• ${option.text}`).join("\n");
 
       return `${poll.category}
 
@@ -514,20 +598,20 @@ async function sendEmail(params: {
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get("authorization");
-const cronSecret = process.env.CRON_SECRET;
-const legacySecret = request.nextUrl.searchParams.get("secret");
-const digestSecret = process.env.DIGEST_SECRET;
-const dryRun = request.nextUrl.searchParams.get("dryRun") === "1";
+    const cronSecret = process.env.CRON_SECRET;
+    const legacySecret = request.nextUrl.searchParams.get("secret");
+    const digestSecret = process.env.DIGEST_SECRET;
+    const dryRun = request.nextUrl.searchParams.get("dryRun") === "1";
 
-const isValidCronRequest =
-  cronSecret && authHeader === `Bearer ${cronSecret}`;
+    const isValidCronRequest =
+      cronSecret && authHeader === `Bearer ${cronSecret}`;
 
-const isValidManualRequest =
-  digestSecret && legacySecret === digestSecret;
+    const isValidManualRequest =
+      digestSecret && legacySecret === digestSecret;
 
-if (!isValidCronRequest && !isValidManualRequest) {
-  return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-}
+    if (!isValidCronRequest && !isValidManualRequest) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -555,9 +639,9 @@ if (!isValidCronRequest && !isValidManualRequest) {
       { data: pollsData, error: pollsError },
       { data: subscribersData, error: subscribersError },
     ] = await Promise.all([
-            supabaseAdmin
+      supabaseAdmin
         .from("polls")
-        .select("id, question, description, category, slug, created_at, is_private")
+        .select("id, question, description, category, slug, created_at")
         .eq("is_private", false)
         .gte("created_at", cutoff)
         .order("created_at", { ascending: false }),
@@ -583,7 +667,7 @@ if (!isValidCronRequest && !isValidManualRequest) {
       );
     }
 
-        const polls = ((pollsData || []) as PollRow[]).filter((poll) => poll.is_private !== true);
+    const polls = ((pollsData || []) as PollRow[]).filter((poll) => (poll as PollRow & { is_private?: boolean | null }).is_private !== true);
     const subscribers = (subscribersData || []) as SubscriberRow[];
 
     if (polls.length === 0 || subscribers.length === 0) {
@@ -601,7 +685,7 @@ if (!isValidCronRequest && !isValidManualRequest) {
 
     const { data: pollOptionsData, error: pollOptionsError } = await supabaseAdmin
       .from("poll_options")
-      .select("id, poll_id, option_text, created_at")
+      .select("id, poll_id, option_text, created_at, image_url")
       .in("poll_id", pollIds)
       .order("id", { ascending: true });
 
@@ -615,11 +699,14 @@ if (!isValidCronRequest && !isValidManualRequest) {
 
     const pollOptions = (pollOptionsData || []) as PollOptionRow[];
 
-    const optionsByPollId = new Map<number, string[]>();
+    const optionsByPollId = new Map<number, DigestPollOption[]>();
 
     for (const option of pollOptions) {
       const existing = optionsByPollId.get(option.poll_id) || [];
-      existing.push(option.option_text);
+      existing.push({
+        text: option.option_text,
+        imageUrl: option.image_url || null,
+      });
       optionsByPollId.set(option.poll_id, existing);
     }
 
