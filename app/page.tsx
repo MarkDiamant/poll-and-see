@@ -1256,13 +1256,13 @@ export default function Home() {
         </div>
 
                 <div className="mt-6 rounded-2xl border border-gray-600 bg-gray-800/80 p-5 md:mx-auto md:max-w-[560px] md:p-6">
-          <p className="mb-1 text-base font-medium text-white md:text-lg">See new polls first</p>
-          <p className="mb-1 text-sm text-gray-200">
-            Get new polls by email based on what interests you.
+          <p className="mb-2 text-base font-medium text-white md:text-lg">See new polls first</p>
+          <p className="mb-3 text-sm text-gray-200">
+            Get new polls by email based on your interests.
           </p>
-          <p className="mb-3 text-sm text-gray-300">Choose categories below. Max once per day. Unsubscribe anytime.</p>
+          <p className="mb-3 text-sm text-gray-300">Choose categories below. Max 1 email per day. Unsubscribe anytime.</p>
 
-          <form onSubmit={handleSubscribe} className="space-y-3">
+          <form onSubmit={handleSubscribe} className="mt-3 space-y-3">
             <input
               type="email"
               value={subscriberEmail}
