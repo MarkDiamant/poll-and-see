@@ -815,35 +815,31 @@ export default function Home() {
   }, [featuredPoll?.id, polls, syncFeaturedVoteCounts, syncTotalVoteCount, syncVoteDerivedData]);
 
   useEffect(() => {
-    if (votesLast24 < 100) {
+  if (votesLast24 < 100) {
+    setShowActivityIndicator(false);
+    return;
+  }
+
+  if (sessionStorage.getItem("activity_indicator_shown") === "1") {
+    return;
+  }
+
+  let hideTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  const initialTimeout = setTimeout(() => {
+    setShowActivityIndicator(true);
+    sessionStorage.setItem("activity_indicator_shown", "1");
+
+    hideTimeout = setTimeout(() => {
       setShowActivityIndicator(false);
-      return;
-    }
+    }, 5000);
+  }, 5000);
 
-    let hideTimeout: ReturnType<typeof setTimeout> | null = null;
-
-    const showIndicator = () => {
-      setShowActivityIndicator(true);
-
-      if (hideTimeout) {
-        clearTimeout(hideTimeout);
-      }
-
-      hideTimeout = setTimeout(() => {
-        setShowActivityIndicator(false);
-      }, 5000);
-    };
-
-    const initialTimeout = setTimeout(showIndicator, 5000);
-    const interval = setInterval(showIndicator, 75000);
-
-    return () => {
-      clearTimeout(initialTimeout);
-      clearInterval(interval);
-      if (hideTimeout) clearTimeout(hideTimeout);
-    };
-  }, []);
-
+  return () => {
+    clearTimeout(initialTimeout);
+    if (hideTimeout) clearTimeout(hideTimeout);
+  };
+}, []);
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
 
