@@ -842,7 +842,7 @@ export default function Home() {
       clearInterval(interval);
       if (hideTimeout) clearTimeout(hideTimeout);
     };
-  }, [votesLast24 >= 100]);
+  }, []);
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
