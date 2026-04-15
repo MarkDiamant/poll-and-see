@@ -113,8 +113,8 @@ function getCategoryColours(category: string) {
 }
 
 function getCategorySummary(selected: string[]) {
-  if (selected.length === 0 || selected.includes("All polls")) {
-    return "All polls";
+  if (selected.length === 0 || selected.includes("All Categories")) {
+    return "All Categories";
   }
 
   if (selected.length <= 2) {
@@ -277,15 +277,15 @@ function getBadgeLabel(
     return "Private";
   }
 
+  if (trendingIds.has(poll.id)) {
+    return "Trending";
+  }
+
   if (poll.created_at) {
     const createdAtTime = new Date(poll.created_at).getTime();
     if (!Number.isNaN(createdAtTime) && createdAtTime >= fortyEightHoursAgo) {
       return "New";
     }
-  }
-
-  if (trendingIds.has(poll.id)) {
-    return "Trending";
   }
 
   if (popularIds.has(poll.id)) {
@@ -658,7 +658,7 @@ export default function PollPage() {
   const pollsRef = useRef<PollBundle[]>([]);
 
   const [subscriberEmail, setSubscriberEmail] = useState("");
-  const [subscriberCategories, setSubscriberCategories] = useState<string[]>(["All polls"]);
+  const [subscriberCategories, setSubscriberCategories] = useState<string[]>(["All Categories"]);
   const [subscribeLoading, setSubscribeLoading] = useState(false);
   const [subscribeMessage, setSubscribeMessage] = useState("");
   const [subscribeError, setSubscribeError] = useState("");
@@ -940,11 +940,11 @@ export default function PollPage() {
 
   const toggleSubscriberCategory = (category: string) => {
     setSubscriberCategories((current) => {
-      if (category === "All polls") {
-        return current.includes("All polls") ? [] : ["All polls"];
+      if (category === "All Categories") {
+        return current.includes("All Categories") ? [] : ["All Categories"];
       }
 
-      if (current.includes("All polls")) {
+      if (current.includes("All Categories")) {
         return SIGNUP_CATEGORIES.filter((item) => item !== category);
       }
 
@@ -954,11 +954,11 @@ export default function PollPage() {
         : [...current, category];
 
       if (next.length === 0) {
-        return ["All polls"];
+        return ["All Categories"];
       }
 
       if (next.length === SIGNUP_CATEGORIES.length) {
-        return ["All polls"];
+        return ["All Categories"];
       }
 
       return next;
@@ -980,7 +980,7 @@ export default function PollPage() {
 
     try {
       const selectedPreferences =
-        subscriberCategories.includes("All polls") ? null : subscriberCategories;
+        subscriberCategories.includes("All Categories") ? null : subscriberCategories;
 
       const response = await fetch("/api/subscribe", {
         method: "POST",
@@ -1002,7 +1002,7 @@ export default function PollPage() {
       markEmailSubscribedLocally();
       setSubscribeMessage("Subscribed.");
       setSubscriberEmail("");
-      setSubscriberCategories(["All polls"]);
+      setSubscriberCategories(["All Categories"]);
       setIsCategoryMenuOpen(false);
     } catch (error) {
       setSubscribeError(error instanceof Error ? error.message : "Could not subscribe right now.");
@@ -1287,12 +1287,12 @@ export default function PollPage() {
               (index === inlineSubscribeInsertAfterIndex ||
                 (inlineSubscribeInsertAfterIndex === -1 && index === polls.length - 1)) ? (
                 <div ref={inlineSubscribeBoxRef} className="mb-8 mt-4 flex justify-center">
-                  <div className="w-full max-w-md rounded-xl border border-gray-700 bg-gray-900/70 p-4">
-                    <p className="mb-1 text-base font-medium text-white md:text-lg">Enjoying these polls?</p>
+                                    <div className="w-full max-w-md rounded-2xl border border-gray-600 bg-gray-800/80 p-5 md:p-6">
+                    <p className="mb-1 text-base font-medium text-white md:text-lg">See new polls first</p>
                     <p className="mb-1 text-sm text-gray-200">
-                      Get new polls by email. Choose what you want to see.
+                      Get new polls by email based on what interests you.
                     </p>
-                    <p className="mb-3 text-sm text-gray-300">Max once per day. Unsubscribe anytime.</p>
+                    <p className="mb-3 text-sm text-gray-300">Choose categories below. Max once per day. Unsubscribe anytime.</p>
 
                     <form onSubmit={handleSubscribe} className="space-y-3">
                       <input
@@ -1318,13 +1318,13 @@ export default function PollPage() {
                           <div className="absolute z-20 mt-2 w-full rounded-lg border border-gray-700 bg-gray-900 p-2 shadow-xl">
                             <button
                               type="button"
-                              onClick={() => toggleSubscriberCategory("All polls")}
+                              onClick={() => toggleSubscriberCategory("All Categories")}
                               className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-white transition hover:bg-gray-800"
                             >
                               <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 text-xs">
-                                {subscriberCategories.includes("All polls") ? "✓" : ""}
+                                {subscriberCategories.includes("All Categories") ? "✓" : ""}
                               </span>
-                              <span>All polls</span>
+                              <span>All Categories</span>
                             </button>
 
                             <div className="my-1 border-t border-gray-800" />
@@ -1337,7 +1337,7 @@ export default function PollPage() {
                                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-white transition hover:bg-gray-800"
                               >
                                 <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 text-xs">
-                                  {subscriberCategories.includes("All polls") ||
+                                  {subscriberCategories.includes("All Categories") ||
                                   subscriberCategories.includes(category)
                                     ? "✓"
                                     : ""}
