@@ -963,7 +963,10 @@ export default function Home() {
       .slice(0, 4);
   }, [polls, trendingPollIds, featuredPoll?.id]);
 
-  const activePollCount = totalPollCount;
+  const activePollCount =
+  selectedCategory === "All" && searchTerm.trim() === ""
+    ? totalPollCount
+    : searchedPolls.length;
   const trendingIdSet = useMemo(() => new Set(trendingPollIds), [trendingPollIds]);
   const popularIdSet = useMemo(() => new Set(popularPollIds), [popularPollIds]);
   const featuredBadge = featuredPoll ? getBadgeLabel(featuredPoll, trendingIdSet, popularIdSet) : null;
