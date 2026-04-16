@@ -592,7 +592,17 @@ function PollCard({
               <div className="px-4 py-3">{option.option_text}</div>
             </button>
           ))}
-          {error ? <p className="text-sm text-red-300">{error}</p> : null}
+                   {error ? <p className="text-sm text-red-300">{error}</p> : null}
+
+          <div className="pt-1">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1 text-sm font-medium text-gray-400 transition hover:text-white"
+            >
+              <span>Home</span>
+              <span aria-hidden="true" className="text-base leading-none">›</span>
+            </Link>
+          </div>
         </div>
       ) : (
         <>
@@ -645,6 +655,7 @@ export default function PollPage() {
 
   const [polls, setPolls] = useState<PollBundle[]>([]);
   const [showInlineSubscribe, setShowInlineSubscribe] = useState(false);
+  const [inlineSubscribeAfterPollId, setInlineSubscribeAfterPollId] = useState<number | null>(null);
   const [trendingPollIds, setTrendingPollIds] = useState<number[]>([]);
   const [popularPollIds, setPopularPollIds] = useState<number[]>([]);
   const [votesLast24, setVotesLast24] = useState(0);
@@ -1141,18 +1152,9 @@ export default function PollPage() {
     void init();
   }, [slug]);
 
-  let votedPollsSeen = 0;
-  let inlineSubscribeInsertAfterIndex = -1;
-
-  for (let i = 0; i < polls.length; i += 1) {
-    if (hasLocalVote(polls[i].poll.id)) {
-      votedPollsSeen += 1;
-      if (votedPollsSeen === INLINE_SUBSCRIBE_VOTE_THRESHOLD) {
-        inlineSubscribeInsertAfterIndex = i;
-        break;
-      }
-    }
-  }
+  const inlineSubscribeInsertAfterIndex = inlineSubscribeAfterPollId
+    ? polls.findIndex((poll) => poll.poll.id === inlineSubscribeAfterPollId)
+    : -1;
 
   useEffect(() => {
     const inlineSubscribeJustOpened = showInlineSubscribe && !previousShowInlineSubscribeRef.current;
@@ -1184,6 +1186,7 @@ export default function PollPage() {
       !hasShownInlineSubscribeThisSession()
     ) {
       markInlineSubscribeShownThisSession();
+      setInlineSubscribeAfterPollId(pollId);
       setShowInlineSubscribe(true);
     }
 
@@ -1252,12 +1255,13 @@ export default function PollPage() {
       </header>
 
       <section className="mx-auto max-w-3xl px-6 pt-2 pb-8">
-        <button
+              <button
           type="button"
           onClick={handleBack}
-          className="cursor-pointer text-sm text-blue-300"
+          className="mb-5 inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-1 text-sm font-medium text-gray-300 transition hover:text-white"
         >
-          ← Back to polls
+          <span aria-hidden="true" className="text-base leading-none">‹</span>
+          <span>Back to polls</span>
         </button>
 
         {polls.map((bundle, index) => {
