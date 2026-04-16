@@ -592,12 +592,12 @@ function PollCard({
               <div className="px-4 py-3">{option.option_text}</div>
             </button>
           ))}
-                   {error ? <p className="text-sm text-red-300">{error}</p> : null}
+                       {error ? <p className="text-sm text-red-300">{error}</p> : null}
 
-          <div className="pt-1">
+          <div className="flex justify-end pt-1">
             <Link
               href="/"
-              className="inline-flex items-center gap-1 text-sm font-medium text-gray-400 transition hover:text-white"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-400 transition hover:text-white"
             >
               <span>Home</span>
               <span aria-hidden="true" className="text-base leading-none">›</span>
@@ -1368,21 +1368,23 @@ export default function PollPage() {
                     ) : null}
                   </div>
                 </div>
+                            ) : null}
+
+              {index > 0 && (index + 1) % 4 === 0 ? (
+                <div className="mb-8 mt-4 text-center">
+                  <Link
+                    href="/submit-poll"
+                    className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-500"
+                  >
+                    Create your own poll
+                  </Link>
+                </div>
               ) : null}
+
             </div>
           );
         })}
 
-        {polls.length > 1 ? (
-          <div className="mt-6 text-center">
-            <Link
-              href="/submit-poll"
-              className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-500"
-            >
-              Create your own poll
-            </Link>
-          </div>
-        ) : null}
       </section>
 
       <Footer />
