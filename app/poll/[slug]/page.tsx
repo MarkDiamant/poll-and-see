@@ -1370,7 +1370,7 @@ export default function PollPage() {
                 </div>
                             ) : null}
 
-              {index > 0 && (index + 1) % 4 === 0 ? (
+              {index > 0 && (index + 1) % 5 === 0 ? (
                 <div className="mb-8 mt-4 text-center">
                   <Link
                     href="/submit-poll"
