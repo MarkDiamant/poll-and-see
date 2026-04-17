@@ -782,7 +782,7 @@ export default function PollPage() {
     }
   };
 
-  const syncDisplayedPolls = async () => {
+    const syncDisplayedPolls = async () => {
     try {
       const currentPolls = pollsRef.current;
       if (currentPolls.length === 0) return;
@@ -801,9 +801,12 @@ export default function PollPage() {
 
           const options = data as PollOption[];
           const voteCounts: VoteCounts = {};
+          const hasVotedLocally = hasLocalVote(bundle.poll.id);
 
           options.forEach((option) => {
-            voteCounts[option.id] = option.vote_count || 0;
+            const serverCount = option.vote_count || 0;
+            const currentCount = bundle.voteCounts[option.id] || 0;
+            voteCounts[option.id] = hasVotedLocally ? Math.max(serverCount, currentCount) : serverCount;
           });
 
           const nextBundle = {
