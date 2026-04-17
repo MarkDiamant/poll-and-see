@@ -452,11 +452,10 @@ function PollCard({
     const shareTextOnly = `${bundle.poll.question}\n\nVote and see what others think:\n\n${url}`;
 const copiedShareText = shareTextOnly;
 
-    if (navigator.share) {
+        if (navigator.share) {
       try {
         await navigator.share({
           text: shareTextOnly,
-          url,
         });
         return;
       } catch {
