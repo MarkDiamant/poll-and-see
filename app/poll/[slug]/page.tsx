@@ -449,8 +449,8 @@ function PollCard({
 
   const handleShare = async () => {
     const url = `${window.location.origin}/poll/${bundle.poll.slug}`;
-    const shareTextOnly = `${bundle.poll.question}\n\nVote and see what others think:`;
-    const copiedShareText = `${bundle.poll.question}\n\nVote and see what others think:\n\n${url}`;
+    const shareTextOnly = `${bundle.poll.question}\n\nVote and see what others think:\n\n${url}`;
+const copiedShareText = shareTextOnly;
 
     if (navigator.share) {
       try {
