@@ -342,7 +342,256 @@ async function submitVote(pollId: number, optionId: number) {
     throw new Error(data.error || "Vote failed");
   }
 }
+type ShareCardMode = "voted" | "anonymous";
 
+function wrapCanvasText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+  maxLines: number
+) {
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let currentLine = "";
+
+  for (const word of words) {
+    const nextLine = currentLine ? `${currentLine} ${word}` : word;
+
+    if (ctx.measureText(nextLine).width <= maxWidth) {
+      currentLine = nextLine;
+      continue;
+    }
+
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+
+    currentLine = word;
+
+    if (lines.length === maxLines - 1) {
+      break;
+    }
+  }
+
+  if (currentLine && lines.length < maxLines) {
+    lines.push(currentLine);
+  }
+
+  if (lines.length === 0) {
+    return [text];
+  }
+
+  const rebuilt = lines.join(" ");
+  if (rebuilt.length < text.trim().length) {
+    const last = lines[lines.length - 1];
+    lines[lines.length - 1] = last.length > 2 ? `${last.slice(0, -1)}…` : `${last}…`;
+  }
+
+  return lines;
+}
+
+function drawRoundedRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number
+) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+}
+
+async function loadLogoImage() {
+  return await new Promise<HTMLImageElement | null>((resolve) => {
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.onload = () => resolve(image);
+    image.onerror = () => resolve(null);
+    image.src = `${window.location.origin}/logo.png`;
+  });
+}
+
+async function buildShareCardFile({
+  poll,
+  options,
+  voteCounts,
+  selectedOptionId,
+  mode,
+}: {
+  poll: Poll;
+  options: PollOption[];
+  voteCounts: VoteCounts;
+  selectedOptionId: number | null;
+  mode: ShareCardMode;
+}) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1200;
+  canvas.height = 1400;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  const totalVotes = Object.values(voteCounts).reduce((sum, count) => sum + count, 0);
+  const categoryColours = getCategoryColours(poll.category);
+  const logo = await loadLogoImage();
+
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradient.addColorStop(0, "#050816");
+  gradient.addColorStop(1, "#111827");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "rgba(255,255,255,0.04)";
+  drawRoundedRect(ctx, 56, 56, 1088, 1288, 34);
+  ctx.fill();
+
+  ctx.fillStyle = categoryColours.bg;
+  ctx.strokeStyle = categoryColours.border;
+  ctx.lineWidth = 2;
+  drawRoundedRect(ctx, 92, 92, 190, 50, 24);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.font = "600 24px Arial";
+  ctx.fillStyle = categoryColours.text;
+  ctx.textBaseline = "middle";
+  ctx.fillText(poll.category, 124, 117);
+
+  if (logo) {
+    ctx.globalAlpha = 0.82;
+    ctx.drawImage(logo, 930, 82, 170, 56);
+    ctx.globalAlpha = 1;
+  } else {
+    ctx.textAlign = "right";
+    ctx.font = "600 24px Arial";
+    ctx.fillStyle = "rgba(255,255,255,0.72)";
+    ctx.fillText("Poll & See", 1088, 118);
+    ctx.textAlign = "left";
+  }
+
+  ctx.textBaseline = "alphabetic";
+  ctx.font = "700 54px Arial";
+  ctx.fillStyle = "#ffffff";
+  const questionLines = wrapCanvasText(ctx, poll.question, 980, 3);
+
+  let questionY = 220;
+  questionLines.forEach((line) => {
+    ctx.fillText(line, 110, questionY);
+    questionY += 68;
+  });
+
+  ctx.font = "400 27px Arial";
+  ctx.fillStyle = "rgba(229,231,235,0.82)";
+  ctx.fillText(
+    mode === "voted" ? "Shared result with your vote highlighted" : "Shared result without showing your vote",
+    110,
+    questionY + 12
+  );
+
+  const rowStartY = questionY + 70;
+  const rowHeight = 148;
+  const barLeft = 128;
+  const barWidth = 760;
+
+  options.forEach((option, index) => {
+    const count = voteCounts[option.id] || 0;
+    const percent = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+    const colour = OPTION_COLOURS[index] || OPTION_COLOURS[0];
+    const isSelected = mode === "voted" && selectedOptionId === option.id;
+    const rowY = rowStartY + index * rowHeight;
+
+    ctx.fillStyle = isSelected ? "rgba(255,255,255,0.075)" : "rgba(255,255,255,0.04)";
+    ctx.strokeStyle = isSelected ? colour : "rgba(255,255,255,0.06)";
+    ctx.lineWidth = isSelected ? 4 : 2;
+    drawRoundedRect(ctx, 96, rowY, 1008, 116, 28);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.font = "600 31px Arial";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(option.option_text, 130, rowY + 38);
+
+    if (isSelected) {
+      ctx.font = "700 24px Arial";
+      ctx.fillStyle = colour;
+      ctx.fillText("✓ Your vote", 130, rowY + 76);
+    }
+
+    ctx.fillStyle = "rgba(255,255,255,0.11)";
+    drawRoundedRect(ctx, barLeft, rowY + 80, barWidth, 20, 10);
+    ctx.fill();
+
+    const fillWidth = percent > 0 ? Math.max((barWidth * percent) / 100, 14) : 0;
+    if (fillWidth > 0) {
+      ctx.fillStyle = colour;
+      drawRoundedRect(ctx, barLeft, rowY + 80, fillWidth, 20, 10);
+      ctx.fill();
+    }
+
+    ctx.textAlign = "right";
+    ctx.font = "700 32px Arial";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(`${percent}%`, 1036, rowY + 60);
+    ctx.textAlign = "left";
+  });
+
+  ctx.font = "500 24px Arial";
+  ctx.fillStyle = "rgba(229,231,235,0.82)";
+  ctx.fillText(`${totalVotes.toLocaleString()} ${totalVotes === 1 ? "vote" : "votes"}`, 110, 1270);
+
+  ctx.textAlign = "center";
+  ctx.font = "600 26px Arial";
+  ctx.fillStyle = "rgba(255,255,255,0.68)";
+  ctx.fillText("pollandsee.com", 600, 1314);
+
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob((result) => resolve(result), "image/png");
+  });
+
+  if (!blob) return null;
+
+  return new File([blob], `pollandsee-${poll.slug}-${mode}.png`, { type: "image/png" });
+}
+
+async function shareImageFile(file: File, text: string) {
+  if (
+    navigator.share &&
+    typeof navigator.canShare === "function" &&
+    navigator.canShare({ files: [file] })
+  ) {
+    await navigator.share({
+      files: [file],
+      text,
+    });
+    return "shared";
+  }
+
+  const objectUrl = URL.createObjectURL(file);
+  const anchor = document.createElement("a");
+  anchor.href = objectUrl;
+  anchor.download = file.name;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(objectUrl);
+
+  try {
+    await navigator.clipboard.writeText(text);
+    return "downloaded_and_copied";
+  } catch {
+    return "downloaded";
+  }
+}
 function ResultOptions({
   options,
   voteCounts,
@@ -432,7 +681,7 @@ function PollCard({
   const [counts, setCounts] = useState<VoteCounts>(bundle.voteCounts);
   const [selected, setSelected] = useState<number | null>(null);
   const [error, setError] = useState<string>("");
-  const [shareText, setShareText] = useState("Share poll link");
+ const [shareMenuOpen, setShareMenuOpen] = useState(false);
 
   const totalVotes = Object.values(counts).reduce((sum, count) => sum + count, 0);
   const voteLabel = `${totalVotes.toLocaleString()} ${totalVotes === 1 ? "vote" : "votes"}`;
@@ -447,30 +696,85 @@ function PollCard({
     setShareText("Share poll link");
   }, [bundle]);
 
-  const handleShare = async () => {
-    const url = `${window.location.origin}/poll/${bundle.poll.slug}`;
-    const shareTextOnly = `${bundle.poll.question}\n\nVote and see what others think:\n\n${url}`;
-const copiedShareText = shareTextOnly;
+  const url = `${window.location.origin}/poll/${bundle.poll.slug}`;
 
-        if (navigator.share) {
-      try {
-        await navigator.share({
-          text: shareTextOnly,
-        });
-        return;
-      } catch {
-        // fall through
-      }
-    }
+const shareLink = async () => {
+  const text = `${bundle.poll.question}
 
+Vote and see what others think:
+
+${url}`;
+
+  if (navigator.share) {
     try {
-      await navigator.clipboard.writeText(copiedShareText);
-      setShareText("Link copied");
-      setTimeout(() => setShareText("Share poll link"), 2000);
-    } catch {
-      setShareText("Share poll link");
+      await navigator.share({ text });
+      return;
+    } catch {}
+  }
+
+  await navigator.clipboard.writeText(text);
+};
+
+const shareResults = async (includeVote: boolean) => {
+  const canvas = document.createElement("canvas");
+  canvas.width = 800;
+  canvas.height = 900;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  ctx.fillStyle = "#111827";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 28px Arial";
+  ctx.fillText(bundle.poll.question, 40, 80);
+
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+
+  bundle.options.forEach((opt, i) => {
+    const percent = total > 0
+      ? Math.round((counts[opt.id] / total) * 100)
+      : 0;
+
+    const y = 150 + i * 90;
+
+    ctx.fillStyle = "#374151";
+    ctx.fillRect(40, y, 600, 24);
+
+    ctx.fillStyle = OPTION_COLOURS[i];
+    ctx.fillRect(40, y, percent * 6, 24);
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "20px Arial";
+    ctx.fillText(opt.option_text, 40, y - 10);
+
+    if (includeVote && selected === opt.id) {
+      ctx.fillText("✓", 660, y + 18);
     }
-  };
+
+    ctx.fillText(`${percent}%`, 700, y + 18);
+  });
+
+  ctx.font = "18px Arial";
+  ctx.fillStyle = "#9ca3af";
+  ctx.fillText("pollandsee.com", 40, 860);
+
+  canvas.toBlob(async blob => {
+    if (!blob) return;
+
+    const file = new File([blob], "poll.png", { type: "image/png" });
+
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        text: url
+      });
+    } else {
+      await navigator.clipboard.writeText(url);
+    }
+  });
+};
 
   const handleVote = async (optionId: number) => {
     if (voted) return;
@@ -612,8 +916,39 @@ const copiedShareText = shareTextOnly;
 
           <div className="mt-6">
             <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-start">
-              <button
-                onClick={handleShare}
+              <div className="relative">
+  <button
+    onClick={() => setShareMenuOpen(v => !v)}
+    className="inline-flex h-10 items-center justify-center rounded-xl bg-white px-4 text-sm font-medium text-black hover:bg-gray-200"
+  >
+    Share
+  </button>
+
+  {shareMenuOpen && (
+    <div className="absolute left-0 mt-2 w-56 rounded-xl border border-gray-700 bg-gray-900 shadow-lg">
+      <button
+        onClick={() => shareLink()}
+        className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-800"
+      >
+        Share poll link
+      </button>
+
+      <button
+        onClick={() => shareResults(true)}
+        className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-800"
+      >
+        Share how I voted
+      </button>
+
+      <button
+        onClick={() => shareResults(false)}
+        className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-800"
+      >
+        Share anonymous results
+      </button>
+    </div>
+  )}
+</div>
                 className="inline-flex h-10 cursor-pointer items-center justify-center rounded-xl bg-white px-3 py-0 text-sm font-medium leading-none text-black transition hover:bg-gray-200 sm:px-4"
               >
                 {shareText}
@@ -628,18 +963,7 @@ const copiedShareText = shareTextOnly;
                 </Link>
               ) : null}
 
-              <Link
-                href={`/?category=${encodeURIComponent(bundle.poll.category)}#live-polls`}
-                className="col-span-2 mt-2 inline-flex h-10 items-center justify-center rounded-xl border px-4 py-0 text-sm font-medium leading-none transition hover:bg-gray-800 sm:col-auto sm:mt-0"
-                style={{
-                  borderColor: categoryColours.border,
-                  backgroundColor: categoryColours.bg,
-                  color: categoryColours.text,
-                }}
-              >
-                See other {bundle.poll.category} polls
-              </Link>
-            </div>
+                </div>
           </div>
         </>
       )}
