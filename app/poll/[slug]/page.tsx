@@ -436,7 +436,6 @@ async function buildShareCardFile({
 }) {
   const canvas = document.createElement("canvas");
   canvas.width = 1200;
-  canvas.height = 1320;
 
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
@@ -445,6 +444,20 @@ async function buildShareCardFile({
   const categoryColours = getCategoryColours(poll.category);
   const logo = await loadLogoImage();
 
+  ctx.textBaseline = "alphabetic";
+  ctx.font = "700 54px Arial";
+  const questionLines = wrapCanvasText(ctx, poll.question, 980, 3);
+
+  const questionTopY = 220;
+  const questionBlockHeight = questionLines.length * 68;
+  const subtitleY = questionTopY + questionBlockHeight + 12;
+  const rowStartY = subtitleY + 58;
+  const rowHeight = 148;
+  const footerTopY = rowStartY + options.length * rowHeight + 24;
+  const footerHeight = 170;
+  const cardHeight = footerTopY + footerHeight;
+  canvas.height = cardHeight + 56;
+
   const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
   gradient.addColorStop(0, "#050816");
   gradient.addColorStop(1, "#111827");
@@ -452,7 +465,7 @@ async function buildShareCardFile({
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   ctx.fillStyle = "rgba(255,255,255,0.04)";
-  drawRoundedRect(ctx, 56, 56, 1088, 1208, 34);
+  drawRoundedRect(ctx, 56, 56, 1088, cardHeight, 34);
   ctx.fill();
 
   ctx.fillStyle = categoryColours.bg;
@@ -467,24 +480,12 @@ async function buildShareCardFile({
   ctx.textBaseline = "middle";
   ctx.fillText(poll.category, 124, 117);
 
-  if (logo) {
-    ctx.globalAlpha = 0.88;
-    ctx.drawImage(logo, 892, 72, 208, 68);
-    ctx.globalAlpha = 1;
-  } else {
-    ctx.textAlign = "right";
-    ctx.font = "600 24px Arial";
-    ctx.fillStyle = "rgba(255,255,255,0.72)";
-    ctx.fillText("Poll & See", 1088, 118);
-    ctx.textAlign = "left";
-  }
-
+  ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
   ctx.font = "700 54px Arial";
   ctx.fillStyle = "#ffffff";
-  const questionLines = wrapCanvasText(ctx, poll.question, 980, 3);
 
-  let questionY = 220;
+  let questionY = questionTopY;
   questionLines.forEach((line) => {
     ctx.fillText(line, 110, questionY);
     questionY += 68;
@@ -493,13 +494,11 @@ async function buildShareCardFile({
   ctx.font = "400 27px Arial";
   ctx.fillStyle = "rgba(229,231,235,0.82)";
   ctx.fillText(
-    mode === "voted" ? "Shared result with your vote highlighted" : "Shared result without showing your vote",
+    mode === "voted" ? "Shared result with my vote highlighted" : "Shared result without showing my vote",
     110,
-    questionY + 12
+    subtitleY
   );
 
-  const rowStartY = questionY + 70;
-  const rowHeight = 148;
   const barLeft = 128;
   const barWidth = 760;
 
@@ -548,12 +547,27 @@ async function buildShareCardFile({
   ctx.font = "500 24px Arial";
   ctx.fillStyle = "rgba(229,231,235,0.82)";
   ctx.textAlign = "left";
-  ctx.fillText(`${totalVotes.toLocaleString()} ${totalVotes === 1 ? "vote" : "votes"}`, 110, 1208);
+  ctx.fillText(`${totalVotes.toLocaleString()} ${totalVotes === 1 ? "vote" : "votes"}`, 110, footerTopY + 28);
+
+  if (logo) {
+    ctx.globalAlpha = 0.9;
+    ctx.drawImage(logo, 430, footerTopY + 8, 340, 92);
+    ctx.globalAlpha = 1;
+  } else {
+    ctx.textAlign = "center";
+    ctx.font = "700 34px Arial";
+    ctx.fillStyle = "rgba(255,255,255,0.82)";
+    ctx.fillText("Poll & See", 600, footerTopY + 62);
+  }
 
   ctx.textAlign = "center";
+  ctx.font = "400 24px Arial";
+  ctx.fillStyle = "rgba(229,231,235,0.70)";
+  ctx.fillText("See what people really think", 600, footerTopY + 118);
+
   ctx.font = "600 32px Arial";
-  ctx.fillStyle = "rgba(255,255,255,0.76)";
-  ctx.fillText("pollandsee.com", 600, 1260);
+  ctx.fillStyle = "rgba(255,255,255,0.78)";
+  ctx.fillText("pollandsee.com", 600, footerTopY + 154);
 
   const blob = await new Promise<Blob | null>((resolve) => {
     canvas.toBlob((result) => resolve(result), "image/png");
