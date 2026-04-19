@@ -1056,12 +1056,12 @@ function PollCard({
 
           <div className="flex justify-end pt-1">
             <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-400 transition hover:text-white"
-            >
-              <span>Home</span>
-              <span aria-hidden="true" className="text-base leading-none">‹</span>
-            </Link>
+  href="/"
+  className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-400 transition hover:text-white"
+>
+  <span>Home</span>
+  <span aria-hidden="true" className="inline-flex h-4 items-center text-base leading-none">›</span>
+</Link>
           </div>
         </div>
       ) : (
@@ -1859,9 +1859,11 @@ export default function PollPage() {
             </div>
           );
         })}
-      </section>
+          </section>
 
-      <Footer />
+      <div className="-mt-8">
+        <Footer />
+      </div>
 
       {votesLast24 >= 100 ? (
         <div
