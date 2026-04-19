@@ -372,7 +372,7 @@ export default function SubmitPollPage() {
         </div>
       </header>
 
-      <section className="max-w-3xl mx-auto px-6 pt-1 pb-12">
+      <section className="max-w-3xl mx-auto px-6 pt-1 pb-6">
         <div className="text-center">
           <h1 className="text-4xl font-bold md:text-[4.25rem]">Create a Poll</h1>
 
