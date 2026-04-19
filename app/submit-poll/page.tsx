@@ -511,7 +511,7 @@ export default function SubmitPollPage() {
               </label>
 
               <p className="text-sm text-gray-400 md:text-base">
-                Private polls won't appear on the homepage or in the automatic polls shown after voting. We'll email you the private link so you can share it.
+                Private polls won't appear on the homepage or in the automatic polls shown after voting.
               </p>
             </div>
 
@@ -522,8 +522,13 @@ export default function SubmitPollPage() {
                   checked={emailMeLink}
                   onChange={(e) => {
                     const nextChecked = e.target.checked;
-                    setEmailMeLink(nextChecked);
-                    if (!nextChecked && !isPrivate) {
+                    setIsPrivate(nextChecked);
+
+                    if (nextChecked) {
+                      setEmailMeLink(true);
+                    }
+
+                    if (!nextChecked && !emailMeLink) {
                       setEmail("");
                     }
                   }}
