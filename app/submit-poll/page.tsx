@@ -178,7 +178,6 @@ function createEmptyOption() {
 }
 
 export default function SubmitPollPage() {
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [question, setQuestion] = useState("");
   const [description, setDescription] = useState("");
@@ -190,12 +189,9 @@ export default function SubmitPollPage() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "">("");
-  const [categoryTouched, setCategoryTouched] = useState(false);
 
-  const canAddOption = useMemo(() => options.length < 8, [options.length]);
+  const canAddOption = useMemo(() => options.length < 6, [options.length]);
   const canRemoveOption = useMemo(() => options.length > 2, [options.length]);
-
-  const suggestedCategory = question.trim() ? suggestCategory(question) : "";
 
   const inputClasses =
     "w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500";
@@ -217,7 +213,7 @@ export default function SubmitPollPage() {
   };
 
   const addOption = () => {
-    if (options.length < 8) setOptions([...options, createEmptyOption()]);
+    if (options.length < 6) setOptions([...options, createEmptyOption()]);
   };
 
   const removeOption = (index: number) => {
@@ -226,26 +222,18 @@ export default function SubmitPollPage() {
   };
 
   const resetPollFields = () => {
+    setEmail("");
     setQuestion("");
     setDescription("");
     setCategory("");
     setOptions([createEmptyOption(), createEmptyOption()]);
     setUsesImages(false);
     setIsPrivate(false);
-    setCategoryTouched(false);
   };
 
   const handleQuestionChange = (value: string) => {
     setQuestion(value);
-
-    if (!categoryTouched) {
-      setCategory(value.trim() ? suggestCategory(value) : "");
-    }
-  };
-
-  const handleCategoryChange = (value: string) => {
-    setCategory(value as Category);
-    setCategoryTouched(true);
+    setCategory(value.trim() ? suggestCategory(value) : "");
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -256,15 +244,23 @@ export default function SubmitPollPage() {
       imageUrl: option.imageUrl.trim(),
     }));
 
-    if (!name.trim() || !email.trim() || !question.trim() || !category.trim()) {
+    const resolvedCategory = category.trim() || suggestCategory(question) || "General";
+
+    if (!question.trim()) {
       setMessageType("error");
       setMessage("Please fill in all required fields.");
       return;
     }
 
-    if (question.trim().length > 100) {
+    if (isPrivate && !email.trim()) {
       setMessageType("error");
-      setMessage("Question must be 100 characters or fewer.");
+      setMessage("Email is required for private polls.");
+      return;
+    }
+
+    if (question.trim().length > 120) {
+      setMessageType("error");
+      setMessage("Question must be 120 characters or fewer.");
       return;
     }
 
@@ -280,9 +276,9 @@ export default function SubmitPollPage() {
       return;
     }
 
-    if (cleanedOptions.length > 8) {
+    if (cleanedOptions.length > 6) {
       setMessageType("error");
-      setMessage("Maximum 8 options allowed.");
+      setMessage("Maximum 6 options allowed.");
       return;
     }
 
@@ -292,9 +288,9 @@ export default function SubmitPollPage() {
       return;
     }
 
-    if (cleanedOptions.some((option) => option.text.length > 60)) {
+    if (cleanedOptions.some((option) => option.text.length > 40)) {
       setMessageType("error");
-      setMessage("Each option must be 60 characters or fewer.");
+      setMessage("Each option must be 40 characters or fewer.");
       return;
     }
 
@@ -314,11 +310,11 @@ export default function SubmitPollPage() {
 
     const { error } = await supabase.from("poll_submissions").insert([
       {
-        name: name.trim(),
-        email: email.trim(),
+        name: null,
+        email: isPrivate ? email.trim() : null,
         question: question.trim(),
         description: description.trim() || null,
-        category: category.trim(),
+        category: resolvedCategory,
         options: cleanedOptions.map((option) => option.text),
         option_image_urls: usesImages
           ? cleanedOptions.map((option) => option.imageUrl)
@@ -388,36 +384,15 @@ export default function SubmitPollPage() {
         <div className="mt-9 bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm mb-2">Name</label>
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className={inputClasses}
-                placeholder="Your name"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm mb-2">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={inputClasses}
-                placeholder="you@email.com"
-              />
-            </div>
-
-            <div>
               <label className="block text-sm mb-2">Poll Question</label>
               <input
-                maxLength={100}
+                maxLength={120}
                 value={question}
                 onChange={(e) => handleQuestionChange(e.target.value)}
                 className={inputClasses}
                 placeholder="e.g. Should school fees come before holidays when money is tight?"
               />
-              <p className="mt-1 text-sm text-gray-400 md:text-base">{question.length}/100</p>
+              <p className="mt-1 text-sm text-gray-400 md:text-base">{question.length}/120</p>
             </div>
 
             <div>
@@ -431,28 +406,6 @@ export default function SubmitPollPage() {
                 placeholder="Add context if helpful (optional)"
               />
               <p className="mt-1 text-sm text-gray-400 md:text-base">{description.length}/200</p>
-            </div>
-
-            <div>
-              <label className="block text-sm mb-2">Category</label>
-              <select
-                value={category}
-                onChange={(e) => handleCategoryChange(e.target.value)}
-                className={inputClasses}
-              >
-                <option value="">Select category</option>
-                {CATEGORY_OPTIONS.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-
-              {suggestedCategory && !categoryTouched && (
-                <p className="mt-1 text-sm text-gray-400 md:text-base">
-                  Suggested category: {suggestedCategory}
-                </p>
-              )}
             </div>
 
             <div>
@@ -479,7 +432,7 @@ export default function SubmitPollPage() {
             </div>
 
             <div>
-              <label className="block text-sm mb-2">Poll Options (2–8 inputs)</label>
+              <label className="block text-sm mb-2">Poll Options (2–6 inputs)</label>
 
               <div className="space-y-4">
                 {options.map((option, i) => {
@@ -490,7 +443,7 @@ export default function SubmitPollPage() {
                     <div key={i} className="space-y-2">
                       <div className="flex gap-2">
                         <input
-                          maxLength={60}
+                          maxLength={40}
                           value={option.text}
                           onChange={(e) => updateOptionText(i, e.target.value)}
                           className={inputClasses}
@@ -525,6 +478,10 @@ export default function SubmitPollPage() {
                 })}
               </div>
 
+              {options.length > 4 ? (
+                <p className="mt-2 text-sm text-gray-400">usually best with 2–4 options</p>
+              ) : null}
+
               {canAddOption && (
                 <button
                   type="button"
@@ -541,7 +498,13 @@ export default function SubmitPollPage() {
                 <input
                   type="checkbox"
                   checked={isPrivate}
-                  onChange={(e) => setIsPrivate(e.target.checked)}
+                  onChange={(e) => {
+                    const nextChecked = e.target.checked;
+                    setIsPrivate(nextChecked);
+                    if (!nextChecked) {
+                      setEmail("");
+                    }
+                  }}
                   className={checkboxClasses}
                 />
                 <span>Make this poll private</span>
@@ -551,6 +514,19 @@ export default function SubmitPollPage() {
                 Private polls are accessible only via direct link and will not appear on the homepage.
               </p>
             </div>
+
+            {isPrivate ? (
+              <div>
+                <label className="block text-sm mb-2">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={inputClasses}
+                  placeholder="you@email.com"
+                />
+              </div>
+            ) : null}
 
             <div className="space-y-2">
               <p className="text-sm text-gray-400">
