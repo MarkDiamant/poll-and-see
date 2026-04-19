@@ -200,6 +200,9 @@ export default function SubmitPollPage() {
     "w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500";
   const checkboxClasses =
     "h-5 w-5 rounded border-gray-600 bg-gray-900 text-blue-600 focus:ring-blue-500";
+  const labelClasses = "block text-sm font-normal text-white mb-2";
+  const checkboxLabelClasses = "inline-flex items-center gap-3 text-sm font-normal text-white";
+  const helperTextClasses = "text-sm text-gray-400 md:text-base";
 
   const updateOptionText = (index: number, value: string) => {
     const next = [...options];
@@ -386,7 +389,7 @@ export default function SubmitPollPage() {
         <div className="mt-9 bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm mb-2">Poll Question</label>
+<label className={labelClasses}>Poll Question</label>
               <input
                 maxLength={120}
                 value={question}
@@ -398,20 +401,20 @@ export default function SubmitPollPage() {
             </div>
 
             <div>
-              <label className="block text-sm mb-2">Description (optional)</label>
+            <label className={labelClasses}>Description (optional)</label>
               <textarea
                 maxLength={200}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className={textareaClasses}
                 rows={3}
-                placeholder="Add context if helpful (optional)"
+                placeholder="Add context if helpful"
               />
               <p className="mt-1 text-sm text-gray-400 md:text-base">{description.length}/200</p>
             </div>
 
             <div>
-              <label className="inline-flex items-center gap-3 text-sm">
+             <label className={checkboxLabelClasses}>
                 <input
                   type="checkbox"
                   checked={usesImages}
@@ -423,18 +426,18 @@ export default function SubmitPollPage() {
 
               {usesImages ? (
                 <div className="mt-2 space-y-1">
-                  <p className="text-sm text-gray-400 md:text-base">
-                    Paste a direct image link into each option. All options must include an image.
-                  </p>
-                  <p className="text-sm text-gray-400 md:text-base">
-                    Best results: square images (1:1), minimal empty space. Ideal size 700×700 or 1000×1000 px.
-                  </p>
+                  <p className={helperTextClasses}>
+  Paste a direct image link into each option. All options must include an image.
+</p>
+<p className={helperTextClasses}>
+  Best results: square images (1:1), minimal empty space. Ideal size 700×700 or 1000×1000 px.
+</p>
                 </div>
               ) : null}
             </div>
 
             <div>
-              <label className="block text-sm mb-2">
+            <label className={labelClasses}>
   Poll Options (choose 2 to 6 options. Fewer options usually give clearer results.)
 </label>
 
@@ -494,7 +497,7 @@ export default function SubmitPollPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="inline-flex items-center gap-3 text-sm">
+       <label className={checkboxLabelClasses}>
 <input
   type="checkbox"
   checked={isPrivate}
@@ -522,7 +525,7 @@ export default function SubmitPollPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="inline-flex items-center gap-3 text-sm">
+             <label className={checkboxLabelClasses}>
 <input
   type="checkbox"
   checked={emailMeLink}
@@ -543,7 +546,7 @@ export default function SubmitPollPage() {
 
             {shouldShowEmailField ? (
               <div>
-                <label className="block text-sm mb-2">Email</label>
+           <label className={labelClasses}>Email</label>
                 <input
                   type="email"
                   value={email}
@@ -555,7 +558,7 @@ export default function SubmitPollPage() {
             ) : null}
 
             <div className="space-y-2">
-              <p className="text-sm text-gray-400">
+             <p className={helperTextClasses}>
   Most polls go live within 24 hours. Wording may be lightly edited for clarity while keeping your original meaning.
 </p>
             </div>
