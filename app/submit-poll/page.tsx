@@ -263,9 +263,9 @@ export default function SubmitPollPage() {
       return;
     }
 
-    if (question.trim().length > 120) {
+    if (question.trim().length > 150) {
       setMessageType("error");
-      setMessage("Question must be 120 characters or fewer.");
+      setMessage("Question must be 150 characters or fewer.");
       return;
     }
 
@@ -391,13 +391,13 @@ export default function SubmitPollPage() {
             <div>
 <label className={labelClasses}>Poll Question</label>
               <input
-                maxLength={120}
+                maxLength={150}
                 value={question}
                 onChange={(e) => handleQuestionChange(e.target.value)}
                 className={inputClasses}
                 placeholder="e.g. A job you love with low pay, or a job you hate with high pay?"
               />
-              <p className="mt-1 text-sm text-gray-400 md:text-base">{question.length}/120</p>
+              <p className="mt-1 text-sm text-gray-400 md:text-base">{question.length}/150</p>
             </div>
 
             <div>
