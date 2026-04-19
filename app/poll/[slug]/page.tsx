@@ -435,7 +435,7 @@ async function buildShareCardFile({
   mode: ShareCardMode;
 }) {
   const canvas = document.createElement("canvas");
-  canvas.width = 1200;
+  canvas.width = 900;
 
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
@@ -444,19 +444,26 @@ async function buildShareCardFile({
   const categoryColours = getCategoryColours(poll.category);
   const logo = await loadLogoImage();
 
-  ctx.textBaseline = "alphabetic";
-  ctx.font = "700 54px Arial";
-  const questionLines = wrapCanvasText(ctx, poll.question, 980, 3);
+  const outerPadding = 42;
+  const cardX = 36;
+  const cardY = 36;
+  const cardWidth = 828;
+  const innerX = 68;
 
-  const questionTopY = 220;
-  const questionBlockHeight = questionLines.length * 68;
-  const subtitleY = questionTopY + questionBlockHeight + 12;
-  const rowStartY = subtitleY + 58;
-  const rowHeight = 148;
-  const footerTopY = rowStartY + options.length * rowHeight + 24;
-  const footerHeight = 170;
+  ctx.font = "700 44px Arial";
+  const questionLines = wrapCanvasText(ctx, poll.question, 700, 4);
+
+  const questionTopY = 168;
+  const questionLineHeight = 56;
+  const questionBlockHeight = questionLines.length * questionLineHeight;
+
+  const subtitleY = questionTopY + questionBlockHeight + 18;
+  const rowStartY = subtitleY + 40;
+  const rowHeight = 120;
+  const footerTopY = rowStartY + options.length * rowHeight + 28;
+  const footerHeight = logo ? 150 : 120;
   const cardHeight = footerTopY + footerHeight;
-  canvas.height = cardHeight + 56;
+  canvas.height = cardY + cardHeight + outerPadding;
 
   const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
   gradient.addColorStop(0, "#050816");
@@ -465,42 +472,49 @@ async function buildShareCardFile({
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   ctx.fillStyle = "rgba(255,255,255,0.04)";
-  drawRoundedRect(ctx, 56, 56, 1088, cardHeight, 34);
+  drawRoundedRect(ctx, cardX, cardY, cardWidth, cardHeight, 30);
   ctx.fill();
 
+  drawRoundedRect(ctx, 68, 68, 170, 46, 22);
   ctx.fillStyle = categoryColours.bg;
   ctx.strokeStyle = categoryColours.border;
   ctx.lineWidth = 2;
-  drawRoundedRect(ctx, 92, 92, 190, 50, 24);
   ctx.fill();
   ctx.stroke();
 
-  ctx.font = "600 24px Arial";
-  ctx.fillStyle = categoryColours.text;
   ctx.textBaseline = "middle";
-  ctx.fillText(poll.category, 124, 117);
+  ctx.font = "600 22px Arial";
+  ctx.fillStyle = categoryColours.text;
+  ctx.fillText(poll.category, 98, 91);
+
+  ctx.textAlign = "right";
+  ctx.font = "600 22px Arial";
+  ctx.fillStyle = "rgba(229,231,235,0.82)";
+  ctx.fillText(`${totalVotes.toLocaleString()} ${totalVotes === 1 ? "vote" : "votes"}`, 800, 91);
 
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
-  ctx.font = "700 54px Arial";
+  ctx.font = "700 44px Arial";
   ctx.fillStyle = "#ffffff";
 
   let questionY = questionTopY;
   questionLines.forEach((line) => {
-    ctx.fillText(line, 110, questionY);
-    questionY += 68;
+    ctx.fillText(line, innerX, questionY);
+    questionY += questionLineHeight;
   });
 
-  ctx.font = "400 27px Arial";
-  ctx.fillStyle = "rgba(229,231,235,0.82)";
+  ctx.font = "400 24px Arial";
+  ctx.fillStyle = "rgba(229,231,235,0.78)";
   ctx.fillText(
     mode === "voted" ? "Shared result with my vote highlighted" : "Shared result without showing my vote",
-    110,
+    innerX,
     subtitleY
   );
 
-  const barLeft = 128;
-  const barWidth = 760;
+  const rowX = 58;
+  const rowWidth = 784;
+  const barLeft = 88;
+  const barWidth = 580;
 
   options.forEach((option, index) => {
     const count = voteCounts[option.id] || 0;
@@ -512,62 +526,57 @@ async function buildShareCardFile({
     ctx.fillStyle = isSelected ? "rgba(255,255,255,0.075)" : "rgba(255,255,255,0.04)";
     ctx.strokeStyle = isSelected ? colour : "rgba(255,255,255,0.06)";
     ctx.lineWidth = isSelected ? 4 : 2;
-    drawRoundedRect(ctx, 96, rowY, 1008, 116, 28);
+    drawRoundedRect(ctx, rowX, rowY, rowWidth, 94, 24);
     ctx.fill();
     ctx.stroke();
 
-    ctx.font = "600 31px Arial";
+    ctx.font = "600 28px Arial";
     ctx.fillStyle = "#ffffff";
-    ctx.fillText(option.option_text, 130, rowY + 38);
+    ctx.textAlign = "left";
+    ctx.fillText(option.option_text, 88, rowY + 34);
 
     if (isSelected) {
-      ctx.font = "700 24px Arial";
+      ctx.font = "700 22px Arial";
       ctx.fillStyle = colour;
-      ctx.fillText("✓ My vote", 130, rowY + 76);
+      ctx.fillText("✓ My vote", 88, rowY + 66);
     }
 
     ctx.fillStyle = "rgba(255,255,255,0.11)";
-    drawRoundedRect(ctx, barLeft, rowY + 80, barWidth, 20, 10);
+    drawRoundedRect(ctx, barLeft, rowY + 68, barWidth, 16, 8);
     ctx.fill();
 
-    const fillWidth = percent > 0 ? Math.max((barWidth * percent) / 100, 14) : 0;
+    const fillWidth = percent > 0 ? Math.max((barWidth * percent) / 100, 12) : 0;
     if (fillWidth > 0) {
       ctx.fillStyle = colour;
-      drawRoundedRect(ctx, barLeft, rowY + 80, fillWidth, 20, 10);
+      drawRoundedRect(ctx, barLeft, rowY + 68, fillWidth, 16, 8);
       ctx.fill();
     }
 
     ctx.textAlign = "right";
-    ctx.font = "700 32px Arial";
+    ctx.font = "700 30px Arial";
     ctx.fillStyle = "#ffffff";
-    ctx.fillText(`${percent}%`, 1036, rowY + 60);
-    ctx.textAlign = "left";
+    ctx.fillText(`${percent}%`, 796, rowY + 54);
   });
-
-  ctx.font = "500 24px Arial";
-  ctx.fillStyle = "rgba(229,231,235,0.82)";
-  ctx.textAlign = "left";
-  ctx.fillText(`${totalVotes.toLocaleString()} ${totalVotes === 1 ? "vote" : "votes"}`, 110, footerTopY + 28);
 
   if (logo) {
     ctx.globalAlpha = 0.9;
-    ctx.drawImage(logo, 430, footerTopY + 8, 340, 92);
+    ctx.drawImage(logo, 300, footerTopY + 6, 300, 82);
     ctx.globalAlpha = 1;
   } else {
     ctx.textAlign = "center";
-    ctx.font = "700 34px Arial";
+    ctx.font = "700 30px Arial";
     ctx.fillStyle = "rgba(255,255,255,0.82)";
-    ctx.fillText("Poll & See", 600, footerTopY + 62);
+    ctx.fillText("Poll & See", 450, footerTopY + 46);
   }
 
   ctx.textAlign = "center";
   ctx.font = "400 24px Arial";
-  ctx.fillStyle = "rgba(229,231,235,0.70)";
-  ctx.fillText("See what people really think", 600, footerTopY + 118);
+  ctx.fillStyle = "rgba(255,255,255,0.76)";
+  ctx.fillText("See what people really think", 450, footerTopY + 106);
 
-  ctx.font = "600 32px Arial";
-  ctx.fillStyle = "rgba(255,255,255,0.78)";
-  ctx.fillText("pollandsee.com", 600, footerTopY + 154);
+  ctx.font = "600 28px Arial";
+  ctx.fillStyle = "rgba(255,255,255,0.62)";
+  ctx.fillText("pollandsee.com", 450, footerTopY + 142);
 
   const blob = await new Promise<Blob | null>((resolve) => {
     canvas.toBlob((result) => resolve(result), "image/png");
