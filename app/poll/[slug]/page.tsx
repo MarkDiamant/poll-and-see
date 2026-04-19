@@ -26,6 +26,7 @@ type PollOption = {
 
 type VoteCounts = Record<number, number>;
 type BadgeLabel = "New" | "Trending" | "Popular" | "Private";
+type ShareCardMode = "voted" | "anonymous";
 
 type PollBundle = {
   poll: Poll;
@@ -342,7 +343,6 @@ async function submitVote(pollId: number, optionId: number) {
     throw new Error(data.error || "Vote failed");
   }
 }
-type ShareCardMode = "voted" | "anonymous";
 
 function wrapCanvasText(
   ctx: CanvasRenderingContext2D,
@@ -592,6 +592,7 @@ async function shareImageFile(file: File, text: string) {
     return "downloaded";
   }
 }
+
 function ResultOptions({
   options,
   voteCounts,
@@ -681,7 +682,9 @@ function PollCard({
   const [counts, setCounts] = useState<VoteCounts>(bundle.voteCounts);
   const [selected, setSelected] = useState<number | null>(null);
   const [error, setError] = useState<string>("");
- const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [shareButtonText, setShareButtonText] = useState("Share");
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const shareMenuRef = useRef<HTMLDivElement | null>(null);
 
   const totalVotes = Object.values(counts).reduce((sum, count) => sum + count, 0);
   const voteLabel = `${totalVotes.toLocaleString()} ${totalVotes === 1 ? "vote" : "votes"}`;
@@ -693,88 +696,81 @@ function PollCard({
     setSelected(getLocalSelectedOption(bundle.poll.id));
     setCounts(bundle.voteCounts);
     setError("");
-    setShareText("Share poll link");
+    setShareButtonText("Share");
+    setShareMenuOpen(false);
   }, [bundle]);
 
-  const url = `${window.location.origin}/poll/${bundle.poll.slug}`;
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (shareMenuRef.current && !shareMenuRef.current.contains(event.target as Node)) {
+        setShareMenuOpen(false);
+      }
+    };
 
-const shareLink = async () => {
-  const text = `${bundle.poll.question}
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
 
-Vote and see what others think:
+  const shareLinkText = `${bundle.poll.question}\n\nVote and see what others think:\n\n${window.location.origin}/poll/${bundle.poll.slug}`;
+  const shareImageLinkText = `${window.location.origin}/poll/${bundle.poll.slug}`;
 
-${url}`;
+  const handleSharePollLink = async () => {
+    setShareMenuOpen(false);
 
-  if (navigator.share) {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          text: shareLinkText,
+        });
+        return;
+      } catch {
+        // fall through
+      }
+    }
+
     try {
-      await navigator.share({ text });
-      return;
-    } catch {}
-  }
-
-  await navigator.clipboard.writeText(text);
-};
-
-const shareResults = async (includeVote: boolean) => {
-  const canvas = document.createElement("canvas");
-  canvas.width = 800;
-  canvas.height = 900;
-
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return;
-
-  ctx.fillStyle = "#111827";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  ctx.fillStyle = "#fff";
-  ctx.font = "bold 28px Arial";
-  ctx.fillText(bundle.poll.question, 40, 80);
-
-  const total = Object.values(counts).reduce((a, b) => a + b, 0);
-
-  bundle.options.forEach((opt, i) => {
-    const percent = total > 0
-      ? Math.round((counts[opt.id] / total) * 100)
-      : 0;
-
-    const y = 150 + i * 90;
-
-    ctx.fillStyle = "#374151";
-    ctx.fillRect(40, y, 600, 24);
-
-    ctx.fillStyle = OPTION_COLOURS[i];
-    ctx.fillRect(40, y, percent * 6, 24);
-
-    ctx.fillStyle = "#fff";
-    ctx.font = "20px Arial";
-    ctx.fillText(opt.option_text, 40, y - 10);
-
-    if (includeVote && selected === opt.id) {
-      ctx.fillText("✓", 660, y + 18);
+      await navigator.clipboard.writeText(shareLinkText);
+      setShareButtonText("Link copied");
+      setTimeout(() => setShareButtonText("Share"), 2000);
+    } catch {
+      setShareButtonText("Share");
     }
+  };
 
-    ctx.fillText(`${percent}%`, 700, y + 18);
-  });
+  const handleShareResults = async (mode: ShareCardMode) => {
+    setShareMenuOpen(false);
 
-  ctx.font = "18px Arial";
-  ctx.fillStyle = "#9ca3af";
-  ctx.fillText("pollandsee.com", 40, 860);
-
-  canvas.toBlob(async blob => {
-    if (!blob) return;
-
-    const file = new File([blob], "poll.png", { type: "image/png" });
-
-    if (navigator.share && navigator.canShare?.({ files: [file] })) {
-      await navigator.share({
-        files: [file],
-        text: url
+    try {
+      const file = await buildShareCardFile({
+        poll: bundle.poll,
+        options: bundle.options,
+        voteCounts: counts,
+        selectedOptionId: selected,
+        mode,
       });
-    } else {
-      await navigator.clipboard.writeText(url);
+
+      if (!file) {
+        setShareButtonText("Share");
+        return;
+      }
+
+      const result = await shareImageFile(file, shareImageLinkText);
+
+      if (result === "downloaded_and_copied") {
+        setShareButtonText("Image saved + link copied");
+      } else if (result === "downloaded") {
+        setShareButtonText("Image saved");
+      } else {
+        setShareButtonText("Share");
+      }
+
+      if (result !== "shared") {
+        setTimeout(() => setShareButtonText("Share"), 2200);
+      }
+    } catch {
+      setShareButtonText("Share");
     }
-  });
-};
+  };
 
   const handleVote = async (optionId: number) => {
     if (voted) return;
@@ -830,8 +826,7 @@ const shareResults = async (includeVote: boolean) => {
 
   return (
     <div className="relative mb-8 overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 p-6">
-      
-            <div className="mb-3 flex items-center gap-3">
+      <div className="mb-3 flex items-center gap-3">
         <span
           className="rounded-full px-3 py-1 text-xs"
           style={{
@@ -854,7 +849,7 @@ const shareResults = async (includeVote: boolean) => {
         ) : null}
       </div>
 
-            <h2 className="mb-2 text-2xl font-bold">{bundle.poll.question}</h2>
+      <h2 className="mb-2 text-2xl font-bold">{bundle.poll.question}</h2>
 
       {bundle.poll.is_private ? (
         <p className="mb-3 text-sm text-gray-400">Shared via private link only</p>
@@ -895,7 +890,7 @@ const shareResults = async (includeVote: boolean) => {
               <div className="px-4 py-3">{option.option_text}</div>
             </button>
           ))}
-                       {error ? <p className="text-sm text-red-300">{error}</p> : null}
+          {error ? <p className="text-sm text-red-300">{error}</p> : null}
 
           <div className="flex justify-end pt-1">
             <Link
@@ -903,7 +898,7 @@ const shareResults = async (includeVote: boolean) => {
               className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-400 transition hover:text-white"
             >
               <span>Home</span>
-              <span aria-hidden="true" className="text-base leading-none">›</span>
+              <span aria-hidden="true" className="text-base leading-none">‹</span>
             </Link>
           </div>
         </div>
@@ -915,55 +910,51 @@ const shareResults = async (includeVote: boolean) => {
           </p>
 
           <div className="mt-6">
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-start">
-              <div className="relative">
-  <button
-    onClick={() => setShareMenuOpen(v => !v)}
-    className="inline-flex h-10 items-center justify-center rounded-xl bg-white px-4 text-sm font-medium text-black hover:bg-gray-200"
-  >
-    Share
-  </button>
+            <div className="grid grid-cols-2 gap-2">
+              <div ref={shareMenuRef} className="relative">
+                <button
+                  onClick={() => setShareMenuOpen((current) => !current)}
+                  className="inline-flex h-10 w-full cursor-pointer items-center justify-center rounded-xl bg-white px-3 py-0 text-sm font-medium leading-none text-black transition hover:bg-gray-200"
+                >
+                  {shareButtonText}
+                </button>
 
-  {shareMenuOpen && (
-    <div className="absolute left-0 mt-2 w-56 rounded-xl border border-gray-700 bg-gray-900 shadow-lg">
-      <button
-        onClick={() => shareLink()}
-        className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-800"
-      >
-        Share poll link
-      </button>
-
-      <button
-        onClick={() => shareResults(true)}
-        className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-800"
-      >
-        Share how I voted
-      </button>
-
-      <button
-        onClick={() => shareResults(false)}
-        className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-800"
-      >
-        Share anonymous results
-      </button>
-    </div>
-  )}
-</div>
-                className="inline-flex h-10 cursor-pointer items-center justify-center rounded-xl bg-white px-3 py-0 text-sm font-medium leading-none text-black transition hover:bg-gray-200 sm:px-4"
-              >
-                {shareText}
-              </button>
+                {shareMenuOpen ? (
+                  <div className="absolute left-0 top-full z-20 mt-2 w-full min-w-[220px] overflow-hidden rounded-xl border border-gray-700 bg-gray-900 shadow-xl">
+                    <button
+                      type="button"
+                      onClick={handleSharePollLink}
+                      className="block w-full px-4 py-3 text-left text-sm text-white transition hover:bg-gray-800"
+                    >
+                      Share poll link
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleShareResults("voted")}
+                      className="block w-full border-t border-gray-800 px-4 py-3 text-left text-sm text-white transition hover:bg-gray-800"
+                    >
+                      Share how I voted
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleShareResults("anonymous")}
+                      className="block w-full border-t border-gray-800 px-4 py-3 text-left text-sm text-white transition hover:bg-gray-800"
+                    >
+                      Share anonymous results
+                    </button>
+                  </div>
+                ) : null}
+              </div>
 
               {showGoToAllPolls ? (
                 <Link
                   href="/#live-polls"
-                  className="inline-flex h-10 items-center justify-center rounded-xl border border-gray-700 bg-gray-900 px-3 py-0 text-sm font-medium leading-none text-white transition hover:bg-gray-800 sm:px-4"
+                  className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-gray-700 bg-gray-900 px-3 py-0 text-sm font-medium leading-none text-white transition hover:bg-gray-800"
                 >
-                  Go to all polls
+                  All polls
                 </Link>
               ) : null}
-
-                </div>
+            </div>
           </div>
         </>
       )}
@@ -1105,7 +1096,7 @@ export default function PollPage() {
     }
   };
 
-    const syncDisplayedPolls = async () => {
+  const syncDisplayedPolls = async () => {
     try {
       const currentPolls = pollsRef.current;
       if (currentPolls.length === 0) return;
@@ -1240,32 +1231,32 @@ export default function PollPage() {
     };
   }, [syncVoteDerivedData]);
 
- useEffect(() => {
-  if (votesLast24 < 100) {
-    setShowActivityIndicator(false);
-    return;
-  }
-
-  if (sessionStorage.getItem("activity_indicator_shown") === "1") {
-    return;
-  }
-
-  let hideTimeout: ReturnType<typeof setTimeout> | null = null;
-
-  const initialTimeout = setTimeout(() => {
-    setShowActivityIndicator(true);
-    sessionStorage.setItem("activity_indicator_shown", "1");
-
-    hideTimeout = setTimeout(() => {
+  useEffect(() => {
+    if (votesLast24 < 100) {
       setShowActivityIndicator(false);
-    }, 5000);
-  }, 5000);
+      return;
+    }
 
-  return () => {
-    clearTimeout(initialTimeout);
-    if (hideTimeout) clearTimeout(hideTimeout);
-  };
-}, [votesLast24 >= 100]);
+    if (sessionStorage.getItem("activity_indicator_shown") === "1") {
+      return;
+    }
+
+    let hideTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const initialTimeout = setTimeout(() => {
+      setShowActivityIndicator(true);
+      sessionStorage.setItem("activity_indicator_shown", "1");
+
+      hideTimeout = setTimeout(() => {
+        setShowActivityIndicator(false);
+      }, 5000);
+    }, 5000);
+
+    return () => {
+      clearTimeout(initialTimeout);
+      if (hideTimeout) clearTimeout(hideTimeout);
+    };
+  }, [votesLast24 >= 100]);
 
   const handleBack = () => {
     sessionStorage.setItem("restoreHomeScroll", "true");
@@ -1581,7 +1572,7 @@ export default function PollPage() {
       </header>
 
       <section className="mx-auto max-w-3xl px-6 pt-2 pb-8">
-              <button
+        <button
           type="button"
           onClick={handleBack}
           className="mb-5 inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-1 text-sm font-medium text-gray-300 transition hover:text-white"
@@ -1614,7 +1605,7 @@ export default function PollPage() {
               (index === inlineSubscribeInsertAfterIndex ||
                 (inlineSubscribeInsertAfterIndex === -1 && index === polls.length - 1)) ? (
                 <div ref={inlineSubscribeBoxRef} className="mb-8 mt-4 flex justify-center">
-                                    <div className="w-full max-w-md rounded-2xl border border-gray-600 bg-gray-800/80 p-5 md:p-6">
+                  <div className="w-full max-w-md rounded-2xl border border-gray-600 bg-gray-800/80 p-5 md:p-6">
                     <p className="mb-2 text-base font-medium text-white md:text-lg">See new polls first</p>
                     <p className="mb-3 text-sm text-gray-200">
                       Get new polls by email based on your interests.
@@ -1694,7 +1685,7 @@ export default function PollPage() {
                     ) : null}
                   </div>
                 </div>
-                            ) : null}
+              ) : null}
 
               {index > 0 && (index + 1) % 5 === 0 ? (
                 <div className="mb-8 mt-4 text-center">
@@ -1706,11 +1697,9 @@ export default function PollPage() {
                   </Link>
                 </div>
               ) : null}
-
             </div>
           );
         })}
-
       </section>
 
       <Footer />
