@@ -1103,7 +1103,7 @@ function PollCard({
   className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-400 transition hover:text-white"
 >
   <span>Home</span>
-<span aria-hidden="true" className="relative -top-[1px] text-sm leading-none">›</span>
+<span aria-hidden="true" className="relative top-[1px] sm:-top-[1px] text-sm leading-none">›</span>
 </Link>
           </div>
         </div>
