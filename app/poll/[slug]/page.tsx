@@ -452,8 +452,8 @@ async function buildShareCardFile({
   );
 
   const questionHeight = questionLines.length * 56;
-  const optionHeight = 136;
-  const optionsHeight = options.length * optionHeight;
+  const getShareOptionHeight = (option: PollOption) => option.image_url ? 290 : 136;
+  const optionsHeight = options.reduce((sum, option) => sum + getShareOptionHeight(option), 0);
   const footerHeight = 240;
 
   const cardHeight =
@@ -540,7 +540,7 @@ async function buildShareCardFile({
 
   const barWidth = 430;
 
-  options.forEach((opt, i) => {
+  for (const [i, opt] of options.entries()) {
 
     const votes =
       voteCounts[opt.id] || 0;
@@ -556,6 +556,8 @@ async function buildShareCardFile({
       OPTION_COLOURS[i] ||
       OPTION_COLOURS[0];
 
+    const optionHeight = opt.image_url ? 290 : 136;
+
     ctx.fillStyle =
       "rgba(255,255,255,0.05)";
 
@@ -564,11 +566,52 @@ async function buildShareCardFile({
       46,
       y,
       588,
-      102,
+      optionHeight - 34,
       20
     );
 
     ctx.fill();
+
+    let contentY = y + 24;
+
+    if (opt.image_url) {
+      const image = await new Promise<HTMLImageElement | null>((resolve) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = opt.image_url as string;
+      });
+
+      if (image) {
+        const imageX = 64;
+        const imageY = y + 18;
+        const imageSize = 120;
+
+        ctx.save();
+        drawRoundedRect(ctx, imageX, imageY, imageSize, imageSize, 16);
+        ctx.clip();
+
+        const imageRatio = image.width / image.height;
+        let drawWidth = imageSize;
+        let drawHeight = imageSize;
+        let drawX = imageX;
+        let drawY = imageY;
+
+        if (imageRatio > 1) {
+          drawWidth = imageSize * imageRatio;
+          drawX = imageX - (drawWidth - imageSize) / 2;
+        } else {
+          drawHeight = imageSize / imageRatio;
+          drawY = imageY - (drawHeight - imageSize) / 2;
+        }
+
+        ctx.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+        ctx.restore();
+      }
+
+      contentY = y + 160;
+    }
 
     ctx.font =
       "600 26px Arial";
@@ -579,7 +622,7 @@ async function buildShareCardFile({
     ctx.fillText(
       opt.option_text,
       64,
-      y + 36
+      contentY + 18
     );
 
     ctx.textAlign = "right";
@@ -590,7 +633,7 @@ async function buildShareCardFile({
     ctx.fillText(
       `${pct}%`,
       612,
-      y + 42
+      contentY + 24
     );
 
     ctx.textAlign = "left";
@@ -601,7 +644,7 @@ async function buildShareCardFile({
     drawRoundedRect(
       ctx,
       64,
-      y + 66,
+      contentY + 48,
       barWidth,
       14,
       8
@@ -622,7 +665,7 @@ async function buildShareCardFile({
     drawRoundedRect(
       ctx,
       64,
-      y + 66,
+      contentY + 48,
       fill,
       14,
       8
@@ -631,7 +674,7 @@ async function buildShareCardFile({
     ctx.fill();
 
     y += optionHeight;
-  });
+  }
 
   y += 50;
 
