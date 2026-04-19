@@ -432,7 +432,9 @@ export default function SubmitPollPage() {
             </div>
 
             <div>
-              <label className="block text-sm mb-2">Poll Options (2–6 inputs)</label>
+              <label className="block text-sm mb-2">
+  Poll Options (choose 2 to 6 options. Fewer options usually give clearer results.)
+</label>
 
               <div className="space-y-4">
                 {options.map((option, i) => {
@@ -478,11 +480,7 @@ export default function SubmitPollPage() {
                 })}
               </div>
 
-              {options.length > 4 ? (
-                <p className="mt-2 text-sm text-gray-400">usually best with 2–4 options</p>
-              ) : null}
-
-              {canAddOption && (
+                  {canAddOption && (
                 <button
                   type="button"
                   onClick={addOption}
@@ -511,8 +509,8 @@ export default function SubmitPollPage() {
               </label>
 
               <p className="text-sm text-gray-400 md:text-base">
-                Private polls are accessible only via direct link and will not appear on the homepage.
-              </p>
+  Private polls won't appear on the homepage or in the automatic polls shown after voting. We'll email you the private link so you can share it.
+</p>
             </div>
 
             {isPrivate ? (
