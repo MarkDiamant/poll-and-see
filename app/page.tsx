@@ -754,7 +754,7 @@ export default function Home() {
 
   const featuredPoll = polls.find((p) => p.featured) || polls[0];
 
-  useEffect(() => {
+    useEffect(() => {
     const channel = supabase
       .channel("homepage-live-votes")
       .on(
@@ -769,7 +769,20 @@ export default function Home() {
 
           setTotalVoteCount((prev) => prev + 1);
 
-          if (featuredPoll?.id && newVote.poll_id === featuredPoll.id && typeof newVote.option_id === "number") {
+          if (typeof newVote.poll_id === "number") {
+            setRecentVoteCounts((prev) => ({
+              ...prev,
+              [newVote.poll_id as number]: (prev[newVote.poll_id as number] || 0) + 1,
+            }));
+
+            setVotesLast24((prev) => prev + 1);
+          }
+
+          if (
+            featuredPoll?.id &&
+            newVote.poll_id === featuredPoll.id &&
+            typeof newVote.option_id === "number"
+          ) {
             setFeaturedVoteCounts((prev) => ({
               ...prev,
               [newVote.option_id as number]: (prev[newVote.option_id as number] || 0) + 1,
