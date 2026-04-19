@@ -500,8 +500,9 @@ export default function SubmitPollPage() {
                   checked={isPrivate}
                   onChange={(e) => {
                     const nextChecked = e.target.checked;
-                    setIsPrivate(nextChecked);
-                    if (!nextChecked && !emailMeLink) {
+                    setEmailMeLink(nextChecked);
+
+                    if (!nextChecked && !isPrivate) {
                       setEmail("");
                     }
                   }}
