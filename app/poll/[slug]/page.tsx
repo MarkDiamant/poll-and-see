@@ -920,30 +920,30 @@ function PollCard({
                 </button>
 
                 {shareMenuOpen ? (
-                  <div className="absolute left-0 top-full z-20 mt-2 w-full min-w-[220px] overflow-hidden rounded-xl border border-gray-700 bg-gray-900 shadow-xl">
-                    <button
-                      type="button"
-                      onClick={handleSharePollLink}
-                      className="block w-full px-4 py-3 text-left text-sm text-white transition hover:bg-gray-800"
-                    >
-                      Share poll link
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleShareResults("voted")}
-                      className="block w-full border-t border-gray-800 px-4 py-3 text-left text-sm text-white transition hover:bg-gray-800"
-                    >
-                      Share how I voted
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleShareResults("anonymous")}
-                      className="block w-full border-t border-gray-800 px-4 py-3 text-left text-sm text-white transition hover:bg-gray-800"
-                    >
-                      Share anonymous results
-                    </button>
-                  </div>
-                ) : null}
+  <div className="absolute bottom-full left-0 z-20 mb-2 w-full min-w-[220px] overflow-hidden rounded-xl border border-gray-700 bg-gray-900 shadow-xl">
+    <button
+      type="button"
+      onClick={handleSharePollLink}
+      className="block w-full px-4 py-3 text-left text-sm text-white transition hover:bg-gray-800"
+    >
+      Share poll link
+    </button>
+    <button
+      type="button"
+      onClick={() => void handleShareResults("voted")}
+      className="block w-full border-t border-gray-800 px-4 py-3 text-left text-sm text-white transition hover:bg-gray-800"
+    >
+      Share how I voted
+    </button>
+    <button
+      type="button"
+      onClick={() => void handleShareResults("anonymous")}
+      className="block w-full border-t border-gray-800 px-4 py-3 text-left text-sm text-white transition hover:bg-gray-800"
+    >
+      Share anonymous results
+    </button>
+  </div>
+) : null}
               </div>
 
               {showGoToAllPolls ? (
