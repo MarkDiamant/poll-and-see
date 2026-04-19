@@ -430,7 +430,7 @@ async function buildShareCardFile({
   voteCounts: VoteCounts;
 }) {
   const canvas = document.createElement("canvas");
-  canvas.width = 800;
+  canvas.width = 720;
 
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
@@ -447,14 +447,14 @@ async function buildShareCardFile({
   const questionLines = wrapCanvasText(
     ctx,
     poll.question,
-    620,
-    4
+    520,
+    5
   );
 
   const questionHeight = questionLines.length * 56;
-  const optionHeight = 110;
+  const optionHeight = 126;
   const optionsHeight = options.length * optionHeight;
-  const footerHeight = 200;
+  const footerHeight = 220;
 
   const cardHeight =
     180 +
@@ -482,7 +482,7 @@ async function buildShareCardFile({
     ctx,
     24,
     24,
-    752,
+    672,
     cardHeight - 48,
     28
   );
@@ -515,7 +515,7 @@ async function buildShareCardFile({
 
   ctx.fillText(
     `${totalVotes.toLocaleString()} votes`,
-    720,
+    640,
     80
   );
 
@@ -538,7 +538,7 @@ async function buildShareCardFile({
 
   y += 24;
 
-  const barWidth = 540;
+  const barWidth = 470;
 
   options.forEach((opt, i) => {
 
@@ -561,10 +561,10 @@ async function buildShareCardFile({
 
     drawRoundedRect(
       ctx,
-      60,
+      52,
       y,
-      680,
-      84,
+      616,
+      96,
       20
     );
 
@@ -578,8 +578,8 @@ async function buildShareCardFile({
 
     ctx.fillText(
       opt.option_text,
-      80,
-      y + 30
+      72,
+      y + 34
     );
 
     ctx.textAlign = "right";
@@ -589,8 +589,8 @@ async function buildShareCardFile({
 
     ctx.fillText(
       `${pct}%`,
-      720,
-      y + 36
+      646,
+      y + 40
     );
 
     ctx.textAlign = "left";
@@ -600,8 +600,8 @@ async function buildShareCardFile({
 
     drawRoundedRect(
       ctx,
-      80,
-      y + 52,
+      72,
+      y + 60,
       barWidth,
       14,
       8
@@ -621,8 +621,8 @@ async function buildShareCardFile({
 
     drawRoundedRect(
       ctx,
-      80,
-      y + 52,
+      72,
+      y + 60,
       fill,
       14,
       8
@@ -641,10 +641,10 @@ async function buildShareCardFile({
 
     ctx.drawImage(
       logo,
-      270,
+      230,
       y,
-      240,
-      64
+      220,
+      58
     );
 
     ctx.globalAlpha = 1;
@@ -663,7 +663,7 @@ async function buildShareCardFile({
 
   ctx.fillText(
     "See what people really think",
-    400,
+    360,
     y
   );
 
@@ -677,7 +677,7 @@ async function buildShareCardFile({
 
   ctx.fillText(
     "pollandsee.com",
-    400,
+    360,
     y
   );
 
