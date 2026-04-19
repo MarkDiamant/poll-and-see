@@ -184,6 +184,7 @@ export default function SubmitPollPage() {
   const [category, setCategory] = useState<Category>("");
   const [usesImages, setUsesImages] = useState(false);
   const [isPrivate, setIsPrivate] = useState(false);
+  const [emailMeLink, setEmailMeLink] = useState(false);
   const [options, setOptions] = useState([createEmptyOption(), createEmptyOption()]);
 
   const [submitting, setSubmitting] = useState(false);
@@ -229,13 +230,14 @@ export default function SubmitPollPage() {
     setOptions([createEmptyOption(), createEmptyOption()]);
     setUsesImages(false);
     setIsPrivate(false);
+    setEmailMeLink(false);
   };
 
   const handleQuestionChange = (value: string) => {
     setQuestion(value);
     setCategory(value.trim() ? suggestCategory(value) : "");
   };
-
+  const shouldShowEmailField = isPrivate || emailMeLink;
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -252,9 +254,9 @@ export default function SubmitPollPage() {
       return;
     }
 
-    if (isPrivate && !email.trim()) {
+    if (shouldShowEmailField && !email.trim()) {
       setMessageType("error");
-      setMessage("Email is required for private polls.");
+      setMessage("Email is required.");
       return;
     }
 
@@ -311,7 +313,7 @@ export default function SubmitPollPage() {
     const { error } = await supabase.from("poll_submissions").insert([
       {
         name: null,
-        email: isPrivate ? email.trim() : null,
+        email: shouldShowEmailField ? email.trim() : null,
         question: question.trim(),
         description: description.trim() || null,
         category: resolvedCategory,
@@ -499,7 +501,7 @@ export default function SubmitPollPage() {
                   onChange={(e) => {
                     const nextChecked = e.target.checked;
                     setIsPrivate(nextChecked);
-                    if (!nextChecked) {
+                    if (!nextChecked && !emailMeLink) {
                       setEmail("");
                     }
                   }}
@@ -509,11 +511,29 @@ export default function SubmitPollPage() {
               </label>
 
               <p className="text-sm text-gray-400 md:text-base">
-  Private polls won't appear on the homepage or in the automatic polls shown after voting. We'll email you the private link so you can share it.
-</p>
+                Private polls won't appear on the homepage or in the automatic polls shown after voting. We'll email you the private link so you can share it.
+              </p>
             </div>
 
-            {isPrivate ? (
+            <div className="space-y-2">
+              <label className="inline-flex items-center gap-3 text-sm">
+                <input
+                  type="checkbox"
+                  checked={emailMeLink}
+                  onChange={(e) => {
+                    const nextChecked = e.target.checked;
+                    setEmailMeLink(nextChecked);
+                    if (!nextChecked && !isPrivate) {
+                      setEmail("");
+                    }
+                  }}
+                  className={checkboxClasses}
+                />
+                <span>Email me the link when my poll goes live</span>
+              </label>
+            </div>
+
+            {shouldShowEmailField ? (
               <div>
                 <label className="block text-sm mb-2">Email</label>
                 <input
@@ -528,7 +548,7 @@ export default function SubmitPollPage() {
 
             <div className="space-y-2">
               <p className="text-sm text-gray-400">
-  Most polls are reviewed within 24 hours. We may lightly edit wording for clarity while keeping your question and options as close as possible to your original meaning.
+  Most polls go live within 24 hours. Wording may be lightly edited for clarity while keeping your original meaning.
 </p>
             </div>
 
