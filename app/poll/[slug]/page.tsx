@@ -436,7 +436,7 @@ async function buildShareCardFile({
 }) {
   const canvas = document.createElement("canvas");
   canvas.width = 1200;
-  canvas.height = 1400;
+  canvas.height = 1320;
 
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
@@ -452,7 +452,7 @@ async function buildShareCardFile({
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   ctx.fillStyle = "rgba(255,255,255,0.04)";
-  drawRoundedRect(ctx, 56, 56, 1088, 1288, 34);
+  drawRoundedRect(ctx, 56, 56, 1088, 1208, 34);
   ctx.fill();
 
   ctx.fillStyle = categoryColours.bg;
@@ -468,8 +468,8 @@ async function buildShareCardFile({
   ctx.fillText(poll.category, 124, 117);
 
   if (logo) {
-    ctx.globalAlpha = 0.82;
-    ctx.drawImage(logo, 930, 82, 170, 56);
+    ctx.globalAlpha = 0.88;
+    ctx.drawImage(logo, 892, 72, 208, 68);
     ctx.globalAlpha = 1;
   } else {
     ctx.textAlign = "right";
@@ -524,7 +524,7 @@ async function buildShareCardFile({
     if (isSelected) {
       ctx.font = "700 24px Arial";
       ctx.fillStyle = colour;
-      ctx.fillText("✓ Your vote", 130, rowY + 76);
+      ctx.fillText("✓ My vote", 130, rowY + 76);
     }
 
     ctx.fillStyle = "rgba(255,255,255,0.11)";
@@ -547,12 +547,13 @@ async function buildShareCardFile({
 
   ctx.font = "500 24px Arial";
   ctx.fillStyle = "rgba(229,231,235,0.82)";
-  ctx.fillText(`${totalVotes.toLocaleString()} ${totalVotes === 1 ? "vote" : "votes"}`, 110, 1270);
+  ctx.textAlign = "left";
+  ctx.fillText(`${totalVotes.toLocaleString()} ${totalVotes === 1 ? "vote" : "votes"}`, 110, 1208);
 
   ctx.textAlign = "center";
-  ctx.font = "600 26px Arial";
-  ctx.fillStyle = "rgba(255,255,255,0.68)";
-  ctx.fillText("pollandsee.com", 600, 1314);
+  ctx.font = "600 32px Arial";
+  ctx.fillStyle = "rgba(255,255,255,0.76)";
+  ctx.fillText("pollandsee.com", 600, 1260);
 
   const blob = await new Promise<Blob | null>((resolve) => {
     canvas.toBlob((result) => resolve(result), "image/png");
@@ -684,6 +685,7 @@ function PollCard({
   const [error, setError] = useState<string>("");
   const [shareButtonText, setShareButtonText] = useState("Share");
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [shareMenuDirection, setShareMenuDirection] = useState<"up" | "down">("up");
   const shareMenuRef = useRef<HTMLDivElement | null>(null);
 
   const totalVotes = Object.values(counts).reduce((sum, count) => sum + count, 0);
@@ -713,7 +715,31 @@ function PollCard({
 
   const shareLinkText = `${bundle.poll.question}\n\nVote and see what others think:\n\n${window.location.origin}/poll/${bundle.poll.slug}`;
   const shareImageLinkText = `${window.location.origin}/poll/${bundle.poll.slug}`;
+  const toggleShareMenu = () => {
+    if (!shareMenuOpen && shareMenuRef.current) {
+      const rect = shareMenuRef.current.getBoundingClientRect();
+      const estimatedMenuHeight = 152;
+      const spaceAbove = rect.top;
+      const spaceBelow = window.innerHeight - rect.bottom;
 
+      if (spaceAbove >= estimatedMenuHeight || spaceAbove > spaceBelow) {
+        setShareMenuDirection("up");
+      } else {
+        setShareMenuDirection("down");
+      }
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          shareMenuRef.current?.scrollIntoView({
+            block: "nearest",
+            behavior: "smooth",
+          });
+        });
+      });
+    }
+
+    setShareMenuOpen((current) => !current);
+  };
   const handleSharePollLink = async () => {
     setShareMenuOpen(false);
 
@@ -913,14 +939,18 @@ function PollCard({
             <div className="grid grid-cols-2 gap-2">
               <div ref={shareMenuRef} className="relative">
                 <button
-                  onClick={() => setShareMenuOpen((current) => !current)}
+                 onClick={toggleShareMenu}
                   className="inline-flex h-10 w-full cursor-pointer items-center justify-center rounded-xl bg-white px-3 py-0 text-sm font-medium leading-none text-black transition hover:bg-gray-200"
                 >
                   {shareButtonText}
                 </button>
 
                 {shareMenuOpen ? (
-  <div className="absolute bottom-full left-0 z-20 mb-2 w-full min-w-[220px] overflow-hidden rounded-xl border border-gray-700 bg-gray-900 shadow-xl">
+  <div
+    className={`absolute left-0 z-20 w-full min-w-[220px] overflow-hidden rounded-xl border border-gray-700 bg-gray-900 shadow-xl ${
+      shareMenuDirection === "up" ? "bottom-full mb-2" : "top-full mt-2"
+    }`}
+  >
     <button
       type="button"
       onClick={handleSharePollLink}
