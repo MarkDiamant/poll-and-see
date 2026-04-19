@@ -495,20 +495,25 @@ export default function SubmitPollPage() {
 
             <div className="space-y-2">
               <label className="inline-flex items-center gap-3 text-sm">
-                <input
-                  type="checkbox"
-                  checked={isPrivate}
-                  onChange={(e) => {
-                    const nextChecked = e.target.checked;
-                    setEmailMeLink(nextChecked);
+<input
+  type="checkbox"
+  checked={isPrivate}
+  onChange={(e) => {
+    const nextChecked = e.target.checked;
 
-                    if (!nextChecked && !isPrivate) {
-                      setEmail("");
-                    }
-                  }}
-                  className={checkboxClasses}
-                />
-                <span>Make this poll private</span>
+    setIsPrivate(nextChecked);
+
+    if (nextChecked) {
+      setEmailMeLink(true);
+    }
+
+    if (!nextChecked && !emailMeLink) {
+      setEmail("");
+    }
+  }}
+  className={checkboxClasses}
+/>
+<span>Make this poll private</span>
               </label>
 
               <p className="text-sm text-gray-400 md:text-base">
@@ -519,23 +524,21 @@ export default function SubmitPollPage() {
             <div className="space-y-2">
               <label className="inline-flex items-center gap-3 text-sm">
                 <input
-                  type="checkbox"
-                  checked={emailMeLink}
-                  onChange={(e) => {
-                    const nextChecked = e.target.checked;
-                    setIsPrivate(nextChecked);
+<input
+  type="checkbox"
+  checked={emailMeLink}
+  onChange={(e) => {
+    const nextChecked = e.target.checked;
 
-                    if (nextChecked) {
-                      setEmailMeLink(true);
-                    }
+    setEmailMeLink(nextChecked);
 
-                    if (!nextChecked && !emailMeLink) {
-                      setEmail("");
-                    }
-                  }}
-                  className={checkboxClasses}
-                />
-                <span>Email me the link when my poll goes live</span>
+    if (!nextChecked && !isPrivate) {
+      setEmail("");
+    }
+  }}
+  className={checkboxClasses}
+/>
+<span>Email me the link when my poll goes live</span>
               </label>
             </div>
 
