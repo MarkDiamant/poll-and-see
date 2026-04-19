@@ -390,7 +390,7 @@ export default function SubmitPollPage() {
                 value={question}
                 onChange={(e) => handleQuestionChange(e.target.value)}
                 className={inputClasses}
-                placeholder="e.g. Should school fees come before holidays when money is tight?"
+                placeholder="e.g. A job you love with low pay, or a job you hate with high pay?"
               />
               <p className="mt-1 text-sm text-gray-400 md:text-base">{question.length}/120</p>
             </div>
@@ -528,12 +528,8 @@ export default function SubmitPollPage() {
 
             <div className="space-y-2">
               <p className="text-sm text-gray-400">
-                Most polls are reviewed within 24 hours.
-              </p>
-              <p className="text-sm text-gray-400">
-                Please note: wording may be lightly edited while keeping your question and
-                options as close as possible to your original meaning.
-              </p>
+  Most polls are reviewed within 24 hours. We may lightly edit wording for clarity while keeping your question and options as close as possible to your original meaning.
+</p>
             </div>
 
             <button
