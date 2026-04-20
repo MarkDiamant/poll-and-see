@@ -875,9 +875,30 @@ function PollCard({
   const hasImageOptions = bundle.options.some((option) => Boolean(option.image_url));
 
   useEffect(() => {
-    setVoted(hasLocalVote(bundle.poll.id));
-    setSelected(getLocalSelectedOption(bundle.poll.id));
-    setCounts(bundle.voteCounts);
+    const votedLocally = hasLocalVote(bundle.poll.id);
+    const selectedLocally = getLocalSelectedOption(bundle.poll.id);
+
+    setVoted(votedLocally);
+    setSelected(selectedLocally);
+
+    setCounts((current) => {
+      if (!votedLocally || selectedLocally === null) {
+        return bundle.voteCounts;
+      }
+
+      const mergedCounts: VoteCounts = { ...bundle.voteCounts };
+
+      Object.keys(current).forEach((key) => {
+        const optionId = Number(key);
+        mergedCounts[optionId] = Math.max(
+          bundle.voteCounts[optionId] || 0,
+          current[optionId] || 0
+        );
+      });
+
+      return mergedCounts;
+    });
+
     setError("");
     setShareButtonText("Share");
     setShareMenuOpen(false);
