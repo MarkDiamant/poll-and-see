@@ -199,7 +199,7 @@ export default function SubmitPollPage() {
   const textareaClasses =
     "w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500";
   const checkboxClasses =
-    "h-5 w-5 rounded border-gray-600 bg-gray-900 text-blue-600 focus:ring-blue-500";
+   "h-5 w-5 shrink-0 rounded border-gray-600 bg-gray-900 text-blue-600 focus:ring-blue-500";
   const labelClasses = "block text-sm font-normal text-white mb-2";
   const checkboxLabelClasses = "inline-flex items-center gap-3 text-sm font-normal text-white";
   const helperTextClasses = "text-sm text-gray-400 md:text-base";
