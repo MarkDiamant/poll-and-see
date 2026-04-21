@@ -1661,10 +1661,11 @@ export default function PollPage() {
           .eq("slug", slug)
           .single();
 
-        if (error || !data) {
-          console.error("Poll page initial poll query failed", error);
-          return;
-        }
+      if (error || !data) {
+        console.error("Poll page initial poll query failed", error);
+        setPolls([]);
+        return;
+      }
 
         const storedAnchorCategory = sessionStorage.getItem(getPollFlowAnchorCategoryKey(slug));
         const resolvedAnchorCategory = storedAnchorCategory || data.category;

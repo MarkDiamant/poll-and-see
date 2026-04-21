@@ -15,6 +15,18 @@ type PollRow = {
   created_at: string | null;
 };
 
+type PollSubmissionRow = {
+  id: number;
+  email: string | null;
+  question: string;
+  description: string | null;
+  category: string | null;
+  options: string[] | null;
+  option_image_urls: string[] | null;
+  is_private: boolean | null;
+  created_at: string | null;
+};
+
 type EmbedStatus = "live" | "closed" | "inactive";
 
 const ADMIN_KEY_STORAGE = "pollandsee-admin-key";
@@ -63,14 +75,27 @@ function buildIframeCode(embedToken: string | null) {
   return `<iframe src="${SITE_URL}/embed/${embedToken}" width="100%" height="720" style="border:0; overflow:hidden;" loading="lazy" allowfullscreen></iframe>`;
 }
 
+function createSlugFromQuestion(question: string) {
+  return question
+    .toLowerCase()
+    .trim()
+    .replace(/['’]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
 export default function AdminPollsPage() {
   const [adminKeyInput, setAdminKeyInput] = useState("");
   const [adminKey, setAdminKey] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [polls, setPolls] = useState<PollRow[]>([]);
+  const [submissions, setSubmissions] = useState<PollSubmissionRow[]>([]);
   const [slugEdits, setSlugEdits] = useState<Record<number, string>>({});
+  const [submissionSlugEdits, setSubmissionSlugEdits] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(false);
+  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [savingKey, setSavingKey] = useState<string>("");
   const [error, setError] = useState("");
   const [copiedKey, setCopiedKey] = useState("");
@@ -133,6 +158,47 @@ export default function AdminPollsPage() {
     void loadPolls();
   }, [adminKey, searchTerm]);
 
+  useEffect(() => {
+    if (!adminKey) return;
+
+    const loadSubmissions = async () => {
+      setLoadingSubmissions(true);
+      setError("");
+
+      try {
+        const response = await fetch("/api/admin/poll-submissions", {
+          headers: {
+            "x-admin-key": adminKey,
+          },
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Could not load submissions.");
+        }
+
+        const nextSubmissions = data.submissions || [];
+        setSubmissions(nextSubmissions);
+        setSubmissionSlugEdits(
+          Object.fromEntries(
+            nextSubmissions.map((submission: PollSubmissionRow) => [
+              submission.id,
+              createSlugFromQuestion(submission.question),
+            ])
+          )
+        );
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not load submissions.");
+        setSubmissions([]);
+      } finally {
+        setLoadingSubmissions(false);
+      }
+    };
+
+    void loadSubmissions();
+  }, [adminKey]);
+
   const handleUnlock = () => {
     const trimmed = adminKeyInput.trim();
     if (!trimmed) return;
@@ -147,7 +213,9 @@ export default function AdminPollsPage() {
     setAdminKey("");
     setAdminKeyInput("");
     setPolls([]);
+    setSubmissions([]);
     setSlugEdits({});
+    setSubmissionSlugEdits({});
     setError("");
   };
 
@@ -171,9 +239,17 @@ export default function AdminPollsPage() {
         throw new Error(data.error || "Could not update poll.");
       }
 
-      setPolls((current) =>
-        current.map((poll) => (poll.id === pollId ? { ...poll, ...data.poll } : poll))
-      );
+      setPolls((current) => {
+        let next = current.map((poll) => (poll.id === pollId ? { ...poll, ...data.poll } : poll));
+
+        if (data.poll?.featured) {
+          next = next.map((poll) =>
+            poll.id === pollId ? poll : { ...poll, featured: false }
+          );
+        }
+
+        return next;
+      });
 
       if (typeof data.poll?.slug === "string") {
         setSlugEdits((current) => ({
@@ -183,6 +259,63 @@ export default function AdminPollsPage() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not update poll.");
+    } finally {
+      setSavingKey("");
+    }
+  };
+
+  const approveSubmission = async (submissionId: number) => {
+    setSavingKey(`submission-approve:${submissionId}`);
+    setError("");
+
+    try {
+      const response = await fetch(`/api/admin/poll-submissions/${submissionId}/approve`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": adminKey,
+        },
+        body: JSON.stringify({
+          slug: (submissionSlugEdits[submissionId] || "").trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Could not approve submission.");
+      }
+
+      setSubmissions((current) => current.filter((submission) => submission.id !== submissionId));
+      setPolls((current) => [data.poll, ...current]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not approve submission.");
+    } finally {
+      setSavingKey("");
+    }
+  };
+
+  const deleteSubmission = async (submissionId: number) => {
+    setSavingKey(`submission-delete:${submissionId}`);
+    setError("");
+
+    try {
+      const response = await fetch(`/api/admin/poll-submissions/${submissionId}`, {
+        method: "DELETE",
+        headers: {
+          "x-admin-key": adminKey,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Could not delete submission.");
+      }
+
+      setSubmissions((current) => current.filter((submission) => submission.id !== submissionId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not delete submission.");
     } finally {
       setSavingKey("");
     }
@@ -209,6 +342,14 @@ export default function AdminPollsPage() {
       return bTime - aTime;
     });
   }, [polls]);
+
+  const sortedSubmissions = useMemo(() => {
+    return [...submissions].sort((a, b) => {
+      const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return bTime - aTime;
+    });
+  }, [submissions]);
 
   if (!adminKey) {
     return (
@@ -278,8 +419,12 @@ export default function AdminPollsPage() {
           </div>
         ) : null}
 
+        <div className="mb-3 text-sm text-gray-400">
+          Scroll sideways to see all admin columns.
+        </div>
+
         <div className="overflow-x-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg">
-          <table className="min-w-full text-sm">
+          <table className="min-w-[2200px] text-sm">
             <thead className="bg-gray-900/70 text-left text-gray-300">
               <tr>
                 <th className="px-4 py-3 font-medium">Question</th>
@@ -312,14 +457,17 @@ export default function AdminPollsPage() {
               ) : null}
 
               {!loading &&
-                sortedPolls.map((poll) => {
+                sortedPolls.map((poll, index) => {
                   const pollUrl = buildPollUrl(poll.slug);
                   const embedUrl = buildEmbedUrl(poll.embed_token);
                   const iframeCode = buildIframeCode(poll.embed_token);
                   const embedStatus = getEmbedStatus(poll);
 
                   return (
-                    <tr key={poll.id} className="border-t border-gray-700 align-top">
+                    <tr
+                      key={poll.id}
+                      className={`border-t border-gray-700 align-top ${index % 2 === 0 ? "bg-gray-800" : "bg-gray-900/35"}`}
+                    >
                       <td className="px-4 py-4">
                         <div className="min-w-[260px]">
                           <p className="font-medium text-white">{poll.question}</p>
@@ -490,6 +638,131 @@ export default function AdminPollsPage() {
                 })}
             </tbody>
           </table>
+        </div>
+
+        <div className="mt-10">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-semibold">Poll submissions</h2>
+              <p className="mt-1 text-sm text-gray-300">
+                Approve submissions directly into live polls.
+              </p>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg">
+            <table className="min-w-[1400px] text-sm">
+              <thead className="bg-gray-900/70 text-left text-gray-300">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Question</th>
+                  <th className="px-4 py-3 font-medium">Slug</th>
+                  <th className="px-4 py-3 font-medium">Details</th>
+                  <th className="px-4 py-3 font-medium">Options</th>
+                  <th className="px-4 py-3 font-medium">Actions</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {loadingSubmissions ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-6 text-center text-gray-300">
+                      Loading submissions...
+                    </td>
+                  </tr>
+                ) : null}
+
+                {!loadingSubmissions && sortedSubmissions.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-6 text-center text-gray-300">
+                      No submissions waiting.
+                    </td>
+                  </tr>
+                ) : null}
+
+                {!loadingSubmissions &&
+                  sortedSubmissions.map((submission, index) => (
+                    <tr
+                      key={submission.id}
+                      className={`border-t border-gray-700 align-top ${index % 2 === 0 ? "bg-gray-800" : "bg-gray-900/35"}`}
+                    >
+                      <td className="px-4 py-4">
+                        <div className="min-w-[260px]">
+                          <p className="font-medium text-white">{submission.question}</p>
+                          <p className="mt-1 text-xs text-gray-400">
+                            Submission ID {submission.id}
+                            {submission.created_at
+                              ? ` • ${new Date(submission.created_at).toLocaleString()}`
+                              : ""}
+                          </p>
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-4">
+                        <div className="min-w-[220px] space-y-2">
+                          <input
+                            type="text"
+                            value={submissionSlugEdits[submission.id] ?? ""}
+                            onChange={(event) =>
+                              setSubmissionSlugEdits((current) => ({
+                                ...current,
+                                [submission.id]: event.target.value,
+                              }))
+                            }
+                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                          />
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-4">
+                        <div className="min-w-[260px] space-y-2 text-xs text-gray-300">
+                          <p><span className="text-gray-400">Category:</span> {submission.category || "General"}</p>
+                          <p><span className="text-gray-400">Private:</span> {submission.is_private ? "Yes" : "No"}</p>
+                          <p><span className="text-gray-400">Email:</span> {submission.email || "—"}</p>
+                          <p className="text-gray-300">{submission.description || "No description"}</p>
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-4">
+                        <div className="min-w-[320px] space-y-2">
+                          {(submission.options || []).map((option, optionIndex) => (
+                            <div key={`${submission.id}-${optionIndex}`} className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-gray-300">
+                              <div>{option}</div>
+                              {submission.option_image_urls?.[optionIndex] ? (
+                                <div className="mt-1 break-all text-gray-500">
+                                  {submission.option_image_urls[optionIndex]}
+                                </div>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-4">
+                        <div className="flex min-w-[140px] flex-col gap-2">
+                          <button
+                            type="button"
+                            onClick={() => void approveSubmission(submission.id)}
+                            disabled={savingKey === `submission-approve:${submission.id}`}
+                            className="rounded-lg bg-white px-3 py-2 text-xs font-medium text-black transition hover:bg-gray-200 disabled:opacity-60"
+                          >
+                            Publish
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => void deleteSubmission(submission.id)}
+                            disabled={savingKey === `submission-delete:${submission.id}`}
+                            className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800 disabled:opacity-60"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
     </main>
