@@ -41,8 +41,8 @@ const OPTION_COLOURS = [
 ];
 
 const SAME_POLL_CLICK_GUARD_MS = 400;
-const BASE_CARD_WIDTH = 760;
-const COMPACT_BREAKPOINT = 430;
+const BASE_CARD_WIDTH = 520;
+const COMPACT_BREAKPOINT = 360;
 function canVoteNow(pollId: number): string | null {
   const last = Number(localStorage.getItem(`poll-last-click-${pollId}`) || 0);
   if (Date.now() - last < SAME_POLL_CLICK_GUARD_MS) return "Please try again.";
@@ -229,7 +229,7 @@ const isCompactMode = availableWidth < COMPACT_BREAKPOINT;
 const scale = useMemo(() => {
   if (isCompactMode) return 1;
   const next = availableWidth / BASE_CARD_WIDTH;
-  return Math.min(1, Math.max(0.18, next));
+  return Math.min(1, Math.max(0.42, next));
 }, [availableWidth, isCompactMode]);
 
   useEffect(() => {

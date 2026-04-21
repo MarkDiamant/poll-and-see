@@ -74,13 +74,13 @@ function estimateEmbedHeight(poll: PollRow) {
   if (descriptionLength > 0) height += 30;
   if (descriptionLength > 120) height += 20;
 
-  return Math.max(280, Math.min(520, height));
+  return Math.max(280, Math.min(460, height));
 }
 
 function buildIframeCode(embedToken: string | null, poll?: PollRow) {
   if (!embedToken) return "";
 
-  const height = poll ? estimateEmbedHeight(poll) : 360;
+  const height = poll ? estimateEmbedHeight(poll) : 380;
 
   return `<iframe src="${SITE_URL}/embed/${embedToken}" width="100%" height="${height}" style="border:0; overflow:hidden; background:transparent; display:block;" loading="lazy" scrolling="no"></iframe>`;
 }
