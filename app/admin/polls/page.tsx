@@ -77,12 +77,10 @@ function estimateEmbedHeight(poll: PollRow) {
   return Math.max(280, Math.min(460, height));
 }
 
-function buildIframeCode(embedToken: string | null, poll?: PollRow) {
+function buildIframeCode(embedToken: string | null) {
   if (!embedToken) return "";
 
-  const height = poll ? estimateEmbedHeight(poll) : 380;
-
-  return `<iframe src="${SITE_URL}/embed/${embedToken}" width="100%" height="${height}" style="border:0; overflow:hidden; background:transparent; display:block;" loading="lazy" scrolling="no"></iframe>`;
+  return `<iframe src="${SITE_URL}/embed/${embedToken}" width="100%" height="100%" style="border:0; display:block; overflow:hidden; background:transparent;" loading="lazy" scrolling="no"></iframe>`;
 }
 
 function isValidSlug(slug: string) {
@@ -409,7 +407,7 @@ export default function AdminPollsPage() {
                 sortedPolls.map((poll, index) => {
                   const pollUrl = buildPollUrl(poll.slug);
                   const embedUrl = buildEmbedUrl(poll.embed_token);
-                  const iframeCode = buildIframeCode(poll.embed_token, poll);
+                  const iframeCode = buildIframeCode(poll.embed_token);
                   const embedStatus = getEmbedStatus(poll);
                   const slugError = getSlugError(slugEdits[poll.id] || "", poll.id, allSlugRecords);
 
