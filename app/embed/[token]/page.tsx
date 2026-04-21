@@ -188,7 +188,7 @@ function EmbedFooter() {
         <img
           src="/favicon.ico"
           alt="Poll & See"
-          className="h-[13px] w-[13px] opacity-80"
+          className="h-[14px] w-[14px] opacity-95"
         />
         <span>Powered by Poll &amp; See</span>
       </Link>
