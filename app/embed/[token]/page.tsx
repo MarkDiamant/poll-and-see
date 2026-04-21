@@ -418,16 +418,21 @@ export default function EmbedPollPage() {
       <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 px-4 py-5 text-white">
         <div className="mx-auto max-w-2xl rounded-2xl border border-gray-800 bg-gray-900/80 p-6 text-center">
           <p className="text-base font-medium text-white">This poll is not currently active.</p>
-          <div className="mt-5">
-            <Link
-              href="https://www.pollandsee.com"
-              target="_blank"
-              rel="noreferrer"
-              className="text-sm text-gray-400 transition hover:text-white"
-            >
-              Powered by Poll &amp; See
-            </Link>
-          </div>
+        <div className="mt-5">
+  <Link
+    href="https://www.pollandsee.com"
+    target="_blank"
+    rel="noreferrer"
+    className="flex items-center justify-center gap-2 text-sm text-gray-400 transition hover:text-white"
+  >
+    <img
+      src="/favicon.ico"
+      alt="Poll & See"
+      className="h-4 w-4 opacity-95 brightness-110"
+    />
+    <span>Powered by Poll &amp; See</span>
+  </Link>
+</div>
         </div>
       </main>
     );
@@ -504,18 +509,18 @@ export default function EmbedPollPage() {
 </>
           )}
 
-          <div className="mt-6 border-t border-gray-700 pt-4 text-center">
+          <div className="mt-8 border-t border-gray-700 pt-4 text-center">
 <Link
   href="https://www.pollandsee.com"
   target="_blank"
   rel="noreferrer"
   className="flex items-center justify-center gap-2 text-sm text-gray-400 transition hover:text-white"
 >
-  <img
-    src="/favicon.ico"
-    alt="Poll & See"
-    className="h-3.5 w-3.5 opacity-80"
-  />
+ <img
+  src="/favicon.ico"
+  alt="Poll & See"
+  className="h-4 w-4 opacity-95 brightness-110"
+/>
   <span>Powered by Poll &amp; See</span>
 </Link>
           </div>
