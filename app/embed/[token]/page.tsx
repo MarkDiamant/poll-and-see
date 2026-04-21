@@ -513,7 +513,7 @@ const scaledCardStyle = isCompactMode
   : ({
       width: `${BASE_CARD_WIDTH}px`,
       transform: `scale(${scale})`,
-      transformOrigin: "top left",
+      transformOrigin: "bottom left",
     } as const);
 
   if (loading) {
