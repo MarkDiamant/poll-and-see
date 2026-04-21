@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -41,6 +41,7 @@ const OPTION_COLOURS = [
 ];
 
 const SAME_POLL_CLICK_GUARD_MS = 400;
+const BASE_CARD_WIDTH = 760;
 
 function canVoteNow(pollId: number): string | null {
   const last = Number(localStorage.getItem(`poll-last-click-${pollId}`) || 0);
@@ -127,7 +128,7 @@ function ResultOptions({
         return (
           <div
             key={option.id}
-            className={option.image_url ? "rounded-xl md:max-w-[480px]" : "rounded-xl"}
+            className="rounded-xl"
             style={{
               border: isSelected ? `3px solid ${colour}` : "3px solid transparent",
               boxShadow: isSelected ? `0 0 0 1px ${colour}33, 0 0 16px ${colour}18` : "none",
@@ -135,7 +136,7 @@ function ResultOptions({
           >
             <div className="px-3 pt-3">
               {option.image_url ? (
-                <div className="mb-3 overflow-hidden rounded-xl bg-gray-900 md:max-w-[480px]">
+                <div className="mb-3 overflow-hidden rounded-xl bg-gray-900">
                   <img
                     src={option.image_url}
                     alt={option.option_text}
@@ -209,13 +210,46 @@ export default function EmbedPollPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
+  const outerRef = useRef<HTMLDivElement | null>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+
+  const [availableWidth, setAvailableWidth] = useState(BASE_CARD_WIDTH);
+  const [cardHeight, setCardHeight] = useState(0);
+
   const totalVotes = useMemo(
     () => Object.values(counts).reduce((sum, count) => sum + count, 0),
     [counts]
   );
 
-  const resultsOnly = !poll?.embed_voting_enabled;
+  const resultsOnly = Boolean(poll) && poll.embed_active && !poll.embed_voting_enabled;
   const hasImageOptions = options.some((option) => Boolean(option.image_url));
+
+  const scale = useMemo(() => {
+    const next = availableWidth / BASE_CARD_WIDTH;
+    return Math.min(1, Math.max(0.55, next));
+  }, [availableWidth]);
+
+  useEffect(() => {
+    document.body.style.margin = "0";
+    document.body.style.padding = "0";
+    document.body.style.background = "transparent";
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.margin = "0";
+    document.documentElement.style.padding = "0";
+    document.documentElement.style.background = "transparent";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.margin = "";
+      document.body.style.padding = "";
+      document.body.style.background = "";
+      document.body.style.overflow = "";
+      document.documentElement.style.margin = "";
+      document.documentElement.style.padding = "";
+      document.documentElement.style.background = "";
+      document.documentElement.style.overflow = "";
+    };
+  }, []);
 
   useEffect(() => {
     const loadPoll = async () => {
@@ -341,35 +375,59 @@ export default function EmbedPollPage() {
   }, [poll, counts]);
 
   useEffect(() => {
-    const updateEmbedHeight = () => {
-      if (typeof window === "undefined") return;
+    if (!outerRef.current) return;
 
-      const card = document.getElementById("pollandsee-embed-card");
-      const height = card
-        ? Math.ceil(card.getBoundingClientRect().height + 16)
-        : Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
+    const element = outerRef.current;
 
-      if (window.parent !== window) {
-        window.parent.postMessage(
-          {
-            type: "pollandsee:embed-height",
-            height,
-          },
-          "*"
-        );
-      }
+    const updateWidth = () => {
+      const nextWidth = element.getBoundingClientRect().width || BASE_CARD_WIDTH;
+      setAvailableWidth(nextWidth);
     };
 
-    updateEmbedHeight();
+    updateWidth();
 
-    const timeout = setTimeout(updateEmbedHeight, 150);
-    window.addEventListener("resize", updateEmbedHeight);
+    const observer = new ResizeObserver(() => {
+      updateWidth();
+    });
 
-    return () => {
-      clearTimeout(timeout);
-      window.removeEventListener("resize", updateEmbedHeight);
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!cardRef.current) return;
+
+    const element = cardRef.current;
+
+    const updateHeight = () => {
+      setCardHeight(element.scrollHeight);
     };
-  }, [loading, poll, options, counts, voted, error]);
+
+    updateHeight();
+
+    const observer = new ResizeObserver(() => {
+      updateHeight();
+    });
+
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, [loading, poll, options, counts, voted, error, resultsOnly, scale]);
+
+  useEffect(() => {
+    const scaledHeight = Math.ceil(cardHeight * scale);
+
+    if (window.parent !== window) {
+      window.parent.postMessage(
+        {
+          type: "pollandsee:embed-height",
+          height: scaledHeight,
+        },
+        "*"
+      );
+    }
+  }, [cardHeight, scale]);
 
   const handleVote = async (optionId: number) => {
     if (!poll) return;
@@ -423,14 +481,27 @@ export default function EmbedPollPage() {
     }
   };
 
+  const scaledWrapperStyle = {
+    height: cardHeight ? `${Math.ceil(cardHeight * scale)}px` : "0px",
+  };
+
+  const scaledCardStyle = {
+    width: `${BASE_CARD_WIDTH}px`,
+    transform: `scale(${scale})`,
+    transformOrigin: "top left",
+  } as const;
+
   if (loading) {
     return (
-      <main className="w-full overflow-x-hidden bg-transparent px-2 py-2 text-white">
-        <div
-          id="pollandsee-embed-card"
-          className="mx-auto w-full max-w-2xl rounded-2xl border border-gray-800 bg-gray-900/95 p-6"
-        >
-          <p className="text-sm text-gray-300">Loading poll...</p>
+      <main className="m-0 w-full overflow-hidden bg-transparent p-0 text-white">
+        <div ref={outerRef} className="w-full overflow-hidden bg-transparent">
+          <div style={scaledWrapperStyle} className="relative w-full overflow-hidden">
+            <div ref={cardRef} style={scaledCardStyle}>
+              <div className="w-full overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/95 p-6">
+                <p className="text-sm text-gray-300">Loading poll...</p>
+              </div>
+            </div>
+          </div>
         </div>
       </main>
     );
@@ -438,95 +509,99 @@ export default function EmbedPollPage() {
 
   if (!poll || !poll.is_embeddable || !poll.embed_active) {
     return (
-      <main className="w-full overflow-x-hidden bg-transparent px-2 py-2 text-white">
-        <div
-          id="pollandsee-embed-card"
-          className="mx-auto w-full max-w-2xl rounded-2xl border border-gray-800 bg-gray-900/95 p-6 text-center"
-        >
-          <p className="text-base font-medium text-white">This poll is not currently active.</p>
-          <EmbedFooter />
+      <main className="m-0 w-full overflow-hidden bg-transparent p-0 text-white">
+        <div ref={outerRef} className="w-full overflow-hidden bg-transparent">
+          <div style={scaledWrapperStyle} className="relative w-full overflow-hidden">
+            <div ref={cardRef} style={scaledCardStyle}>
+              <div className="w-full overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/95 p-6 text-center">
+                <p className="text-base font-medium text-white">This poll is not currently active.</p>
+                <EmbedFooter />
+              </div>
+            </div>
+          </div>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="w-full overflow-x-hidden bg-transparent px-2 py-2 text-white">
-      <section className="mx-auto w-full max-w-2xl">
-        <div
-          id="pollandsee-embed-card"
-          className="w-full overflow-hidden rounded-2xl border border-gray-700 bg-gray-800/95 p-5 md:p-6"
-        >
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <div></div>
-            <span className="text-sm text-gray-400">
-              {totalVotes.toLocaleString()} {totalVotes === 1 ? "vote" : "votes"}
-            </span>
-          </div>
+    <main className="m-0 w-full overflow-hidden bg-transparent p-0 text-white">
+      <div ref={outerRef} className="w-full overflow-hidden bg-transparent">
+        <div style={scaledWrapperStyle} className="relative w-full overflow-hidden">
+          <div ref={cardRef} style={scaledCardStyle}>
+            <div className="w-full overflow-hidden rounded-2xl border border-gray-700 bg-gray-800/95 p-6">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div></div>
+                <span className="text-sm text-gray-400">
+                  {totalVotes.toLocaleString()} {totalVotes === 1 ? "vote" : "votes"}
+                </span>
+              </div>
 
-          <h1 className="mb-2 text-2xl font-bold text-white break-words">{poll.question}</h1>
+              <h1 className="mb-2 text-2xl font-bold text-white break-words">{poll.question}</h1>
 
-          {poll.description ? (
-            <p className="mb-4 text-gray-300 break-words">{poll.description}</p>
-          ) : null}
-
-          {!voted && !resultsOnly ? (
-            <div className="flex flex-col gap-3">
-              {hasImageOptions ? (
-                <p className="mb-[8px] mt-[6px] text-sm text-gray-300 opacity-80">
-                  Tap an image to vote
-                </p>
+              {poll.description ? (
+                <p className="mb-4 text-gray-300 break-words">{poll.description}</p>
               ) : null}
 
-              {options.map((option) => (
-                <button
-                  key={option.id}
-                  onClick={() => handleVote(option.id)}
-                  className={
-                    option.image_url
-                      ? "w-full cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600"
-                      : "w-full cursor-pointer overflow-hidden rounded-xl bg-gray-700 px-4 py-3 text-left text-white transition hover:bg-gray-600"
-                  }
-                >
-                  {option.image_url ? (
-                    <>
-                      <div className="overflow-hidden bg-gray-900">
-                        <img
-                          src={option.image_url}
-                          alt={option.option_text}
-                          loading="lazy"
-                          width={1200}
-                          height={675}
-                          className="aspect-square h-auto w-full object-contain"
-                        />
-                      </div>
-                      <div className="px-4 py-3 break-words">{option.option_text}</div>
-                    </>
-                  ) : (
-                    <span className="break-words">{option.option_text}</span>
-                  )}
-                </button>
-              ))}
+              {!voted && !resultsOnly ? (
+                <div className="flex flex-col gap-3">
+                  {hasImageOptions ? (
+                    <p className="mb-[8px] mt-[6px] text-sm text-gray-300 opacity-80">
+                      Tap an image to vote
+                    </p>
+                  ) : null}
 
-              {error ? <p className="text-sm text-red-300">{error}</p> : null}
-            </div>
-          ) : (
-            <>
-              <ResultOptions options={options} voteCounts={counts} selectedOptionId={selected} />
+                  {options.map((option) => (
+                    <button
+                      key={option.id}
+                      onClick={() => handleVote(option.id)}
+                      className={
+                        option.image_url
+                          ? "w-full cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600"
+                          : "w-full cursor-pointer overflow-hidden rounded-xl bg-gray-700 px-4 py-3 text-left text-white transition hover:bg-gray-600"
+                      }
+                    >
+                      {option.image_url ? (
+                        <>
+                          <div className="overflow-hidden bg-gray-900">
+                            <img
+                              src={option.image_url}
+                              alt={option.option_text}
+                              loading="lazy"
+                              width={1200}
+                              height={675}
+                              className="aspect-square h-auto w-full object-contain"
+                            />
+                          </div>
+                          <div className="px-4 py-3 break-words">{option.option_text}</div>
+                        </>
+                      ) : (
+                        <span className="break-words">{option.option_text}</span>
+                      )}
+                    </button>
+                  ))}
 
-              {resultsOnly ? (
-                <div className="mt-4 rounded-xl border border-gray-700 bg-gray-900/70 px-4 py-3 text-center text-sm text-gray-300">
-                  Poll closed. Final results shown above.
+                  {error ? <p className="text-sm text-red-300">{error}</p> : null}
                 </div>
-              ) : null}
+              ) : (
+                <>
+                  <ResultOptions options={options} voteCounts={counts} selectedOptionId={selected} />
 
-              {error ? <p className="pt-3 text-sm text-red-300">{error}</p> : null}
-            </>
-          )}
+                  {resultsOnly ? (
+                    <div className="mt-4 rounded-xl border border-gray-700 bg-gray-900/70 px-4 py-3 text-center text-sm text-gray-300">
+                      Poll closed. Final results shown above.
+                    </div>
+                  ) : null}
 
-          <EmbedFooter />
+                  {error ? <p className="pt-3 text-sm text-red-300">{error}</p> : null}
+                </>
+              )}
+
+              <EmbedFooter />
+            </div>
+          </div>
         </div>
-      </section>
+      </div>
     </main>
   );
 }
