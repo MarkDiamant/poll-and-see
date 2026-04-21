@@ -176,6 +176,7 @@ function ResultOptions({
     </div>
   );
 }
+
 function EmbedFooter() {
   return (
     <div className="mt-4 border-t border-gray-700 pt-4 text-center">
@@ -195,6 +196,7 @@ function EmbedFooter() {
     </div>
   );
 }
+
 export default function EmbedPollPage() {
   const params = useParams();
   const token = String(params.token);
@@ -342,10 +344,10 @@ export default function EmbedPollPage() {
     const updateEmbedHeight = () => {
       if (typeof window === "undefined") return;
 
-      const height = Math.max(
-        document.documentElement.scrollHeight,
-        document.body.scrollHeight
-      );
+      const card = document.getElementById("pollandsee-embed-card");
+      const height = card
+        ? Math.ceil(card.getBoundingClientRect().height + 16)
+        : Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
 
       if (window.parent !== window) {
         window.parent.postMessage(
@@ -423,8 +425,11 @@ export default function EmbedPollPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 px-4 py-5 text-white">
-        <div className="mx-auto max-w-2xl rounded-2xl border border-gray-800 bg-gray-900/80 p-6">
+      <main className="w-full overflow-x-hidden bg-transparent px-2 py-2 text-white">
+        <div
+          id="pollandsee-embed-card"
+          className="mx-auto w-full max-w-2xl rounded-2xl border border-gray-800 bg-gray-900/95 p-6"
+        >
           <p className="text-sm text-gray-300">Loading poll...</p>
         </div>
       </main>
@@ -433,19 +438,25 @@ export default function EmbedPollPage() {
 
   if (!poll || !poll.is_embeddable || !poll.embed_active) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 px-4 py-5 text-white">
-        <div className="mx-auto max-w-2xl rounded-2xl border border-gray-800 bg-gray-900/80 p-6 text-center">
+      <main className="w-full overflow-x-hidden bg-transparent px-2 py-2 text-white">
+        <div
+          id="pollandsee-embed-card"
+          className="mx-auto w-full max-w-2xl rounded-2xl border border-gray-800 bg-gray-900/95 p-6 text-center"
+        >
           <p className="text-base font-medium text-white">This poll is not currently active.</p>
-        <EmbedFooter />
+          <EmbedFooter />
         </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 px-4 py-5 text-white">
-      <section className="mx-auto max-w-2xl">
-        <div className="overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 p-5 md:p-6">
+    <main className="w-full overflow-x-hidden bg-transparent px-2 py-2 text-white">
+      <section className="mx-auto w-full max-w-2xl">
+        <div
+          id="pollandsee-embed-card"
+          className="w-full overflow-hidden rounded-2xl border border-gray-700 bg-gray-800/95 p-5 md:p-6"
+        >
           <div className="mb-3 flex items-center justify-between gap-3">
             <div></div>
             <span className="text-sm text-gray-400">
@@ -453,10 +464,10 @@ export default function EmbedPollPage() {
             </span>
           </div>
 
-          <h1 className="mb-2 text-2xl font-bold text-white">{poll.question}</h1>
+          <h1 className="mb-2 text-2xl font-bold text-white break-words">{poll.question}</h1>
 
           {poll.description ? (
-            <p className="mb-4 text-gray-300">{poll.description}</p>
+            <p className="mb-4 text-gray-300 break-words">{poll.description}</p>
           ) : null}
 
           {!voted && !resultsOnly ? (
@@ -473,8 +484,8 @@ export default function EmbedPollPage() {
                   onClick={() => handleVote(option.id)}
                   className={
                     option.image_url
-                      ? "cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600 md:max-w-[480px]"
-                      : "cursor-pointer overflow-hidden rounded-xl bg-gray-700 px-4 py-3 text-left text-white transition hover:bg-gray-600"
+                      ? "w-full cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600"
+                      : "w-full cursor-pointer overflow-hidden rounded-xl bg-gray-700 px-4 py-3 text-left text-white transition hover:bg-gray-600"
                   }
                 >
                   {option.image_url ? (
@@ -489,10 +500,10 @@ export default function EmbedPollPage() {
                           className="aspect-square h-auto w-full object-contain"
                         />
                       </div>
-                      <div className="px-4 py-3">{option.option_text}</div>
+                      <div className="px-4 py-3 break-words">{option.option_text}</div>
                     </>
                   ) : (
-                    option.option_text
+                    <span className="break-words">{option.option_text}</span>
                   )}
                 </button>
               ))}
@@ -501,21 +512,21 @@ export default function EmbedPollPage() {
             </div>
           ) : (
             <>
-  <ResultOptions options={options} voteCounts={counts} selectedOptionId={selected} />
+              <ResultOptions options={options} voteCounts={counts} selectedOptionId={selected} />
 
-  {resultsOnly ? (
-    <div className="mt-4 rounded-xl border border-gray-700 bg-gray-900/70 px-4 py-3 text-center text-sm text-gray-300">
-      Poll closed. Final results shown above.
-    </div>
-  ) : null}
+              {resultsOnly ? (
+                <div className="mt-4 rounded-xl border border-gray-700 bg-gray-900/70 px-4 py-3 text-center text-sm text-gray-300">
+                  Poll closed. Final results shown above.
+                </div>
+              ) : null}
 
-  {error ? <p className="pt-3 text-sm text-red-300">{error}</p> : null}
-</>
+              {error ? <p className="pt-3 text-sm text-red-300">{error}</p> : null}
+            </>
           )}
- 
+
           <EmbedFooter />
         </div>
       </section>
     </main>
-     );
+  );
 }

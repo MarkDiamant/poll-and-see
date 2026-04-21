@@ -8,6 +8,7 @@ type PollRow = {
   question: string;
   description: string | null;
   slug: string | null;
+  category: string | null;
   is_private: boolean | null;
   featured: boolean | null;
   embed_token: string | null;
@@ -355,8 +356,8 @@ export default function AdminPollsPage() {
           </div>
         ) : null}
 
-        <div className="overflow-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg max-h-[75vh]">
-          <table className="min-w-[1750px] text-sm">
+        <div className="overflow-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg max-h-[78vh]">
+          <table className="min-w-[1280px] text-sm">
             <thead className="sticky top-0 z-10 bg-gray-900/95 text-left text-gray-300">
               <tr>
                 <th className="px-4 py-3 font-medium">Question / Description</th>
@@ -364,7 +365,6 @@ export default function AdminPollsPage() {
                 <th className="px-4 py-3 font-medium">Private</th>
                 <th className="px-4 py-3 font-medium">Featured</th>
                 <th className="px-4 py-3 font-medium">Embed</th>
-                <th className="px-4 py-3 font-medium">Links</th>
                 <th className="px-4 py-3 font-medium">Actions</th>
               </tr>
             </thead>
@@ -372,7 +372,7 @@ export default function AdminPollsPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-6 text-center text-gray-300">
+                  <td colSpan={6} className="px-4 py-6 text-center text-gray-300">
                     Loading polls...
                   </td>
                 </tr>
@@ -380,7 +380,7 @@ export default function AdminPollsPage() {
 
               {!loading && sortedPolls.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-6 text-center text-gray-300">
+                  <td colSpan={6} className="px-4 py-6 text-center text-gray-300">
                     No polls found.
                   </td>
                 </tr>
@@ -402,7 +402,7 @@ export default function AdminPollsPage() {
                       }`}
                     >
                       <td className="px-4 py-4">
-                        <div className="min-w-[360px] space-y-2">
+                        <div className="min-w-[300px] max-w-[340px] space-y-2">
                           <input
                             type="text"
                             value={questionEdits[poll.id] ?? ""}
@@ -425,7 +425,7 @@ export default function AdminPollsPage() {
                             rows={3}
                             className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
                           />
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-center justify-between gap-3">
                             <p className="text-xs text-gray-400">
                               ID {poll.id}
                               {poll.created_at
@@ -450,7 +450,7 @@ export default function AdminPollsPage() {
                       </td>
 
                       <td className="px-4 py-4">
-                        <div className="min-w-[240px] space-y-2">
+                        <div className="min-w-[220px] max-w-[240px] space-y-2">
                           <input
                             type="text"
                             value={slugEdits[poll.id] ?? ""}
@@ -518,7 +518,7 @@ export default function AdminPollsPage() {
                           onChange={(event) =>
                             void updatePoll(poll.id, getEmbedPayload(event.target.value as EmbedStatus))
                           }
-                          className="min-w-[120px] rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                          className="min-w-[110px] rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
                         >
                           <option value="live">Live</option>
                           <option value="closed">Closed</option>
@@ -527,67 +527,36 @@ export default function AdminPollsPage() {
                       </td>
 
                       <td className="px-4 py-4">
-                        <div className="min-w-[420px] space-y-3">
-                          <div className="space-y-1">
-                            <p className="text-xs text-gray-400">Poll URL</p>
-                            <input
-                              type="text"
-                              readOnly
-                              value={pollUrl}
-                              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-gray-300 outline-none"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => void handleCopy(`poll:${poll.id}`, pollUrl)}
-                              className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800"
-                            >
-                              {copiedKey === `poll:${poll.id}` ? "Copied" : "Copy"}
-                            </button>
-                          </div>
+                        <div className="flex min-w-[220px] flex-col gap-2">
+                          <button
+                            type="button"
+                            onClick={() => void handleCopy(`poll:${poll.id}`, pollUrl)}
+                            className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-left text-xs font-medium text-white transition hover:bg-gray-800"
+                          >
+                            {copiedKey === `poll:${poll.id}` ? "Copied poll URL" : "Copy poll URL"}
+                          </button>
 
-                          <div className="space-y-1">
-                            <p className="text-xs text-gray-400">Embed URL</p>
-                            <input
-                              type="text"
-                              readOnly
-                              value={embedUrl}
-                              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-gray-300 outline-none"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => void handleCopy(`embed:${poll.id}`, embedUrl)}
-                              className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800"
-                            >
-                              {copiedKey === `embed:${poll.id}` ? "Copied" : "Copy"}
-                            </button>
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => void handleCopy(`embed:${poll.id}`, embedUrl)}
+                            className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-left text-xs font-medium text-white transition hover:bg-gray-800"
+                          >
+                            {copiedKey === `embed:${poll.id}` ? "Copied embed URL" : "Copy embed URL"}
+                          </button>
 
-                          <div className="space-y-1">
-                            <p className="text-xs text-gray-400">Iframe code</p>
-                            <textarea
-                              readOnly
-                              value={iframeCode}
-                              rows={3}
-                              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-gray-300 outline-none"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => void handleCopy(`iframe:${poll.id}`, iframeCode)}
-                              className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800"
-                            >
-                              {copiedKey === `iframe:${poll.id}` ? "Copied" : "Copy"}
-                            </button>
-                          </div>
-                        </div>
-                      </td>
+                          <button
+                            type="button"
+                            onClick={() => void handleCopy(`iframe:${poll.id}`, iframeCode)}
+                            className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-left text-xs font-medium text-white transition hover:bg-gray-800"
+                          >
+                            {copiedKey === `iframe:${poll.id}` ? "Copied iframe" : "Copy iframe"}
+                          </button>
 
-                      <td className="px-4 py-4">
-                        <div className="flex min-w-[120px] flex-col gap-2">
                           <a
                             href={pollUrl || "#"}
                             target="_blank"
                             rel="noreferrer"
-                            className={`rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-center text-xs font-medium text-white transition hover:bg-gray-800 ${
+                            className={`rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-left text-xs font-medium text-white transition hover:bg-gray-800 ${
                               !pollUrl ? "pointer-events-none opacity-40" : ""
                             }`}
                           >
@@ -598,7 +567,7 @@ export default function AdminPollsPage() {
                             href={embedUrl || "#"}
                             target="_blank"
                             rel="noreferrer"
-                            className={`rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-center text-xs font-medium text-white transition hover:bg-gray-800 ${
+                            className={`rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-left text-xs font-medium text-white transition hover:bg-gray-800 ${
                               !embedUrl ? "pointer-events-none opacity-40" : ""
                             }`}
                           >

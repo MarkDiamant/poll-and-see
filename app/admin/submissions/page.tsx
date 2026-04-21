@@ -17,6 +17,25 @@ type PollSubmissionRow = {
   created_at: string | null;
 };
 
+type CategoryOption =
+  | "General"
+  | "Lifestyle"
+  | "Community"
+  | "Finance"
+  | "Business"
+  | "Education"
+  | "Fun";
+
+const CATEGORY_OPTIONS: CategoryOption[] = [
+  "General",
+  "Lifestyle",
+  "Community",
+  "Finance",
+  "Business",
+  "Education",
+  "Fun",
+];
+
 const ADMIN_KEY_STORAGE = "pollandsee-admin-key";
 
 function createSlugFromQuestion(question: string) {
@@ -58,6 +77,8 @@ export default function AdminSubmissionsPage() {
   const [descriptionEdits, setDescriptionEdits] = useState<Record<number, string>>({});
   const [slugEdits, setSlugEdits] = useState<Record<number, string>>({});
   const [statusEdits, setStatusEdits] = useState<Record<number, "pending" | "ready">>({});
+  const [categoryEdits, setCategoryEdits] = useState<Record<number, CategoryOption>>({});
+  const [privacyEdits, setPrivacyEdits] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState(false);
   const [savingKey, setSavingKey] = useState("");
   const [error, setError] = useState("");
@@ -128,6 +149,19 @@ export default function AdminSubmissionsPage() {
             nextSubmissions.map((row: PollSubmissionRow) => [row.id, row.status || "pending"])
           )
         );
+        setCategoryEdits(
+          Object.fromEntries(
+            nextSubmissions.map((row: PollSubmissionRow) => [
+              row.id,
+              (row.category as CategoryOption) || "General",
+            ])
+          )
+        );
+        setPrivacyEdits(
+          Object.fromEntries(
+            nextSubmissions.map((row: PollSubmissionRow) => [row.id, Boolean(row.is_private)])
+          )
+        );
       } catch (err) {
         setError(err instanceof Error ? err.message : "Could not load submissions.");
         setSubmissions([]);
@@ -156,6 +190,8 @@ export default function AdminSubmissionsPage() {
     setDescriptionEdits({});
     setSlugEdits({});
     setStatusEdits({});
+    setCategoryEdits({});
+    setPrivacyEdits({});
     setError("");
   };
 
@@ -175,6 +211,8 @@ export default function AdminSubmissionsPage() {
           description: (descriptionEdits[submissionId] || "").trim(),
           slug: (slugEdits[submissionId] || "").trim(),
           status: statusEdits[submissionId] || "pending",
+          category: categoryEdits[submissionId] || "General",
+          is_private: Boolean(privacyEdits[submissionId]),
         }),
       });
 
@@ -349,13 +387,13 @@ export default function AdminSubmissionsPage() {
           </div>
         ) : null}
 
-        <div className="overflow-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg max-h-[75vh]">
-          <table className="min-w-[1650px] text-sm">
+        <div className="overflow-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg max-h-[78vh]">
+          <table className="min-w-[1280px] text-sm">
             <thead className="sticky top-0 z-10 bg-gray-900/95 text-left text-gray-300">
               <tr>
                 <th className="px-4 py-3 font-medium">Question / Description</th>
                 <th className="px-4 py-3 font-medium">Slug</th>
-                <th className="px-4 py-3 font-medium">Details</th>
+                <th className="px-4 py-3 font-medium">Category / Privacy / Status</th>
                 <th className="px-4 py-3 font-medium">Options</th>
                 <th className="px-4 py-3 font-medium">Actions</th>
               </tr>
@@ -390,7 +428,7 @@ export default function AdminSubmissionsPage() {
                       }`}
                     >
                       <td className="px-4 py-4">
-                        <div className="min-w-[340px] space-y-2">
+                        <div className="min-w-[300px] max-w-[340px] space-y-2">
                           <input
                             type="text"
                             value={questionEdits[submission.id] ?? ""}
@@ -423,7 +461,7 @@ export default function AdminSubmissionsPage() {
                       </td>
 
                       <td className="px-4 py-4">
-                        <div className="min-w-[240px] space-y-2">
+                        <div className="min-w-[220px] max-w-[240px] space-y-2">
                           <input
                             type="text"
                             value={slugEdits[submission.id] ?? ""}
@@ -444,12 +482,49 @@ export default function AdminSubmissionsPage() {
                       </td>
 
                       <td className="px-4 py-4">
-                        <div className="min-w-[250px] space-y-2 text-xs text-gray-300">
-                          <p><span className="text-gray-400">Category:</span> {submission.category || "General"}</p>
-                          <p><span className="text-gray-400">Private:</span> {submission.is_private ? "Yes" : "No"}</p>
-                          <p><span className="text-gray-400">Email:</span> {submission.email || "—"}</p>
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-400">Status:</span>
+                        <div className="min-w-[240px] space-y-2 text-xs text-gray-300">
+                          <div className="space-y-1">
+                            <span className="text-gray-400">Category</span>
+                            <select
+                              value={categoryEdits[submission.id] || "General"}
+                              onChange={(event) =>
+                                setCategoryEdits((current) => ({
+                                  ...current,
+                                  [submission.id]: event.target.value as CategoryOption,
+                                }))
+                              }
+                              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none"
+                            >
+                              {CATEGORY_OPTIONS.map((category) => (
+                                <option key={category} value={category}>
+                                  {category}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="space-y-1">
+                            <span className="text-gray-400">Privacy</span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setPrivacyEdits((current) => ({
+                                  ...current,
+                                  [submission.id]: !current[submission.id],
+                                }))
+                              }
+                              className={`w-full rounded-lg px-3 py-2 text-left text-xs font-medium transition ${
+                                privacyEdits[submission.id]
+                                  ? "bg-white text-black hover:bg-gray-200"
+                                  : "border border-gray-700 bg-gray-900 text-white hover:bg-gray-800"
+                              }`}
+                            >
+                              {privacyEdits[submission.id] ? "Private" : "Public"}
+                            </button>
+                          </div>
+
+                          <div className="space-y-1">
+                            <span className="text-gray-400">Status</span>
                             <select
                               value={statusEdits[submission.id] || "pending"}
                               onChange={(event) =>
@@ -458,12 +533,18 @@ export default function AdminSubmissionsPage() {
                                   [submission.id]: event.target.value as "pending" | "ready",
                                 }))
                               }
-                              className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none"
+                              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none"
                             >
                               <option value="pending">Pending</option>
                               <option value="ready">Ready</option>
                             </select>
                           </div>
+
+                          <div className="space-y-1">
+                            <span className="text-gray-400">Email</span>
+                            <p>{submission.email || "—"}</p>
+                          </div>
+
                           <button
                             type="button"
                             onClick={() => void saveSubmission(submission.id)}
@@ -476,7 +557,7 @@ export default function AdminSubmissionsPage() {
                       </td>
 
                       <td className="px-4 py-4">
-                        <div className="min-w-[320px] space-y-2">
+                        <div className="min-w-[260px] max-w-[300px] space-y-2">
                           {(submission.options || []).map((option, optionIndex) => (
                             <div
                               key={`${submission.id}-${optionIndex}`}
@@ -494,12 +575,12 @@ export default function AdminSubmissionsPage() {
                       </td>
 
                       <td className="px-4 py-4">
-                        <div className="flex min-w-[140px] flex-col gap-2">
+                        <div className="flex min-w-[120px] flex-col gap-2">
                           <button
                             type="button"
                             onClick={() => void approveSubmission(submission.id)}
                             disabled={Boolean(slugError) || savingKey === `publish:${submission.id}`}
-                            className="rounded-lg bg-white px-3 py-2 text-xs font-medium text-black transition hover:bg-gray-200 disabled:opacity-40"
+                            className="rounded-lg bg-white px-3 py-2 text-left text-xs font-medium text-black transition hover:bg-gray-200 disabled:opacity-40"
                           >
                             Publish
                           </button>
@@ -508,7 +589,7 @@ export default function AdminSubmissionsPage() {
                             type="button"
                             onClick={() => void deleteSubmission(submission.id)}
                             disabled={savingKey === `delete:${submission.id}`}
-                            className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800 disabled:opacity-60"
+                            className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-left text-xs font-medium text-white transition hover:bg-gray-800 disabled:opacity-60"
                           >
                             Delete
                           </button>
