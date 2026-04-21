@@ -438,6 +438,7 @@ export default function EmbedPollPage() {
       <section className="mx-auto max-w-2xl">
         <div className="overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 p-5 md:p-6">
           <div className="mb-3 flex items-center justify-between gap-3">
+            <div></div>
             <span className="text-sm text-gray-400">
               {totalVotes.toLocaleString()} {totalVotes === 1 ? "vote" : "votes"}
             </span>
