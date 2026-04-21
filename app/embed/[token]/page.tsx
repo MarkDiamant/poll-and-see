@@ -657,7 +657,9 @@ const scaledCardStyle = isCompactMode
                 </>
               )}
 
-              <EmbedFooter />
+                            <div className="mt-auto">
+                <EmbedFooter />
+              </div>
             </div>
           </div>
         </div>
