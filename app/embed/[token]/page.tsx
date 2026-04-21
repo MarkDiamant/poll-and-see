@@ -548,7 +548,9 @@ const scaledCardStyle = isCompactMode
   }`}
 >
                 <p className="text-base font-medium text-white">This poll is not currently active.</p>
-                <EmbedFooter />
+                <div className="mt-auto">
+  <EmbedFooter />
+</div>
               </div>
             </div>
           </div>
@@ -567,6 +569,7 @@ const scaledCardStyle = isCompactMode
     isCompactMode ? "p-4" : "p-6"
   }`}
 >
+  <div className={`flex flex-col ${isCompactMode ? "min-h-[460px]" : "min-h-[520px]"}`}>
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div></div>
                 <span className="text-sm text-gray-400">
