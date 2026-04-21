@@ -549,7 +549,6 @@ const scaledCardStyle = isCompactMode
 >
                 <p className="text-base font-medium text-white">This poll is not currently active.</p>
   <EmbedFooter />
-</div>
               </div>
             </div>
           </div>
