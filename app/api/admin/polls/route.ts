@@ -46,22 +46,32 @@ export async function GET(request: NextRequest) {
     let query = supabaseAdmin
       .from("polls")
       .select(
-        "id, question, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at"
+        "id, question, description, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at"
       )
       .order("created_at", { ascending: false });
 
     if (search) {
       const safeSearch = search.replace(/[%(),]/g, " ");
-      query = query.or(`question.ilike.%${safeSearch}%,slug.ilike.%${safeSearch}%`);
+      query = query.or(
+        `question.ilike.%${safeSearch}%,description.ilike.%${safeSearch}%,slug.ilike.%${safeSearch}%`
+      );
     }
 
-    const { data, error } = await query;
+    const [{ data, error }, { data: slugRows, error: slugError }] = await Promise.all([
+      query,
+      supabaseAdmin.from("polls").select("id, slug").not("slug", "is", null),
+    ]);
 
-    if (error) {
+    if (error || slugError) {
       return NextResponse.json({ error: "Could not load polls." }, { status: 500 });
     }
 
-    return NextResponse.json({ polls: data || [] });
+    return NextResponse.json({
+      polls: data || [],
+      allSlugs: (slugRows || [])
+        .filter((row) => row.slug)
+        .map((row) => ({ id: row.id, slug: row.slug as string })),
+    });
   } catch {
     return NextResponse.json({ error: "Could not load polls." }, { status: 500 });
   }

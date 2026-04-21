@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 type PollRow = {
   id: number;
   question: string;
+  description: string | null;
   slug: string | null;
   is_private: boolean | null;
   featured: boolean | null;
@@ -12,18 +14,6 @@ type PollRow = {
   is_embeddable: boolean;
   embed_active: boolean;
   embed_voting_enabled: boolean;
-  created_at: string | null;
-};
-
-type PollSubmissionRow = {
-  id: number;
-  email: string | null;
-  question: string;
-  description: string | null;
-  category: string | null;
-  options: string[] | null;
-  option_image_urls: string[] | null;
-  is_private: boolean | null;
   created_at: string | null;
 };
 
@@ -75,14 +65,29 @@ function buildIframeCode(embedToken: string | null) {
   return `<iframe src="${SITE_URL}/embed/${embedToken}" width="100%" height="720" style="border:0; overflow:hidden;" loading="lazy" allowfullscreen></iframe>`;
 }
 
-function createSlugFromQuestion(question: string) {
-  return question
-    .toLowerCase()
-    .trim()
-    .replace(/['’]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80);
+function isValidSlug(slug: string) {
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug);
+}
+
+function getSlugError(
+  slug: string,
+  currentId: number,
+  slugRecords: Array<{ id: number; slug: string }>
+) {
+  const trimmed = slug.trim();
+
+  if (!trimmed) return "Slug cannot be empty.";
+  if (!isValidSlug(trimmed)) {
+    return "Use lowercase letters, numbers and hyphens only.";
+  }
+
+  const duplicate = slugRecords.some(
+    (record) => record.id !== currentId && record.slug === trimmed
+  );
+
+  if (duplicate) return "Slug already in use.";
+
+  return "";
 }
 
 export default function AdminPollsPage() {
@@ -91,12 +96,12 @@ export default function AdminPollsPage() {
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [polls, setPolls] = useState<PollRow[]>([]);
-  const [submissions, setSubmissions] = useState<PollSubmissionRow[]>([]);
+  const [allSlugRecords, setAllSlugRecords] = useState<Array<{ id: number; slug: string }>>([]);
+  const [questionEdits, setQuestionEdits] = useState<Record<number, string>>({});
+  const [descriptionEdits, setDescriptionEdits] = useState<Record<number, string>>({});
   const [slugEdits, setSlugEdits] = useState<Record<number, string>>({});
-  const [submissionSlugEdits, setSubmissionSlugEdits] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(false);
-  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
-  const [savingKey, setSavingKey] = useState<string>("");
+  const [savingKey, setSavingKey] = useState("");
   const [error, setError] = useState("");
   const [copiedKey, setCopiedKey] = useState("");
 
@@ -141,11 +146,18 @@ export default function AdminPollsPage() {
           throw new Error(data.error || "Could not load polls.");
         }
 
-        setPolls(data.polls || []);
+        const nextPolls = data.polls || [];
+        setPolls(nextPolls);
+        setAllSlugRecords(data.allSlugs || []);
+
+        setQuestionEdits(
+          Object.fromEntries(nextPolls.map((poll: PollRow) => [poll.id, poll.question || ""]))
+        );
+        setDescriptionEdits(
+          Object.fromEntries(nextPolls.map((poll: PollRow) => [poll.id, poll.description || ""]))
+        );
         setSlugEdits(
-          Object.fromEntries(
-            (data.polls || []).map((poll: PollRow) => [poll.id, poll.slug || ""])
-          )
+          Object.fromEntries(nextPolls.map((poll: PollRow) => [poll.id, poll.slug || ""]))
         );
       } catch (err) {
         setError(err instanceof Error ? err.message : "Could not load polls.");
@@ -158,51 +170,9 @@ export default function AdminPollsPage() {
     void loadPolls();
   }, [adminKey, searchTerm]);
 
-  useEffect(() => {
-    if (!adminKey) return;
-
-    const loadSubmissions = async () => {
-      setLoadingSubmissions(true);
-      setError("");
-
-      try {
-        const response = await fetch("/api/admin/poll-submissions", {
-          headers: {
-            "x-admin-key": adminKey,
-          },
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Could not load submissions.");
-        }
-
-        const nextSubmissions = data.submissions || [];
-        setSubmissions(nextSubmissions);
-        setSubmissionSlugEdits(
-          Object.fromEntries(
-            nextSubmissions.map((submission: PollSubmissionRow) => [
-              submission.id,
-              createSlugFromQuestion(submission.question),
-            ])
-          )
-        );
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Could not load submissions.");
-        setSubmissions([]);
-      } finally {
-        setLoadingSubmissions(false);
-      }
-    };
-
-    void loadSubmissions();
-  }, [adminKey]);
-
   const handleUnlock = () => {
     const trimmed = adminKeyInput.trim();
     if (!trimmed) return;
-
     sessionStorage.setItem(ADMIN_KEY_STORAGE, trimmed);
     setAdminKey(trimmed);
     setError("");
@@ -213,9 +183,10 @@ export default function AdminPollsPage() {
     setAdminKey("");
     setAdminKeyInput("");
     setPolls([]);
-    setSubmissions([]);
+    setAllSlugRecords([]);
+    setQuestionEdits({});
+    setDescriptionEdits({});
     setSlugEdits({});
-    setSubmissionSlugEdits({});
     setError("");
   };
 
@@ -240,7 +211,9 @@ export default function AdminPollsPage() {
       }
 
       setPolls((current) => {
-        let next = current.map((poll) => (poll.id === pollId ? { ...poll, ...data.poll } : poll));
+        let next = current.map((poll) =>
+          poll.id === pollId ? { ...poll, ...data.poll } : poll
+        );
 
         if (data.poll?.featured) {
           next = next.map((poll) =>
@@ -251,71 +224,28 @@ export default function AdminPollsPage() {
         return next;
       });
 
-      if (typeof data.poll?.slug === "string") {
-        setSlugEdits((current) => ({
+      if (typeof data.poll?.question === "string") {
+        setQuestionEdits((current) => ({ ...current, [pollId]: data.poll.question }));
+      }
+
+      if (typeof data.poll?.description === "string" || data.poll?.description === null) {
+        setDescriptionEdits((current) => ({
           ...current,
-          [pollId]: data.poll.slug,
+          [pollId]: data.poll.description || "",
         }));
+      }
+
+      if (typeof data.poll?.slug === "string") {
+        setSlugEdits((current) => ({ ...current, [pollId]: data.poll.slug }));
+        setAllSlugRecords((current) => {
+          const withoutCurrent = current.filter((record) => record.id !== pollId);
+          return [...withoutCurrent, { id: pollId, slug: data.poll.slug }].sort((a, b) =>
+            a.slug.localeCompare(b.slug)
+          );
+        });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not update poll.");
-    } finally {
-      setSavingKey("");
-    }
-  };
-
-  const approveSubmission = async (submissionId: number) => {
-    setSavingKey(`submission-approve:${submissionId}`);
-    setError("");
-
-    try {
-      const response = await fetch(`/api/admin/poll-submissions/${submissionId}/approve`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-key": adminKey,
-        },
-        body: JSON.stringify({
-          slug: (submissionSlugEdits[submissionId] || "").trim(),
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Could not approve submission.");
-      }
-
-      setSubmissions((current) => current.filter((submission) => submission.id !== submissionId));
-      setPolls((current) => [data.poll, ...current]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not approve submission.");
-    } finally {
-      setSavingKey("");
-    }
-  };
-
-  const deleteSubmission = async (submissionId: number) => {
-    setSavingKey(`submission-delete:${submissionId}`);
-    setError("");
-
-    try {
-      const response = await fetch(`/api/admin/poll-submissions/${submissionId}`, {
-        method: "DELETE",
-        headers: {
-          "x-admin-key": adminKey,
-        },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Could not delete submission.");
-      }
-
-      setSubmissions((current) => current.filter((submission) => submission.id !== submissionId));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not delete submission.");
     } finally {
       setSavingKey("");
     }
@@ -343,22 +273,12 @@ export default function AdminPollsPage() {
     });
   }, [polls]);
 
-  const sortedSubmissions = useMemo(() => {
-    return [...submissions].sort((a, b) => {
-      const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
-      const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
-      return bTime - aTime;
-    });
-  }, [submissions]);
-
   if (!adminKey) {
     return (
       <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 px-6 py-10 text-white">
         <section className="mx-auto max-w-xl rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-lg">
           <h1 className="mb-2 text-2xl font-semibold">Poll Admin</h1>
-          <p className="mb-5 text-sm text-gray-300">
-            Enter your admin key to manage polls.
-          </p>
+          <p className="mb-5 text-sm text-gray-300">Enter your admin key to manage polls.</p>
 
           <div className="space-y-3">
             <input
@@ -391,11 +311,26 @@ export default function AdminPollsPage() {
           <div>
             <h1 className="text-3xl font-semibold">Admin Polls</h1>
             <p className="mt-1 text-sm text-gray-300">
-              Manage routine poll actions without using Supabase directly.
+              Manage live polls without using Supabase directly.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <nav className="flex items-center gap-2">
+              <Link
+                href="/admin/polls"
+                className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-black"
+              >
+                Polls
+              </Link>
+              <Link
+                href="/admin/submissions"
+                className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+              >
+                Submissions
+              </Link>
+            </nav>
+
             <input
               type="text"
               value={searchInput}
@@ -403,6 +338,7 @@ export default function AdminPollsPage() {
               placeholder="Search question or slug..."
               className="h-11 w-full min-w-[260px] rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500 md:w-[320px]"
             />
+
             <button
               type="button"
               onClick={handleLogout}
@@ -419,22 +355,16 @@ export default function AdminPollsPage() {
           </div>
         ) : null}
 
-        <div className="mb-3 text-sm text-gray-400">
-          Scroll sideways to see all admin columns.
-        </div>
-
-        <div className="overflow-x-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg">
-          <table className="min-w-[2200px] text-sm">
-            <thead className="bg-gray-900/70 text-left text-gray-300">
+        <div className="overflow-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg max-h-[75vh]">
+          <table className="min-w-[1750px] text-sm">
+            <thead className="sticky top-0 z-10 bg-gray-900/95 text-left text-gray-300">
               <tr>
-                <th className="px-4 py-3 font-medium">Question</th>
+                <th className="px-4 py-3 font-medium">Question / Description</th>
                 <th className="px-4 py-3 font-medium">Slug</th>
                 <th className="px-4 py-3 font-medium">Private</th>
                 <th className="px-4 py-3 font-medium">Featured</th>
-                <th className="px-4 py-3 font-medium">Embed status</th>
-                <th className="px-4 py-3 font-medium">Poll URL</th>
-                <th className="px-4 py-3 font-medium">Embed URL</th>
-                <th className="px-4 py-3 font-medium">Iframe code</th>
+                <th className="px-4 py-3 font-medium">Embed</th>
+                <th className="px-4 py-3 font-medium">Links</th>
                 <th className="px-4 py-3 font-medium">Actions</th>
               </tr>
             </thead>
@@ -442,7 +372,7 @@ export default function AdminPollsPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-6 text-center text-gray-300">
+                  <td colSpan={7} className="px-4 py-6 text-center text-gray-300">
                     Loading polls...
                   </td>
                 </tr>
@@ -450,7 +380,7 @@ export default function AdminPollsPage() {
 
               {!loading && sortedPolls.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-6 text-center text-gray-300">
+                  <td colSpan={7} className="px-4 py-6 text-center text-gray-300">
                     No polls found.
                   </td>
                 </tr>
@@ -462,26 +392,65 @@ export default function AdminPollsPage() {
                   const embedUrl = buildEmbedUrl(poll.embed_token);
                   const iframeCode = buildIframeCode(poll.embed_token);
                   const embedStatus = getEmbedStatus(poll);
+                  const slugError = getSlugError(slugEdits[poll.id] || "", poll.id, allSlugRecords);
 
                   return (
                     <tr
                       key={poll.id}
-                      className={`border-t border-gray-700 align-top ${index % 2 === 0 ? "bg-gray-800" : "bg-gray-900/35"}`}
+                      className={`border-t border-gray-700 align-top ${
+                        index % 2 === 0 ? "bg-gray-800" : "bg-gray-900/35"
+                      }`}
                     >
                       <td className="px-4 py-4">
-                        <div className="min-w-[260px]">
-                          <p className="font-medium text-white">{poll.question}</p>
-                          <p className="mt-1 text-xs text-gray-400">
-                            ID {poll.id}
-                            {poll.created_at
-                              ? ` • ${new Date(poll.created_at).toLocaleString()}`
-                              : ""}
-                          </p>
+                        <div className="min-w-[360px] space-y-2">
+                          <input
+                            type="text"
+                            value={questionEdits[poll.id] ?? ""}
+                            onChange={(event) =>
+                              setQuestionEdits((current) => ({
+                                ...current,
+                                [poll.id]: event.target.value,
+                              }))
+                            }
+                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                          />
+                          <textarea
+                            value={descriptionEdits[poll.id] ?? ""}
+                            onChange={(event) =>
+                              setDescriptionEdits((current) => ({
+                                ...current,
+                                [poll.id]: event.target.value,
+                              }))
+                            }
+                            rows={3}
+                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                          />
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs text-gray-400">
+                              ID {poll.id}
+                              {poll.created_at
+                                ? ` • ${new Date(poll.created_at).toLocaleString()}`
+                                : ""}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                void updatePoll(poll.id, {
+                                  question: (questionEdits[poll.id] || "").trim(),
+                                  description: (descriptionEdits[poll.id] || "").trim(),
+                                })
+                              }
+                              disabled={savingKey === `${poll.id}:question,description`}
+                              className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800 disabled:opacity-60"
+                            >
+                              Save content
+                            </button>
+                          </div>
                         </div>
                       </td>
 
                       <td className="px-4 py-4">
-                        <div className="min-w-[220px] space-y-2">
+                        <div className="min-w-[240px] space-y-2">
                           <input
                             type="text"
                             value={slugEdits[poll.id] ?? ""}
@@ -493,13 +462,20 @@ export default function AdminPollsPage() {
                             }
                             className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
                           />
+                          {slugError ? (
+                            <p className="text-xs text-amber-300">{slugError}</p>
+                          ) : (
+                            <p className="text-xs text-green-300">Slug available.</p>
+                          )}
                           <button
                             type="button"
                             onClick={() =>
-                              void updatePoll(poll.id, { slug: (slugEdits[poll.id] || "").trim() })
+                              void updatePoll(poll.id, {
+                                slug: (slugEdits[poll.id] || "").trim(),
+                              })
                             }
-                            disabled={savingKey === `${poll.id}:slug`}
-                            className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800 disabled:opacity-60"
+                            disabled={Boolean(slugError) || savingKey === `${poll.id}:slug`}
+                            className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800 disabled:opacity-40"
                           >
                             Save slug
                           </button>
@@ -509,9 +485,7 @@ export default function AdminPollsPage() {
                       <td className="px-4 py-4">
                         <button
                           type="button"
-                          onClick={() =>
-                            void updatePoll(poll.id, { is_private: !poll.is_private })
-                          }
+                          onClick={() => void updatePoll(poll.id, { is_private: !poll.is_private })}
                           disabled={savingKey === `${poll.id}:is_private`}
                           className={`rounded-lg px-3 py-2 text-xs font-medium transition disabled:opacity-60 ${
                             poll.is_private
@@ -526,9 +500,7 @@ export default function AdminPollsPage() {
                       <td className="px-4 py-4">
                         <button
                           type="button"
-                          onClick={() =>
-                            void updatePoll(poll.id, { featured: !poll.featured })
-                          }
+                          onClick={() => void updatePoll(poll.id, { featured: !poll.featured })}
                           disabled={savingKey === `${poll.id}:featured`}
                           className={`rounded-lg px-3 py-2 text-xs font-medium transition disabled:opacity-60 ${
                             poll.featured
@@ -555,56 +527,57 @@ export default function AdminPollsPage() {
                       </td>
 
                       <td className="px-4 py-4">
-                        <div className="min-w-[280px] space-y-2">
-                          <input
-                            type="text"
-                            readOnly
-                            value={pollUrl}
-                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-gray-300 outline-none"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => void handleCopy(`poll:${poll.id}`, pollUrl)}
-                            className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800"
-                          >
-                            {copiedKey === `poll:${poll.id}` ? "Copied" : "Copy"}
-                          </button>
-                        </div>
-                      </td>
+                        <div className="min-w-[420px] space-y-3">
+                          <div className="space-y-1">
+                            <p className="text-xs text-gray-400">Poll URL</p>
+                            <input
+                              type="text"
+                              readOnly
+                              value={pollUrl}
+                              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-gray-300 outline-none"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => void handleCopy(`poll:${poll.id}`, pollUrl)}
+                              className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800"
+                            >
+                              {copiedKey === `poll:${poll.id}` ? "Copied" : "Copy"}
+                            </button>
+                          </div>
 
-                      <td className="px-4 py-4">
-                        <div className="min-w-[320px] space-y-2">
-                          <input
-                            type="text"
-                            readOnly
-                            value={embedUrl}
-                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-gray-300 outline-none"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => void handleCopy(`embed:${poll.id}`, embedUrl)}
-                            className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800"
-                          >
-                            {copiedKey === `embed:${poll.id}` ? "Copied" : "Copy"}
-                          </button>
-                        </div>
-                      </td>
+                          <div className="space-y-1">
+                            <p className="text-xs text-gray-400">Embed URL</p>
+                            <input
+                              type="text"
+                              readOnly
+                              value={embedUrl}
+                              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-gray-300 outline-none"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => void handleCopy(`embed:${poll.id}`, embedUrl)}
+                              className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800"
+                            >
+                              {copiedKey === `embed:${poll.id}` ? "Copied" : "Copy"}
+                            </button>
+                          </div>
 
-                      <td className="px-4 py-4">
-                        <div className="min-w-[360px] space-y-2">
-                          <textarea
-                            readOnly
-                            value={iframeCode}
-                            rows={4}
-                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-gray-300 outline-none"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => void handleCopy(`iframe:${poll.id}`, iframeCode)}
-                            className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800"
-                          >
-                            {copiedKey === `iframe:${poll.id}` ? "Copied" : "Copy"}
-                          </button>
+                          <div className="space-y-1">
+                            <p className="text-xs text-gray-400">Iframe code</p>
+                            <textarea
+                              readOnly
+                              value={iframeCode}
+                              rows={3}
+                              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-gray-300 outline-none"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => void handleCopy(`iframe:${poll.id}`, iframeCode)}
+                              className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800"
+                            >
+                              {copiedKey === `iframe:${poll.id}` ? "Copied" : "Copy"}
+                            </button>
+                          </div>
                         </div>
                       </td>
 
@@ -638,131 +611,6 @@ export default function AdminPollsPage() {
                 })}
             </tbody>
           </table>
-        </div>
-
-        <div className="mt-10">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-semibold">Poll submissions</h2>
-              <p className="mt-1 text-sm text-gray-300">
-                Approve submissions directly into live polls.
-              </p>
-            </div>
-          </div>
-
-          <div className="overflow-x-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg">
-            <table className="min-w-[1400px] text-sm">
-              <thead className="bg-gray-900/70 text-left text-gray-300">
-                <tr>
-                  <th className="px-4 py-3 font-medium">Question</th>
-                  <th className="px-4 py-3 font-medium">Slug</th>
-                  <th className="px-4 py-3 font-medium">Details</th>
-                  <th className="px-4 py-3 font-medium">Options</th>
-                  <th className="px-4 py-3 font-medium">Actions</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {loadingSubmissions ? (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-6 text-center text-gray-300">
-                      Loading submissions...
-                    </td>
-                  </tr>
-                ) : null}
-
-                {!loadingSubmissions && sortedSubmissions.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-6 text-center text-gray-300">
-                      No submissions waiting.
-                    </td>
-                  </tr>
-                ) : null}
-
-                {!loadingSubmissions &&
-                  sortedSubmissions.map((submission, index) => (
-                    <tr
-                      key={submission.id}
-                      className={`border-t border-gray-700 align-top ${index % 2 === 0 ? "bg-gray-800" : "bg-gray-900/35"}`}
-                    >
-                      <td className="px-4 py-4">
-                        <div className="min-w-[260px]">
-                          <p className="font-medium text-white">{submission.question}</p>
-                          <p className="mt-1 text-xs text-gray-400">
-                            Submission ID {submission.id}
-                            {submission.created_at
-                              ? ` • ${new Date(submission.created_at).toLocaleString()}`
-                              : ""}
-                          </p>
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-4">
-                        <div className="min-w-[220px] space-y-2">
-                          <input
-                            type="text"
-                            value={submissionSlugEdits[submission.id] ?? ""}
-                            onChange={(event) =>
-                              setSubmissionSlugEdits((current) => ({
-                                ...current,
-                                [submission.id]: event.target.value,
-                              }))
-                            }
-                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
-                          />
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-4">
-                        <div className="min-w-[260px] space-y-2 text-xs text-gray-300">
-                          <p><span className="text-gray-400">Category:</span> {submission.category || "General"}</p>
-                          <p><span className="text-gray-400">Private:</span> {submission.is_private ? "Yes" : "No"}</p>
-                          <p><span className="text-gray-400">Email:</span> {submission.email || "—"}</p>
-                          <p className="text-gray-300">{submission.description || "No description"}</p>
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-4">
-                        <div className="min-w-[320px] space-y-2">
-                          {(submission.options || []).map((option, optionIndex) => (
-                            <div key={`${submission.id}-${optionIndex}`} className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-gray-300">
-                              <div>{option}</div>
-                              {submission.option_image_urls?.[optionIndex] ? (
-                                <div className="mt-1 break-all text-gray-500">
-                                  {submission.option_image_urls[optionIndex]}
-                                </div>
-                              ) : null}
-                            </div>
-                          ))}
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-4">
-                        <div className="flex min-w-[140px] flex-col gap-2">
-                          <button
-                            type="button"
-                            onClick={() => void approveSubmission(submission.id)}
-                            disabled={savingKey === `submission-approve:${submission.id}`}
-                            className="rounded-lg bg-white px-3 py-2 text-xs font-medium text-black transition hover:bg-gray-200 disabled:opacity-60"
-                          >
-                            Publish
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => void deleteSubmission(submission.id)}
-                            disabled={savingKey === `submission-delete:${submission.id}`}
-                            className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800 disabled:opacity-60"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
         </div>
       </section>
     </main>

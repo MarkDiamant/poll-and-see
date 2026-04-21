@@ -41,17 +41,35 @@ export async function GET(request: NextRequest) {
 
   try {
     const supabaseAdmin = getAdminClient();
+    const search = request.nextUrl.searchParams.get("q")?.trim() || "";
 
-    const { data, error } = await supabaseAdmin
+    let query = supabaseAdmin
       .from("poll_submissions")
-      .select("id, email, question, description, category, options, option_image_urls, is_private, created_at")
+      .select("id, email, question, description, category, options, option_image_urls, is_private, slug, status, created_at")
       .order("created_at", { ascending: false });
 
-    if (error) {
+    if (search) {
+      const safeSearch = search.replace(/[%(),]/g, " ");
+      query = query.or(
+        `question.ilike.%${safeSearch}%,description.ilike.%${safeSearch}%,email.ilike.%${safeSearch}%,slug.ilike.%${safeSearch}%`
+      );
+    }
+
+    const [{ data, error }, { data: pollSlugRows, error: slugError }] = await Promise.all([
+      query,
+      supabaseAdmin.from("polls").select("slug").not("slug", "is", null),
+    ]);
+
+    if (error || slugError) {
       return NextResponse.json({ error: "Could not load submissions." }, { status: 500 });
     }
 
-    return NextResponse.json({ submissions: data || [] });
+    return NextResponse.json({
+      submissions: data || [],
+      allPollSlugs: (pollSlugRows || [])
+        .map((row) => row.slug)
+        .filter((slug): slug is string => Boolean(slug)),
+    });
   } catch {
     return NextResponse.json({ error: "Could not load submissions." }, { status: 500 });
   }

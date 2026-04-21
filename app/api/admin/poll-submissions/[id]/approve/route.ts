@@ -10,6 +10,8 @@ type SubmissionRow = {
   options: string[] | null;
   option_image_urls: string[] | null;
   is_private: boolean | null;
+  slug: string | null;
+  status: "pending" | "ready";
   created_at: string | null;
 };
 
@@ -48,6 +50,16 @@ function isValidSlug(slug: string) {
   return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug);
 }
 
+function createSlugFromQuestion(question: string) {
+  return question
+    .toLowerCase()
+    .trim()
+    .replace(/['’]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -67,7 +79,20 @@ export async function POST(
     }
 
     const body = (await request.json()) as { slug?: string };
-    const slug = (body.slug || "").trim();
+    const supabaseAdmin = getAdminClient();
+
+    const { data: submission, error: submissionError } = await supabaseAdmin
+      .from("poll_submissions")
+      .select("id, email, question, description, category, options, option_image_urls, is_private, slug, status, created_at")
+      .eq("id", submissionId)
+      .single();
+
+    if (submissionError || !submission) {
+      return NextResponse.json({ error: "Submission not found." }, { status: 404 });
+    }
+
+    const typedSubmission = submission as SubmissionRow;
+    const slug = (body.slug || typedSubmission.slug || createSlugFromQuestion(typedSubmission.question)).trim();
 
     if (!slug) {
       return NextResponse.json({ error: "Slug is required." }, { status: 400 });
@@ -80,8 +105,6 @@ export async function POST(
       );
     }
 
-    const supabaseAdmin = getAdminClient();
-
     const { data: existingPoll } = await supabaseAdmin
       .from("polls")
       .select("id")
@@ -92,17 +115,6 @@ export async function POST(
       return NextResponse.json({ error: "Slug already exists." }, { status: 400 });
     }
 
-    const { data: submission, error: submissionError } = await supabaseAdmin
-      .from("poll_submissions")
-      .select("id, email, question, description, category, options, option_image_urls, is_private, created_at")
-      .eq("id", submissionId)
-      .single();
-
-    if (submissionError || !submission) {
-      return NextResponse.json({ error: "Submission not found." }, { status: 404 });
-    }
-
-    const typedSubmission = submission as SubmissionRow;
     const options = typedSubmission.options || [];
     const optionImageUrls = typedSubmission.option_image_urls || [];
 
@@ -121,7 +133,9 @@ export async function POST(
         is_private: Boolean(typedSubmission.is_private),
         total_votes: 0,
       })
-      .select("id, question, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at")
+      .select(
+        "id, question, description, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at"
+      )
       .single();
 
     if (pollInsertError || !insertedPoll) {
@@ -150,9 +164,10 @@ export async function POST(
       .eq("id", submissionId);
 
     if (deleteSubmissionError) {
-      return NextResponse.json({
-        error: "Poll created, but submission could not be removed. Please delete it manually.",
-      }, { status: 500 });
+      return NextResponse.json(
+        { error: "Poll created, but submission could not be removed. Please delete it manually." },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ poll: insertedPoll });
