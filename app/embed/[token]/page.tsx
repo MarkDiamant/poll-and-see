@@ -214,7 +214,7 @@ export default function EmbedPollPage() {
     [counts]
   );
 
-  const resultsOnly = Boolean(poll) && poll.embed_active && !poll.embed_voting_enabled;
+ const resultsOnly = poll ? poll.embed_active && !poll.embed_voting_enabled : false;
   const hasImageOptions = options.some((option) => Boolean(option.image_url));
 
   useEffect(() => {
