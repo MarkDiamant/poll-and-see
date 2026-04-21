@@ -431,7 +431,7 @@ export default function EmbedPollPage() {
     );
   }
 
-  if (!poll || !poll.is_embeddable) {
+  if (!poll || !poll.is_embeddable || !poll.embed_active) {
     return (
       <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 px-4 py-5 text-white">
         <div className="mx-auto max-w-2xl rounded-2xl border border-gray-800 bg-gray-900/80 p-6 text-center">
