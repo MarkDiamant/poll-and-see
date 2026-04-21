@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -41,6 +41,7 @@ const OPTION_COLOURS = [
 ];
 
 const SAME_POLL_CLICK_GUARD_MS = 400;
+const BASE_CARD_WIDTH = 760;
 
 function canVoteNow(pollId: number): string | null {
   const last = Number(localStorage.getItem(`poll-last-click-${pollId}`) || 0);
@@ -209,33 +210,54 @@ export default function EmbedPollPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
+  const outerRef = useRef<HTMLDivElement | null>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+
+  const [availableWidth, setAvailableWidth] = useState(BASE_CARD_WIDTH);
+  const [cardHeight, setCardHeight] = useState(0);
+
   const totalVotes = useMemo(
     () => Object.values(counts).reduce((sum, count) => sum + count, 0),
     [counts]
   );
 
- const resultsOnly = poll ? poll.embed_active && !poll.embed_voting_enabled : false;
+  const resultsOnly = poll ? poll.embed_active && !poll.embed_voting_enabled : false;
   const hasImageOptions = options.some((option) => Boolean(option.image_url));
+
+  const scale = useMemo(() => {
+    const next = availableWidth / BASE_CARD_WIDTH;
+    return Math.min(1, Math.max(0.18, next));
+  }, [availableWidth]);
 
   useEffect(() => {
     document.body.style.margin = "0";
     document.body.style.padding = "0";
     document.body.style.background = "transparent";
-    document.body.style.overflowX = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.minHeight = "0";
+    document.body.style.width = "100%";
+
     document.documentElement.style.margin = "0";
     document.documentElement.style.padding = "0";
     document.documentElement.style.background = "transparent";
-    document.documentElement.style.overflowX = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    document.documentElement.style.minHeight = "0";
+    document.documentElement.style.width = "100%";
 
     return () => {
       document.body.style.margin = "";
       document.body.style.padding = "";
       document.body.style.background = "";
-      document.body.style.overflowX = "";
+      document.body.style.overflow = "";
+      document.body.style.minHeight = "";
+      document.body.style.width = "";
+
       document.documentElement.style.margin = "";
       document.documentElement.style.padding = "";
       document.documentElement.style.background = "";
-      document.documentElement.style.overflowX = "";
+      document.documentElement.style.overflow = "";
+      document.documentElement.style.minHeight = "";
+      document.documentElement.style.width = "";
     };
   }, []);
 
@@ -363,33 +385,59 @@ export default function EmbedPollPage() {
   }, [poll, counts]);
 
   useEffect(() => {
-    const sendHeight = () => {
-      const height = Math.max(
-        document.documentElement.scrollHeight,
-        document.body.scrollHeight
+    if (!outerRef.current) return;
+
+    const element = outerRef.current;
+
+    const updateWidth = () => {
+      const nextWidth = element.getBoundingClientRect().width || BASE_CARD_WIDTH;
+      setAvailableWidth(nextWidth);
+    };
+
+    updateWidth();
+
+    const observer = new ResizeObserver(() => {
+      updateWidth();
+    });
+
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!cardRef.current) return;
+
+    const element = cardRef.current;
+
+    const updateHeight = () => {
+      setCardHeight(element.scrollHeight);
+    };
+
+    updateHeight();
+
+    const observer = new ResizeObserver(() => {
+      updateHeight();
+    });
+
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, [loading, poll, options, counts, voted, error, resultsOnly, scale]);
+
+  useEffect(() => {
+    const scaledHeight = Math.ceil(cardHeight * scale);
+
+    if (window.parent !== window) {
+      window.parent.postMessage(
+        {
+          type: "pollandsee:embed-height",
+          height: scaledHeight,
+        },
+        "*"
       );
-
-      if (window.parent !== window) {
-        window.parent.postMessage(
-          {
-            type: "pollandsee:embed-height",
-            height,
-          },
-          "*"
-        );
-      }
-    };
-
-    sendHeight();
-
-    const timeout = setTimeout(sendHeight, 150);
-    window.addEventListener("resize", sendHeight);
-
-    return () => {
-      clearTimeout(timeout);
-      window.removeEventListener("resize", sendHeight);
-    };
-  }, [loading, poll, options, counts, voted, error, resultsOnly]);
+    }
+  }, [cardHeight, scale]);
 
   const handleVote = async (optionId: number) => {
     if (!poll) return;
@@ -443,12 +491,26 @@ export default function EmbedPollPage() {
     }
   };
 
+  const scaledWrapperStyle = {
+    height: cardHeight ? `${Math.ceil(cardHeight * scale)}px` : "0px",
+  };
+
+  const scaledCardStyle = {
+    width: `${BASE_CARD_WIDTH}px`,
+    transform: `scale(${scale})`,
+    transformOrigin: "top left",
+  } as const;
+
   if (loading) {
     return (
       <main className="m-0 w-full overflow-hidden bg-transparent p-0 text-white">
-        <div className="w-full overflow-hidden bg-transparent">
-          <div className="mx-auto w-full max-w-[760px] overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/95 p-6">
-            <p className="text-sm text-gray-300">Loading poll...</p>
+        <div ref={outerRef} className="w-full overflow-hidden bg-transparent">
+          <div style={scaledWrapperStyle} className="relative w-full overflow-hidden">
+            <div ref={cardRef} style={scaledCardStyle}>
+              <div className="w-full overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/95 p-6">
+                <p className="text-sm text-gray-300">Loading poll...</p>
+              </div>
+            </div>
           </div>
         </div>
       </main>
@@ -458,10 +520,14 @@ export default function EmbedPollPage() {
   if (!poll || !poll.is_embeddable || !poll.embed_active) {
     return (
       <main className="m-0 w-full overflow-hidden bg-transparent p-0 text-white">
-        <div className="w-full overflow-hidden bg-transparent">
-          <div className="mx-auto w-full max-w-[760px] overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/95 p-6 text-center">
-            <p className="text-base font-medium text-white">This poll is not currently active.</p>
-            <EmbedFooter />
+        <div ref={outerRef} className="w-full overflow-hidden bg-transparent">
+          <div style={scaledWrapperStyle} className="relative w-full overflow-hidden">
+            <div ref={cardRef} style={scaledCardStyle}>
+              <div className="w-full overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/95 p-6 text-center">
+                <p className="text-base font-medium text-white">This poll is not currently active.</p>
+                <EmbedFooter />
+              </div>
+            </div>
           </div>
         </div>
       </main>
@@ -470,76 +536,80 @@ export default function EmbedPollPage() {
 
   return (
     <main className="m-0 w-full overflow-hidden bg-transparent p-0 text-white">
-      <div className="w-full overflow-hidden bg-transparent">
-        <div className="mx-auto w-full max-w-[760px] overflow-hidden rounded-2xl border border-gray-700 bg-gray-800/95 p-6">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <div></div>
-            <span className="text-sm text-gray-400">
-              {totalVotes.toLocaleString()} {totalVotes === 1 ? "vote" : "votes"}
-            </span>
-          </div>
+      <div ref={outerRef} className="w-full overflow-hidden bg-transparent">
+        <div style={scaledWrapperStyle} className="relative w-full overflow-hidden">
+          <div ref={cardRef} style={scaledCardStyle}>
+            <div className="w-full overflow-hidden rounded-2xl border border-gray-700 bg-gray-800/95 p-6">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div></div>
+                <span className="text-sm text-gray-400">
+                  {totalVotes.toLocaleString()} {totalVotes === 1 ? "vote" : "votes"}
+                </span>
+              </div>
 
-          <h1 className="mb-2 break-words text-2xl font-bold text-white">{poll.question}</h1>
+              <h1 className="mb-2 break-words text-2xl font-bold text-white">{poll.question}</h1>
 
-          {poll.description ? (
-            <p className="mb-4 break-words text-gray-300">{poll.description}</p>
-          ) : null}
-
-          {!voted && !resultsOnly ? (
-            <div className="flex flex-col gap-3">
-              {hasImageOptions ? (
-                <p className="mb-[8px] mt-[6px] text-sm text-gray-300 opacity-80">
-                  Tap an image to vote
-                </p>
+              {poll.description ? (
+                <p className="mb-4 break-words text-gray-300">{poll.description}</p>
               ) : null}
 
-              {options.map((option) => (
-                <button
-                  key={option.id}
-                  onClick={() => handleVote(option.id)}
-                  className={
-                    option.image_url
-                      ? "w-full cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600"
-                      : "w-full cursor-pointer overflow-hidden rounded-xl bg-gray-700 px-4 py-3 text-left text-white transition hover:bg-gray-600"
-                  }
-                >
-                  {option.image_url ? (
-                    <>
-                      <div className="overflow-hidden bg-gray-900">
-                        <img
-                          src={option.image_url}
-                          alt={option.option_text}
-                          loading="lazy"
-                          width={1200}
-                          height={675}
-                          className="aspect-square h-auto w-full object-contain"
-                        />
-                      </div>
-                      <div className="break-words px-4 py-3">{option.option_text}</div>
-                    </>
-                  ) : (
-                    <span className="break-words">{option.option_text}</span>
-                  )}
-                </button>
-              ))}
+              {!voted && !resultsOnly ? (
+                <div className="flex flex-col gap-3">
+                  {hasImageOptions ? (
+                    <p className="mb-[8px] mt-[6px] text-sm text-gray-300 opacity-80">
+                      Tap an image to vote
+                    </p>
+                  ) : null}
 
-              {error ? <p className="text-sm text-red-300">{error}</p> : null}
-            </div>
-          ) : (
-            <>
-              <ResultOptions options={options} voteCounts={counts} selectedOptionId={selected} />
+                  {options.map((option) => (
+                    <button
+                      key={option.id}
+                      onClick={() => handleVote(option.id)}
+                      className={
+                        option.image_url
+                          ? "w-full cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600"
+                          : "w-full cursor-pointer overflow-hidden rounded-xl bg-gray-700 px-4 py-3 text-left text-white transition hover:bg-gray-600"
+                      }
+                    >
+                      {option.image_url ? (
+                        <>
+                          <div className="overflow-hidden bg-gray-900">
+                            <img
+                              src={option.image_url}
+                              alt={option.option_text}
+                              loading="lazy"
+                              width={1200}
+                              height={675}
+                              className="aspect-square h-auto w-full object-contain"
+                            />
+                          </div>
+                          <div className="break-words px-4 py-3">{option.option_text}</div>
+                        </>
+                      ) : (
+                        <span className="break-words">{option.option_text}</span>
+                      )}
+                    </button>
+                  ))}
 
-              {resultsOnly ? (
-                <div className="mt-4 rounded-xl border border-gray-700 bg-gray-900/70 px-4 py-3 text-center text-sm text-gray-300">
-                  Poll closed. Final results shown above.
+                  {error ? <p className="text-sm text-red-300">{error}</p> : null}
                 </div>
-              ) : null}
+              ) : (
+                <>
+                  <ResultOptions options={options} voteCounts={counts} selectedOptionId={selected} />
 
-              {error ? <p className="pt-3 text-sm text-red-300">{error}</p> : null}
-            </>
-          )}
+                  {resultsOnly ? (
+                    <div className="mt-4 rounded-xl border border-gray-700 bg-gray-900/70 px-4 py-3 text-center text-sm text-gray-300">
+                      Poll closed. Final results shown above.
+                    </div>
+                  ) : null}
 
-          <EmbedFooter />
+                  {error ? <p className="pt-3 text-sm text-red-300">{error}</p> : null}
+                </>
+              )}
+
+              <EmbedFooter />
+            </div>
+          </div>
         </div>
       </div>
     </main>
