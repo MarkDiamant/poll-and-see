@@ -63,7 +63,7 @@ function buildEmbedUrl(embedToken: string | null) {
 
 function buildIframeCode(embedToken: string | null) {
   if (!embedToken) return "";
-  return `<iframe src="${SITE_URL}/embed/${embedToken}" width="100%" height="720" style="border:0; overflow:hidden;" loading="lazy" allowfullscreen></iframe>`;
+  return `<iframe src="${SITE_URL}/embed/${embedToken}" width="100%" height="720" style="border:0; overflow:hidden; background:transparent;" loading="lazy" allowfullscreen></iframe>`;
 }
 
 function isValidSlug(slug: string) {
@@ -527,7 +527,7 @@ export default function AdminPollsPage() {
                       </td>
 
                       <td className="px-4 py-4">
-                        <div className="flex min-w-[220px] flex-col gap-2">
+                        <div className="flex min-w-[150px] flex-col gap-2">
                           <button
                             type="button"
                             onClick={() => void handleCopy(`poll:${poll.id}`, pollUrl)}
