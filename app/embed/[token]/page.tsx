@@ -178,7 +178,7 @@ function ResultOptions({
 }
 function EmbedFooter() {
   return (
-    <div className="mt-5 border-t border-gray-700 pt-4 text-center">
+    <div className="mt-4 border-t border-gray-700 pt-4 text-center">
       <Link
         href="https://www.pollandsee.com"
         target="_blank"
@@ -188,7 +188,7 @@ function EmbedFooter() {
         <img
           src="/favicon.ico"
           alt="Poll & See"
-          className="h-[13px] w-[13px] opacity-85"
+          className="h-[13px] w-[13px] opacity-80"
         />
         <span>Powered by Poll &amp; See</span>
       </Link>
@@ -436,7 +436,7 @@ export default function EmbedPollPage() {
       <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 px-4 py-5 text-white">
         <div className="mx-auto max-w-2xl rounded-2xl border border-gray-800 bg-gray-900/80 p-6 text-center">
           <p className="text-base font-medium text-white">This poll is not currently active.</p>
-              <EmbedFooter />
+        <EmbedFooter />
         </div>
       </main>
     );
@@ -512,9 +512,8 @@ export default function EmbedPollPage() {
   {error ? <p className="pt-3 text-sm text-red-300">{error}</p> : null}
 </>
           )}
-
-              <EmbedFooter />
+ 
+          <EmbedFooter />
+        </div>
       </section>
     </main>
-  );
-}
