@@ -42,7 +42,7 @@ const OPTION_COLOURS = [
 
 const SAME_POLL_CLICK_GUARD_MS = 400;
 const BASE_CARD_WIDTH = 760;
-
+const COMPACT_BREAKPOINT = 430;
 function canVoteNow(pollId: number): string | null {
   const last = Number(localStorage.getItem(`poll-last-click-${pollId}`) || 0);
   if (Date.now() - last < SAME_POLL_CLICK_GUARD_MS) return "Please try again.";
@@ -224,10 +224,13 @@ export default function EmbedPollPage() {
   const resultsOnly = poll ? !poll.embed_voting_enabled : false;
   const hasImageOptions = options.some((option) => Boolean(option.image_url));
 
-  const scale = useMemo(() => {
-    const next = availableWidth / BASE_CARD_WIDTH;
-    return Math.min(1, Math.max(0.18, next));
-  }, [availableWidth]);
+const isCompactMode = availableWidth < COMPACT_BREAKPOINT;
+
+const scale = useMemo(() => {
+  if (isCompactMode) return 1;
+  const next = availableWidth / BASE_CARD_WIDTH;
+  return Math.min(1, Math.max(0.18, next));
+}, [availableWidth, isCompactMode]);
 
   useEffect(() => {
     document.body.style.margin = "0";
@@ -425,19 +428,19 @@ export default function EmbedPollPage() {
     return () => observer.disconnect();
   }, [loading, poll, options, counts, voted, error, resultsOnly, scale]);
 
-  useEffect(() => {
-    const scaledHeight = Math.ceil(cardHeight * scale);
+useEffect(() => {
+  const renderedHeight = Math.ceil(cardHeight * (isCompactMode ? 1 : scale));
 
-    if (window.parent !== window) {
-      window.parent.postMessage(
-        {
-          type: "pollandsee:embed-height",
-          height: scaledHeight,
-        },
-        "*"
-      );
-    }
-  }, [cardHeight, scale]);
+  if (window.parent !== window) {
+    window.parent.postMessage(
+      {
+        type: "pollandsee:embed-height",
+        height: renderedHeight,
+      },
+      "*"
+    );
+  }
+}, [cardHeight, scale, isCompactMode]);
 
   const handleVote = async (optionId: number) => {
     if (!poll) return;
@@ -491,18 +494,27 @@ export default function EmbedPollPage() {
     }
   };
 
-  const scaledWidth = Math.ceil(BASE_CARD_WIDTH * scale);
+const compactWidth = Math.max(availableWidth, 220);
+const renderedWidth = isCompactMode ? compactWidth : Math.ceil(BASE_CARD_WIDTH * scale);
 
-  const scaledWrapperStyle = {
-    width: `${scaledWidth}px`,
-    height: cardHeight ? `${Math.ceil(cardHeight * scale)}px` : "0px",
-  };
+const scaledWrapperStyle = {
+  width: `${renderedWidth}px`,
+  height: cardHeight
+    ? `${Math.ceil(cardHeight * (isCompactMode ? 1 : scale))}px`
+    : "0px",
+};
 
-  const scaledCardStyle = {
-    width: `${BASE_CARD_WIDTH}px`,
-    transform: `scale(${scale})`,
-    transformOrigin: "top left",
-  } as const;
+const scaledCardStyle = isCompactMode
+  ? ({
+      width: `${compactWidth}px`,
+      transform: "none",
+      transformOrigin: "top left",
+    } as const)
+  : ({
+      width: `${BASE_CARD_WIDTH}px`,
+      transform: `scale(${scale})`,
+      transformOrigin: "top left",
+    } as const);
 
   if (loading) {
     return (
@@ -510,7 +522,11 @@ export default function EmbedPollPage() {
         <div ref={outerRef} className="w-full overflow-hidden bg-transparent">
           <div className="mx-auto" style={scaledWrapperStyle}>
             <div ref={cardRef} style={scaledCardStyle}>
-              <div className="w-full overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/95 p-6">
+          <div
+  className={`w-full overflow-hidden rounded-2xl border border-gray-800 bg-gray-900 ${
+    isCompactMode ? "p-4" : "p-6"
+  }`}
+>
                 <p className="text-sm text-gray-300">Loading poll...</p>
               </div>
             </div>
@@ -526,7 +542,11 @@ export default function EmbedPollPage() {
         <div ref={outerRef} className="w-full overflow-hidden bg-transparent">
           <div className="mx-auto" style={scaledWrapperStyle}>
             <div ref={cardRef} style={scaledCardStyle}>
-              <div className="w-full overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/95 p-6 text-center">
+           <div
+  className={`w-full overflow-hidden rounded-2xl border border-gray-800 bg-gray-900 text-center ${
+    isCompactMode ? "p-4" : "p-6"
+  }`}
+>
                 <p className="text-base font-medium text-white">This poll is not currently active.</p>
                 <EmbedFooter />
               </div>
@@ -542,7 +562,11 @@ export default function EmbedPollPage() {
       <div ref={outerRef} className="w-full overflow-hidden bg-transparent">
         <div className="mx-auto" style={scaledWrapperStyle}>
           <div ref={cardRef} style={scaledCardStyle}>
-            <div className="w-full overflow-hidden rounded-2xl border border-gray-700 bg-gray-800/95 p-6">
+           <div
+  className={`w-full overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 ${
+    isCompactMode ? "p-4" : "p-6"
+  }`}
+>
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div></div>
                 <span className="text-sm text-gray-400">
@@ -550,16 +574,28 @@ export default function EmbedPollPage() {
                 </span>
               </div>
 
-              <h1 className="mb-2 break-words text-2xl font-bold text-white">{poll.question}</h1>
+             <h1
+  className={`mb-2 break-words font-bold text-white ${
+    isCompactMode ? "text-lg leading-7" : "text-2xl"
+  }`}
+>
+  {poll.question}
+</h1>
 
               {poll.description ? (
-                <p className="mb-4 break-words text-gray-300">{poll.description}</p>
+              <p
+  className={`mb-4 break-words text-gray-300 ${
+    isCompactMode ? "text-sm leading-6" : ""
+  }`}
+>
+  {poll.description}
+</p>
               ) : null}
 
               {!voted && !resultsOnly ? (
                 <div className="flex flex-col gap-3">
                   {hasImageOptions ? (
-                    <p className="mb-[8px] mt-[6px] text-sm text-gray-300 opacity-80">
+                 <p className={`mb-[8px] mt-[6px] text-gray-300 opacity-80 ${isCompactMode ? "text-xs" : "text-sm"}`}>
                       Tap an image to vote
                     </p>
                   ) : null}
@@ -571,7 +607,9 @@ export default function EmbedPollPage() {
                       className={
                         option.image_url
                           ? "w-full cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600"
-                          : "w-full cursor-pointer overflow-hidden rounded-xl bg-gray-700 px-4 py-3 text-left text-white transition hover:bg-gray-600"
+                      : `w-full cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600 ${
+    isCompactMode ? "px-3 py-2.5 text-sm" : "px-4 py-3"
+  }`
                       }
                     >
                       {option.image_url ? (
@@ -586,7 +624,9 @@ export default function EmbedPollPage() {
                               className="aspect-square h-auto w-full object-contain"
                             />
                           </div>
-                          <div className="break-words px-4 py-3">{option.option_text}</div>
+                        <div className={`break-words ${isCompactMode ? "px-3 py-2.5 text-sm" : "px-4 py-3"}`}>
+  {option.option_text}
+</div>
                         </>
                       ) : (
                         <span className="break-words">{option.option_text}</span>
@@ -601,7 +641,11 @@ export default function EmbedPollPage() {
                   <ResultOptions options={options} voteCounts={counts} selectedOptionId={selected} />
 
                   {resultsOnly ? (
-                    <div className="mt-4 rounded-xl border border-gray-700 bg-gray-900/70 px-4 py-3 text-center text-sm text-gray-300">
+                 <div
+  className={`mt-4 rounded-xl border border-gray-700 bg-gray-900/70 text-center text-gray-300 ${
+    isCompactMode ? "px-3 py-2.5 text-xs" : "px-4 py-3 text-sm"
+  }`}
+>
                       Poll closed. Final results shown above.
                     </div>
                   ) : null}

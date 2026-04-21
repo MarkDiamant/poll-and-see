@@ -61,9 +61,28 @@ function buildEmbedUrl(embedToken: string | null) {
   return embedToken ? `${SITE_URL}/embed/${embedToken}` : "";
 }
 
-function buildIframeCode(embedToken: string | null) {
+function estimateEmbedHeight(poll: PollRow) {
+  const questionLength = (poll.question || "").trim().length;
+  const descriptionLength = (poll.description || "").trim().length;
+
+  let height = 250;
+
+  if (questionLength > 70) height += 20;
+  if (questionLength > 120) height += 20;
+  if (questionLength > 180) height += 20;
+
+  if (descriptionLength > 0) height += 30;
+  if (descriptionLength > 120) height += 20;
+
+  return Math.max(280, Math.min(520, height));
+}
+
+function buildIframeCode(embedToken: string | null, poll?: PollRow) {
   if (!embedToken) return "";
-  return `<iframe src="${SITE_URL}/embed/${embedToken}" width="100%" height="720" style="border:0; overflow:hidden; background:transparent;" loading="lazy" allowfullscreen></iframe>`;
+
+  const height = poll ? estimateEmbedHeight(poll) : 360;
+
+  return `<iframe src="${SITE_URL}/embed/${embedToken}" width="100%" height="${height}" style="border:0; overflow:hidden; background:transparent; display:block;" loading="lazy" scrolling="no"></iframe>`;
 }
 
 function isValidSlug(slug: string) {
@@ -276,7 +295,7 @@ export default function AdminPollsPage() {
 
   if (!adminKey) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 px-6 py-10 text-white">
+     <main className="m-0 w-full overflow-hidden bg-transparent p-0 text-white">
         <section className="mx-auto max-w-xl rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-lg">
           <h1 className="mb-2 text-2xl font-semibold">Poll Admin</h1>
           <p className="mb-5 text-sm text-gray-300">Enter your admin key to manage polls.</p>
@@ -390,7 +409,7 @@ export default function AdminPollsPage() {
                 sortedPolls.map((poll, index) => {
                   const pollUrl = buildPollUrl(poll.slug);
                   const embedUrl = buildEmbedUrl(poll.embed_token);
-                  const iframeCode = buildIframeCode(poll.embed_token);
+                  const iframeCode = buildIframeCode(poll.embed_token, poll);
                   const embedStatus = getEmbedStatus(poll);
                   const slugError = getSlugError(slugEdits[poll.id] || "", poll.id, allSlugRecords);
 
