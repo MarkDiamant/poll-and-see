@@ -37,9 +37,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+      const body = await request.json();
     const pollId = Number(body.pollId);
     const optionId = Number(body.optionId);
+    const embedToken =
+      typeof body.embedToken === "string" && body.embedToken.trim().length > 0
+        ? body.embedToken.trim()
+        : null;
 
     if (!Number.isInteger(pollId) || !Number.isInteger(optionId)) {
       return NextResponse.json(
@@ -67,6 +71,29 @@ export async function POST(request: NextRequest) {
         { error: "That option is not valid for this poll." },
         { status: 400 }
       );
+    }
+
+    if (embedToken) {
+      const { data: embedPoll } = await supabaseAdmin
+        .from("polls")
+        .select("id, is_embeddable, embed_active, embed_voting_enabled, embed_token")
+        .eq("id", pollId)
+        .eq("embed_token", embedToken)
+        .maybeSingle();
+
+      if (!embedPoll || !embedPoll.is_embeddable) {
+        return NextResponse.json(
+          { error: "This embedded poll is unavailable." },
+          { status: 403 }
+        );
+      }
+
+      if (!embedPoll.embed_active || !embedPoll.embed_voting_enabled) {
+        return NextResponse.json(
+          { error: "Voting is closed for this embedded poll." },
+          { status: 403 }
+        );
+      }
     }
 
     const ipAddress = getIpAddress(request);
