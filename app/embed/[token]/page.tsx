@@ -517,3 +517,5 @@ export default function EmbedPollPage() {
         </div>
       </section>
     </main>
+     );
+}
