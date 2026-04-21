@@ -221,7 +221,7 @@ export default function EmbedPollPage() {
     [counts]
   );
 
-  const resultsOnly = poll ? poll.embed_active && !poll.embed_voting_enabled : false;
+  const resultsOnly = poll ? !poll.embed_voting_enabled : false;
   const hasImageOptions = options.some((option) => Boolean(option.image_url));
 
   const scale = useMemo(() => {
@@ -491,7 +491,10 @@ export default function EmbedPollPage() {
     }
   };
 
+  const scaledWidth = Math.ceil(BASE_CARD_WIDTH * scale);
+
   const scaledWrapperStyle = {
+    width: `${scaledWidth}px`,
     height: cardHeight ? `${Math.ceil(cardHeight * scale)}px` : "0px",
   };
 
@@ -505,7 +508,7 @@ export default function EmbedPollPage() {
     return (
       <main className="m-0 w-full overflow-hidden bg-transparent p-0 text-white">
         <div ref={outerRef} className="w-full overflow-hidden bg-transparent">
-          <div style={scaledWrapperStyle} className="relative w-full overflow-hidden">
+          <div className="mx-auto" style={scaledWrapperStyle}>
             <div ref={cardRef} style={scaledCardStyle}>
               <div className="w-full overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/95 p-6">
                 <p className="text-sm text-gray-300">Loading poll...</p>
@@ -521,7 +524,7 @@ export default function EmbedPollPage() {
     return (
       <main className="m-0 w-full overflow-hidden bg-transparent p-0 text-white">
         <div ref={outerRef} className="w-full overflow-hidden bg-transparent">
-          <div style={scaledWrapperStyle} className="relative w-full overflow-hidden">
+          <div className="mx-auto" style={scaledWrapperStyle}>
             <div ref={cardRef} style={scaledCardStyle}>
               <div className="w-full overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/95 p-6 text-center">
                 <p className="text-base font-medium text-white">This poll is not currently active.</p>
@@ -537,7 +540,7 @@ export default function EmbedPollPage() {
   return (
     <main className="m-0 w-full overflow-hidden bg-transparent p-0 text-white">
       <div ref={outerRef} className="w-full overflow-hidden bg-transparent">
-        <div style={scaledWrapperStyle} className="relative w-full overflow-hidden">
+        <div className="mx-auto" style={scaledWrapperStyle}>
           <div ref={cardRef} style={scaledCardStyle}>
             <div className="w-full overflow-hidden rounded-2xl border border-gray-700 bg-gray-800/95 p-6">
               <div className="mb-3 flex items-center justify-between gap-3">
