@@ -1,0 +1,262 @@
+[33m61e9749[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Remove extra closing div in embed page
+[33m1bcb3f8[m Fix malformed closed-results banner in embed page
+[33m8bc4d7e[m Adjust embed breakpoint for smoother resizing
+[33ma999046[m Smooth embed resizing by disabling compact mode
+[33m86a7e1b[m Add missing closing div in active embed block
+[33mc34f596[m Remove extra closing div in inactive embed block
+[33m0b968a9[m Fix stray closing p tag in embed page
+[33mc57c3de[m Fix inactive embed footer wrapper
+[33m7753d86[m Fix embed footer wrapper
+[33m0c1b0ab[m Reserve embed height and pin footer to bottom
+[33mbeab8ef[m Anchor embed scaling to bottom so attribution stays visible
+[33ma517558[m Finalize universal responsive embed iframe
+[33m2420614[m Set narrower universal embed width and safer default heights
+[33m58be73e[m Add recommended iframe height for embeds
+[33m29267d4[m Tighten embed output to scaled card only
+[33m7d45fab[m Restore embed scaling with smaller minimum size
+[33m511cfb7[m Simplify embed to responsive card
+[33m82daf56[m Simplify embed to responsive card
+[33m869e170[m Make embed transparent and proportionally scalable
+[33mac323e9[m Update iframe snippet and tighten actions column
+[33m7aa2210[m Tighten admin layout and make embed transparent/responsive
+[33me93edcb[m Split admin pages and add submission workflow
+[33mf916347[m Improve admin polls page and add submission approval flow
+[33m03e4cf5[m Add internal admin polls page
+[33m5be716e[m Make embed active control inactive state
+[33me07b6e5[m Fix embed state logic separation
+[33mc061098[m Refine embed footer icon visibility
+[33m0dc319d[m Fix embed page closing syntax
+[33m00fb859[m Fix shared embed footer and card closing
+[33m919c65a[m Unify embed footer across all states
+[33m48d6eb2[m Embed footer polish: icon visibility, spacing alignment, inactive page icon
+[33mb51f941[m Embed polish: favicon attribution, closed poll text, unavailable wording
+[33mf7332c1[m Fix embed vote alignment
+[33m90bd989[m Merge branch 'embed-polls-v1'
+[33m3209c8a[m[33m ([m[1;31morigin/embed-polls-v1[m[33m, [m[1;32membed-polls-v1[m[33m)[m Remove category label from embed poll
+[33m21bc06e[m Merge pull request #1 from MarkDiamant/embed-polls-v1
+[33m55d5d8f[m Add secure embedded poll route and embed-aware vote validation
+[33m471838e[m Fix mobile checkbox size mismatch
+[33md791154[m Prevent voted poll from flashing back to zero
+[33m7da7dbb[m Add PRIVATE POLL label to private share links
+[33m7b00cc6[m Increase poll question max length to 150 characters
+[33mf6ff4bc[m Fix responsive chevron alignment mobile vs desktop
+[33m9b7b484[m Show option images in shared poll cards
+[33m7408332[m Adjust home chevron alignment
+[33m44738d2[m Fix Home chevron baseline alignment
+[33m626f941[m Fix slug footer spacing and home chevron alignment
+[33maf2fc5b[m Restore slug page height and reduce footer gap
+[33m7be7f4e[m Remove forced full-height layout on poll slug page
+[33mef0f3a3[m Reduce bottom spacing on create poll page
+[33m451027a[m Standardise create poll form text hierarchy
+[33m5128137[m Fix duplicate input tag in submit poll form
+[33m56cc8d0[m Fix private/email checkbox interaction
+[33md374653[m Fix private poll email checkbox logic
+[33mca97426[m Auto-tick email option for private polls
+[33m531ff05[m Add shared email field logic to create poll form
+[33m6adeb7c[m Make poll share card more portrait
+[33m9986026[m Make poll share card feel like true mobile portrait
+[33m0d3a042[m Fix poll share menu clipping and simplify share results
+[33ma7430b2[m Switch poll share cards to portrait layout
+[33md165337[m Move share card logo to bottom and reduce blank space
+[33m1b1d9c2[m Improve poll share menu positioning and share card layout
+[33mdd8c824[m Open poll share menu above button
+[33m1c070f3[m Fix broken share button JSX on poll page
+[33mde6a9c6[m Add post-vote share menu and branded share cards
+[33m7516e00[m Improve helper text clarity and update example question
+[33m01355ab[m Improve poll options guidance and clarify private poll visibility
+[33mf9d13e1[m Confirm latest submit poll page changes
+[33m0874c68[m Restore live vote updates and simplify poll submission
+[33mb3e998c[m Fix duplicate link in share output
+[33m9639c08[m Update poll share text to place URL on its own line
+[33m2084fb5[m Prevent stale slug poll sync from overwriting local vote
+[33mcc1c416[m Reduce create poll CTA frequency on poll page
+[33m60d2cca[m Stagger create poll CTA on poll page
+[33mf5ca5b6[m Add small home link under unvoted polls
+[33m1bc6c40[m Restore filtered active poll count on homepage
+[33m49f4e14[m Activity indicator once per session
+[33m24426bc[m Show activity indicator once per session
+[33me6acf85[m Stabilise activity indicator timing
+[33m7e988dd[m Fix homepage activity indicator flashing frequency
+[33m9d57612[m Read total poll count from site stats
+[33m722bd83[m Add image options to daily digest emails
+[33m1f880a2[m Prevent activity indicator from restarting on vote updates
+[33m0c17f00[m Increase spacing above subscribe form
+[33m6cd9add[m Fix duplicated getBadgeLabel declaration
+[33mc01d9db[m Update badge priority and restyle subscribe boxes
+[33m2922c15[m Include private poll votes in homepage 24 hour activity count
+[33m6ee370f[m Remove card ribbons from trending section
+[33m6f5e06e[m Exclude private polls from daily digest
+[33mec76764[m Fix vertical alignment of Private ribbon text
+[33m8fcc75c[m Add private poll ribbon and helper text on slug page
+[33m1f76c2e[m Change Featured Poll label to ribbon
+[33me3780dc[m Increase size and align Trending section ribbon to edge
+[33m88f7d8b[m Increase size and align Trending section ribbon to edge
+[33m3f1be96[m Restore Trending section container
+[33mfc0360a[m Add single trending ribbon to section header
+[33m87b93bc[m Fix Trending card layout structure
+[33m38b1b2a[m Separate trending vote count from CTA
+[33md6fe295[m Align poll card CTAs to bottom right
+[33mdebf859[m Pin live poll CTA to card bottom on desktop
+[33mf309231[m Restore vote count on poll slug page header
+[33m24c1feb[m Tighten badge edge spacing and fix trending vertical alignment
+[33m849b960[m Nudge status tag text alignment on featured and poll pages
+[33med2d607[m Soften badge colours and fix vertical centering
+[33m3763333[m Increase status label font size slightly
+[33mfca0014[m Make status tags flush with card edge
+[33mf7e3d23[m Align status badges flush with card content edge
+[33me6535b5[m Align featured poll badge with category row
+[33mf41f3eb[m Align status tags closer to right edge
+[33m00ff37b[m Replace diagonal status ribbon with inline status tag
+[33m565df81[m Move slug page status label inline with category
+[33m5436e88[m Reduce ribbon size and move closer to corner
+[33m0cb6e54[m Refine ribbon centering and positioning
+[33m181c65b[m Refine ribbon thickness, centering, and position
+[33mc5fc095[m Refine ribbon thickness and corner positioning
+[33mb04fd96[m Adjust ribbon size and prevent featured poll overlap
+[33m46fc2a7[m Fix extra brace in poll page ribbon
+[33m3a6f38b[m Fix ribbon positioning
+[33m43900b4[m Adjust status ribbon angle for visibility
+[33mcc953a5[m Adjust status ribbon angle for visibility
+[33m1fc3c47[m Adjust status ribbon angle for visibility
+[33mafbb9fc[m Refine poll page status ribbons and activity indicator
+[33m532ed42[m Refine homepage status ribbons and activity indicator
+[33m92b7181[m Refine status badges and desktop activity indicator positioning
+[33m354c59e[m Refine trending card text and desktop alignment
+[33m5683698[m Reduce trending section from 5 polls to 4
+[33mcf8525b[m Prevent featured poll duplication in trending section
+[33me8e145f[m Homepage: add trending section, reposition subscribe box, improve activity indicator timing
+[33m93076d5[m Refine trending section and slow activity indicator
+[33me50e1cf[m Add homepage trending badges and activity indicator
+[33m9d6c39d[m Update inline subscribe trigger to 3 votes and scroll to subscribe box
+[33mda7fbae[m Add inline subscribe block after 5 votes and update subscribe copy
+[33me99a172[m Increase image poll helper text size
+[33m0932ba3[m Adjust spacing and visibility of image poll helper text
+[33m73853e6[m Constrain desktop image poll width and tighten vote helper spacing
+[33m8be04c1[m Align desktop poll image width and move image vote helper text
+[33m372ac66[m Update image guidance copy on create poll page
+[33m12385e8[m Reduce desktop poll image size and add image vote helper text
+[33m3a16b5a[m Fix poll image cropping on poll page
+[33mf36c8f2[m Change share button text to Share poll link
+[33mb95acd9[m Fix optimistic vote flash on poll page
+[33m04f8e86[m Restore counter fallback sync and poll page live refresh
+[33mc59db5f[m Fix homepage after private poll changes
+[33m777cdd8[m Tidy create poll image helper text and checkbox styling
+[33m0af2f02[m Add image ratio helper text to create poll page
+[33m8ddd0ad[m Add private poll option and create poll wording updates
+[33m9f11c83[m Increase poll option length to 60 chars
+[33m0af1cf7[m Restore live counter catch-up and pointer cursor
+[33m60dc8da[m Add image support to live poll page
+[33maab9e45[m Restore live homepage counter and add featured poll image support
+[33mbb60f65[m Add colours 5–8 for poll options
+[33ma95f8fb[m Remove remaining votes table reads from homepage cache
+[33m81a1fe6[m Revert "Move poll totals off votes scans and optimise vote checks"
+[33m00b6fe7[m Move poll totals off votes scans and optimise vote checks
+[33m7fa1e0a[m Force redeploy
+[33m8734aa9[m Make homepage poll loading fail-safe and remove repeated vote polling
+[33mce46625[m Fix cron auth using CRON_SECRET
+[33ma000d2e[m Improve revisits and group fallback poll flow
+[33m4b209b3[m Fix stable category flow after voting
+[33m8a07b5f[m Prioritize related categories after voting
+[33mdcdb976[m Fix digest polls query and keep correct lookback logic
+[33m849556f[m Fix digest route and add dry run mode
+[33m4a3550e[m Improve homepage loading skeleton
+[33m32eba52[m Fix poll slug page and add live total vote message
+[33mc581c80[m Update voted message with live total site vote count
+[33md90974e[m Delay back to top button and rename ready status to draft
+[33m34ab5b1[m Adjust back to top button size and trigger
+[33m1c6c956[m Add back to top button on homepage
+[33m04601ff[m Fix footer flash during loading state
+[33m9842b24[m Use shared footer on legal pages and add Google verification content
+[33ma1c87e0[m Add trust pages footer links and Google verification
+[33m911298a[m Tighten create poll layout and add review note
+[33m3f4b72f[m Refine create poll heading alignment and placeholders
+[33mab51e04[m Improve create poll page layout and wording
+[33mababf62[m Match homepage subscribe box text to poll page
+[33m6cc1ab9[m Fix poll button centering and quick smooth scroll
+[33me1d2fc3[m Fix share text spacing without changing layout
+[33mbb383af[m fix share text spacing + remove copy error message
+[33m5584fb8[m Fix poll page mobile button layout and speed up next poll
+[33m5d2f661[m Add category dropdown to poll page subscribe box
+[33m5f4e71f[m Restore poll action buttons before and after voting
+[33m66726fc[m Restore poll page buttons and keep single subscribe box
+[33mb0ad331[m Restore slug page and final digest
+[33mbbdceac[m fix cron UK time
+[33m4e05891[m final digest + subscribe box
+[33mdc8a15a[m Fix digest to load poll options from poll_options table
+[33mf34151f[m Restore digest query error handling
+[33m69e7eb2[m digest now shows poll options styled like site
+[33ma76df8e[m Improve daily digest email design
+[33m8e71a93[m Redeploy with resend email settings
+[33m37470fb[m trigger redeploy
+[33mf1a6d17[m Tighten homepage and fix signup behaviour
+[33m007dcca[m Tighten homepage layout and improve signup selector
+[33mc7ffa53[m Fix subscribe API TypeScript error
+[33mcb5886b[m Improve homepage search and signup category selector
+[33m0e737cc[m Fix homepage idle callback build error
+[33m52b7f65[m Add homepage poll search and daily digest email signup
+[33m84e1a87[m Remove homepage tab-return refresh
+[33m1418418[m Restore exact poll back navigation and button cursor
+[33m46a8529[m Restore exact back to previous poll position
+[33mbb5297b[m Restore back to polls scroll position
+[33me818f64[m Improve voting flow - allow continuous voting
+[33ma875aa3[m Fix share message URL duplication
+[33m111fece[m Update poll share text format only
+[33m3e737cd[m Fix page cache preloading build error
+[33m5b4d730[m Speed up poll page loading and instant chained poll append
+[33ma2d7725[m Preload and auto-scroll chained polls on poll page
+[33m30be482[m Fix poll page voted state and restore original styling
+[33ma7e1f0f[m Fix local voted detection and restore compact poll header
+[33m48583a9[m Fix voted detection typing and restore poll page header
+[33m7dafd7a[m Fix voted detection + restore header buttons
+[33m05f5fb7[m Fix null data TypeScript error in loadNext
+[33m0b031a8[m Fix null options TypeScript error
+[33md428bf0[m Fix voted-state flicker and TypeScript error
+[33mf717366[m Fix poll stacking flow and improve navigation buttons
+[33m102cc20[m force deploy now
+[33m4de653a[m trigger vercel deploy
+[33m7140fc7[m Improve chained poll voting flow and actions
+[33m18abd4a[m redeploy after adding service role key
+[33mc730cdc[m Add inline next poll flow and light vote anti-spam protection
+[33mc4e80d2[m Restore slow live vote counter scroll
+[33macd8771[m Fix visible live counter scroll
+[33madfcd53[m Fix live counter animation and layout jump
+[33m303f998[m Fix live counter multi-digit scroll
+[33m0b0398d[m Slow and sync multi-digit live vote counter
+[33m6ef3291[m Fix live vote counter scroll behavior
+[33m17f574d[m Improve live vote counter animation and styling
+[33mf2f90d5[m Upgrade live homepage vote counter
+[33m5bd0fe0[m Fix live vote counter clipping
+[33m969267a[m Fix live vote counter formatting
+[33mee607d6[m Add live homepage vote counter
+[33m634d4fe[m Keep poll percentages directly above result bars
+[33m2118713[m Fix poll page answer and percentage alignment
+[33m37a5a69[m Fix featured poll answer and percentage alignment
+[33m4890442[m Simplify poll result highlighting
+[33m50228dd[m Polish voted and leading result states
+[33md0b8cf6[m Refine voted and leading poll option styling
+[33mf3e4d2e[m Improve selected and leading poll result styling
+[33mb40eb66[m Show selected poll option after voting
+[33mfd5638a[m Increase category colour contrast
+[33m205c20b[m Make poll category colours fully distinct
+[33m4c88de3[m Add featured poll vote count and category colours
+[33mfd08604[m return to exact previous poll card on homepage
+[33m4449f71[m restore exact previous homepage position from poll page back button
+[33ma9c1e51[m fix linked category highlighting on homepage
+[33mdf74226[m keep linked category selected first then allow manual category changes
+[33mfc9511d[m allow changing category after category link navigation
+[33mab83134[m make URL category win on homepage
+[33mfe07e50[m use category query param for related category poll link
+[33m5e2c70c[m fix category highlight from category poll link
+[33m1125a1e[m fix category highlight when returning from poll page
+[33mee3ac7d[m fit 3 mobile category buttons per row and fix category poll link
+[33m1d47d20[m fit category buttons on one desktop row and fix related category link
+[33mc314257[m fix homepage build issue
+[33md92b1da[m fix homepage categories and poll page related category link
+[33me910d5c[m persist homepage category selection and add related category link
+[33mf57ae2a[m alphabetise category filters and count all active polls
+[33m33e1dca[m add homepage category filters and show newest polls first
+[33me3642c6[m Add slug routing
+[33m6b08b55[m fix create poll page layout and add category suggestion
+[33m231e69c[m add header footer and dropdown to create poll page
+[33m76409f8[m finalise create poll page
+[33m82afd4c[m update create poll pages and poll page link
