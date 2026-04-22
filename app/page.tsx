@@ -1086,7 +1086,7 @@ const trendingPolls = useMemo(() => {
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
       <header className="mx-auto max-w-6xl px-4 pb-3 pt-4 md:px-6">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link href="/" aria-label="Go to homepage" className="shrink-0">
             <img
               src="/logo.png"

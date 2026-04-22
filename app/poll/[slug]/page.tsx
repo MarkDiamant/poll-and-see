@@ -1776,7 +1776,7 @@ export default function PollPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
       <header className="max-w-6xl mx-auto px-4 md:px-6 pt-5 pb-4">
-        <div className="flex items-center justify-between gap-4">
+         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link href="/" aria-label="Go to homepage" className="shrink-0">
             <img
               src="/logo.png"
