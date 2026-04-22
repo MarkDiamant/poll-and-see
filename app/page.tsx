@@ -538,14 +538,22 @@ let last24Total = 0;
   const createdAtTime = new Date(vote.created_at).getTime();
 
   // last 48 hours → trending
-  if (createdAtTime >= now.getTime() - 48 * 60 * 60 * 1000) {
+if (!Number.isNaN(createdAtTime)) {
+  const hoursAgo = (Date.now() - createdAtTime) / (1000 * 60 * 60);
+
+  if (hoursAgo <= 48) {
     recentCounts[pollId] = (recentCounts[pollId] || 0) + 1;
   }
+}
 
   // last 24 hours → activity counter
-  if (createdAtTime >= twentyFourHoursAgoMs) {
+  if (!Number.isNaN(createdAtTime)) {
+  const hoursAgo = (Date.now() - createdAtTime) / (1000 * 60 * 60);
+
+  if (hoursAgo <= 24) {
     last24Total += 1;
   }
+}
 });
 
 const totalVoteCounts: Record<number, number> = {};
