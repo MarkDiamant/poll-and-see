@@ -428,16 +428,14 @@ export default function SubmitPollPage() {
         <div className="text-center">
           <h1 className="text-4xl font-bold md:text-[4.25rem]">Create a Poll</h1>
 
-                   <div className="mt-6 space-y-3">
-            <p className="text-lg text-white">
-              <p className="mb-4 text-sm text-gray-300 md:text-base">
-  Create your poll and get a shareable link below instantly. No name or email required.
-</p>
+             <div className="mt-6 space-y-2">
+            <p className="text-2xl font-semibold text-white">
+              Get your shareable link instantly
             </p>
-            <p className="text-gray-300">
-              Your poll goes live instantly, so you can share it straight away and start getting responses.
+            <p className="text-base text-gray-300">
+              No sign-up required. Your link will appear instantly below.
             </p>
-             </div>
+          </div>
         </div>
 
         <div className="mt-9 bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
@@ -534,9 +532,13 @@ export default function SubmitPollPage() {
               </div>
 
               <div>
-                <label className={labelClasses}>
-                  Poll Options (choose 2 to 6 options. Fewer options usually give clearer results.)
+            <label className={labelClasses}>
+                  Poll options (2–6)
                 </label>
+
+                            <p className="mb-2 text-sm text-gray-400 md:text-base">
+                  Fewer options usually give clearer results
+                </p>
 
                 <div className="space-y-4">
                   {options.map((option, i) => {
@@ -593,7 +595,7 @@ export default function SubmitPollPage() {
                 )}
               </div>
 
-                           <div className="space-y-2">
+                         <div className="space-y-1">
                 <label className={checkboxLabelClasses}>
                   <input
                     type="checkbox"
@@ -601,20 +603,21 @@ export default function SubmitPollPage() {
                     onChange={(e) => setIsPrivate(e.target.checked)}
                     className={checkboxClasses}
                   />
-                  <span>
-                    Make this poll private{" "}
-                    <span className="text-gray-400">(never shown publicly on Poll & See)</span>
-                  </span>
+                  <span>Make this poll private</span>
                 </label>
 
-               <p className="text-xs text-gray-400">
-  Public polls may appear on the Poll & See homepage after review.
-</p>
+                <p className="text-xs text-white">
+                  (Never shown publicly on Poll & See)
+                </p>
+
+                <p className="text-xs text-white">
+                  Public polls may appear on the Poll & See homepage after review.
+                </p>
               </div>
 
-              <div className="space-y-2">
+                      <div className="space-y-2">
                 <p className="text-sm text-gray-400">
-                  Polls may be lightly edited for clarity, spelling, or shareability, and polls that are abusive, explicit, or inappropriate may be removed.
+                  Polls may be edited for clarity, spelling, or shareability, or removed if they breach our guidelines.
                 </p>
               </div>
 
