@@ -510,10 +510,9 @@ export default function Home() {
       const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString();
       const twentyFourHoursAgoMs = now.getTime() - 24 * 60 * 60 * 1000;
 
-     const { data: recentVotesData, error: recentError } = await supabase
+const { data: recentVotesData, error: recentError } = await supabase
   .from("votes")
-  .select("poll_id")
-  .gte("created_at", fortyEightHoursAgo);
+  .select("poll_id");
 
 if (recentError) {
   console.error("recent votes error", recentError);
