@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -41,6 +41,8 @@ const OPTION_COLOURS = [
 ];
 
 const SAME_POLL_CLICK_GUARD_MS = 400;
+const BASE_CARD_WIDTH = 520;
+const COMPACT_BREAKPOINT = 360;
 function canVoteNow(pollId: number): string | null {
   const last = Number(localStorage.getItem(`poll-last-click-${pollId}`) || 0);
   if (Date.now() - last < SAME_POLL_CLICK_GUARD_MS) return "Please try again.";
@@ -208,6 +210,12 @@ export default function EmbedPollPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
+  const outerRef = useRef<HTMLDivElement | null>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+
+  const [availableWidth, setAvailableWidth] = useState(BASE_CARD_WIDTH);
+  const [cardHeight, setCardHeight] = useState(0);
+
   const totalVotes = useMemo(
     () => Object.values(counts).reduce((sum, count) => sum + count, 0),
     [counts]
@@ -216,7 +224,13 @@ export default function EmbedPollPage() {
   const resultsOnly = poll ? !poll.embed_voting_enabled : false;
   const hasImageOptions = options.some((option) => Boolean(option.image_url));
 
-  const isCompactMode = false;
+const isCompactMode = availableWidth < COMPACT_BREAKPOINT;
+
+const scale = useMemo(() => {
+  if (isCompactMode) return 1;
+  const next = availableWidth / BASE_CARD_WIDTH;
+  return Math.min(1, Math.max(0.42, next));
+}, [availableWidth, isCompactMode]);
 
   useEffect(() => {
     document.body.style.margin = "0";
@@ -374,33 +388,59 @@ export default function EmbedPollPage() {
   }, [poll, counts]);
 
   useEffect(() => {
-  const sendHeight = () => {
-    const height = Math.max(
-      document.documentElement.scrollHeight,
-      document.body.scrollHeight
+    if (!outerRef.current) return;
+
+    const element = outerRef.current;
+
+    const updateWidth = () => {
+      const nextWidth = element.getBoundingClientRect().width || BASE_CARD_WIDTH;
+      setAvailableWidth(nextWidth);
+    };
+
+    updateWidth();
+
+    const observer = new ResizeObserver(() => {
+      updateWidth();
+    });
+
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!cardRef.current) return;
+
+    const element = cardRef.current;
+
+    const updateHeight = () => {
+      setCardHeight(element.scrollHeight);
+    };
+
+    updateHeight();
+
+    const observer = new ResizeObserver(() => {
+      updateHeight();
+    });
+
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, [loading, poll, options, counts, voted, error, resultsOnly, scale]);
+
+useEffect(() => {
+  const renderedHeight = Math.ceil(cardHeight * (isCompactMode ? 1 : scale));
+
+  if (window.parent !== window) {
+    window.parent.postMessage(
+      {
+        type: "pollandsee:embed-height",
+        height: renderedHeight,
+      },
+      "*"
     );
-
-    if (window.parent !== window) {
-      window.parent.postMessage(
-        {
-          type: "pollandsee:embed-height",
-          height,
-        },
-        "*"
-      );
-    }
-  };
-
-  sendHeight();
-
-  const timeout = setTimeout(sendHeight, 150);
-  window.addEventListener("resize", sendHeight);
-
-  return () => {
-    clearTimeout(timeout);
-    window.removeEventListener("resize", sendHeight);
-  };
-}, [loading, poll, options, counts, voted, error, resultsOnly]);
+  }
+}, [cardHeight, scale, isCompactMode]);
 
   const handleVote = async (optionId: number) => {
     if (!poll) return;
@@ -454,11 +494,34 @@ export default function EmbedPollPage() {
     }
   };
 
+const compactWidth = Math.max(availableWidth, 220);
+const renderedWidth = isCompactMode ? compactWidth : Math.ceil(BASE_CARD_WIDTH * scale);
+
+const scaledWrapperStyle = {
+  width: `${renderedWidth}px`,
+  height: cardHeight
+    ? `${Math.ceil(cardHeight * (isCompactMode ? 1 : scale))}px`
+    : "0px",
+};
+
+const scaledCardStyle = isCompactMode
+  ? ({
+      width: `${compactWidth}px`,
+      transform: "none",
+      transformOrigin: "top left",
+    } as const)
+  : ({
+      width: `${BASE_CARD_WIDTH}px`,
+      transform: `scale(${scale})`,
+      transformOrigin: "bottom left",
+    } as const);
+
   if (loading) {
     return (
       <main className="m-0 w-full overflow-hidden bg-transparent p-0 text-white">
-  <div className="w-full overflow-hidden bg-transparent">
-    <div className="mx-auto w-full max-w-[520px]">
+        <div ref={outerRef} className="w-full overflow-hidden bg-transparent">
+          <div className="mx-auto" style={scaledWrapperStyle}>
+            <div ref={cardRef} style={scaledCardStyle}>
           <div
   className={`w-full overflow-hidden rounded-2xl border border-gray-800 bg-gray-900 ${
     isCompactMode ? "p-4" : "p-6"
@@ -468,6 +531,7 @@ export default function EmbedPollPage() {
               </div>
             </div>
           </div>
+        </div>
       </main>
     );
   }
@@ -475,32 +539,37 @@ export default function EmbedPollPage() {
   if (!poll || !poll.is_embeddable || !poll.embed_active) {
     return (
       <main className="m-0 w-full overflow-hidden bg-transparent p-0 text-white">
-  <div className="w-full overflow-hidden bg-transparent">
-    <div className="mx-auto w-full max-w-[520px]">
+        <div ref={outerRef} className="w-full overflow-hidden bg-transparent">
+          <div className="mx-auto" style={scaledWrapperStyle}>
+            <div ref={cardRef} style={scaledCardStyle}>
            <div
   className={`w-full overflow-hidden rounded-2xl border border-gray-800 bg-gray-900 text-center ${
     isCompactMode ? "p-4" : "p-6"
   }`}
 >
                 <p className="text-base font-medium text-white">This poll is not currently active.</p>
+                <div className="mt-auto">
   <EmbedFooter />
+</div>
               </div>
             </div>
           </div>
+        </div>
       </main>
     );
   }
 
   return (
-<main className="m-0 w-full overflow-hidden bg-transparent p-0 text-white">
-  <div className="w-full overflow-hidden bg-transparent">
-    <div className="mx-auto w-full max-w-[520px]">
+    <main className="m-0 w-full overflow-hidden bg-transparent p-0 text-white">
+      <div ref={outerRef} className="w-full overflow-hidden bg-transparent">
+        <div className="mx-auto" style={scaledWrapperStyle}>
+          <div ref={cardRef} style={scaledCardStyle}>
            <div
   className={`w-full overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 ${
     isCompactMode ? "p-4" : "p-6"
   }`}
 >
- <div className="flex min-h-[460px] flex-col sm:min-h-[520px]">
+  <div className={`flex flex-col ${isCompactMode ? "min-h-[460px]" : "min-h-[520px]"}`}>
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div></div>
                 <span className="text-sm text-gray-400">
@@ -508,12 +577,20 @@ export default function EmbedPollPage() {
                 </span>
               </div>
 
-<h1 className="mb-2 break-words text-xl font-bold leading-7 text-white sm:text-2xl">
+             <h1
+  className={`mb-2 break-words font-bold text-white ${
+    isCompactMode ? "text-lg leading-7" : "text-2xl"
+  }`}
+>
   {poll.question}
 </h1>
 
               {poll.description ? (
-<p className="mb-4 break-words text-sm leading-6 text-gray-300 sm:text-base">
+              <p
+  className={`mb-4 break-words text-gray-300 ${
+    isCompactMode ? "text-sm leading-6" : ""
+  }`}
+>
   {poll.description}
 </p>
               ) : null}
@@ -521,7 +598,7 @@ export default function EmbedPollPage() {
               {!voted && !resultsOnly ? (
                 <div className="flex flex-col gap-3">
                   {hasImageOptions ? (
-                 <p className="mb-[8px] mt-[6px] text-xs text-gray-300 opacity-80 sm:text-sm">
+                 <p className={`mb-[8px] mt-[6px] text-gray-300 opacity-80 ${isCompactMode ? "text-xs" : "text-sm"}`}>
                       Tap an image to vote
                     </p>
                   ) : null}
@@ -533,7 +610,9 @@ export default function EmbedPollPage() {
                       className={
                         option.image_url
                           ? "w-full cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600"
-                      : "w-full cursor-pointer overflow-hidden rounded-xl bg-gray-700 px-3 py-2.5 text-left text-sm text-white transition hover:bg-gray-600 sm:px-4 sm:py-3"
+                      : `w-full cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600 ${
+    isCompactMode ? "px-3 py-2.5 text-sm" : "px-4 py-3"
+  }`
                       }
                     >
                       {option.image_url ? (
@@ -548,7 +627,7 @@ export default function EmbedPollPage() {
                               className="aspect-square h-auto w-full object-contain"
                             />
                           </div>
-                        <div className="break-words px-3 py-2.5 text-sm sm:px-4 sm:py-3">
+                        <div className={`break-words ${isCompactMode ? "px-3 py-2.5 text-sm" : "px-4 py-3"}`}>
   {option.option_text}
 </div>
                         </>
@@ -564,8 +643,12 @@ export default function EmbedPollPage() {
                 <>
                   <ResultOptions options={options} voteCounts={counts} selectedOptionId={selected} />
 
-                   {resultsOnly ? (
-                    <div className="mt-4 rounded-xl border border-gray-700 bg-gray-900/70 px-3 py-2.5 text-center text-xs text-gray-300 sm:px-4 sm:py-3 sm:text-sm">
+                  {resultsOnly ? (
+                 <div
+  className={`mt-4 rounded-xl border border-gray-700 bg-gray-900/70 text-center text-gray-300 ${
+    isCompactMode ? "px-3 py-2.5 text-xs" : "px-4 py-3 text-sm"
+  }`}
+>
                       Poll closed. Final results shown above.
                     </div>
                   ) : null}
@@ -574,9 +657,7 @@ export default function EmbedPollPage() {
                 </>
               )}
 
-              <div className="mt-auto">
-                <EmbedFooter />
-              </div>
+              <EmbedFooter />
             </div>
           </div>
         </div>
