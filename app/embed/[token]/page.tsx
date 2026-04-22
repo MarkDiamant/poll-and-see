@@ -156,7 +156,9 @@ const animatedPercent = percent > 0 ? Math.max(12, percent) : 0;
                       ✓
                     </span>
                   ) : null}
-                  <span className={`min-w-0 break-words leading-5 text-white ${isCompactMode ? "text-sm" : "text-base"}`}>{option.option_text}</span>
+                 <span className="min-w-0 break-words text-sm leading-5 text-white sm:text-base">
+  {option.option_text}
+</span>
                 </div>
                 <span className="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-gray-300">
                   {percent}%
