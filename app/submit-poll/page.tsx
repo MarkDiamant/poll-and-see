@@ -600,20 +600,20 @@ export default function SubmitPollPage() {
                     onChange={(e) => setIsPrivate(e.target.checked)}
                     className={checkboxClasses}
                   />
-                  <span>Make this poll private</span>
+                  <span>
+                    Make this poll private{" "}
+                    <span className="text-gray-400">(Never shown publicly on Poll & See)</span>
+                  </span>
                 </label>
 
                 <p className="text-sm text-gray-400 md:text-base">
-                  Private polls are live instantly by link and never shown publicly on Poll & See.
-                </p>
-                <p className="text-sm text-gray-400 md:text-base">
-                  Public polls are also live instantly by link, and may appear on Poll & See after review.
+                  Your poll goes live instantly by link. Public polls may appear on the Poll & See homepage after review.
                 </p>
               </div>
 
               <div className="space-y-2">
                 <p className="text-sm text-gray-400">
-                  Polls that are abusive, explicit, or inappropriate may be removed.
+                  Polls may be lightly edited for clarity, spelling, or shareability. Polls that are abusive, explicit, or inappropriate may be removed.
                 </p>
               </div>
 

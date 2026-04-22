@@ -131,8 +131,8 @@ function ResultOptions({
                     {option.option_text}
                   </span>
                 </div>
-                <span className="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-gray-300">
-                  {percent}% <span className="font-normal text-gray-500">• {count} votes</span>
+             <span className="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-gray-300">
+                  {percent}% <span className="font-normal text-gray-400">• {count} votes</span>
                 </span>
               </div>
             </div>
@@ -358,10 +358,10 @@ export default function ResultsPage() {
                       </span>
                     </div>
 
-                                        <div className="mb-2 flex items-start justify-between gap-3">
-                      <h2 className="text-2xl font-bold leading-tight">{bundle.poll.question}</h2>
+                                <div className="mb-3 flex items-center justify-between gap-3">
+                      <h2 className="text-2xl font-bold">{bundle.poll.question}</h2>
 
-                      <span className="whitespace-nowrap text-xs text-gray-400">
+                      <span className="text-sm text-gray-400">
                         {Object.values(bundle.voteCounts).reduce((sum, count) => sum + count, 0)} votes
                       </span>
                     </div>
