@@ -426,13 +426,13 @@ export default function SubmitPollPage() {
 
       <section className="max-w-3xl mx-auto px-6 pt-1 pb-6">
         <div className="text-center">
-          <h1 className="text-4xl font-bold md:text-[4.25rem]">Create a Poll</h1>
+             <h1 className="text-4xl font-bold md:text-[3.75rem]">Create a Poll</h1>
 
-             <div className="mt-6 space-y-2">
-            <p className="text-2xl font-semibold text-white">
+                     <div className="mt-6 space-y-2">
+            <p className="text-[2rem] font-semibold text-white">
               Get your shareable link instantly
             </p>
-            <p className="text-base text-gray-300">
+            <p className="text-sm text-gray-300 md:text-base">
               No sign-up required. Your link will appear instantly below.
             </p>
           </div>
@@ -536,7 +536,7 @@ export default function SubmitPollPage() {
                   Poll options (2–6)
                 </label>
 
-                            <p className="mb-2 text-sm text-gray-400 md:text-base">
+            <p className="mb-2 text-xs text-gray-400">
                   Fewer options usually give clearer results
                 </p>
 
@@ -595,7 +595,7 @@ export default function SubmitPollPage() {
                 )}
               </div>
 
-                         <div className="space-y-1">
+                        <div className="space-y-1">
                 <label className={checkboxLabelClasses}>
                   <input
                     type="checkbox"
@@ -606,17 +606,17 @@ export default function SubmitPollPage() {
                   <span>Make this poll private</span>
                 </label>
 
-                <p className="text-xs text-white">
-                  (Never shown publicly on Poll & See)
+                <p className="text-xs text-gray-300">
+                  Never shown publicly on Poll & See.
                 </p>
 
-                <p className="text-xs text-white">
+                <p className="text-xs text-gray-300">
                   Public polls may appear on the Poll & See homepage after review.
                 </p>
               </div>
 
-                      <div className="space-y-2">
-                <p className="text-sm text-gray-400">
+              <div className="space-y-2">
+                <p className="text-xs text-gray-400">
                   Polls may be edited for clarity, spelling, or shareability, or removed if they breach our guidelines.
                 </p>
               </div>
