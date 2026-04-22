@@ -571,7 +571,7 @@ const scaledCardStyle = isCompactMode
   }`}
 >
   <div className={`flex flex-col ${
-  voted || resultsOnly ? "" : "min-h-[380px]"
+  voted || resultsOnly ? "" : "min-h-[400px]"
 }`}>
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div></div>
