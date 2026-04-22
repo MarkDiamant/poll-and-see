@@ -1460,7 +1460,9 @@ const trendingPolls = useMemo(() => {
 
                                     <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
                   <p className="mb-4 text-sm text-gray-300">{poll.description}</p>
-
+<p className="mb-2 text-xs text-gray-500">
+  recent: {recentVoteCounts[poll.id] || 0}
+</p>
                                     <div className="flex items-center justify-end gap-1.5 text-sm text-gray-400 md:mt-auto">
                     <span>View poll</span>
                     <span aria-hidden="true" className="text-base leading-none">
