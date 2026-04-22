@@ -534,9 +534,7 @@ export default function Home() {
       (recentVotesResult.data || []).forEach((vote) => {
         const pollId = Number(vote.poll_id);
 
-        if (validPollIds.has(pollId)) {
-          recentCounts[pollId] = (recentCounts[pollId] || 0) + 1;
-        }
+        recentCounts[pollId] = (recentCounts[pollId] || 0) + 1;
 
         const createdAtTime = new Date(vote.created_at).getTime();
         if (!Number.isNaN(createdAtTime) && createdAtTime >= twentyFourHoursAgoMs) {
@@ -547,7 +545,7 @@ export default function Home() {
       const totalVoteCounts: Record<number, number> = {};
       (optionTotalsResult.data || []).forEach((option) => {
         const pollId = Number(option.poll_id);
-        if (!validPollIds.has(pollId)) return;
+        // remove this check entirely
         totalVoteCounts[pollId] = (totalVoteCounts[pollId] || 0) + (option.vote_count || 0);
       });
 
