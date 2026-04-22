@@ -559,7 +559,16 @@ const scaledCardStyle = isCompactMode
       </main>
     );
   }
-
+const preVoteMinHeight =
+  !poll || options.length === 0
+    ? "min-h-[420px]"
+    : options.length >= 4
+      ? "min-h-[440px]"
+      : options.length === 3
+        ? "min-h-[410px]"
+        : poll?.description
+          ? "min-h-[390px]"
+          : "min-h-[360px]";
   return (
     <main className="m-0 w-full overflow-hidden bg-transparent p-0 text-white">
       <div ref={outerRef} className="w-full overflow-hidden bg-transparent">
@@ -571,7 +580,7 @@ const scaledCardStyle = isCompactMode
   }`}
 >
   <div className={`flex flex-col ${
-  voted || resultsOnly ? "" : "min-h-[400px]"
+  voted || resultsOnly ? "" : preVoteMinHeight
 }`}>
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div></div>
