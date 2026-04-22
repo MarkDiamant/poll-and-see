@@ -430,15 +430,14 @@ export default function SubmitPollPage() {
 
                    <div className="mt-6 space-y-3">
             <p className="text-lg text-white">
-              Create a poll and get your link in seconds.
+              <p className="mb-4 text-sm text-gray-300 md:text-base">
+  Create your poll and get a shareable link below instantly. No name or email required.
+</p>
             </p>
             <p className="text-gray-300">
-              Your poll goes live instantly by link, so you can share it straight away and start getting responses.
+              Your poll goes live instantly, so you can share it straight away and start getting responses.
             </p>
-            <p className="text-gray-400">
-              No email required.
-            </p>
-          </div>
+             </div>
         </div>
 
         <div className="mt-9 bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
@@ -484,10 +483,7 @@ export default function SubmitPollPage() {
             </div>
                     ) : (
             <>
-              <p className="mb-4 text-sm text-gray-300 md:text-base">
-                Your poll goes live instantly. Your link will appear below.
-              </p>
-
+             
               <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label className={labelClasses}>Poll Question</label>
@@ -611,9 +607,9 @@ export default function SubmitPollPage() {
                   </span>
                 </label>
 
-                <p className="text-sm text-gray-400 md:text-base">
-                  Public polls may appear on the Poll & See homepage after review.
-                </p>
+               <p className="text-xs text-gray-400">
+  Public polls may appear on the Poll & See homepage after review.
+</p>
               </div>
 
               <div className="space-y-2">
