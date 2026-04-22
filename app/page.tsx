@@ -510,39 +510,31 @@ export default function Home() {
     const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString();
     const twentyFourHoursAgoMs = now.getTime() - 24 * 60 * 60 * 1000;
 
-    const [recentVotesResult, optionTotalsResult] = await Promise.all([
-      supabase
-        .from("votes")
-        .select("poll_id, created_at")
-        .gte("created_at", fortyEightHoursAgo),
-      supabase
-        .from("poll_options")
-        .select("poll_id, vote_count"),
-    ]);
+   const [recentVotesResult, optionTotalsResult] = await Promise.all([
+  supabase.rpc("get_recent_poll_votes"),
+  supabase
+    .from("poll_options")
+    .select("poll_id, vote_count"),
+]);
 
-    if (recentVotesResult.error) {
-      console.error("Homepage recent votes query failed", recentVotesResult.error);
-    }
+if (recentVotesResult.error) {
+  console.error("Homepage recent votes query failed", recentVotesResult.error);
+}
 
-    if (optionTotalsResult.error) {
-      console.error("Homepage option totals query failed", optionTotalsResult.error);
-    }
+if (optionTotalsResult.error) {
+  console.error("Homepage option totals query failed", optionTotalsResult.error);
+}
 
-    const recentCounts: Record<number, number> = {};
-    let last24Total = 0;
+const recentCounts: Record<number, number> = {};
+let last24Total = 0;
 
-    (recentVotesResult.data || []).forEach((vote) => {
-      const pollId = Number(vote.poll_id);
+(recentVotesResult.data || []).forEach((row) => {
+  const pollId = Number(row.poll_id);
+  if (!validPollIds.has(pollId)) return;
 
-      if (validPollIds.has(pollId)) {
-        recentCounts[pollId] = (recentCounts[pollId] || 0) + 1;
-      }
-
-      const createdAtTime = new Date(vote.created_at).getTime();
-      if (!Number.isNaN(createdAtTime) && createdAtTime >= twentyFourHoursAgoMs) {
-        last24Total += 1;
-      }
-    });
+  recentCounts[pollId] = Number(row.recent_votes_48h || 0);
+  last24Total += Number(row.recent_votes_24h || 0);
+});
 
     const totalVoteCounts: Record<number, number> = {};
     (optionTotalsResult.data || []).forEach((option) => {
