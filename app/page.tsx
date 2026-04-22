@@ -1182,14 +1182,14 @@ const trendingPolls = useMemo(() => {
                   const optionColour = getOptionColour(index);
 
                   return (
-                    <div
-                      key={option.id}
-                      className="rounded-2xl"
-                      style={{
-                        border: isSelected ? `2px solid ${optionColour}dd` : "2px solid transparent",
-boxShadow: isSelected ? `0 0 8px ${optionColour}22` : "none",
-                      }}
-                    >
+  <div
+    key={option.id}
+    className="rounded-2xl p-2"
+    style={{
+      border: isSelected ? `2px solid ${optionColour}dd` : "2px solid transparent",
+      boxShadow: isSelected ? `0 0 8px ${optionColour}22` : "none",
+    }}
+  >
                       <div className="px-2.5 pt-1">
                         {option.image_url ? (
                           <div className="mb-3 overflow-hidden rounded-xl bg-gray-900">
