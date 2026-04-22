@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import Footer from "@/components/Footer";
 
 const CATEGORY_OPTIONS = [
@@ -16,6 +15,13 @@ const CATEGORY_OPTIONS = [
 ] as const;
 
 type Category = (typeof CATEGORY_OPTIONS)[number] | "";
+
+type PollCreateResponse = {
+  pollUrl: string;
+  shareText: string;
+  slug: string;
+  emailSent?: boolean;
+};
 
 function suggestCategory(question: string): Category {
   const q = question.toLowerCase().trim();
@@ -190,6 +196,7 @@ export default function SubmitPollPage() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "">("");
+  const [successData, setSuccessData] = useState<PollCreateResponse | null>(null);
 
   const canAddOption = useMemo(() => options.length < 6, [options.length]);
   const canRemoveOption = useMemo(() => options.length > 2, [options.length]);
@@ -199,7 +206,7 @@ export default function SubmitPollPage() {
   const textareaClasses =
     "w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500";
   const checkboxClasses =
-   "h-5 w-5 shrink-0 rounded border-gray-600 bg-gray-900 text-blue-600 focus:ring-blue-500";
+    "h-5 w-5 shrink-0 rounded border-gray-600 bg-gray-900 text-blue-600 focus:ring-blue-500";
   const labelClasses = "block text-sm font-normal text-white mb-2";
   const checkboxLabelClasses = "inline-flex items-center gap-3 text-sm font-normal text-white";
   const helperTextClasses = "text-sm text-gray-400 md:text-base";
@@ -234,13 +241,46 @@ export default function SubmitPollPage() {
     setUsesImages(false);
     setIsPrivate(false);
     setEmailMeLink(false);
+    setSubmitting(false);
+    setMessage("");
+    setMessageType("");
+    setSuccessData(null);
   };
 
   const handleQuestionChange = (value: string) => {
     setQuestion(value);
     setCategory(value.trim() ? suggestCategory(value) : "");
   };
-  const shouldShowEmailField = isPrivate || emailMeLink;
+
+  const shouldShowEmailField = emailMeLink;
+
+  const handleCopy = async () => {
+    if (!successData) return;
+    try {
+      await navigator.clipboard.writeText(successData.shareText);
+    } catch {
+      setMessageType("error");
+      setMessage("Could not copy link.");
+    }
+  };
+
+  const handleShare = async () => {
+    if (!successData) return;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          text: successData.shareText,
+        });
+        return;
+      } catch {
+        // fall through to clipboard
+      }
+    }
+
+    await handleCopy();
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -313,33 +353,39 @@ export default function SubmitPollPage() {
     setMessage("");
     setMessageType("");
 
-    const { error } = await supabase.from("poll_submissions").insert([
-      {
-        name: null,
-        email: shouldShowEmailField ? email.trim() : null,
-        question: question.trim(),
-        description: description.trim() || null,
-        category: resolvedCategory,
-        options: cleanedOptions.map((option) => option.text),
-        option_image_urls: usesImages
-          ? cleanedOptions.map((option) => option.imageUrl)
-          : null,
-        is_private: isPrivate,
-      },
-    ]);
+    try {
+      const response = await fetch("/api/polls/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email.trim() || null,
+          emailMeLink,
+          question: question.trim(),
+          description: description.trim() || null,
+          category: resolvedCategory,
+          options: cleanedOptions.map((option) => option.text),
+          optionImageUrls: usesImages ? cleanedOptions.map((option) => option.imageUrl) : [],
+          isPrivate,
+        }),
+      });
 
-    if (error) {
-      console.error(error);
-      setMessageType("error");
-      setMessage("Something went wrong. Please try again.");
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Something went wrong. Please try again.");
+      }
+
+      setSuccessData(data as PollCreateResponse);
+      setMessageType("success");
+      setMessage("");
       setSubmitting(false);
-      return;
+    } catch (error) {
+      setMessageType("error");
+      setMessage(error instanceof Error ? error.message : "Something went wrong. Please try again.");
+      setSubmitting(false);
     }
-
-    resetPollFields();
-    setMessageType("success");
-    setMessage("Thanks — your poll has been submitted for review.");
-    setSubmitting(false);
   };
 
   return (
@@ -387,210 +433,229 @@ export default function SubmitPollPage() {
         </div>
 
         <div className="mt-9 bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-<label className={labelClasses}>Poll Question</label>
-              <input
-                maxLength={150}
-                value={question}
-                onChange={(e) => handleQuestionChange(e.target.value)}
-                className={inputClasses}
-                placeholder="e.g. A job you love with low pay, or a job you hate with high pay?"
-              />
-              <p className="mt-1 text-sm text-gray-400 md:text-base">{question.length}/150</p>
-            </div>
-
-            <div>
-            <label className={labelClasses}>Description (optional)</label>
-              <textarea
-                maxLength={200}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className={textareaClasses}
-                rows={3}
-                placeholder="Add context if helpful"
-              />
-              <p className="mt-1 text-sm text-gray-400 md:text-base">{description.length}/200</p>
-            </div>
-
-            <div>
-             <label className={checkboxLabelClasses}>
-                <input
-                  type="checkbox"
-                  checked={usesImages}
-                  onChange={(e) => setUsesImages(e.target.checked)}
-                  className={checkboxClasses}
-                />
-                <span>This poll uses images</span>
-              </label>
-
-              {usesImages ? (
-                <div className="mt-2 space-y-1">
-                  <p className={helperTextClasses}>
-  Paste a direct image link into each option. All options must include an image.
-</p>
-<p className={helperTextClasses}>
-  Best results: square images (1:1), minimal empty space. Ideal size 700×700 or 1000×1000 px.
-</p>
-                </div>
-              ) : null}
-            </div>
-
-            <div>
-            <label className={labelClasses}>
-  Poll Options (choose 2 to 6 options. Fewer options usually give clearer results.)
-</label>
-
-              <div className="space-y-4">
-                {options.map((option, i) => {
-                  const optionPlaceholder =
-                    i === 0 ? "Yes" : i === 1 ? "No" : i === 2 ? "Depends" : `Option ${i + 1}`;
-
-                  return (
-                    <div key={i} className="space-y-2">
-                      <div className="flex gap-2">
-                        <input
-                          maxLength={40}
-                          value={option.text}
-                          onChange={(e) => updateOptionText(i, e.target.value)}
-                          className={inputClasses}
-                          placeholder={optionPlaceholder}
-                        />
-                        {canRemoveOption && (
-                          <button
-                            type="button"
-                            onClick={() => removeOption(i)}
-                            className="px-3 bg-gray-700 rounded-xl whitespace-nowrap transition hover:bg-gray-600"
-                          >
-                            Remove
-                          </button>
-                        )}
-                      </div>
-
-                      {usesImages ? (
-                        <div>
-                          <input
-                            value={option.imageUrl}
-                            onChange={(e) => updateOptionImageUrl(i, e.target.value)}
-                            className={inputClasses}
-                            placeholder="https://example.com/image.jpg"
-                          />
-                          <p className="mt-1 text-sm text-gray-400 md:text-base">
-                            Direct image URL (jpg, png, webp etc.)
-                          </p>
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                })}
+          {successData ? (
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-2xl font-semibold text-white">Your poll is live</h2>
               </div>
 
-                  {canAddOption && (
+              <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   type="button"
-                  onClick={addOption}
-                  className="mt-3 text-sm text-blue-300"
+                  onClick={() => void handleCopy()}
+                  className="rounded-xl bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-500"
                 >
-                  + Add option
+                  Copy link
                 </button>
-              )}
-            </div>
 
-            <div className="space-y-2">
-       <label className={checkboxLabelClasses}>
-<input
-  type="checkbox"
-  checked={isPrivate}
-  onChange={(e) => {
-    const nextChecked = e.target.checked;
-
-    setIsPrivate(nextChecked);
-
-    if (nextChecked) {
-      setEmailMeLink(true);
-    }
-
-    if (!nextChecked && !emailMeLink) {
-      setEmail("");
-    }
-  }}
-  className={checkboxClasses}
-/>
-<span>Make this poll private</span>
-              </label>
-
-              <p className="text-sm text-gray-400 md:text-base">
-                Private polls won't appear on the homepage or in the automatic polls shown after voting.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-             <label className={checkboxLabelClasses}>
-<input
-  type="checkbox"
-  checked={emailMeLink}
-  onChange={(e) => {
-    const nextChecked = e.target.checked;
-
-    setEmailMeLink(nextChecked);
-
-    if (!nextChecked && !isPrivate) {
-      setEmail("");
-    }
-  }}
-  className={checkboxClasses}
-/>
-<span>Email me the link when my poll goes live</span>
-              </label>
-            </div>
-
-            {shouldShowEmailField ? (
-              <div>
-           <label className={labelClasses}>Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={inputClasses}
-                  placeholder="you@email.com"
-                />
+                <button
+                  type="button"
+                  onClick={() => void handleShare()}
+                  className="rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800"
+                >
+                  Share
+                </button>
               </div>
-            ) : null}
 
-            <div className="space-y-2">
-             <p className={helperTextClasses}>
-  Most polls go live within 24 hours. Wording may be lightly edited for clarity while keeping your original meaning.
-</p>
-            </div>
+              <div className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 break-all text-sm text-gray-200">
+                {successData.pollUrl}
+              </div>
 
-            <button
-              type={messageType === "success" ? "button" : "submit"}
-              onClick={() => {
-                if (messageType === "success") {
-                  setMessage("");
-                  setMessageType("");
-                }
-              }}
-              disabled={submitting}
-              className="rounded-xl bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-500 disabled:opacity-60"
-            >
-              {messageType === "success"
-                ? "Create another poll"
-                : submitting
-                ? "Submitting..."
-                : "Create Poll"}
-            </button>
-
-            {message && (
-              <p
-                className={`text-sm ${
-                  messageType === "success" ? "text-green-400" : "text-red-400"
-                }`}
-              >
-                {message}
+              <p className="text-sm text-gray-400">
+                Public polls may appear on Poll & See after review.
               </p>
-            )}
-          </form>
+
+              <button
+                type="button"
+                onClick={resetPollFields}
+                className="rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800"
+              >
+                Create another poll
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label className={labelClasses}>Poll Question</label>
+                <input
+                  maxLength={150}
+                  value={question}
+                  onChange={(e) => handleQuestionChange(e.target.value)}
+                  className={inputClasses}
+                  placeholder="e.g. A job you love with low pay, or a job you hate with high pay?"
+                />
+                <p className="mt-1 text-sm text-gray-400 md:text-base">{question.length}/150</p>
+              </div>
+
+              <div>
+                <label className={labelClasses}>Description (optional)</label>
+                <textarea
+                  maxLength={200}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className={textareaClasses}
+                  rows={3}
+                  placeholder="Add context if helpful"
+                />
+                <p className="mt-1 text-sm text-gray-400 md:text-base">{description.length}/200</p>
+              </div>
+
+              <div>
+                <label className={checkboxLabelClasses}>
+                  <input
+                    type="checkbox"
+                    checked={usesImages}
+                    onChange={(e) => setUsesImages(e.target.checked)}
+                    className={checkboxClasses}
+                  />
+                  <span>This poll uses images</span>
+                </label>
+
+                {usesImages ? (
+                  <div className="mt-2 space-y-1">
+                    <p className={helperTextClasses}>
+                      Paste a direct image link into each option. All options must include an image.
+                    </p>
+                    <p className={helperTextClasses}>
+                      Best results: square images (1:1), minimal empty space. Ideal size 700×700 or 1000×1000 px.
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+
+              <div>
+                <label className={labelClasses}>
+                  Poll Options (choose 2 to 6 options. Fewer options usually give clearer results.)
+                </label>
+
+                <div className="space-y-4">
+                  {options.map((option, i) => {
+                    const optionPlaceholder =
+                      i === 0 ? "Yes" : i === 1 ? "No" : i === 2 ? "Depends" : `Option ${i + 1}`;
+
+                    return (
+                      <div key={i} className="space-y-2">
+                        <div className="flex gap-2">
+                          <input
+                            maxLength={40}
+                            value={option.text}
+                            onChange={(e) => updateOptionText(i, e.target.value)}
+                            className={inputClasses}
+                            placeholder={optionPlaceholder}
+                          />
+                          {canRemoveOption && (
+                            <button
+                              type="button"
+                              onClick={() => removeOption(i)}
+                              className="px-3 bg-gray-700 rounded-xl whitespace-nowrap transition hover:bg-gray-600"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+
+                        {usesImages ? (
+                          <div>
+                            <input
+                              value={option.imageUrl}
+                              onChange={(e) => updateOptionImageUrl(i, e.target.value)}
+                              className={inputClasses}
+                              placeholder="https://example.com/image.jpg"
+                            />
+                            <p className="mt-1 text-sm text-gray-400 md:text-base">
+                              Direct image URL (jpg, png, webp etc.)
+                            </p>
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {canAddOption && (
+                  <button
+                    type="button"
+                    onClick={addOption}
+                    className="mt-3 text-sm text-blue-300"
+                  >
+                    + Add option
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className={checkboxLabelClasses}>
+                  <input
+                    type="checkbox"
+                    checked={isPrivate}
+                    onChange={(e) => setIsPrivate(e.target.checked)}
+                    className={checkboxClasses}
+                  />
+                  <span>Make this poll private</span>
+                </label>
+
+                <p className="text-sm text-gray-400 md:text-base">
+                  Private polls are live immediately by link but never shown publicly on Poll & See.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className={checkboxLabelClasses}>
+                  <input
+                    type="checkbox"
+                    checked={emailMeLink}
+                    onChange={(e) => {
+                      const nextChecked = e.target.checked;
+                      setEmailMeLink(nextChecked);
+
+                      if (!nextChecked) {
+                        setEmail("");
+                      }
+                    }}
+                    className={checkboxClasses}
+                  />
+                  <span>Email me this link</span>
+                </label>
+              </div>
+
+              {shouldShowEmailField ? (
+                <div>
+                  <label className={labelClasses}>Email</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className={inputClasses}
+                    placeholder="you@email.com"
+                  />
+                </div>
+              ) : null}
+
+              <div className="space-y-2">
+                <p className="text-sm text-gray-400">
+                  Polls that are abusive, explicit, or inappropriate may be removed.
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="rounded-xl bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-500 disabled:opacity-60"
+              >
+                {submitting ? "Creating..." : "Create Poll"}
+              </button>
+
+              {message && (
+                <p
+                  className={`text-sm ${
+                    messageType === "success" ? "text-green-400" : "text-red-400"
+                  }`}
+                >
+                  {message}
+                </p>
+              )}
+            </form>
+          )}
         </div>
       </section>
 

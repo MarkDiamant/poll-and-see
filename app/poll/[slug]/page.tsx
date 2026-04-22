@@ -167,6 +167,10 @@ function getPollSelectedNewKey(pollId: number) {
   return `poll-selected-${pollId}`;
 }
 
+function getPollVotedAtKey(pollId: number) {
+  return `poll-voted-at-${pollId}`;
+}
+
 function getPollFlowAnchorCategoryKey(slug: string) {
   return `poll-flow-anchor-category-${slug}`;
 }
@@ -196,6 +200,8 @@ function getLocalSelectedOption(pollId: number): number | null {
 
 function markPollVotedLocally(pollId: number, optionId: number | null) {
   localStorage.setItem(getPollVotedKey(pollId), "true");
+  localStorage.setItem(getPollVotedAtKey(pollId), String(Date.now()));
+
   if (optionId !== null) {
     localStorage.setItem(getPollSelectedNewKey(pollId), String(optionId));
     localStorage.setItem(getPollSelectedOldKey(pollId), String(optionId));

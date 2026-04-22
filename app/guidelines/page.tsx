@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Footer from "@/components/Footer";
 
-export default function AboutPage() {
+export default function GuidelinesPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
       <header className="mx-auto max-w-6xl px-4 pb-4 pt-5 md:px-6">
@@ -34,25 +34,26 @@ export default function AboutPage() {
 
       <section className="mx-auto max-w-3xl px-6 pb-10 pt-6">
         <div className="rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-lg">
-          <h1 className="mb-6 text-3xl font-bold">About</h1>
+          <h1 className="mb-6 text-3xl font-bold">Guidelines</h1>
 
-          <div className="space-y-4 text-gray-300">
-            <p>
-              Poll & See is a simple platform for creating and voting on opinion polls across
-              business, finance, education, lifestyle and community topics.
-            </p>
+          <div className="space-y-6 text-gray-300">
+            <div>
+              <h2 className="mb-2 text-xl font-semibold text-white">Allowed</h2>
+              <div className="space-y-2">
+                <p>general opinions</p>
+                <p>everyday topics</p>
+                <p>normal discussion questions</p>
+              </div>
+            </div>
 
-            <p>Our goal is to make it easy to see what people really think.</p>
-
-            <p>
-              Users can create a poll in seconds, share the link, and watch results come in live.
-            </p>
-
-            <div className="pt-2">
-              <h2 className="mb-2 text-xl font-semibold text-white">Trust</h2>
-              <p>
-                Poll & See shows live results from real users. Votes are counted individually and update instantly.
-              </p>
+            <div>
+              <h2 className="mb-2 text-xl font-semibold text-white">Not allowed</h2>
+              <div className="space-y-2">
+                <p>explicit sexual content</p>
+                <p>abusive or hateful content</p>
+                <p>harmful targeting of real people</p>
+                <p>illegal content</p>
+              </div>
             </div>
           </div>
         </div>

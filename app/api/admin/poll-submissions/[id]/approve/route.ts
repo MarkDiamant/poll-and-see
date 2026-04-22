@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 
 type SubmissionRow = {
   id: number;
+  poll_id: number | null;
   email: string | null;
   question: string;
   description: string | null;
@@ -83,7 +84,7 @@ export async function POST(
 
     const { data: submission, error: submissionError } = await supabaseAdmin
       .from("poll_submissions")
-      .select("id, email, question, description, category, options, option_image_urls, is_private, slug, status, created_at")
+      .select("id, poll_id, email, question, description, category, options, option_image_urls, is_private, slug, status, created_at")
       .eq("id", submissionId)
       .single();
 
@@ -103,6 +104,54 @@ export async function POST(
         { error: "Slug must use lowercase letters, numbers, and hyphens only." },
         { status: 400 }
       );
+    }
+
+    if (typedSubmission.poll_id) {
+      const { data: existingPoll } = await supabaseAdmin
+        .from("polls")
+        .select("id")
+        .eq("slug", slug)
+        .neq("id", typedSubmission.poll_id)
+        .maybeSingle();
+
+      if (existingPoll) {
+        return NextResponse.json({ error: "Slug already exists." }, { status: 400 });
+      }
+
+      const { data: updatedPoll, error: pollUpdateError } = await supabaseAdmin
+        .from("polls")
+        .update({
+          question: typedSubmission.question,
+          description: typedSubmission.description || "",
+          category: typedSubmission.category || "General",
+          slug,
+          is_private: Boolean(typedSubmission.is_private),
+          is_publicly_listed: !Boolean(typedSubmission.is_private),
+          full_url: `https://www.pollandsee.com/poll/${slug}`,
+        })
+        .eq("id", typedSubmission.poll_id)
+        .select(
+          "id, question, description, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed"
+        )
+        .single();
+
+      if (pollUpdateError || !updatedPoll) {
+        return NextResponse.json({ error: "Could not publish submission." }, { status: 500 });
+      }
+
+      const { error: deleteSubmissionError } = await supabaseAdmin
+        .from("poll_submissions")
+        .delete()
+        .eq("id", submissionId);
+
+      if (deleteSubmissionError) {
+        return NextResponse.json(
+          { error: "Poll published, but submission could not be removed. Please delete it manually." },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({ poll: updatedPoll });
     }
 
     const { data: existingPoll } = await supabaseAdmin
@@ -131,10 +180,12 @@ export async function POST(
         slug,
         featured: false,
         is_private: Boolean(typedSubmission.is_private),
+        is_publicly_listed: !Boolean(typedSubmission.is_private),
         total_votes: 0,
+        full_url: `https://www.pollandsee.com/poll/${slug}`,
       })
       .select(
-        "id, question, description, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at"
+        "id, question, description, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed"
       )
       .single();
 

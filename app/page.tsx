@@ -13,6 +13,7 @@ type Poll = {
   slug: string;
   featured?: boolean;
   is_private?: boolean;
+  is_publicly_listed?: boolean;
   created_at?: string | null;
 };
 
@@ -452,6 +453,7 @@ export default function Home() {
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
   const [showTopButton, setShowTopButton] = useState(false);
   const [showActivityIndicator, setShowActivityIndicator] = useState(false);
+  const [votedPollIds, setVotedPollIds] = useState<number[]>([]);
 
   const categoryMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -575,10 +577,11 @@ let last24Total = 0;
 
     try {
           const [pollsResult, totalPollCountResult] = await Promise.all([
-        supabase
+                supabase
           .from("polls")
-          .select("id, question, description, category, slug, featured, is_private, created_at")
+          .select("id, question, description, category, slug, featured, is_private, is_publicly_listed, created_at")
           .eq("is_private", false)
+          .eq("is_publicly_listed", true)
           .order("id", { ascending: false }),
         supabase
           .from("site_stats")
@@ -683,6 +686,35 @@ let last24Total = 0;
 
     document.addEventListener("mousedown", handleOutsideClick);
     return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
+  useEffect(() => {
+    const syncVotedPollIds = () => {
+      const nextIds: number[] = [];
+
+      for (let i = 0; i < localStorage.length; i += 1) {
+        const key = localStorage.key(i) || "";
+        if (!key.startsWith("poll-voted-")) continue;
+
+        if (localStorage.getItem(key) !== "true") continue;
+
+        const parsed = Number(key.replace("poll-voted-", ""));
+        if (!Number.isNaN(parsed)) {
+          nextIds.push(parsed);
+        }
+      }
+
+      setVotedPollIds(nextIds);
+    };
+
+    syncVotedPollIds();
+    window.addEventListener("focus", syncVotedPollIds);
+    window.addEventListener("storage", syncVotedPollIds);
+
+    return () => {
+      window.removeEventListener("focus", syncVotedPollIds);
+      window.removeEventListener("storage", syncVotedPollIds);
+    };
   }, []);
 
   useEffect(() => {
@@ -1147,7 +1179,7 @@ const trendingPolls = useMemo(() => {
                       key={option.id}
                       className="rounded-2xl"
                       style={{
-                        border: isSelected ? `2px solid ${optionColour}cc` : "2px solid transparent",
+                        border: isSelected ? `2px solid ${optionColour}dd` : "2px solid transparent",
 boxShadow: isSelected ? `0 0 8px ${optionColour}22` : "none",
                       }}
                     >
@@ -1426,24 +1458,30 @@ boxShadow: isSelected ? `0 0 8px ${optionColour}22` : "none",
                   className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 p-5 shadow-lg transition hover:border-gray-500 md:flex md:min-h-[220px] md:flex-col"
                 >
                   
-                  <div className="mb-3 flex items-center">
-  <span
-    className="rounded-full px-2 py-1 text-xs"
-    style={{
-      color: categoryColours.text,
-      backgroundColor: categoryColours.bg,
-      border: `1px solid ${categoryColours.border}`,
-    }}
-  >
-    {poll.category}
-  </span>
+                  <div className="mb-3 flex items-center gap-2">
+                    <span
+                      className="rounded-full px-2 py-1 text-xs"
+                      style={{
+                        color: categoryColours.text,
+                        backgroundColor: categoryColours.bg,
+                        border: `1px solid ${categoryColours.border}`,
+                      }}
+                    >
+                      {poll.category}
+                    </span>
 
-  {badgeLabel ? (
-  <span className="ml-auto -mr-6">
-    <StatusRibbon label={badgeLabel} />
-  </span>
-) : null}
-</div>
+                    {votedPollIds.includes(poll.id) ? (
+                      <span className="rounded-full border border-gray-600 bg-gray-900 px-2 py-1 text-[11px] text-gray-300">
+                        Voted
+                      </span>
+                    ) : null}
+
+                    {badgeLabel ? (
+                      <span className="ml-auto -mr-6">
+                        <StatusRibbon label={badgeLabel} />
+                      </span>
+                    ) : null}
+                  </div>
 
                                     <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
                   <p className="mb-4 text-sm text-gray-300">{poll.description}</p>

@@ -6,6 +6,19 @@ type SubmissionUpdatePayload = {
   description?: string;
   slug?: string;
   status?: "pending" | "ready";
+  category?: string;
+  is_private?: boolean;
+};
+
+type SubmissionRow = {
+  id: number;
+  poll_id: number | null;
+  question: string;
+  description: string | null;
+  category: string | null;
+  slug: string | null;
+  status: "pending" | "ready";
+  is_private: boolean | null;
 };
 
 function getAdminClient() {
@@ -62,8 +75,21 @@ export async function PATCH(
     }
 
     const body = (await request.json()) as SubmissionUpdatePayload;
-    const updates: Record<string, unknown> = {};
     const supabaseAdmin = getAdminClient();
+
+    const { data: existingSubmission, error: existingSubmissionError } = await supabaseAdmin
+      .from("poll_submissions")
+      .select("id, poll_id, question, description, category, slug, status, is_private")
+      .eq("id", submissionId)
+      .single();
+
+    if (existingSubmissionError || !existingSubmission) {
+      return NextResponse.json({ error: "Submission not found." }, { status: 404 });
+    }
+
+    const typedSubmission = existingSubmission as SubmissionRow;
+    const updates: Record<string, unknown> = {};
+    const pollUpdates: Record<string, unknown> = {};
 
     if ("question" in body) {
       const question = (body.question || "").trim();
@@ -71,10 +97,13 @@ export async function PATCH(
         return NextResponse.json({ error: "Question cannot be empty." }, { status: 400 });
       }
       updates.question = question;
+      pollUpdates.question = question;
     }
 
     if ("description" in body) {
-      updates.description = (body.description || "").trim();
+      const description = (body.description || "").trim();
+      updates.description = description;
+      pollUpdates.description = description;
     }
 
     if ("slug" in body) {
@@ -95,6 +124,7 @@ export async function PATCH(
         .from("polls")
         .select("id")
         .eq("slug", slug)
+        .neq("id", typedSubmission.poll_id || -1)
         .maybeSingle();
 
       if (duplicatePoll) {
@@ -102,6 +132,7 @@ export async function PATCH(
       }
 
       updates.slug = slug;
+      pollUpdates.slug = slug;
     }
 
     if ("status" in body) {
@@ -109,6 +140,18 @@ export async function PATCH(
         return NextResponse.json({ error: "Invalid status." }, { status: 400 });
       }
       updates.status = body.status;
+    }
+
+    if ("category" in body) {
+      const category = (body.category || "General").trim() || "General";
+      updates.category = category;
+      pollUpdates.category = category;
+    }
+
+    if ("is_private" in body) {
+      const isPrivate = Boolean(body.is_private);
+      updates.is_private = isPrivate;
+      pollUpdates.is_private = isPrivate;
     }
 
     if (Object.keys(updates).length === 0) {
@@ -119,11 +162,26 @@ export async function PATCH(
       .from("poll_submissions")
       .update(updates)
       .eq("id", submissionId)
-      .select("id, email, question, description, category, options, option_image_urls, is_private, slug, status, created_at")
+      .select("id, email, question, description, category, options, option_image_urls, is_private, slug, status, created_at, poll_id")
       .single();
 
     if (error || !data) {
       return NextResponse.json({ error: "Could not update submission." }, { status: 500 });
+    }
+
+    if (typedSubmission.poll_id && Object.keys(pollUpdates).length > 0) {
+      const nextSlug =
+        typeof pollUpdates.slug === "string"
+          ? pollUpdates.slug
+          : typedSubmission.slug || "";
+
+      await supabaseAdmin
+        .from("polls")
+        .update({
+          ...pollUpdates,
+          full_url: nextSlug ? `https://www.pollandsee.com/poll/${nextSlug}` : undefined,
+        })
+        .eq("id", typedSubmission.poll_id);
     }
 
     return NextResponse.json({ submission: data });
@@ -151,6 +209,21 @@ export async function DELETE(
     }
 
     const supabaseAdmin = getAdminClient();
+
+    const { data: submission, error: submissionError } = await supabaseAdmin
+      .from("poll_submissions")
+      .select("id, poll_id")
+      .eq("id", submissionId)
+      .single();
+
+    if (submissionError || !submission) {
+      return NextResponse.json({ error: "Submission not found." }, { status: 404 });
+    }
+
+    if (submission.poll_id) {
+      await supabaseAdmin.from("poll_options").delete().eq("poll_id", submission.poll_id);
+      await supabaseAdmin.from("polls").delete().eq("id", submission.poll_id);
+    }
 
     const { error } = await supabaseAdmin
       .from("poll_submissions")
