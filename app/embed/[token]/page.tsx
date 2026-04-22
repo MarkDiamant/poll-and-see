@@ -118,7 +118,7 @@ function ResultOptions({
   const total = Object.values(voteCounts).reduce((sum, count) => sum + count, 0);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {options.map((option, index) => {
         const count = voteCounts[option.id] || 0;
         const percent = total > 0 ? Math.round((count / total) * 100) : 0;
@@ -134,7 +134,7 @@ function ResultOptions({
               boxShadow: isSelected ? `0 0 0 1px ${colour}33, 0 0 16px ${colour}18` : "none",
             }}
           >
-            <div className="px-3 pt-3">
+            <div className="px-3 pt-2">
               {option.image_url ? (
                 <div className="mb-3 overflow-hidden rounded-xl bg-gray-900">
                   <img
@@ -155,7 +155,7 @@ function ResultOptions({
                       ✓
                     </span>
                   ) : null}
-                  <span className="min-w-0 break-words leading-6 text-white">{option.option_text}</span>
+                  <span className="min-w-0 break-words text-base leading-5 text-white">{option.option_text}</span>
                 </div>
                 <span className="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-gray-300">
                   {percent}%
@@ -163,7 +163,7 @@ function ResultOptions({
               </div>
             </div>
 
-            <div className="px-3 pb-3 pt-2">
+            <div className="px-3 pb-2 pt-1.5">
               <div className="h-4 w-full overflow-hidden rounded-full bg-gray-700">
                 <div
                   className="h-4 transition-all"
