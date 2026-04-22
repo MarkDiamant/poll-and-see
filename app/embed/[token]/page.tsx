@@ -122,19 +122,20 @@ function ResultOptions({
       {options.map((option, index) => {
         const count = voteCounts[option.id] || 0;
         const percent = total > 0 ? Math.round((count / total) * 100) : 0;
+const animatedPercent = percent > 0 ? Math.max(12, percent) : 0;
         const colour = OPTION_COLOURS[index] || OPTION_COLOURS[0];
         const isSelected = selectedOptionId === option.id;
 
         return (
           <div
-            key={option.id}
-            className="rounded-xl"
-            style={{
-              border: isSelected ? `3px solid ${colour}` : "3px solid transparent",
-              boxShadow: isSelected ? `0 0 0 1px ${colour}33, 0 0 16px ${colour}18` : "none",
-            }}
-          >
-            <div className="px-2.5 pt-1.5">
+  key={option.id}
+  className="rounded-xl transition-opacity duration-200 hover:opacity-95"
+  style={{
+    border: isSelected ? `2px solid ${colour}` : "2px solid transparent",
+    boxShadow: isSelected ? `0 0 0 1px ${colour}22, 0 0 10px ${colour}14` : "none",
+  }}
+>
+            <div className="px-2.5 pt-1">
               {option.image_url ? (
                 <div className="mb-3 overflow-hidden rounded-xl bg-gray-900">
                   <img
@@ -149,7 +150,7 @@ function ResultOptions({
               ) : null}
 
               <div className="grid grid-cols-[1fr_auto] items-start gap-x-3">
-                <div className="flex min-w-0 items-start gap-2">
+                <div className="flex min-w-0 items-center gap-2">
                   {isSelected ? (
                     <span className="shrink-0 text-base font-bold leading-5" style={{ color: colour }}>
                       ✓
@@ -164,12 +165,12 @@ function ResultOptions({
             </div>
 
             <div className="px-2.5 pb-1.5 pt-1">
-              <div className="h-4 w-full overflow-hidden rounded-full bg-gray-700">
-                <div
-                  className="h-4 transition-all"
-                  style={{ width: `${percent}%`, backgroundColor: colour, opacity: 0.96 }}
-                />
-              </div>
+              <div className="h-5 w-full overflow-hidden rounded-full bg-gray-700">
+  <div
+    className="h-5 transition-[width] duration-300 ease-out"
+    style={{ width: `${animatedPercent}%`, backgroundColor: colour, opacity: 0.96 }}
+  />
+</div>
             </div>
           </div>
         );
@@ -609,7 +610,7 @@ const scaledCardStyle = isCompactMode
                         option.image_url
                           ? "w-full cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600"
                       : `w-full cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600 ${
-    isCompactMode ? "px-3 py-2.5 text-sm" : "px-4 py-3"
+    isCompactMode ? "px-3 py-3 text-sm" : "px-4 py-3.5"
   }`
                       }
                     >
@@ -625,7 +626,7 @@ const scaledCardStyle = isCompactMode
                               className="aspect-square h-auto w-full object-contain"
                             />
                           </div>
-                        <div className={`break-words ${isCompactMode ? "px-3 py-2.5 text-sm" : "px-4 py-3"}`}>
+                       <div className={`break-words ${isCompactMode ? "px-3 py-3 text-sm" : "px-4 py-3.5"}`}>
   {option.option_text}
 </div>
                         </>
