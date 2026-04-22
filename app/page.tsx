@@ -528,7 +528,7 @@ if (optionTotalsResult.error) {
 const recentCounts: Record<number, number> = {};
 let last24Total = 0;
 
-(recentVotesResult.data || []).forEach((row) => {
+(recentVotesResult.data || []).forEach((row: { poll_id: number | string; recent_votes_48h: number | string | null; recent_votes_24h: number | string | null }) => {
   const pollId = Number(row.poll_id);
   if (!validPollIds.has(pollId)) return;
 
