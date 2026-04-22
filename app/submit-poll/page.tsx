@@ -482,12 +482,13 @@ export default function SubmitPollPage() {
                 Create another poll
               </button>
             </div>
-          ) : (
-            <p className="mb-4 text-sm text-gray-300 md:text-base">
-  Your poll goes live instantly. Your link will appear below.
-</p>
+                    ) : (
+            <>
+              <p className="mb-4 text-sm text-gray-300 md:text-base">
+                Your poll goes live instantly. Your link will appear below.
+              </p>
 
-<form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label className={labelClasses}>Poll Question</label>
                 <input
@@ -638,7 +639,8 @@ export default function SubmitPollPage() {
                   {message}
                 </p>
               )}
-            </form>
+                </form>
+            </>
           )}
         </div>
       </section>
