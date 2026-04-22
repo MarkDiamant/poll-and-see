@@ -166,7 +166,7 @@ const animatedPercent = percent > 0 ? Math.max(12, percent) : 0;
               </div>
             </div>
 
-            <div className="px-2.5 pb-1.5 pt-1">
+            <div className="px-2.5 pb-1 pt-0.5">
               <div className="h-5 w-full overflow-hidden rounded-full bg-gray-700">
   <div
     className="h-5 transition-[width] duration-300 ease-out"
@@ -570,7 +570,13 @@ const scaledCardStyle = isCompactMode
     isCompactMode ? "p-4" : "p-6"
   }`}
 >
-  <div className={`flex flex-col ${isCompactMode ? "min-h-[500px]" : "min-h-[560px]"}`}>
+  <div className={`flex flex-col ${
+  voted || resultsOnly
+    ? ""
+    : isCompactMode
+      ? "min-h-[500px]"
+      : "min-h-[560px]"
+}`}>
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div></div>
                 <span className="text-sm text-gray-400">
