@@ -510,43 +510,44 @@ export default function Home() {
       const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString();
       const twentyFourHoursAgoMs = now.getTime() - 24 * 60 * 60 * 1000;
 
-      const { data: recentVotesGrouped, error: recentError } = await supabase
+     const { data: recentVotesData, error: recentError } = await supabase
   .from("votes")
-  .select("poll_id")
+  .select("poll_id, created_at")
   .gte("created_at", fortyEightHoursAgo);
 
 if (recentError) {
   console.error("recent votes error", recentError);
 }
 
-      if (recentVotesResult.error) {
-        console.error("Homepage recent votes query failed", recentVotesResult.error);
-      }
+const { data: optionTotalsData, error: optionError } = await supabase
+  .from("poll_options")
+  .select("poll_id, vote_count");
 
-      if (optionTotalsResult.error) {
-        console.error("Homepage option totals query failed", optionTotalsResult.error);
-      }
+if (optionError) {
+  console.error("option totals error", optionError);
+}
 
-           const recentCounts: Record<number, number> = {};
-      let last24Total = 0;
+const recentCounts: Record<number, number> = {};
+let last24Total = 0;
 
-      (recentVotesResult.data || []).forEach((vote) => {
-        const pollId = Number(vote.poll_id);
+(recentVotesData || []).forEach((vote) => {
+  const pollId = Number(vote.poll_id);
 
-        recentCounts[pollId] = (recentCounts[pollId] || 0) + 1;
+  recentCounts[pollId] = (recentCounts[pollId] || 0) + 1;
 
-        const createdAtTime = new Date(vote.created_at).getTime();
-        if (!Number.isNaN(createdAtTime) && createdAtTime >= twentyFourHoursAgoMs) {
-          last24Total += 1;
-        }
-      });
+  const createdAtTime = new Date(vote.created_at).getTime();
+  if (!Number.isNaN(createdAtTime) && createdAtTime >= twentyFourHoursAgoMs) {
+    last24Total += 1;
+  }
+});
 
-      const totalVoteCounts: Record<number, number> = {};
-      (optionTotalsResult.data || []).forEach((option) => {
-        const pollId = Number(option.poll_id);
-        // remove this check entirely
-        totalVoteCounts[pollId] = (totalVoteCounts[pollId] || 0) + (option.vote_count || 0);
-      });
+const totalVoteCounts: Record<number, number> = {};
+
+(optionTotalsData || []).forEach((option) => {
+  const pollId = Number(option.poll_id);
+  totalVoteCounts[pollId] =
+    (totalVoteCounts[pollId] || 0) + (option.vote_count || 0);
+});
 
       const trendingIds = Object.entries(recentCounts)
         .sort((a, b) => {
