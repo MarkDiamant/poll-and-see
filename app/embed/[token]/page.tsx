@@ -574,8 +574,8 @@ const scaledCardStyle = isCompactMode
   voted || resultsOnly
     ? ""
     : isCompactMode
-      ? "min-h-[460px]"
-      : "min-h-[520px]"
+      ? "min-h-[400px]"
+      : "min-h-[460px]"
 }`}>
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div></div>
