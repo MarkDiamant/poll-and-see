@@ -345,7 +345,7 @@ export default function ResultsPage() {
                     key={bundle.poll.id}
                     className="rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-lg"
                   >
-                                        <div className="mb-3 flex items-center gap-2">
+                    <div className="mb-3 flex items-center justify-between gap-3">
                       <span
                         className="rounded-full px-2 py-1 text-xs"
                         style={{
@@ -356,15 +356,13 @@ export default function ResultsPage() {
                       >
                         {bundle.poll.category}
                       </span>
-                    </div>
-
-                    <div className="mb-3 flex items-center justify-between gap-3">
-                      <h2 className="text-2xl font-bold">{bundle.poll.question}</h2>
 
                       <span className="text-sm text-gray-400">
                         {Object.values(bundle.voteCounts).reduce((sum, count) => sum + count, 0)} votes
                       </span>
                     </div>
+
+                    <h2 className="mb-2 text-2xl font-bold">{bundle.poll.question}</h2>
                     {bundle.poll.description ? (
                       <p className="mb-4 text-gray-300">{bundle.poll.description}</p>
                     ) : null}
