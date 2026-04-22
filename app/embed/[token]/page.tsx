@@ -152,11 +152,11 @@ const animatedPercent = percent > 0 ? Math.max(12, percent) : 0;
               <div className="grid grid-cols-[1fr_auto] items-start gap-x-3">
                 <div className="flex min-w-0 items-center gap-2">
                   {isSelected ? (
-                    <span className="shrink-0 text-base font-bold leading-5" style={{ color: colour }}>
+                    <span className={`shrink-0 font-bold leading-5 ${isCompactMode ? "text-sm" : "text-base"}`} style={{ color: colour }}>
                       ✓
                     </span>
                   ) : null}
-                  <span className="min-w-0 break-words text-base leading-5 text-white">{option.option_text}</span>
+                  <span className={`min-w-0 break-words leading-5 text-white ${isCompactMode ? "text-sm" : "text-base"}`}>{option.option_text}</span>
                 </div>
                 <span className="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-gray-300">
                   {percent}%
@@ -568,7 +568,7 @@ const scaledCardStyle = isCompactMode
     isCompactMode ? "p-4" : "p-6"
   }`}
 >
-  <div className={`flex flex-col ${isCompactMode ? "min-h-[460px]" : "min-h-[520px]"}`}>
+  <div className={`flex flex-col ${isCompactMode ? "min-h-[500px]" : "min-h-[560px]"}`}>
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div></div>
                 <span className="text-sm text-gray-400">
@@ -656,7 +656,7 @@ const scaledCardStyle = isCompactMode
                 </>
               )}
 
-              <div className="mt-auto">
+              <div className="mt-auto pt-2">
                 <EmbedFooter />
               </div>
             </div>
