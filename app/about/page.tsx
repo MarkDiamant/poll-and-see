@@ -14,12 +14,19 @@ export default function AboutPage() {
             />
           </Link>
 
-          <div className="flex shrink-0 items-center gap-2">
+                    <div className="flex shrink-0 items-center gap-2">
             <Link
               href="/"
               className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm font-medium text-white transition hover:bg-gray-800 md:px-5"
             >
               Home
+            </Link>
+
+            <Link
+              href="/results"
+              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm font-medium text-white transition hover:bg-gray-800 md:px-5"
+            >
+              Results
             </Link>
 
             <Link

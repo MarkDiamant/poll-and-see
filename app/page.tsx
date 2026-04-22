@@ -1095,12 +1095,19 @@ const trendingPolls = useMemo(() => {
             />
           </Link>
 
-          <div className="flex shrink-0 items-center gap-2">
+                   <div className="flex shrink-0 items-center gap-2">
             <Link
               href="/"
               className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm font-medium text-white transition hover:bg-gray-800 md:px-5"
             >
               Home
+            </Link>
+
+            <Link
+              href="/results"
+              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm font-medium text-white transition hover:bg-gray-800 md:px-5"
+            >
+              Results
             </Link>
 
             <Link
@@ -1458,7 +1465,7 @@ boxShadow: isSelected ? `0 0 8px ${optionColour}22` : "none",
                   className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 p-5 shadow-lg transition hover:border-gray-500 md:flex md:min-h-[220px] md:flex-col"
                 >
                   
-                  <div className="mb-3 flex items-center gap-2">
+                                    <div className="mb-3 flex items-center">
                     <span
                       className="rounded-full px-2 py-1 text-xs"
                       style={{
@@ -1470,12 +1477,6 @@ boxShadow: isSelected ? `0 0 8px ${optionColour}22` : "none",
                       {poll.category}
                     </span>
 
-                    {votedPollIds.includes(poll.id) ? (
-                      <span className="rounded-full border border-gray-600 bg-gray-900 px-2 py-1 text-[11px] text-gray-300">
-                        Voted
-                      </span>
-                    ) : null}
-
                     {badgeLabel ? (
                       <span className="ml-auto -mr-6">
                         <StatusRibbon label={badgeLabel} />
@@ -1483,14 +1484,20 @@ boxShadow: isSelected ? `0 0 8px ${optionColour}22` : "none",
                     ) : null}
                   </div>
 
-                                    <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
+                  <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
                   <p className="mb-4 text-sm text-gray-300">{poll.description}</p>
 
-                                    <div className="flex items-center justify-end gap-1.5 text-sm text-gray-400 md:mt-auto">
-                    <span>View poll</span>
-                    <span aria-hidden="true" className="text-base leading-none">
-                      ›
-                    </span>
+                  <div className="flex items-center justify-between gap-3 md:mt-auto">
+                    <div className="text-xs text-gray-400">
+                      {votedPollIds.includes(poll.id) ? "Voted" : ""}
+                    </div>
+
+                    <div className="flex items-center gap-1.5 text-sm text-gray-400">
+                      <span>View poll</span>
+                      <span aria-hidden="true" className="text-base leading-none">
+                        ›
+                      </span>
+                    </div>
                   </div>
                 </Link>
               );

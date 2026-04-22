@@ -9,9 +9,15 @@ export default function Footer() {
           business, finance, education, lifestyle and community topics.
         </p>
 
-        <div className="mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+                <div className="mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
           <Link href="/about" className="hover:text-gray-300">
             About
+          </Link>
+          <Link href="/results" className="hover:text-gray-300">
+            Results
+          </Link>
+          <Link href="/guidelines" className="hover:text-gray-300">
+            Guidelines
           </Link>
           <Link href="/privacy" className="hover:text-gray-300">
             Privacy

@@ -190,7 +190,7 @@ export default function SubmitPollPage() {
   const [category, setCategory] = useState<Category>("");
   const [usesImages, setUsesImages] = useState(false);
   const [isPrivate, setIsPrivate] = useState(false);
-  const [emailMeLink, setEmailMeLink] = useState(false);
+  const [emailMeLink] = useState(false);
   const [options, setOptions] = useState([createEmptyOption(), createEmptyOption()]);
 
   const [submitting, setSubmitting] = useState(false);
@@ -240,7 +240,6 @@ export default function SubmitPollPage() {
     setOptions([createEmptyOption(), createEmptyOption()]);
     setUsesImages(false);
     setIsPrivate(false);
-    setEmailMeLink(false);
     setSubmitting(false);
     setMessage("");
     setMessageType("");
@@ -252,7 +251,7 @@ export default function SubmitPollPage() {
     setCategory(value.trim() ? suggestCategory(value) : "");
   };
 
-  const shouldShowEmailField = emailMeLink;
+  const shouldShowEmailField = false;
 
   const handleCopy = async () => {
     if (!successData) return;
@@ -400,12 +399,19 @@ export default function SubmitPollPage() {
             />
           </Link>
 
-          <div className="flex items-center gap-2 shrink-0">
+                   <div className="flex items-center gap-2 shrink-0">
             <Link
               href="/"
               className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-gray-800"
             >
               Home
+            </Link>
+
+            <Link
+              href="/results"
+              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-gray-800"
+            >
+              Results
             </Link>
 
             <Link
@@ -422,12 +428,15 @@ export default function SubmitPollPage() {
         <div className="text-center">
           <h1 className="text-4xl font-bold md:text-[4.25rem]">Create a Poll</h1>
 
-          <div className="mt-6 space-y-3">
+                   <div className="mt-6 space-y-3">
             <p className="text-lg text-white">
-              Ask a question. Share the link. Watch responses come in live.
+              Create a poll and get your link in seconds.
             </p>
             <p className="text-gray-300">
-              Share with your contacts, team or community to quickly see what people really think.
+              Your poll goes live instantly by link, so you can share it straight away and start getting responses.
+            </p>
+            <p className="text-gray-400">
+              No email required.
             </p>
           </div>
         </div>
@@ -583,7 +592,7 @@ export default function SubmitPollPage() {
                 )}
               </div>
 
-              <div className="space-y-2">
+                            <div className="space-y-2">
                 <label className={checkboxLabelClasses}>
                   <input
                     type="checkbox"
@@ -595,41 +604,12 @@ export default function SubmitPollPage() {
                 </label>
 
                 <p className="text-sm text-gray-400 md:text-base">
-                  Private polls are live immediately by link but never shown publicly on Poll & See.
+                  Private polls are live instantly by link and never shown publicly on Poll & See.
+                </p>
+                <p className="text-sm text-gray-400 md:text-base">
+                  Public polls are also live instantly by link, and may appear on Poll & See after review.
                 </p>
               </div>
-
-              <div className="space-y-2">
-                <label className={checkboxLabelClasses}>
-                  <input
-                    type="checkbox"
-                    checked={emailMeLink}
-                    onChange={(e) => {
-                      const nextChecked = e.target.checked;
-                      setEmailMeLink(nextChecked);
-
-                      if (!nextChecked) {
-                        setEmail("");
-                      }
-                    }}
-                    className={checkboxClasses}
-                  />
-                  <span>Email me this link</span>
-                </label>
-              </div>
-
-              {shouldShowEmailField ? (
-                <div>
-                  <label className={labelClasses}>Email</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className={inputClasses}
-                    placeholder="you@email.com"
-                  />
-                </div>
-              ) : null}
 
               <div className="space-y-2">
                 <p className="text-sm text-gray-400">
