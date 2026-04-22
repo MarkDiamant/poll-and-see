@@ -519,17 +519,6 @@ if (recentError) {
   console.error("recent votes error", recentError);
 }
 
-const recentCounts: Record<number, number> = {};
-
-(recentVotesGrouped || []).forEach((vote) => {
-  const id = Number(vote.poll_id);
-  recentCounts[id] = (recentCounts[id] || 0) + 1;
-});
-        supabase
-          .from("poll_options")
-          .select("poll_id, vote_count"),
-      ]);
-
       if (recentVotesResult.error) {
         console.error("Homepage recent votes query failed", recentVotesResult.error);
       }
