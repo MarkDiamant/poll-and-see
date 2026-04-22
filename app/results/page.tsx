@@ -13,6 +13,7 @@ type Poll = {
   slug: string;
   is_private: boolean | null;
   is_publicly_listed: boolean | null;
+  total_votes?: number | null;
 };
 
 type PollOption = {
@@ -34,6 +35,48 @@ type PollBundle = {
 };
 
 const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899", "#8b5cf6", "#14b8a6", "#f97316", "#ef4444"];
+
+const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: string; solid: string }> = {
+  All: { text: "#e5e7eb", bg: "rgba(31, 41, 55, 0.9)", border: "rgba(75, 85, 99, 1)", solid: "#374151" },
+  Business: { text: "#93c5fd", bg: "rgba(37, 99, 235, 0.12)", border: "rgba(37, 99, 235, 0.55)", solid: "#2563eb" },
+  Community: { text: "#fca5a5", bg: "rgba(239, 68, 68, 0.12)", border: "rgba(239, 68, 68, 0.55)", solid: "#ef4444" },
+  Education: { text: "#fde68a", bg: "rgba(245, 158, 11, 0.12)", border: "rgba(245, 158, 11, 0.55)", solid: "#f59e0b" },
+  Finance: { text: "#86efac", bg: "rgba(34, 197, 94, 0.12)", border: "rgba(34, 197, 94, 0.55)", solid: "#22c55e" },
+  Fun: { text: "#f9a8d4", bg: "rgba(236, 72, 153, 0.12)", border: "rgba(236, 72, 153, 0.55)", solid: "#ec4899" },
+  General: { text: "#67e8f9", bg: "rgba(6, 182, 212, 0.12)", border: "rgba(6, 182, 212, 0.55)", solid: "#06b6d4" },
+  Lifestyle: { text: "#d8b4fe", bg: "rgba(168, 85, 247, 0.12)", border: "rgba(168, 85, 247, 0.55)", solid: "#a855f7" },
+  Health: { text: "#fdba74", bg: "rgba(249, 115, 22, 0.12)", border: "rgba(249, 115, 22, 0.55)", solid: "#f97316" },
+  Politics: { text: "#fcd34d", bg: "rgba(234, 179, 8, 0.12)", border: "rgba(234, 179, 8, 0.55)", solid: "#eab308" },
+  Sport: { text: "#c4b5fd", bg: "rgba(139, 92, 246, 0.12)", border: "rgba(139, 92, 246, 0.55)", solid: "#8b5cf6" },
+  Sports: { text: "#c4b5fd", bg: "rgba(139, 92, 246, 0.12)", border: "rgba(139, 92, 246, 0.55)", solid: "#8b5cf6" },
+  Tech: { text: "#f9a8d4", bg: "rgba(217, 70, 239, 0.12)", border: "rgba(217, 70, 239, 0.55)", solid: "#d946ef" },
+};
+
+const FALLBACK_CATEGORY_COLOURS = [
+  { text: "#93c5fd", bg: "rgba(37, 99, 235, 0.12)", border: "rgba(37, 99, 235, 0.55)", solid: "#2563eb" },
+  { text: "#fca5a5", bg: "rgba(239, 68, 68, 0.12)", border: "rgba(239, 68, 68, 0.55)", solid: "#ef4444" },
+  { text: "#fde68a", bg: "rgba(245, 158, 11, 0.12)", border: "rgba(245, 158, 11, 0.55)", solid: "#f59e0b" },
+  { text: "#86efac", bg: "rgba(34, 197, 94, 0.12)", border: "rgba(34, 197, 94, 0.55)", solid: "#22c55e" },
+  { text: "#67e8f9", bg: "rgba(6, 182, 212, 0.12)", border: "rgba(6, 182, 212, 0.55)", solid: "#06b6d4" },
+  { text: "#d8b4fe", bg: "rgba(168, 85, 247, 0.12)", border: "rgba(168, 85, 247, 0.55)", solid: "#a855f7" },
+  { text: "#fdba74", bg: "rgba(249, 115, 22, 0.12)", border: "rgba(249, 115, 22, 0.55)", solid: "#f97316" },
+  { text: "#fcd34d", bg: "rgba(234, 179, 8, 0.12)", border: "rgba(234, 179, 8, 0.55)", solid: "#eab308" },
+  { text: "#c4b5fd", bg: "rgba(139, 92, 246, 0.12)", border: "rgba(139, 92, 246, 0.55)", solid: "#8b5cf6" },
+  { text: "#f9a8d4", bg: "rgba(217, 70, 239, 0.12)", border: "rgba(217, 70, 239, 0.55)", solid: "#d946ef" },
+];
+
+function getCategoryColours(category: string) {
+  const trimmed = category?.trim();
+  if (!trimmed) return CATEGORY_COLOURS.All;
+  if (CATEGORY_COLOURS[trimmed]) return CATEGORY_COLOURS[trimmed];
+
+  let hash = 0;
+  for (let i = 0; i < trimmed.length; i += 1) {
+    hash = trimmed.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  return FALLBACK_CATEGORY_COLOURS[Math.abs(hash) % FALLBACK_CATEGORY_COLOURS.length];
+}
 
 function ResultOptions({
   options,
@@ -77,7 +120,7 @@ function ResultOptions({
                 </div>
               ) : null}
 
-              <div className="grid grid-cols-[1fr_auto] items-start gap-x-3">
+                            <div className="grid grid-cols-[1fr_auto] items-start gap-x-3">
                 <div className="flex min-w-0 items-center gap-2">
                   {isSelected ? (
                     <span className="shrink-0 text-sm font-bold leading-5 sm:text-base" style={{ color: colour }}>
@@ -89,7 +132,7 @@ function ResultOptions({
                   </span>
                 </div>
                 <span className="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-gray-300">
-                  {percent}%
+                  {percent}% <span className="font-normal text-gray-500">• {count} votes</span>
                 </span>
               </div>
             </div>
@@ -103,9 +146,6 @@ function ResultOptions({
               </div>
             </div>
 
-            <div className="px-3 pb-3 text-xs text-gray-400">
-              {count} {count === 1 ? "vote" : "votes"}
-            </div>
           </div>
         );
       })}
@@ -151,9 +191,9 @@ export default function ResultsPage() {
 
         if (votedPollIds.length > 0) {
           const [{ data: pollRows }, { data: optionRows }] = await Promise.all([
-            supabase
+               supabase
               .from("polls")
-              .select("id, question, description, category, slug, is_private, is_publicly_listed")
+              .select("id, question, description, category, slug, is_private, is_publicly_listed, total_votes")
               .in("id", votedPollIds),
             supabase
               .from("poll_options")
@@ -202,9 +242,9 @@ export default function ResultsPage() {
           setVotedPolls([]);
         }
 
-        const { data: newPollRows } = await supabase
+          const { data: newPollRows } = await supabase
           .from("polls")
-          .select("id, question, description, category, slug, is_private, is_publicly_listed")
+          .select("id, question, description, category, slug, is_private, is_publicly_listed, total_votes")
           .eq("is_private", false)
           .eq("is_publicly_listed", true)
           .order("id", { ascending: false })
@@ -305,16 +345,26 @@ export default function ResultsPage() {
                     key={bundle.poll.id}
                     className="rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-lg"
                   >
-                    <div className="mb-3 flex items-center gap-2">
-                      <span className="rounded-full border border-gray-700 bg-gray-900 px-3 py-1 text-xs text-gray-300">
+                                        <div className="mb-3 flex items-center gap-2">
+                      <span
+                        className="rounded-full px-2 py-1 text-xs"
+                        style={{
+                          color: getCategoryColours(bundle.poll.category).text,
+                          backgroundColor: getCategoryColours(bundle.poll.category).bg,
+                          border: `1px solid ${getCategoryColours(bundle.poll.category).border}`,
+                        }}
+                      >
                         {bundle.poll.category}
-                      </span>
-                      <span className="rounded-full border border-gray-700 bg-gray-900 px-3 py-1 text-xs text-gray-300">
-                        Voted
                       </span>
                     </div>
 
-                    <h2 className="mb-2 text-2xl font-bold">{bundle.poll.question}</h2>
+                                        <div className="mb-2 flex items-start justify-between gap-3">
+                      <h2 className="text-2xl font-bold leading-tight">{bundle.poll.question}</h2>
+
+                      <span className="whitespace-nowrap text-xs text-gray-400">
+                        {Object.values(bundle.voteCounts).reduce((sum, count) => sum + count, 0)} votes
+                      </span>
+                    </div>
                     {bundle.poll.description ? (
                       <p className="mb-4 text-gray-300">{bundle.poll.description}</p>
                     ) : null}
@@ -337,31 +387,44 @@ export default function ResultsPage() {
               <h2 className="text-2xl font-semibold">New polls to vote on</h2>
             </div>
 
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {newPolls.map((poll) => (
-                <Link
-                  key={poll.id}
-                  href={`/poll/${poll.slug}`}
-                  className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 p-5 shadow-lg transition hover:border-gray-500 md:flex md:min-h-[220px] md:flex-col"
-                >
-                  <div className="mb-3 flex items-center">
-                    <span className="rounded-full border border-gray-700 bg-gray-900 px-2 py-1 text-xs text-gray-300">
-                      {poll.category}
-                    </span>
-                  </div>
+                       {newPolls.length > 0 ? (
+              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                {newPolls.map((poll) => (
+                  <Link
+                    key={poll.id}
+                    href={`/poll/${poll.slug}`}
+                    className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 p-5 shadow-lg transition hover:border-gray-500 md:flex md:min-h-[220px] md:flex-col"
+                  >
+                    <div className="mb-3 flex items-center">
+                      <span
+                        className="rounded-full px-2 py-1 text-xs"
+                        style={{
+                          color: getCategoryColours(poll.category).text,
+                          backgroundColor: getCategoryColours(poll.category).bg,
+                          border: `1px solid ${getCategoryColours(poll.category).border}`,
+                        }}
+                      >
+                        {poll.category}
+                      </span>
+                    </div>
 
-                  <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
-                  <p className="mb-4 text-sm text-gray-300">{poll.description}</p>
+                    <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
+                    <p className="mb-4 text-sm text-gray-300">{poll.description}</p>
 
-                  <div className="flex items-center justify-end gap-1.5 text-sm text-gray-400 md:mt-auto">
-                    <span>Vote now</span>
-                    <span aria-hidden="true" className="text-base leading-none">
-                      ›
-                    </span>
-                  </div>
-                </Link>
-              ))}
-            </div>
+                    <div className="flex items-center justify-end gap-1.5 text-sm text-gray-400 md:mt-auto">
+                      <span>Vote now</span>
+                      <span aria-hidden="true" className="text-base leading-none">
+                        ›
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-gray-700 bg-gray-800 p-6 text-center text-gray-300">
+                You’ve voted on all live polls. Check back soon.
+              </div>
+            )}
           </>
         )}
       </section>

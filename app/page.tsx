@@ -1488,9 +1488,14 @@ const trendingPolls = useMemo(() => {
                   <p className="mb-4 text-sm text-gray-300">{poll.description}</p>
 
                   <div className="flex items-center justify-between gap-3 md:mt-auto">
-                    <div className="text-xs text-gray-400">
-                      {votedPollIds.includes(poll.id) ? "Voted" : ""}
-                    </div>
+                    <div className="text-xs">
+  {votedPollIds.includes(poll.id) ? (
+    <span className="flex items-center gap-1 text-green-400">
+      <span>✓</span>
+      <span className="text-gray-400">Voted</span>
+    </span>
+  ) : null}
+</div>
 
                     <div className="flex items-center gap-1.5 text-sm text-gray-400">
                       <span>View poll</span>
