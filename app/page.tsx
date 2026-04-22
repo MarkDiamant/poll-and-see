@@ -512,7 +512,7 @@ export default function Home() {
 
 const { data: recentVotesData, error: recentError } = await supabase
   .from("votes")
-  .select("poll_id");
+  .select("poll_id, created_at");
 
 if (recentError) {
   console.error("recent votes error", recentError);
@@ -527,9 +527,25 @@ if (optionError) {
 }
 
 const recentCounts: Record<number, number> = {};
+let last24Total = 0;
+
 (recentVotesData || []).forEach((vote) => {
   const pollId = Number(vote.poll_id);
-  recentCounts[pollId] = (recentCounts[pollId] || 0) + 1;
+
+  // only polls that exist on homepage
+  if (!validPollIds.has(pollId)) return;
+
+  const createdAtTime = new Date(vote.created_at).getTime();
+
+  // last 48 hours → trending
+  if (createdAtTime >= now.getTime() - 48 * 60 * 60 * 1000) {
+    recentCounts[pollId] = (recentCounts[pollId] || 0) + 1;
+  }
+
+  // last 24 hours → activity counter
+  if (createdAtTime >= twentyFourHoursAgoMs) {
+    last24Total += 1;
+  }
 });
 
 const totalVoteCounts: Record<number, number> = {};
@@ -561,7 +577,7 @@ const totalVoteCounts: Record<number, number> = {};
       setRecentVoteCounts(recentCounts);
       setTrendingPollIds(trendingIds);
       setPopularPollIds(popularIds);
-      setVotesLast24(Object.values(recentCounts).reduce((a, b) => a + b, 0));
+      setVotesLast24(last24Total);
     } catch (error) {
       console.error("Homepage vote-derived data query failed", error);
     }
