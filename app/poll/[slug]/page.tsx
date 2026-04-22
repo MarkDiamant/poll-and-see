@@ -787,7 +787,7 @@ function ResultOptions({
   const total = Object.values(voteCounts).reduce((sum, count) => sum + count, 0);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {options.map((option, index) => {
         const count = voteCounts[option.id] || 0;
         const percent = total > 0 ? Math.round((count / total) * 100) : 0;
@@ -799,11 +799,11 @@ function ResultOptions({
             key={option.id}
             className={option.image_url ? "rounded-xl md:max-w-[480px]" : "rounded-xl"}
             style={{
-              border: isSelected ? `3px solid ${colour}` : "3px solid transparent",
-              boxShadow: isSelected ? `0 0 0 1px ${colour}33, 0 0 16px ${colour}18` : "none",
-            }}
+  border: isSelected ? `2px solid ${colour}` : "2px solid transparent",
+  boxShadow: isSelected ? `0 0 0 1px ${colour}22, 0 0 10px ${colour}14` : "none",
+}}
           >
-            <div className="px-3 pt-3">
+            <div className="px-3 pt-2">
               {option.image_url ? (
                 <div className="mb-3 overflow-hidden rounded-xl bg-gray-900 md:max-w-[480px]">
                   <img
@@ -818,13 +818,13 @@ function ResultOptions({
               ) : null}
 
               <div className="grid grid-cols-[1fr_auto] items-start gap-x-3">
-                <div className="flex min-w-0 items-start gap-2">
+                <div className="flex min-w-0 items-center gap-2">
                   {isSelected ? (
-                    <span className="mt-0.5 shrink-0 text-base font-bold" style={{ color: colour }}>
+                   <span className="shrink-0 text-sm font-bold leading-5 text-white sm:text-base" style={{ color: colour }}>
                       ✓
                     </span>
                   ) : null}
-                  <span className="min-w-0 break-words leading-6 text-white">{option.option_text}</span>
+                 <span className="min-w-0 break-words text-sm leading-5 text-white sm:text-base">{option.option_text}</span>
                 </div>
                 <span className="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-gray-300">
                   {percent}%
@@ -832,13 +832,13 @@ function ResultOptions({
               </div>
             </div>
 
-            <div className="px-3 pb-3 pt-2">
-              <div className="h-4 w-full overflow-hidden rounded-full bg-gray-700">
-                <div
-                  className="h-4 transition-all"
-                  style={{ width: `${percent}%`, backgroundColor: colour, opacity: 0.96 }}
-                />
-              </div>
+            <div className="px-3 pb-2 pt-1">
+              <div className="h-5 w-full overflow-hidden rounded-full bg-gray-700">
+  <div
+    className="h-5 transition-all"
+    style={{ width: `${percent}%`, backgroundColor: colour, opacity: 0.96 }}
+  />
+</div>
             </div>
           </div>
         );
@@ -1115,7 +1115,7 @@ function PollCard({
                   />
                 </div>
               ) : null}
-              <div className="px-4 py-3">{option.option_text}</div>
+              <div className="px-4 py-3.5">{option.option_text}</div>
             </button>
           ))}
           {error ? <p className="text-sm text-red-300">{error}</p> : null}
