@@ -496,100 +496,87 @@ export default function Home() {
   }, []);
 
   const syncVoteDerivedData = useCallback(async (pollList: Poll[]) => {
-    if (pollList.length === 0) {
-      setTrendingPollIds([]);
-      setPopularPollIds([]);
-      setRecentVoteCounts({});
-      setVotesLast24(0);
-      return;
+  if (pollList.length === 0) {
+    setTrendingPollIds([]);
+    setPopularPollIds([]);
+    setRecentVoteCounts({});
+    setVotesLast24(0);
+    return;
+  }
+
+  try {
+    const validPollIds = new Set(pollList.map((poll) => poll.id));
+    const now = new Date();
+    const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString();
+    const twentyFourHoursAgoMs = now.getTime() - 24 * 60 * 60 * 1000;
+
+    const [recentVotesResult, optionTotalsResult] = await Promise.all([
+      supabase
+        .from("votes")
+        .select("poll_id, created_at")
+        .gte("created_at", fortyEightHoursAgo),
+      supabase
+        .from("poll_options")
+        .select("poll_id, vote_count"),
+    ]);
+
+    if (recentVotesResult.error) {
+      console.error("Homepage recent votes query failed", recentVotesResult.error);
     }
 
-    try {
-      const validPollIds = new Set(pollList.map((poll) => poll.id));
-      const now = new Date();
-      const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString();
-      const twentyFourHoursAgoMs = now.getTime() - 24 * 60 * 60 * 1000;
-
-const { data: recentVotesData, error: recentError } = await supabase
-  .from("votes")
-  .select("poll_id, created_at");
-
-if (recentError) {
-  console.error("recent votes error", recentError);
-}
-
-const { data: optionTotalsData, error: optionError } = await supabase
-  .from("poll_options")
-  .select("poll_id, vote_count");
-
-if (optionError) {
-  console.error("option totals error", optionError);
-}
-
-const recentCounts: Record<number, number> = {};
-let last24Total = 0;
-
-(recentVotesData || []).forEach((vote) => {
-  const pollId = Number(vote.poll_id);
-
-  // only polls that exist on homepage
-  if (!validPollIds.has(pollId)) return;
-
-  const createdAtTime = new Date(vote.created_at).getTime();
-
-  // last 48 hours → trending
-if (!Number.isNaN(createdAtTime)) {
-  const hoursAgo = (Date.now() - createdAtTime) / (1000 * 60 * 60);
-
-  if (hoursAgo <= 48) {
-    recentCounts[pollId] = (recentCounts[pollId] || 0) + 1;
-  }
-}
-
-  // last 24 hours → activity counter
-  if (!Number.isNaN(createdAtTime)) {
-  const hoursAgo = (Date.now() - createdAtTime) / (1000 * 60 * 60);
-
-  if (hoursAgo <= 24) {
-    last24Total += 1;
-  }
-}
-});
-
-const totalVoteCounts: Record<number, number> = {};
-
-(optionTotalsData || []).forEach((option) => {
-  const pollId = Number(option.poll_id);
-  totalVoteCounts[pollId] =
-    (totalVoteCounts[pollId] || 0) + (option.vote_count || 0);
-});
-
-      const trendingIds = Object.entries(recentCounts)
-        .sort((a, b) => {
-          const diff = Number(b[1]) - Number(a[1]);
-          if (diff !== 0) return diff;
-          return Number(b[0]) - Number(a[0]);
-        })
-        .slice(0, 5)
-        .map(([pollId]) => Number(pollId));
-
-      const popularIds = Object.entries(totalVoteCounts)
-        .sort((a, b) => {
-          const diff = Number(b[1]) - Number(a[1]);
-          if (diff !== 0) return diff;
-          return Number(b[0]) - Number(a[0]);
-        })
-        .slice(0, 10)
-        .map(([pollId]) => Number(pollId));
-
-      setRecentVoteCounts(recentCounts);
-      setTrendingPollIds(trendingIds);
-      setPopularPollIds(popularIds);
-      setVotesLast24(last24Total);
-    } catch (error) {
-      console.error("Homepage vote-derived data query failed", error);
+    if (optionTotalsResult.error) {
+      console.error("Homepage option totals query failed", optionTotalsResult.error);
     }
-  }, []);
+
+    const recentCounts: Record<number, number> = {};
+    let last24Total = 0;
+
+    (recentVotesResult.data || []).forEach((vote) => {
+      const pollId = Number(vote.poll_id);
+
+      if (validPollIds.has(pollId)) {
+        recentCounts[pollId] = (recentCounts[pollId] || 0) + 1;
+      }
+
+      const createdAtTime = new Date(vote.created_at).getTime();
+      if (!Number.isNaN(createdAtTime) && createdAtTime >= twentyFourHoursAgoMs) {
+        last24Total += 1;
+      }
+    });
+
+    const totalVoteCounts: Record<number, number> = {};
+    (optionTotalsResult.data || []).forEach((option) => {
+      const pollId = Number(option.poll_id);
+      if (!validPollIds.has(pollId)) return;
+      totalVoteCounts[pollId] = (totalVoteCounts[pollId] || 0) + (option.vote_count || 0);
+    });
+
+    const trendingIds = Object.entries(recentCounts)
+      .sort((a, b) => {
+        const diff = Number(b[1]) - Number(a[1]);
+        if (diff !== 0) return diff;
+        return Number(b[0]) - Number(a[0]);
+      })
+      .slice(0, 5)
+      .map(([pollId]) => Number(pollId));
+
+    const popularIds = Object.entries(totalVoteCounts)
+      .sort((a, b) => {
+        const diff = Number(b[1]) - Number(a[1]);
+        if (diff !== 0) return diff;
+        return Number(b[0]) - Number(a[0]);
+      })
+      .slice(0, 10)
+      .map(([pollId]) => Number(pollId));
+
+    setRecentVoteCounts(recentCounts);
+    setTrendingPollIds(trendingIds);
+    setPopularPollIds(popularIds);
+    setVotesLast24(last24Total);
+  } catch (error) {
+    console.error("Homepage vote-derived data query failed", error);
+  }
+}, []);
 
   const loadHomeData = useCallback(async () => {
     setLoading(true);
@@ -981,16 +968,13 @@ const totalVoteCounts: Record<number, number> = {};
   }, [searchedPolls, featuredPoll]);
 
 const trendingPolls = useMemo(() => {
-  return polls
+  const pollMap = new Map(polls.map((poll) => [poll.id, poll]));
+  return trendingPollIds
+    .map((id) => pollMap.get(id))
+    .filter((poll): poll is Poll => Boolean(poll))
     .filter((poll) => poll.id !== featuredPoll?.id)
-    .filter((poll) => (recentVoteCounts[poll.id] || 0) > 0)
-    .sort((a, b) => {
-      const diff = (recentVoteCounts[b.id] || 0) - (recentVoteCounts[a.id] || 0);
-      if (diff !== 0) return diff;
-      return b.id - a.id;
-    })
     .slice(0, 4);
-}, [polls, recentVoteCounts, featuredPoll?.id]);
+}, [polls, trendingPollIds, featuredPoll?.id]);
 
   const activePollCount =
   selectedCategory === "All" && searchTerm.trim() === ""
@@ -1276,7 +1260,6 @@ const trendingPolls = useMemo(() => {
 
                       <span className="shrink-0 text-sm text-gray-400">
                         {recentVoteCounts[poll.id] || 0} recent votes
-                      <p className="text-[10px] text-red-400">id: {poll.id}</p>
                       </span>
                     </div>
 
@@ -1474,9 +1457,7 @@ const trendingPolls = useMemo(() => {
 
                                     <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
                   <p className="mb-4 text-sm text-gray-300">{poll.description}</p>
-<p className="mb-2 text-xs text-gray-500">
-  id: {poll.id} recent: {recentVoteCounts[poll.id] || 0}
-</p>
+
                                     <div className="flex items-center justify-end gap-1.5 text-sm text-gray-400 md:mt-auto">
                     <span>View poll</span>
                     <span aria-hidden="true" className="text-base leading-none">
