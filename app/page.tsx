@@ -1133,7 +1133,7 @@ const trendingPolls = useMemo(() => {
               <h2 className="mb-2 text-2xl font-semibold">{featuredPoll.question}</h2>
               <p className="mb-4 text-gray-300">{featuredPoll.description}</p>
 
-              <div className="mb-5 space-y-2">
+              <div className="mb-5 space-y-1.5">
                 {featuredOptions.map((option, index) => {
                   const count = featuredVoteCounts[option.id] || 0;
                   const percent = totalFeaturedVotes > 0
@@ -1147,13 +1147,11 @@ const trendingPolls = useMemo(() => {
                       key={option.id}
                       className="rounded-2xl"
                       style={{
-                        border: isSelected ? `3px solid ${optionColour}` : "3px solid transparent",
-                        boxShadow: isSelected
-                          ? `0 0 0 1px ${optionColour}33, 0 0 16px ${optionColour}18`
-                          : "none",
+                        border: isSelected ? `2px solid ${optionColour}cc` : "2px solid transparent",
+boxShadow: isSelected ? `0 0 8px ${optionColour}22` : "none",
                       }}
                     >
-                      <div className="px-3 pt-3">
+                      <div className="px-2.5 pt-1">
                         {option.image_url ? (
                           <div className="mb-3 overflow-hidden rounded-xl bg-gray-900">
                             <img
@@ -1168,16 +1166,16 @@ const trendingPolls = useMemo(() => {
                         ) : null}
 
                         <div className="grid grid-cols-[1fr_auto] items-start gap-x-3">
-                          <div className="flex min-w-0 items-start gap-2">
+                         <div className="flex min-w-0 items-center gap-2">
                             {isSelected ? (
                               <span
-                                className="mt-0.5 shrink-0 text-base font-bold"
-                                style={{ color: optionColour }}
-                              >
+  className="shrink-0 text-sm font-bold leading-5 sm:text-base"
+  style={{ color: optionColour }}
+>
                                 ✓
                               </span>
                             ) : null}
-                            <span className="min-w-0 break-words leading-6 text-white">
+                            <span className="min-w-0 break-words text-sm leading-5 text-white sm:text-base">
                               {option.option_text}
                             </span>
                           </div>
@@ -1188,10 +1186,10 @@ const trendingPolls = useMemo(() => {
                         </div>
                       </div>
 
-                      <div className="px-3 pb-3 pt-2">
-                        <div className="h-4 w-full overflow-hidden rounded-full bg-gray-700">
-                          <div
-                            className="h-4 transition-all"
+                      <div className="px-2.5 pb-1 pt-0.5">
+                        <div className="h-5 w-full overflow-hidden rounded-full bg-gray-700">
+  <div
+    className="h-5 transition-all"
                             style={{
                               width: `${percent}%`,
                               backgroundColor: optionColour,
