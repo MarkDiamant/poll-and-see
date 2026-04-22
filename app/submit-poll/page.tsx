@@ -483,7 +483,11 @@ export default function SubmitPollPage() {
               </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <p className="mb-4 text-sm text-gray-300 md:text-base">
+  Your poll goes live instantly. Your link will appear below.
+</p>
+
+<form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label className={labelClasses}>Poll Question</label>
                 <input
@@ -592,7 +596,7 @@ export default function SubmitPollPage() {
                 )}
               </div>
 
-                            <div className="space-y-2">
+                           <div className="space-y-2">
                 <label className={checkboxLabelClasses}>
                   <input
                     type="checkbox"
@@ -602,18 +606,18 @@ export default function SubmitPollPage() {
                   />
                   <span>
                     Make this poll private{" "}
-                    <span className="text-gray-400">(Never shown publicly on Poll & See)</span>
+                    <span className="text-gray-400">(never shown publicly on Poll & See)</span>
                   </span>
                 </label>
 
                 <p className="text-sm text-gray-400 md:text-base">
-                  Your poll goes live instantly by link. Public polls may appear on the Poll & See homepage after review.
+                  Public polls may appear on the Poll & See homepage after review.
                 </p>
               </div>
 
               <div className="space-y-2">
                 <p className="text-sm text-gray-400">
-                  Polls may be lightly edited for clarity, spelling, or shareability. Polls that are abusive, explicit, or inappropriate may be removed.
+                  Polls may be lightly edited for clarity, spelling, or shareability, and polls that are abusive, explicit, or inappropriate may be removed.
                 </p>
               </div>
 
