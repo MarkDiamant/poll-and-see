@@ -559,16 +559,25 @@ const scaledCardStyle = isCompactMode
       </main>
     );
   }
+const longestOptionLength = Math.max(
+  ...options.map((o) => o.option_text.length),
+  0
+);
+
 const preVoteMinHeight =
   !poll || options.length === 0
     ? "min-h-[420px]"
-    : options.length >= 4
-      ? "min-h-[440px]"
-      : options.length === 3
-        ? "min-h-[410px]"
-        : poll?.description
-          ? "min-h-[390px]"
-          : "min-h-[360px]";
+    : longestOptionLength > 55
+      ? "min-h-[500px]"
+      : longestOptionLength > 35
+        ? "min-h-[460px]"
+        : options.length >= 4
+          ? "min-h-[460px]"
+          : options.length === 3
+            ? "min-h-[420px]"
+            : poll?.description
+              ? "min-h-[390px]"
+              : "min-h-[360px]";
   return (
     <main className="m-0 w-full overflow-hidden bg-transparent p-0 text-white">
       <div ref={outerRef} className="w-full overflow-hidden bg-transparent">
