@@ -291,7 +291,7 @@ export default function ResultsPage() {
             />
           </Link>
 
-                    <div className="flex items-center gap-2 shrink-0">
+           <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
             <Link
               href="/"
               className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-gray-800"
@@ -358,7 +358,7 @@ export default function ResultsPage() {
                       </span>
                     </div>
 
-                                <div className="mb-3 flex items-center justify-between gap-3">
+                                   <div className="mb-3 flex items-center justify-between gap-3">
                       <h2 className="text-2xl font-bold">{bundle.poll.question}</h2>
 
                       <span className="text-sm text-gray-400">

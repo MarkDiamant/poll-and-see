@@ -399,7 +399,7 @@ export default function SubmitPollPage() {
             />
           </Link>
 
-                   <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
             <Link
               href="/"
               className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-gray-800"
@@ -595,7 +595,7 @@ export default function SubmitPollPage() {
                 )}
               </div>
 
-                        <div className="space-y-1">
+                    <div className="space-y-2">
                 <label className={checkboxLabelClasses}>
                   <input
                     type="checkbox"
@@ -617,14 +617,14 @@ export default function SubmitPollPage() {
 
               <div className="space-y-2">
                 <p className="text-xs text-gray-400">
-                  Polls may be edited for clarity, spelling, or shareability, or removed if they breach our guidelines.
+                  Polls may be edited for clarity, spelling, or shareability, and removed if they breach our guidelines.
                 </p>
               </div>
 
-              <button
+             <button
                 type="submit"
                 disabled={submitting}
-                className="rounded-xl bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-500 disabled:opacity-60"
+                className="mt-1 rounded-xl bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-500 disabled:opacity-60"
               >
                 {submitting ? "Creating..." : "Create Poll"}
               </button>
