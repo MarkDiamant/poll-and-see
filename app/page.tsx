@@ -1095,7 +1095,7 @@ const trendingPolls = useMemo(() => {
             />
           </Link>
 
-                   <div className="flex shrink-0 items-center gap-2">
+   <div className="flex w-full flex-wrap items-center gap-2 shrink-0 sm:w-auto sm:justify-end">
             <Link
               href="/"
               className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm font-medium text-white transition hover:bg-gray-800 md:px-5"
