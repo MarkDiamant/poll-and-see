@@ -967,14 +967,17 @@ export default function Home() {
     return searchedPolls.filter((poll) => poll.id !== featuredPoll?.id);
   }, [searchedPolls, featuredPoll]);
 
-  const trendingPolls = useMemo(() => {
-    const pollMap = new Map(polls.map((poll) => [poll.id, poll]));
-    return trendingPollIds
-      .map((id) => pollMap.get(id))
-      .filter((poll): poll is Poll => Boolean(poll))
-      .filter((poll) => poll.id !== featuredPoll?.id)
-      .slice(0, 4);
-  }, [polls, trendingPollIds, featuredPoll?.id]);
+const trendingPolls = useMemo(() => {
+  return polls
+    .filter((poll) => poll.id !== featuredPoll?.id)
+    .filter((poll) => (recentVoteCounts[poll.id] || 0) > 0)
+    .sort((a, b) => {
+      const diff = (recentVoteCounts[b.id] || 0) - (recentVoteCounts[a.id] || 0);
+      if (diff !== 0) return diff;
+      return b.id - a.id;
+    })
+    .slice(0, 4);
+}, [polls, recentVoteCounts, featuredPoll?.id]);
 
   const activePollCount =
   selectedCategory === "All" && searchTerm.trim() === ""
