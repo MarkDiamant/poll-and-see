@@ -512,7 +512,7 @@ export default function Home() {
 
      const { data: recentVotesData, error: recentError } = await supabase
   .from("votes")
-  .select("poll_id, created_at")
+  .select("poll_id")
   .gte("created_at", fortyEightHoursAgo);
 
 if (recentError) {
@@ -528,17 +528,9 @@ if (optionError) {
 }
 
 const recentCounts: Record<number, number> = {};
-let last24Total = 0;
-
 (recentVotesData || []).forEach((vote) => {
   const pollId = Number(vote.poll_id);
-
   recentCounts[pollId] = (recentCounts[pollId] || 0) + 1;
-
-  const createdAtTime = new Date(vote.created_at).getTime();
-  if (!Number.isNaN(createdAtTime) && createdAtTime >= twentyFourHoursAgoMs) {
-    last24Total += 1;
-  }
 });
 
 const totalVoteCounts: Record<number, number> = {};
@@ -570,7 +562,7 @@ const totalVoteCounts: Record<number, number> = {};
       setRecentVoteCounts(recentCounts);
       setTrendingPollIds(trendingIds);
       setPopularPollIds(popularIds);
-      setVotesLast24(last24Total);
+      setVotesLast24(Object.values(recentCounts).reduce((a, b) => a + b, 0));
     } catch (error) {
       console.error("Homepage vote-derived data query failed", error);
     }
