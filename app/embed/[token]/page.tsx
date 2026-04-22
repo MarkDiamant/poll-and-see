@@ -131,9 +131,9 @@ const animatedPercent = percent > 0 ? Math.max(12, percent) : 0;
   key={option.id}
   className="rounded-xl transition-opacity duration-200 hover:opacity-95"
   style={{
-    border: isSelected ? `2px solid ${colour}` : "2px solid transparent",
-    boxShadow: isSelected ? `0 0 0 1px ${colour}22, 0 0 10px ${colour}14` : "none",
-  }}
+  border: isSelected ? `2px solid ${colour}aa` : "2px solid transparent",
+  boxShadow: isSelected ? `0 0 8px ${colour}22` : "none",
+}}
 >
             <div className="px-2.5 pt-1">
               {option.image_url ? (

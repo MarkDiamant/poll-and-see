@@ -799,8 +799,8 @@ function ResultOptions({
             key={option.id}
             className={option.image_url ? "rounded-xl md:max-w-[480px]" : "rounded-xl"}
             style={{
-  border: isSelected ? `2px solid ${colour}` : "2px solid transparent",
-  boxShadow: isSelected ? `0 0 0 1px ${colour}22, 0 0 10px ${colour}14` : "none",
+  border: isSelected ? `2px solid ${colour}aa` : "2px solid transparent",
+boxShadow: isSelected ? `0 0 8px ${colour}22` : "none",
 }}
           >
             <div className="px-3 pt-2">
