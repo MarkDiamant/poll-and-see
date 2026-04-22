@@ -510,11 +510,21 @@ export default function Home() {
       const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString();
       const twentyFourHoursAgoMs = now.getTime() - 24 * 60 * 60 * 1000;
 
-      const [recentVotesResult, optionTotalsResult] = await Promise.all([
-        supabase
-          .from("votes")
-          .select("poll_id, created_at")
-          .gte("created_at", fortyEightHoursAgo),
+      const { data: recentVotesGrouped, error: recentError } = await supabase
+  .from("votes")
+  .select("poll_id")
+  .gte("created_at", fortyEightHoursAgo);
+
+if (recentError) {
+  console.error("recent votes error", recentError);
+}
+
+const recentCounts: Record<number, number> = {};
+
+(recentVotesGrouped || []).forEach((vote) => {
+  const id = Number(vote.poll_id);
+  recentCounts[id] = (recentCounts[id] || 0) + 1;
+});
         supabase
           .from("poll_options")
           .select("poll_id, vote_count"),
