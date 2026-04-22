@@ -152,7 +152,7 @@ const animatedPercent = percent > 0 ? Math.max(12, percent) : 0;
               <div className="grid grid-cols-[1fr_auto] items-start gap-x-3">
                 <div className="flex min-w-0 items-center gap-2">
                   {isSelected ? (
-                    <span className={`shrink-0 font-bold leading-5 ${isCompactMode ? "text-sm" : "text-base"}`} style={{ color: colour }}>
+                    <span className="shrink-0 text-sm font-bold leading-5 text-white sm:text-base" style={{ color: colour }}>
                       ✓
                     </span>
                   ) : null}
