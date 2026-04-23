@@ -1100,7 +1100,7 @@ const trendingPolls = useMemo(() => {
             Real questions. Anonymous opinions.
           </p>
           <p className="mt-2 text-gray-300">
-            From everyday dilemmas to testing ideas, create a poll and see what people really think.
+            Create a poll in seconds, share it, and see results instantly.
           </p>
         </div>
 

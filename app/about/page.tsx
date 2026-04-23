@@ -22,18 +22,18 @@ export default function AboutPage() {
 
             <p>No sign-up required.</p>
 
-            <div className="pt-2">
-              <h2 className="mb-3 text-xl font-semibold text-white">How it works</h2>
-              <div className="space-y-2">
-                <p>
-                  <Link href="/submit-poll" className="text-blue-300 hover:underline">
-                    Create a poll
-                  </Link>
-                </p>
-                <p>Share it</p>
-                <p>See live results</p>
-              </div>
-            </div>
+           <div className="pt-2">
+  <h2 className="mb-3 text-xl font-semibold text-white">How it works</h2>
+  <ul className="space-y-2 list-disc pl-5 text-white">
+    <li>
+      <Link href="/submit-poll" className="text-blue-300 hover:underline">
+        Create a poll
+      </Link>
+    </li>
+    <li>Share it</li>
+    <li>See live results</li>
+  </ul>
+</div>
 
             <div className="pt-2">
               <h2 className="mb-2 text-xl font-semibold text-white">Built for real opinions</h2>
@@ -47,7 +47,7 @@ export default function AboutPage() {
               <h2 className="mb-2 text-xl font-semibold text-white">Use it on your website</h2>
               <p>
                 You can add live polls directly to your website so visitors can vote without leaving
-                your page. If you want to embed a poll on your website, get in touch and we’ll help
+                the page. If you'd like to embed a poll on your site, get in touch and we’ll help
                 you set it up.
               </p>
             </div>

@@ -11,31 +11,31 @@ export default function PrivacyPage() {
           <h1 className="mb-6 text-3xl font-bold">Privacy Policy</h1>
 
           <div className="space-y-4 text-gray-300">
-            <p>Poll & See is designed to be simple and privacy-friendly.</p>
+  <p>Poll & See is designed to be simple and privacy-friendly.</p>
 
-            <p>No account is required to create or vote on polls.</p>
+  <ul className="space-y-2 list-disc pl-5">
+    <li>No account is required to create or vote on polls</li>
+    <li>Voting is designed to be anonymous</li>
+    <li>
+      We use limited technical signals, such as IP-based checks, to help reduce duplicate
+      voting and keep results fair
+    </li>
+  </ul>
 
-            <p>Voting is designed to be anonymous.</p>
+  <p>
+    These signals are used only to maintain the integrity of polls. They are not used to
+    identify individuals.
+  </p>
 
-            <p>
-              We use limited technical signals, such as IP-based checks, to help reduce duplicate
-              voting and keep results fair.
-            </p>
+  <p>
+    If you subscribe, your email address is used only to send poll updates. You can
+    unsubscribe at any time.
+  </p>
 
-            <p>
-              These signals are used only to maintain the integrity of polls. They are not used to
-              identify individuals.
-            </p>
+  <p>We do not sell subscriber data or personal information.</p>
 
-            <p>
-              If you subscribe, your email address is used only to send poll updates. You can
-              unsubscribe at any time.
-            </p>
-
-            <p>We do not sell subscriber data or personal information.</p>
-
-            <p>We may use basic analytics to understand usage and improve the service.</p>
-          </div>
+  <p>We may use basic analytics to understand usage and improve the service.</p>
+</div>
         </div>
       </section>
 

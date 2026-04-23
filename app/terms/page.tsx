@@ -15,32 +15,30 @@ export default function TermsPage() {
 
             <div className="pt-1">
               <p className="mb-2 text-white">Polls must not include:</p>
-              <ul className="list-disc space-y-2 pl-6">
-                <li>illegal content</li>
-                <li>abusive, harmful or threatening content</li>
-                <li>hate speech</li>
-                <li>impersonation or misleading content</li>
+              <ul className="list-disc space-y-2 pl-5">
+                <li>Illegal content</li>
+                <li>Abusive, harmful or threatening content</li>
+                <li>Hate speech</li>
+                <li>Impersonation or misleading content</li>
               </ul>
             </div>
 
             <p>
-              We may review, edit or remove any poll to maintain quality, clarity and compliance
-              with these guidelines.
+              We may review, edit or remove any poll to maintain quality, clarity and compliance with these guidelines.
             </p>
 
             <div className="pt-1">
               <p className="mb-2 text-white">Polls may also be edited for:</p>
-              <ul className="list-disc space-y-2 pl-6">
-                <li>clarity</li>
-                <li>spelling</li>
-                <li>length</li>
-                <li>readability</li>
+              <ul className="list-disc space-y-2 pl-5">
+                <li>Clarity</li>
+                <li>Spelling</li>
+                <li>Length</li>
+                <li>Readability</li>
               </ul>
             </div>
 
             <p>
-              Poll & See is provided as-is. We aim to keep the service reliable and fair, but
-              cannot guarantee uninterrupted access or availability.
+              Poll & See is provided as-is. We aim to keep the service reliable and fair, but cannot guarantee uninterrupted access or availability at all times.
             </p>
           </div>
         </div>

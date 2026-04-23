@@ -5,7 +5,7 @@ export default function Footer() {
     <footer className="pt-4 pb-6 text-center text-sm text-gray-500">
       <div className="mx-auto max-w-6xl px-6">
         <p className="mb-3">
-          Create polls in seconds and share to see real opinions instantly. No sign-up required.
+          Create polls in seconds, share them, and see real opinions instantly. No sign-up required.
            </p>
 
                 <div className="mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
