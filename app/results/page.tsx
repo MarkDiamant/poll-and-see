@@ -161,7 +161,7 @@ export default function ResultsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [showTopButton, setShowTopButton] = useState(false);
-const [totalVoteCount, setTotalVoteCount] = useState(0);
+const [totalVoteCount, setTotalVoteCount] = useState<number | null>(null);
 
   useEffect(() => {
     const loadResults = async () => {
@@ -174,7 +174,7 @@ const [totalVoteCount, setTotalVoteCount] = useState(0);
       .eq("key", "global")
       .single();
 
-    setTotalVoteCount(statsRow?.total_votes || 0);
+    setTotalVoteCount(statsRow?.total_votes ?? 0);
 
     const votedMeta: Array<{ pollId: number; selectedOptionId: number | null; votedAt: number }> = [];
 
@@ -319,7 +319,9 @@ const [totalVoteCount, setTotalVoteCount] = useState(0);
        <div className="mb-5 text-center">
   <h1 className="mb-2 text-4xl font-bold md:text-5xl">Poll & See</h1>
   <p className="text-lg text-gray-300">See what people really think</p>
+  {totalVoteCount !== null && (
   <LiveVoteCounter value={totalVoteCount} />
+)}
 </div>
 
 <div className="mb-6 text-center">
