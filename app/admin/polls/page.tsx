@@ -123,10 +123,7 @@ const [categoryFilter, setCategoryFilter] = useState<"all" | CategoryOption>("al
   const [featuredEdits, setFeaturedEdits] = useState<Record<number, boolean>>({});
   const [embedStatusEdits, setEmbedStatusEdits] = useState<Record<number, EmbedStatus>>({});
   const [optionEdits, setOptionEdits] = useState<Record<number, PollOptionRow[]>>({});
-const [newQuestion, setNewQuestion] = useState("");
-const [newDescription, setNewDescription] = useState("");
-const [newOptions, setNewOptions] = useState("Option 1\nOption 2");
-const [creating, setCreating] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [savingKey, setSavingKey] = useState("");
   const [error, setError] = useState("");
@@ -373,42 +370,6 @@ if (searchInput.trim()) {
     });
   };
 
-const createPoll = async () => {
-  setCreating(true);
-  setError("");
-
-  try {
-    const response = await fetch("/api/admin/polls", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-admin-key": adminKey,
-      },
-      body: JSON.stringify({
-        question: newQuestion.trim(),
-        description: newDescription.trim(),
-        category: "General",
-        is_private: false,
-        options: newOptions
-          .split("\n")
-          .map((o) => o.trim())
-          .filter(Boolean),
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "Failed to create poll");
-    }
-
-    window.location.reload();
-  } catch (err) {
-    setError(err instanceof Error ? err.message : "Error");
-  } finally {
-    setCreating(false);
-  }
-};
 const sortedPolls = useMemo(() => {
   return [...polls]
     .filter((poll) => {
@@ -491,7 +452,7 @@ const sortedPolls = useMemo(() => {
       className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-black"
     >
       <span>Live Polls</span>
-   {badge(sortedPolls.length, true)}
+   {sortedPolls.length > 0 ? badge(sortedPolls.length, false) : null}
     </Link>
     <Link
       href="/admin/submissions"
@@ -542,41 +503,7 @@ const sortedPolls = useMemo(() => {
   </button>
 </div>
         </div>
-<div className="mb-6 rounded-2xl border border-gray-700 bg-gray-800 p-4">
-  <h2 className="mb-3 text-sm font-medium text-white">Create poll</h2>
 
-  <div className="space-y-2">
-    <input
-      value={newQuestion}
-      onChange={(e) => setNewQuestion(e.target.value)}
-      placeholder="Question"
-      className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white"
-    />
-
-    <textarea
-      value={newDescription}
-      onChange={(e) => setNewDescription(e.target.value)}
-      placeholder="Description"
-      rows={2}
-      className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white"
-    />
-
-    <textarea
-      value={newOptions}
-      onChange={(e) => setNewOptions(e.target.value)}
-      rows={3}
-      className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white"
-    />
-
-    <button
-      onClick={createPoll}
-      disabled={creating}
-      className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black"
-    >
-      {creating ? "Creating..." : "Create poll"}
-    </button>
-  </div>
-</div>
         {error ? (
           <div className="mb-4 rounded-xl border border-red-500/40 bg-red-950/50 px-4 py-3 text-sm text-red-200">
             {error}

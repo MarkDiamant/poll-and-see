@@ -74,3 +74,57 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Could not load submissions." }, { status: 500 });
   }
 }
+export async function POST(request: NextRequest) {
+  const auth = isAuthorized(request);
+
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: 401 });
+  }
+
+  try {
+    const supabaseAdmin = getAdminClient();
+    const body = await request.json();
+
+    const question = String(body.question || "").trim();
+    const description = String(body.description || "").trim();
+    const category = String(body.category || "General").trim();
+    const is_private = Boolean(body.is_private);
+    const options = Array.isArray(body.options)
+      ? body.options.map((item) => String(item || "").trim()).filter(Boolean)
+      : [];
+    const option_image_urls = Array.isArray(body.option_image_urls)
+      ? body.option_image_urls.map((item) => String(item || "").trim())
+      : [];
+
+    if (!question) {
+      return NextResponse.json({ error: "Question is required." }, { status: 400 });
+    }
+
+    if (options.length < 2) {
+      return NextResponse.json({ error: "At least 2 options are required." }, { status: 400 });
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from("poll_submissions")
+      .insert({
+        question,
+        description,
+        category,
+        is_private,
+        options,
+        option_image_urls,
+        email: null,
+        status: "pending",
+      })
+      .select("id, email, question, description, category, options, option_image_urls, is_private, slug, status, created_at")
+      .single();
+
+    if (error || !data) {
+      return NextResponse.json({ error: "Could not create submission." }, { status: 500 });
+    }
+
+    return NextResponse.json({ submission: data });
+  } catch {
+    return NextResponse.json({ error: "Could not create submission." }, { status: 500 });
+  }
+}

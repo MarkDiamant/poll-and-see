@@ -78,6 +78,13 @@ const [categoryFilter, setCategoryFilter] = useState<"all" | CategoryOption>("al
 const [savingKey, setSavingKey] = useState("");
 const [error, setError] = useState("");
 const [showTopButton, setShowTopButton] = useState(false);
+const [newQuestion, setNewQuestion] = useState("");
+const [newDescription, setNewDescription] = useState("");
+const [newCategory, setNewCategory] = useState<CategoryOption>("General");
+const [newIsPrivate, setNewIsPrivate] = useState(false);
+const [newOptions, setNewOptions] = useState("Option 1\nOption 2");
+const [newImageUrls, setNewImageUrls] = useState("");
+const [creatingSubmission, setCreatingSubmission] = useState(false);
 
  useEffect(() => {
   const saved = sessionStorage.getItem(ADMIN_KEY_STORAGE) || "";
@@ -263,7 +270,71 @@ useEffect(() => {
       setSavingKey("");
     }
   };
+const createSubmission = async () => {
+  setCreatingSubmission(true);
+  setError("");
 
+  try {
+    const response = await fetch("/api/admin/poll-submissions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-key": adminKey,
+      },
+      body: JSON.stringify({
+        question: newQuestion.trim(),
+        description: newDescription.trim(),
+        category: newCategory,
+        is_private: newIsPrivate,
+        options: newOptions
+          .split("\n")
+          .map((item) => item.trim())
+          .filter(Boolean),
+        option_image_urls: newImageUrls
+          .split("\n")
+          .map((item) => item.trim()),
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Could not create submission.");
+    }
+
+    setSubmissions((current) => [data.submission, ...current]);
+    setQuestionEdits((current) => ({ ...current, [data.submission.id]: data.submission.question }));
+    setDescriptionEdits((current) => ({ ...current, [data.submission.id]: data.submission.description || "" }));
+    setOptionsEdits((current) => ({
+      ...current,
+      [data.submission.id]: (data.submission.options || []).join("\n"),
+    }));
+    setImageUrlEdits((current) => ({
+      ...current,
+      [data.submission.id]: (data.submission.option_image_urls || []).join("\n"),
+    }));
+    setEmailEdits((current) => ({ ...current, [data.submission.id]: data.submission.email || "" }));
+    setCategoryEdits((current) => ({
+      ...current,
+      [data.submission.id]: (data.submission.category as CategoryOption) || "General",
+    }));
+    setPrivacyEdits((current) => ({
+      ...current,
+      [data.submission.id]: Boolean(data.submission.is_private),
+    }));
+
+    setNewQuestion("");
+    setNewDescription("");
+    setNewCategory("General");
+    setNewIsPrivate(false);
+    setNewOptions("Option 1\nOption 2");
+    setNewImageUrls("");
+  } catch (err) {
+    setError(err instanceof Error ? err.message : "Could not create submission.");
+  } finally {
+    setCreatingSubmission(false);
+  }
+};
   const deleteSubmission = async (submissionId: number) => {
     setSavingKey(`delete:${submissionId}`);
     setError("");
@@ -422,7 +493,99 @@ const sortedSubmissions = useMemo(() => {
   </button>
 </div>
         </div>
+        <div className="mb-4 rounded-2xl border border-gray-700 bg-gray-800 p-4">
+          <h2 className="mb-3 text-sm font-medium text-white">Create submission</h2>
 
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="space-y-3">
+              <div>
+                <p className="mb-1 text-xs text-gray-400">Question</p>
+                <input
+                  value={newQuestion}
+                  onChange={(event) => setNewQuestion(event.target.value)}
+                  placeholder="Question"
+                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                />
+              </div>
+
+              <div>
+                <p className="mb-1 text-xs text-gray-400">Description</p>
+                <textarea
+                  value={newDescription}
+                  onChange={(event) => setNewDescription(event.target.value)}
+                  rows={2}
+                  placeholder="Description"
+                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="mb-1 text-xs text-gray-400">Category</p>
+                  <select
+                    value={newCategory}
+                    onChange={(event) => setNewCategory(event.target.value as CategoryOption)}
+                    className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none"
+                  >
+                    {CATEGORY_OPTIONS.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <p className="mb-1 text-xs text-gray-400">Privacy</p>
+                  <button
+                    type="button"
+                    onClick={() => setNewIsPrivate((current) => !current)}
+                    className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
+                      newIsPrivate
+                        ? "bg-white text-black hover:bg-gray-200"
+                        : "border border-gray-700 bg-gray-900 text-white hover:bg-gray-800"
+                    }`}
+                  >
+                    {newIsPrivate ? "Private" : "Public"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-[1.4fr_0.9fr]">
+              <div>
+                <p className="mb-1 text-xs text-gray-400">Options (one per line)</p>
+                <textarea
+                  value={newOptions}
+                  onChange={(event) => setNewOptions(event.target.value)}
+                  rows={6}
+                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
+                />
+              </div>
+
+              <div>
+                <p className="mb-1 text-xs text-gray-400">Image URLs (optional)</p>
+                <textarea
+                  value={newImageUrls}
+                  onChange={(event) => setNewImageUrls(event.target.value)}
+                  rows={6}
+                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => void createSubmission()}
+              disabled={creatingSubmission}
+              className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-40"
+            >
+              {creatingSubmission ? "Creating..." : "Create submission"}
+            </button>
+          </div>
+        </div>
         {error ? (
           <div className="mb-4 rounded-xl border border-red-500/40 bg-red-950/50 px-4 py-3 text-sm text-red-200">
             {error}
