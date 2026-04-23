@@ -255,10 +255,10 @@ const [linkCopied, setLinkCopied] = useState(false);
 
   const shouldShowEmailField = false;
 
-  const handleCopy = async () => {
+ const handleCopy = async () => {
   if (!successData) return;
   try {
-    await navigator.clipboard.writeText(successData.pollUrl);
+    await navigator.clipboard.writeText(successData.shareText);
     setLinkCopied(true);
     window.setTimeout(() => {
       setLinkCopied(false);
@@ -470,11 +470,11 @@ setSuccessData(data as PollCreateResponse);
     </p>
   </div>
 
-  <div className="flex flex-col gap-3 sm:flex-row sm:gap-5">
+  <div className="flex flex-col gap-3 sm:flex-row sm:gap-3">
     <button
       type="button"
       onClick={() => void handleCopy()}
-      className="cursor-pointer rounded-xl bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-500"
+      className="w-full cursor-pointer rounded-xl bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-500 sm:flex-1"
     >
       {linkCopied ? "Copied ✓" : "Copy link"}
     </button>
@@ -482,32 +482,40 @@ setSuccessData(data as PollCreateResponse);
     <button
       type="button"
       onClick={() => void handleShare()}
-      className="cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800"
+      className="w-full cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800 sm:flex-1"
     >
       Share
     </button>
+
+    <Link
+      href={successData.pollUrl}
+      className="inline-flex w-full cursor-pointer items-center justify-center rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800 sm:flex-1"
+    >
+      View poll
+    </Link>
   </div>
 
   <button
     type="button"
     onClick={() => void handleCopy()}
-    className="w-full cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-4 py-2.5 text-left text-sm text-gray-200 transition hover:bg-gray-800"
+    className="w-full cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-left text-sm text-gray-200 transition hover:bg-gray-800"
+    title={successData.pollUrl}
   >
-    {successData.pollUrl}
+    {linkCopied ? "Copied ✓" : successData.pollUrl}
   </button>
 
-  <div className="pt-2 flex flex-col gap-3 sm:flex-row">
+  <div className="pt-2 flex flex-col gap-3 sm:flex-row sm:gap-3">
     <button
       type="button"
       onClick={resetPollFields}
-      className="cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800"
+      className="w-full cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800 sm:flex-1"
     >
       Create another poll
     </button>
 
     <Link
       href="/"
-      className="inline-flex cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800"
+      className="inline-flex w-full cursor-pointer items-center justify-center rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800 sm:flex-1"
     >
       Back to home
     </Link>
