@@ -373,7 +373,11 @@ if (searchInput.trim()) {
     });
   };
 const updateOptionImageUrl = (pollId: number, optionIndex: number, value: string) => {
-  ...
+  setOptionEdits((current) => {
+    const next = [...(current[pollId] || [])];
+    next[optionIndex] = { ...next[optionIndex], image_url: value };
+    return { ...current, [pollId]: next };
+  });
 };
 
 const createPoll = async () => {
