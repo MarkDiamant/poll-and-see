@@ -1,51 +1,47 @@
-import Link from "next/link";
 import Footer from "@/components/Footer";
+import SiteHeader from "@/components/SiteHeader";
 
 export default function TermsPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
-      <header className="mx-auto max-w-6xl px-4 pb-4 pt-5 md:px-6">
-        <div className="flex items-center justify-between gap-4">
-          <Link href="/" className="shrink-0" aria-label="Go to homepage">
-            <img
-              src="/logo.png"
-              alt="Poll & See"
-              className="block h-12 w-auto object-contain md:h-16"
-            />
-          </Link>
-
-          <div className="flex shrink-0 items-center gap-2">
-            <Link
-              href="/"
-              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm font-medium text-white transition hover:bg-gray-800 md:px-5"
-            >
-              Home
-            </Link>
-
-            <Link
-              href="/submit-poll"
-              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-3 text-sm font-medium text-white transition hover:bg-blue-500 md:px-5"
-            >
-              Create Poll
-            </Link>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       <section className="mx-auto max-w-3xl px-6 pb-10 pt-6">
         <div className="rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-lg">
           <h1 className="mb-6 text-3xl font-bold">Terms of Use</h1>
 
           <div className="space-y-4 text-gray-300">
-            <p>Polls must not be defamatory, illegal, or abusive.</p>
+            <p>By using Poll & See, you agree to the following:</p>
 
-            <p>Hate speech is not allowed.</p>
+            <div className="pt-1">
+              <p className="mb-2 text-white">Polls must not include:</p>
+              <ul className="list-disc space-y-2 pl-6">
+                <li>illegal content</li>
+                <li>abusive, harmful or threatening content</li>
+                <li>hate speech</li>
+                <li>impersonation or misleading content</li>
+              </ul>
+            </div>
 
-            <p>Impersonation is not allowed.</p>
+            <p>
+              We may review, edit or remove any poll to maintain quality, clarity and compliance
+              with these guidelines.
+            </p>
 
-            <p>Content may be reviewed, edited, moderated, or removed.</p>
+            <div className="pt-1">
+              <p className="mb-2 text-white">Polls may also be edited for:</p>
+              <ul className="list-disc space-y-2 pl-6">
+                <li>clarity</li>
+                <li>spelling</li>
+                <li>length</li>
+                <li>readability</li>
+              </ul>
+            </div>
 
-            <p>The service is provided on an as-is basis.</p>
+            <p>
+              Poll & See is provided as-is. We aim to keep the service reliable and fair, but
+              cannot guarantee uninterrupted access or availability.
+            </p>
           </div>
         </div>
       </section>

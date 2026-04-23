@@ -1,54 +1,40 @@
-import Link from "next/link";
 import Footer from "@/components/Footer";
+import SiteHeader from "@/components/SiteHeader";
 
 export default function PrivacyPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
-      <header className="mx-auto max-w-6xl px-4 pb-4 pt-5 md:px-6">
-        <div className="flex items-center justify-between gap-4">
-          <Link href="/" className="shrink-0" aria-label="Go to homepage">
-            <img
-              src="/logo.png"
-              alt="Poll & See"
-              className="block h-12 w-auto object-contain md:h-16"
-            />
-          </Link>
-
-          <div className="flex shrink-0 items-center gap-2">
-            <Link
-              href="/"
-              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm font-medium text-white transition hover:bg-gray-800 md:px-5"
-            >
-              Home
-            </Link>
-
-            <Link
-              href="/submit-poll"
-              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-3 text-sm font-medium text-white transition hover:bg-blue-500 md:px-5"
-            >
-              Create Poll
-            </Link>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       <section className="mx-auto max-w-3xl px-6 pb-10 pt-6">
         <div className="rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-lg">
           <h1 className="mb-6 text-3xl font-bold">Privacy Policy</h1>
 
           <div className="space-y-4 text-gray-300">
-            <p>
-              If you subscribe, your email address is used only to send poll notifications and
-              related updates.
-            </p>
+            <p>Poll & See is designed to be simple and privacy-friendly.</p>
 
-            <p>We do not sell personal data.</p>
+            <p>No account is required to create or vote on polls.</p>
 
             <p>Voting is designed to be anonymous.</p>
 
-            <p>Basic analytics may be used to help improve the site and understand usage.</p>
+            <p>
+              We use limited technical signals, such as IP-based checks, to help reduce duplicate
+              voting and keep results fair.
+            </p>
 
-            <p>You can unsubscribe from email updates at any time.</p>
+            <p>
+              These signals are used only to maintain the integrity of polls. They are not used to
+              identify individuals.
+            </p>
+
+            <p>
+              If you subscribe, your email address is used only to send poll updates. You can
+              unsubscribe at any time.
+            </p>
+
+            <p>We do not sell subscriber data or personal information.</p>
+
+            <p>We may use basic analytics to understand usage and improve the service.</p>
           </div>
         </div>
       </section>

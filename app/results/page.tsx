@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Footer from "@/components/Footer";
+import SiteHeader from "@/components/SiteHeader";
+import LiveVoteCounter from "@/components/LiveVoteCounter";
 
 type Poll = {
   id: number;
@@ -159,13 +161,22 @@ export default function ResultsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [showTopButton, setShowTopButton] = useState(false);
+const [totalVoteCount, setTotalVoteCount] = useState(0);
 
   useEffect(() => {
     const loadResults = async () => {
-      setLoading(true);
+  setLoading(true);
 
-      try {
-        const votedMeta: Array<{ pollId: number; selectedOptionId: number | null; votedAt: number }> = [];
+  try {
+    const { data: statsRow } = await supabase
+      .from("site_stats")
+      .select("total_votes")
+      .eq("key", "global")
+      .single();
+
+    setTotalVoteCount(statsRow?.total_votes || 0);
+
+    const votedMeta: Array<{ pollId: number; selectedOptionId: number | null; votedAt: number }> = [];
 
         for (let i = 0; i < localStorage.length; i += 1) {
           const key = localStorage.key(i) || "";
@@ -273,6 +284,27 @@ export default function ResultsPage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  useEffect(() => {
+  const channel = supabase
+    .channel("results-live-votes")
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "votes",
+      },
+      () => {
+        setTotalVoteCount((prev) => prev + 1);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, []);
+
   const filteredVotedPolls = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return votedPolls;
@@ -281,55 +313,19 @@ export default function ResultsPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
-      <header className="max-w-6xl mx-auto px-4 md:px-6 pt-5 pb-4">
-         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-          <div className="flex w-full items-center justify-between sm:w-auto sm:block">
-            <Link href="/" className="shrink-0" aria-label="Go to homepage">
-              <img
-                src="/logo.png"
-                alt="Poll & See"
-                className="h-12 md:h-16 w-auto object-contain block"
-              />
-            </Link>
-
-            <Link
-              href="/submit-poll"
-              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-3 text-sm font-medium text-white transition hover:bg-blue-500 sm:hidden"
-            >
-              Create Poll
-            </Link>
-          </div>
-
-          <div className="flex w-full items-center justify-center gap-2 shrink-0 sm:w-auto sm:justify-end">
-            <Link
-              href="/"
-              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-gray-800"
-            >
-              Home
-            </Link>
-
-            <Link
-              href="/results"
-              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-gray-800"
-            >
-              Results
-            </Link>
-
-            <Link
-              href="/submit-poll"
-              className="hidden h-11 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-blue-500 sm:inline-flex"
-            >
-              Create Poll
-            </Link>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       <section className="mx-auto max-w-4xl px-6 pt-2 pb-8">
-        <div className="mb-6 text-center">
-          <h1 className="text-4xl font-bold md:text-5xl">Your results</h1>
-           <p className="mt-2 text-lg text-gray-300">Polls you’ve voted on, with full results</p>
-        </div>
+       <div className="mb-5 text-center">
+  <h1 className="mb-2 text-4xl font-bold md:text-5xl">Poll & See</h1>
+  <p className="text-lg text-gray-300">See what people really think</p>
+  <LiveVoteCounter value={totalVoteCount} />
+</div>
+
+<div className="mb-6 text-center">
+  <h2 className="text-4xl font-bold md:text-5xl">Your results</h2>
+  <p className="mt-2 text-lg text-gray-300">Polls you’ve voted on, with full results</p>
+</div>
 
         <div className="mb-6">
           <input
