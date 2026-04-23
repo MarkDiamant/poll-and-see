@@ -146,9 +146,9 @@ const [categoryFilter, setCategoryFilter] = useState<"all" | CategoryOption>("al
 
       try {
         const url = new URL("/api/admin/polls", window.location.origin);
-        if (searchTerm) {
-          url.searchParams.set("q", searchTerm);
-        }
+if (searchInput.trim()) {
+  url.searchParams.set("q", searchInput.trim());
+}
 
         const response = await fetch(url.toString(), {
           headers: {
