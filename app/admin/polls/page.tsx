@@ -578,7 +578,7 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
  {(optionEdits[poll.id] || []).map((option, optionIndex) => (
 <div
   key={`${poll.id}-${option.id || `new-${optionIndex}`}`}
- className="grid grid-cols-[1fr_140px_auto] items-center gap-2"
+ className="grid grid-cols-[1.5fr_84px_auto] items-center gap-2"
 >
  <input
   type="text"
@@ -586,7 +586,7 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
   onChange={(event) =>
     updateOptionText(poll.id, optionIndex, event.target.value)
   }
- className="w-full min-w-0 rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
+className="w-full min-w-0 rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
   placeholder="Option text"
 />
 
@@ -596,11 +596,11 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
   onChange={(event) =>
     updateOptionImageUrl(poll.id, optionIndex, event.target.value)
   }
- className="w-[120px] rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
+ className="w-[84px] rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
   placeholder="Image URL (optional)"
 />
 
- <div className="flex items-center justify-start gap-2 self-center text-[11px] text-gray-400">
+ <div className="flex h-full items-center justify-start gap-2 self-center whitespace-nowrap text-[11px] text-gray-400">
   <span>{option.vote_count}</span>
   {(optionEdits[poll.id] || []).length > 2 ? (
     <button
@@ -610,7 +610,7 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
         next.splice(optionIndex, 1);
         setOptionEdits((current) => ({ ...current, [poll.id]: next }));
       }}
-      className="cursor-pointer text-base font-bold leading-none text-red-400 hover:text-red-300"
+      className="cursor-pointer text-sm font-bold leading-none text-red-400 hover:text-red-300 align-middle"
       aria-label="Remove option"
       title="Remove option"
     >
