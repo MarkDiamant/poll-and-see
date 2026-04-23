@@ -197,6 +197,7 @@ export default function SubmitPollPage() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "">("");
   const [successData, setSuccessData] = useState<PollCreateResponse | null>(null);
+const [linkCopied, setLinkCopied] = useState(false);
 
   const canAddOption = useMemo(() => options.length < 6, [options.length]);
   const canRemoveOption = useMemo(() => options.length > 2, [options.length]);
@@ -233,18 +234,19 @@ export default function SubmitPollPage() {
   };
 
   const resetPollFields = () => {
-    setEmail("");
-    setQuestion("");
-    setDescription("");
-    setCategory("");
-    setOptions([createEmptyOption(), createEmptyOption()]);
-    setUsesImages(false);
-    setIsPrivate(false);
-    setSubmitting(false);
-    setMessage("");
-    setMessageType("");
-    setSuccessData(null);
-  };
+  setEmail("");
+  setQuestion("");
+  setDescription("");
+  setCategory("");
+  setOptions([createEmptyOption(), createEmptyOption()]);
+  setUsesImages(false);
+  setIsPrivate(false);
+  setSubmitting(false);
+  setMessage("");
+  setMessageType("");
+  setSuccessData(null);
+  setLinkCopied(false);
+};
 
   const handleQuestionChange = (value: string) => {
     setQuestion(value);
@@ -254,14 +256,18 @@ export default function SubmitPollPage() {
   const shouldShowEmailField = false;
 
   const handleCopy = async () => {
-    if (!successData) return;
-    try {
-      await navigator.clipboard.writeText(successData.shareText);
-    } catch {
-      setMessageType("error");
-      setMessage("Could not copy link.");
-    }
-  };
+  if (!successData) return;
+  try {
+    await navigator.clipboard.writeText(successData.pollUrl);
+    setLinkCopied(true);
+    window.setTimeout(() => {
+      setLinkCopied(false);
+    }, 1600);
+  } catch {
+    setMessageType("error");
+    setMessage("Could not copy link.");
+  }
+};
 
   const handleShare = async () => {
     if (!successData) return;
@@ -458,22 +464,19 @@ setSuccessData(data as PollCreateResponse);
           {successData ? (
   <div className="space-y-5">
   <div className="space-y-2">
-    <p className="text-[2rem] font-semibold text-white">
-      Get your shareable link instantly
-    </p>
+    <h2 className="text-2xl font-semibold text-white">Your poll is live! 🎉</h2>
     <p className="text-sm text-gray-300 md:text-base">
-      Completely free. No sign-up required.
+      👉 Share it on WhatsApp or your socials to start getting votes.
     </p>
-    <h2 className="pt-1 text-2xl font-semibold text-white">Your poll is live</h2>
   </div>
 
-  <div className="flex flex-col gap-3 sm:flex-row">
+  <div className="flex flex-col gap-3 sm:flex-row sm:gap-5">
     <button
       type="button"
       onClick={() => void handleCopy()}
       className="cursor-pointer rounded-xl bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-500"
     >
-      Copy link
+      {linkCopied ? "Copied ✓" : "Copy link"}
     </button>
 
     <button
@@ -485,24 +488,30 @@ setSuccessData(data as PollCreateResponse);
     </button>
   </div>
 
-  <div className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 break-all text-sm text-gray-200">
-    {successData.pollUrl}
-  </div>
-
   <button
     type="button"
-    onClick={resetPollFields}
-    className="cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800"
+    onClick={() => void handleCopy()}
+    className="w-full cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-4 py-2.5 text-left text-sm text-gray-200 transition hover:bg-gray-800"
   >
-    Create another poll
+    {successData.pollUrl}
   </button>
 
-  <Link
-    href="/"
-    className="inline-flex cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800"
-  >
-    Back to home
-  </Link>
+  <div className="pt-2 flex flex-col gap-3 sm:flex-row">
+    <button
+      type="button"
+      onClick={resetPollFields}
+      className="cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800"
+    >
+      Create another poll
+    </button>
+
+    <Link
+      href="/"
+      className="inline-flex cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800"
+    >
+      Back to home
+    </Link>
+  </div>
 </div>
                     ) : (
             <>
