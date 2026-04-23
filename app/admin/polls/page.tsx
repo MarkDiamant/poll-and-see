@@ -128,7 +128,7 @@ const [categoryFilter, setCategoryFilter] = useState<"all" | CategoryOption>("al
   const [savingKey, setSavingKey] = useState("");
   const [error, setError] = useState("");
   const [copiedKey, setCopiedKey] = useState("");
-const [showTopButton, setShowTopButton] = useState(false);const [copiedKey, setCopiedKey] = useState("");
+const [showTopButton, setShowTopButton] = useState(false);
 
   useEffect(() => {
   const saved = sessionStorage.getItem(ADMIN_KEY_STORAGE) || "";
