@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Could not create poll." }, { status: 500 });
     }
 
-    const optionRows = options.map((optionText, index) => ({
+    const optionRows = options.map((optionText: string, index: number) => ({
       poll_id: insertedPoll.id,
       option_text: optionText,
       vote_count: 0,
