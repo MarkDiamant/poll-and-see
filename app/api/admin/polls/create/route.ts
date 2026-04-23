@@ -252,25 +252,27 @@ export async function POST(request: NextRequest) {
     const baseUrl = getBaseUrl(request);
     const pollUrl = `${baseUrl}/poll/${slug}`;
 
-    const { data: insertedPoll, error: pollInsertError } = await supabaseAdmin
-      .from("polls")
-      .insert({
-        question,
-        description,
-        category,
-        slug,
-        featured: false,
-        is_private: isPrivate,
-        is_publicly_listed: false,
-        total_votes: 0,
-        full_url: pollUrl,
-      })
-      .select("id, slug")
-      .single();
+const { data: insertedPoll, error: pollInsertError } = await supabaseAdmin
+  .from("polls")
+  .insert({
+    question,
+    description,
+    category,
+    slug,
+    featured: false,
+    is_private: isPrivate,
+    is_publicly_listed: false,
+    total_votes: 0,
+  })
+  .select("id, slug")
+  .single();
 
-    if (pollInsertError || !insertedPoll) {
-      return NextResponse.json({ error: "Could not create poll." }, { status: 500 });
-    }
+   if (pollInsertError || !insertedPoll) {
+  return NextResponse.json(
+    { error: pollInsertError?.message || "Could not create poll." },
+    { status: 500 }
+  );
+}
 
     const optionRows = options.map((optionText, index) => ({
       poll_id: insertedPoll.id,
