@@ -441,7 +441,7 @@ const sortedPolls = useMemo(() => {
       className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-black"
     >
       <span>Live Polls</span>
-      {polls.length > 0 ? badge(polls.length, true) : null}
+    {sortedPolls.length > 0 ? badge(sortedPolls.length, true) : null}
     </Link>
     <Link
       href="/admin/submissions"
@@ -500,7 +500,7 @@ const sortedPolls = useMemo(() => {
         ) : null}
 
         <div className="overflow-x-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg">
-  <table className="min-w-[1320px] text-sm">
+  <table className="min-w-[1180px] text-sm">
             <thead className="sticky top-0 z-10 bg-gray-900/95 text-left text-gray-300">
               <tr>
                 <th className="px-4 py-3 font-medium">Poll</th>
@@ -540,7 +540,7 @@ const sortedPolls = useMemo(() => {
                       }`}
                     >
                       <td className="px-4 py-4">
-                        <div className="min-w-[320px] max-w-[420px] space-y-2">
+                      <div className="min-w-[380px] max-w-[460px] space-y-2">
                           <input
                             type="text"
                             value={questionEdits[poll.id] ?? ""}
@@ -574,37 +574,48 @@ const sortedPolls = useMemo(() => {
                       </td>
 
                       <td className="px-4 py-4">
-                        <div className="min-w-[340px] max-w-[420px] space-y-2">
-                          {(optionEdits[poll.id] || []).map((option, optionIndex) => (
-                            <div
-                              key={`${poll.id}-${option.id || `new-${optionIndex}`}`}
-                              className="grid grid-cols-[1fr_1fr_auto] gap-2 rounded-lg border border-gray-700 bg-gray-900 p-2"
-                            >
-                              <input
-                                type="text"
-                                value={option.option_text}
-                                onChange={(event) =>
-                                  updateOptionText(poll.id, optionIndex, event.target.value)
-                                }
-                                className="rounded-lg border border-gray-700 bg-black/20 px-3 py-2 text-xs text-white outline-none transition focus:border-gray-500"
-                                placeholder="Option text"
-                              />
+                      <div className="min-w-[220px] max-w-[280px] space-y-2">
+ {(optionEdits[poll.id] || []).map((option, optionIndex) => (
+  <div
+    key={`${poll.id}-${option.id || `new-${optionIndex}`}`}
+    className="grid grid-cols-[1fr_1fr_auto] gap-2 rounded-lg border border-gray-700 bg-gray-900 p-2"
+  >
+    <input
+      type="text"
+      value={option.option_text}
+      onChange={(event) =>
+        updateOptionText(poll.id, optionIndex, event.target.value)
+      }
+      className="rounded-lg border border-gray-700 bg-black/20 px-3 py-2 text-xs text-white outline-none transition focus:border-gray-500"
+      placeholder="Option text"
+    />
 
-                              <input
-                                type="text"
-                                value={option.image_url || ""}
-                                onChange={(event) =>
-                                  updateOptionImageUrl(poll.id, optionIndex, event.target.value)
-                                }
-                                className="rounded-lg border border-gray-700 bg-black/20 px-3 py-2 text-xs text-white outline-none transition focus:border-gray-500"
-                                placeholder="Image URL (optional)"
-                              />
+    <input
+      type="text"
+      value={option.image_url || ""}
+      onChange={(event) =>
+        updateOptionImageUrl(poll.id, optionIndex, event.target.value)
+      }
+      className="rounded-lg border border-gray-700 bg-black/20 px-3 py-2 text-xs text-white outline-none transition focus:border-gray-500"
+      placeholder="Image URL (optional)"
+    />
 
-                              <div className="flex items-center justify-end text-[11px] text-gray-400">
-                                {option.vote_count} votes
-                              </div>
-                            </div>
-                          ))}
+    <div className="flex flex-col items-end justify-center gap-1 text-[11px] text-gray-400">
+      <span>{option.vote_count} votes</span>
+      <button
+        type="button"
+        onClick={() => {
+          const next = [...(optionEdits[poll.id] || [])];
+          next.splice(optionIndex, 1);
+          setOptionEdits((current) => ({ ...current, [poll.id]: next }));
+        }}
+        className="text-[10px] text-red-400 hover:text-red-300"
+      >
+        Remove
+      </button>
+    </div>
+  </div>
+))}
 
                           <button
                             type="button"
@@ -617,7 +628,7 @@ const sortedPolls = useMemo(() => {
                       </td>
 
                       <td className="px-4 py-4">
-              <div className="min-w-[190px] space-y-2 text-xs text-gray-300">
+            <div className="min-w-[150px] grid grid-cols-2 gap-2 text-xs text-gray-300">
                           <div className="space-y-1">
                             <span className="text-gray-400">Category</span>
                             <select
@@ -699,7 +710,7 @@ const sortedPolls = useMemo(() => {
                       </td>
 
                       <td className="px-4 py-4">
-                       <div className="flex min-w-[115px] flex-col gap-1.5">
+                   <div className="flex min-w-[90px] flex-col gap-1.5">
                           <button
                             type="button"
                             onClick={() =>

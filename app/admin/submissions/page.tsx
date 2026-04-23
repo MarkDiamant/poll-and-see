@@ -419,7 +419,7 @@ const sortedSubmissions = useMemo(() => {
         ) : null}
 
 <div className="overflow-x-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg">
- <table className="min-w-[1180px] text-sm">
+<table className="min-w-[980px] text-sm">
             <thead className="sticky top-0 z-10 bg-gray-900/95 text-left text-gray-300">
               <tr>
                 <th className="px-4 py-3 font-medium">Poll</th>
@@ -455,7 +455,7 @@ const sortedSubmissions = useMemo(() => {
                     }`}
                   >
                     <td className="px-4 py-4">
-                      <div className="min-w-[220px] max-w-[260px] space-y-2">
+                  <div className="min-w-[360px] max-w-[440px] space-y-2">
                         <input
                           type="text"
                           value={questionEdits[submission.id] ?? ""}
@@ -492,7 +492,7 @@ const sortedSubmissions = useMemo(() => {
                     </td>
 
                     <td className="px-4 py-4">
-                      <div className="min-w-[320px] max-w-[360px] space-y-2">
+<div className="min-w-[140px] max-w-[180px] space-y-2">
                         <div>
                           <p className="mb-1 text-xs text-gray-400">Options (one per line)</p>
                           <textarea
@@ -518,7 +518,7 @@ const sortedSubmissions = useMemo(() => {
                                 [submission.id]: event.target.value,
                               }))
                             }
-                            rows={3}
+                            rows={1}
                             className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none transition focus:border-gray-500"
                           />
                         </div>
@@ -526,94 +526,105 @@ const sortedSubmissions = useMemo(() => {
                     </td>
 
                     <td className="px-4 py-4">
-                    <div className="min-w-[180px] space-y-2 text-xs text-gray-300">
-                        <div className="space-y-1">
-                          <span className="text-gray-400">Category</span>
-                          <select
-                            value={categoryEdits[submission.id] || "General"}
-                            onChange={(event) =>
-                              setCategoryEdits((current) => ({
-                                ...current,
-                                [submission.id]: event.target.value as CategoryOption,
-                              }))
-                            }
-                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none"
-                          >
-                            {CATEGORY_OPTIONS.map((category) => (
-                              <option key={category} value={category}>
-                                {category}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
+                  <div className="min-w-[150px] grid grid-cols-2 gap-2 text-xs text-gray-300">
+                     <div className="space-y-1">
+  <span className="text-gray-400">Category</span>
+  <select
+    value={categoryEdits[submission.id] || "General"}
+    onChange={(event) =>
+      setCategoryEdits((current) => ({
+        ...current,
+        [submission.id]: event.target.value as CategoryOption,
+      }))
+    }
+    className="w-full rounded-lg border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-white outline-none"
+  >
+    {CATEGORY_OPTIONS.map((category) => (
+      <option key={category} value={category}>
+        {category}
+      </option>
+    ))}
+  </select>
+</div>
 
-                        <div className="space-y-1">
-                          <span className="text-gray-400">Privacy</span>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setPrivacyEdits((current) => ({
-                                ...current,
-                                [submission.id]: !current[submission.id],
-                              }))
-                            }
-                            className={`w-full rounded-lg px-3 py-2 text-left text-xs font-medium transition ${
-                              privacyEdits[submission.id]
-                                ? "bg-white text-black hover:bg-gray-200"
-                                : "border border-gray-700 bg-gray-900 text-white hover:bg-gray-800"
-                            }`}
-                          >
-                            {privacyEdits[submission.id] ? "Private" : "Public"}
-                          </button>
-                        </div>
+                       <div className="space-y-1">
+  <span className="text-gray-400">Privacy</span>
+  <button
+    type="button"
+    onClick={() =>
+      setPrivacyEdits((current) => ({
+        ...current,
+        [submission.id]: !current[submission.id],
+      }))
+    }
+    className={`w-full rounded-lg px-2 py-2 text-left text-xs font-medium transition ${
+      privacyEdits[submission.id]
+        ? "bg-white text-black hover:bg-gray-200"
+        : "border border-gray-700 bg-gray-900 text-white hover:bg-gray-800"
+    }`}
+  >
+    {privacyEdits[submission.id] ? "Private" : "Public"}
+  </button>
+</div>
 
-                        <div className="space-y-1">
-                          <span className="text-gray-400">Email</span>
-                          <input
-                            type="text"
-                            value={emailEdits[submission.id] ?? ""}
-                            onChange={(event) =>
-                              setEmailEdits((current) => ({
-                                ...current,
-                                [submission.id]: event.target.value,
-                              }))
-                            }
-                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none transition focus:border-gray-500"
-                            placeholder="No email"
-                          />
-                        </div>
+<div className="col-span-2 space-y-1">
+  <span className="text-gray-400">Email</span>
+  <input
+    type="text"
+    value={emailEdits[submission.id] ?? ""}
+    onChange={(event) =>
+      setEmailEdits((current) => ({
+        ...current,
+        [submission.id]: event.target.value,
+      }))
+    }
+    className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none transition focus:border-gray-500"
+    placeholder="No email"
+  />
+</div>
                       </div>
                     </td>
 
                     <td className="px-4 py-4">
-<div className="flex min-w-[95px] flex-col gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => void saveSubmission(submission.id)}
-                          disabled={savingKey === `save:${submission.id}`}
-                          className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-left text-xs font-medium text-white transition hover:bg-gray-800 disabled:opacity-40"
-                        >
-                          Save row
-                        </button>
+<div className="flex min-w-[82px] flex-col gap-1.5">
+  <button
+    type="button"
+    onClick={() => void saveSubmission(submission.id)}
+    disabled={savingKey === `save:${submission.id}`}
+    className="rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800 disabled:opacity-40"
+  >
+    Save row
+  </button>
 
-                        <button
-                          type="button"
-                          onClick={() => void approveSubmission(submission.id)}
-                          disabled={savingKey === `approve:${submission.id}`}
-                          className="rounded-lg bg-white px-3 py-2 text-left text-xs font-medium text-black transition hover:bg-gray-200 disabled:opacity-40"
-                        >
-                          Approve
-                        </button>
+  <a
+    href={submission.slug ? `/poll/${submission.slug}` : "#"}
+    target="_blank"
+    rel="noreferrer"
+    className={`rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-left text-xs font-medium text-white transition ${
+      !submission.slug ? "pointer-events-none opacity-40" : "hover:bg-gray-800"
+    }`}
+  >
+    Open poll
+  </a>
 
-                        <button
-                          type="button"
-                          onClick={() => void deleteSubmission(submission.id)}
-                          disabled={savingKey === `delete:${submission.id}`}
-                          className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-left text-xs font-medium text-white transition hover:bg-gray-800 disabled:opacity-60"
-                        >
-                          Delete
-                        </button>
-                      </div>
+  <button
+    type="button"
+    onClick={() => void approveSubmission(submission.id)}
+    disabled={savingKey === `approve:${submission.id}`}
+    className="rounded-lg bg-white px-2 py-1.5 text-left text-xs font-medium text-black transition hover:bg-gray-200 disabled:opacity-40"
+  >
+    Approve
+  </button>
+
+  <button
+    type="button"
+    onClick={() => void deleteSubmission(submission.id)}
+    disabled={savingKey === `delete:${submission.id}`}
+    className="rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800 disabled:opacity-60"
+  >
+    Delete
+  </button>
+</div>
                     </td>
                   </tr>
                 ))}
