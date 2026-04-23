@@ -82,7 +82,7 @@ const [newQuestion, setNewQuestion] = useState("");
 const [newDescription, setNewDescription] = useState("");
 const [newCategory, setNewCategory] = useState<CategoryOption>("General");
 const [newIsPrivate, setNewIsPrivate] = useState(false);
-const [newOptions, setNewOptions] = useState("Option 1\nOption 2");
+const [newOptions, setNewOptions] = useState("");
 const [newImageUrls, setNewImageUrls] = useState("");
 const [creatingSubmission, setCreatingSubmission] = useState(false);
 
@@ -525,7 +525,7 @@ const sortedSubmissions = useMemo(() => {
                   <select
                     value={newCategory}
                     onChange={(event) => setNewCategory(event.target.value as CategoryOption)}
-                    className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none"
+                   className="h-10 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none"
                   >
                     {CATEGORY_OPTIONS.map((category) => (
                       <option key={category} value={category}>
@@ -540,7 +540,7 @@ const sortedSubmissions = useMemo(() => {
                   <button
                     type="button"
                     onClick={() => setNewIsPrivate((current) => !current)}
-                    className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
+                className={`h-10 w-full rounded-lg px-3 py-2 text-left text-sm transition ${
                       newIsPrivate
                         ? "bg-white text-black hover:bg-gray-200"
                         : "border border-gray-700 bg-gray-900 text-white hover:bg-gray-800"
@@ -553,39 +553,40 @@ const sortedSubmissions = useMemo(() => {
             </div>
 
             <div className="grid gap-3 md:grid-cols-[1.4fr_0.9fr]">
-              <div>
-                <p className="mb-1 text-xs text-gray-400">Options (one per line)</p>
-                <textarea
-                  value={newOptions}
-                  onChange={(event) => setNewOptions(event.target.value)}
-                  rows={6}
-                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
-                />
-              </div>
+  <div>
+    <p className="mb-1 text-xs text-gray-400">Options (one per line)</p>
+    <textarea
+      value={newOptions}
+      onChange={(event) => setNewOptions(event.target.value)}
+      rows={6}
+      className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
+    />
+  </div>
 
-              <div>
-                <p className="mb-1 text-xs text-gray-400">Image URLs (optional)</p>
-                <textarea
-                  value={newImageUrls}
-                  onChange={(event) => setNewImageUrls(event.target.value)}
-                  rows={6}
-                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
-                />
-              </div>
+  <div className="space-y-3">
+    <div>
+      <p className="mb-1 text-xs text-gray-400">Image URLs (optional)</p>
+      <textarea
+        value={newImageUrls}
+        onChange={(event) => setNewImageUrls(event.target.value)}
+        rows={6}
+        className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
+      />
+    </div>
+
+    <button
+      type="button"
+      onClick={() => void createSubmission()}
+      disabled={creatingSubmission}
+      className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-40"
+    >
+      {creatingSubmission ? "Creating..." : "Create submission"}
+    </button>
+  </div>
+</div>
+          </div>
+
             </div>
-          </div>
-
-          <div className="mt-3">
-            <button
-              type="button"
-              onClick={() => void createSubmission()}
-              disabled={creatingSubmission}
-              className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-40"
-            >
-              {creatingSubmission ? "Creating..." : "Create submission"}
-            </button>
-          </div>
-        </div>
         {error ? (
           <div className="mb-4 rounded-xl border border-red-500/40 bg-red-950/50 px-4 py-3 text-sm text-red-200">
             {error}
