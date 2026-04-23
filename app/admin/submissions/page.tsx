@@ -367,7 +367,7 @@ const sortedSubmissions = useMemo(() => {
       className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-black"
     >
       <span>Submissions</span>
-      {sortedSubmissions.length > 0 ? badge(sortedSubmissions.length, true) : null}
+     {badge(sortedSubmissions.length, true)}
     </Link>
   </nav>
 
@@ -419,7 +419,7 @@ const sortedSubmissions = useMemo(() => {
         ) : null}
 
 <div className="overflow-x-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg">
-<table className="min-w-[980px] text-sm">
+<table className="min-w-[1040px] text-sm">
             <thead className="sticky top-0 z-10 bg-gray-900/95 text-left text-gray-300">
               <tr>
                 <th className="px-4 py-3 font-medium">Poll</th>
@@ -455,7 +455,7 @@ const sortedSubmissions = useMemo(() => {
                     }`}
                   >
                     <td className="px-4 py-4">
-                  <div className="min-w-[360px] max-w-[440px] space-y-2">
+                  <div className="min-w-[340px] max-w-[420px] space-y-2">
                         <input
                           type="text"
                           value={questionEdits[submission.id] ?? ""}
@@ -492,7 +492,7 @@ const sortedSubmissions = useMemo(() => {
                     </td>
 
                     <td className="px-4 py-4">
-<div className="min-w-[140px] max-w-[180px] space-y-2">
+<div className="min-w-[180px] max-w-[220px] space-y-2">
                         <div>
                           <p className="mb-1 text-xs text-gray-400">Options (one per line)</p>
                           <textarea
@@ -526,7 +526,7 @@ const sortedSubmissions = useMemo(() => {
                     </td>
 
                     <td className="px-4 py-4">
-                  <div className="min-w-[150px] grid grid-cols-2 gap-2 text-xs text-gray-300">
+                  <div className="min-w-[180px] grid grid-cols-2 gap-2 text-xs text-gray-300">
                      <div className="space-y-1">
   <span className="text-gray-400">Category</span>
   <select
@@ -586,7 +586,7 @@ const sortedSubmissions = useMemo(() => {
                     </td>
 
                     <td className="px-4 py-4">
-<div className="flex min-w-[82px] flex-col gap-1.5">
+<div className="flex min-w-[96px] flex-col gap-1.5">
   <button
     type="button"
     onClick={() => void saveSubmission(submission.id)}
@@ -600,9 +600,9 @@ const sortedSubmissions = useMemo(() => {
     href={submission.slug ? `/poll/${submission.slug}` : "#"}
     target="_blank"
     rel="noreferrer"
-    className={`rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-left text-xs font-medium text-white transition ${
-      !submission.slug ? "pointer-events-none opacity-40" : "hover:bg-gray-800"
-    }`}
+  className={`rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800 ${
+  !submission.slug ? "pointer-events-none opacity-40" : ""
+}`}
   >
     Open poll
   </a>
