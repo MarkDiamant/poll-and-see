@@ -48,22 +48,16 @@ function createSlugFromQuestion(question: string) {
     .slice(0, 80);
 }
 
-function isValidSlug(slug: string) {
-  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug);
-}
-
-function getSlugError(slug: string, allPollSlugs: string[]) {
-  const trimmed = slug.trim();
-
-  if (!trimmed) return "Slug cannot be empty.";
-  if (!isValidSlug(trimmed)) {
-    return "Use lowercase letters, numbers and hyphens only.";
-  }
-  if (allPollSlugs.includes(trimmed)) {
-    return "Slug already in use.";
-  }
-
-  return "";
+function badge(count: number, isActive: boolean) {
+  return (
+    <span
+      className={`inline-flex min-w-[22px] items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold ${
+        isActive ? "bg-black/10 text-black" : "bg-white/10 text-white"
+      }`}
+    >
+      {count}
+    </span>
+  );
 }
 
 export default function AdminSubmissionsPage() {
@@ -72,11 +66,11 @@ export default function AdminSubmissionsPage() {
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [submissions, setSubmissions] = useState<PollSubmissionRow[]>([]);
-  const [allPollSlugs, setAllPollSlugs] = useState<string[]>([]);
   const [questionEdits, setQuestionEdits] = useState<Record<number, string>>({});
   const [descriptionEdits, setDescriptionEdits] = useState<Record<number, string>>({});
-  const [slugEdits, setSlugEdits] = useState<Record<number, string>>({});
-  const [statusEdits, setStatusEdits] = useState<Record<number, "pending" | "ready">>({});
+  const [optionsEdits, setOptionsEdits] = useState<Record<number, string>>({});
+  const [imageUrlEdits, setImageUrlEdits] = useState<Record<number, string>>({});
+  const [emailEdits, setEmailEdits] = useState<Record<number, string>>({});
   const [categoryEdits, setCategoryEdits] = useState<Record<number, CategoryOption>>({});
   const [privacyEdits, setPrivacyEdits] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState(false);
@@ -84,7 +78,7 @@ export default function AdminSubmissionsPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const saved = sessionStorage.getItem("pollandsee-admin-key") || "";
+    const saved = sessionStorage.getItem(ADMIN_KEY_STORAGE) || "";
     if (saved) {
       setAdminKey(saved);
       setAdminKeyInput(saved);
@@ -126,28 +120,25 @@ export default function AdminSubmissionsPage() {
 
         const nextSubmissions = data.submissions || [];
         setSubmissions(nextSubmissions);
-        setAllPollSlugs(data.allPollSlugs || []);
 
         setQuestionEdits(
           Object.fromEntries(nextSubmissions.map((row: PollSubmissionRow) => [row.id, row.question]))
         );
         setDescriptionEdits(
+          Object.fromEntries(nextSubmissions.map((row: PollSubmissionRow) => [row.id, row.description || ""]))
+        );
+        setOptionsEdits(
           Object.fromEntries(
-            nextSubmissions.map((row: PollSubmissionRow) => [row.id, row.description || ""])
+            nextSubmissions.map((row: PollSubmissionRow) => [row.id, (row.options || []).join("\n")])
           )
         );
-        setSlugEdits(
+        setImageUrlEdits(
           Object.fromEntries(
-            nextSubmissions.map((row: PollSubmissionRow) => [
-              row.id,
-              row.slug || createSlugFromQuestion(row.question),
-            ])
+            nextSubmissions.map((row: PollSubmissionRow) => [row.id, (row.option_image_urls || []).join("\n")])
           )
         );
-        setStatusEdits(
-          Object.fromEntries(
-            nextSubmissions.map((row: PollSubmissionRow) => [row.id, row.status || "pending"])
-          )
+        setEmailEdits(
+          Object.fromEntries(nextSubmissions.map((row: PollSubmissionRow) => [row.id, row.email || ""]))
         );
         setCategoryEdits(
           Object.fromEntries(
@@ -188,8 +179,9 @@ export default function AdminSubmissionsPage() {
     setSubmissions([]);
     setQuestionEdits({});
     setDescriptionEdits({});
-    setSlugEdits({});
-    setStatusEdits({});
+    setOptionsEdits({});
+    setImageUrlEdits({});
+    setEmailEdits({});
     setCategoryEdits({});
     setPrivacyEdits({});
     setError("");
@@ -209,10 +201,16 @@ export default function AdminSubmissionsPage() {
         body: JSON.stringify({
           question: (questionEdits[submissionId] || "").trim(),
           description: (descriptionEdits[submissionId] || "").trim(),
-          slug: (slugEdits[submissionId] || "").trim(),
-          status: statusEdits[submissionId] || "pending",
           category: categoryEdits[submissionId] || "General",
           is_private: Boolean(privacyEdits[submissionId]),
+          email: (emailEdits[submissionId] || "").trim(),
+          options: (optionsEdits[submissionId] || "")
+            .split("\n")
+            .map((item) => item.trim())
+            .filter(Boolean),
+          option_image_urls: (imageUrlEdits[submissionId] || "")
+            .split("\n")
+            .map((item) => item.trim()),
         }),
       });
 
@@ -227,10 +225,6 @@ export default function AdminSubmissionsPage() {
           submission.id === submissionId ? { ...submission, ...data.submission } : submission
         )
       );
-      setSlugEdits((current) => ({
-        ...current,
-        [submissionId]: data.submission.slug || current[submissionId] || "",
-      }));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save submission.");
     } finally {
@@ -239,7 +233,7 @@ export default function AdminSubmissionsPage() {
   };
 
   const approveSubmission = async (submissionId: number) => {
-    setSavingKey(`publish:${submissionId}`);
+    setSavingKey(`approve:${submissionId}`);
     setError("");
 
     try {
@@ -249,23 +243,18 @@ export default function AdminSubmissionsPage() {
           "Content-Type": "application/json",
           "x-admin-key": adminKey,
         },
-        body: JSON.stringify({
-          slug: (slugEdits[submissionId] || "").trim(),
-        }),
+        body: JSON.stringify({}),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Could not publish submission.");
+        throw new Error(data.error || "Could not approve submission.");
       }
 
       setSubmissions((current) => current.filter((submission) => submission.id !== submissionId));
-      setAllPollSlugs((current) =>
-        data.poll?.slug ? [...current, data.poll.slug].sort() : current
-      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not publish submission.");
+      setError(err instanceof Error ? err.message : "Could not approve submission.");
     } finally {
       setSavingKey("");
     }
@@ -309,8 +298,18 @@ export default function AdminSubmissionsPage() {
     return (
       <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 px-6 py-10 text-white">
         <section className="mx-auto max-w-xl rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-lg">
-          <h1 className="mb-2 text-2xl font-semibold">Submission Admin</h1>
-          <p className="mb-5 text-sm text-gray-300">Enter your admin key to manage submissions.</p>
+          <div className="mb-5 flex items-center gap-3">
+            <Link href="/" aria-label="Go to homepage">
+              <img
+                src="/logo.png"
+                alt="Poll & See"
+                className="block h-12 w-auto object-contain"
+              />
+            </Link>
+          </div>
+
+          <h1 className="mb-2 text-2xl font-semibold">Admin</h1>
+          <p className="mb-5 text-sm text-gray-300">Enter your admin key to manage polls and submissions.</p>
 
           <div className="space-y-3">
             <input
@@ -338,13 +337,21 @@ export default function AdminSubmissionsPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 px-6 py-8 text-white">
-      <section className="mx-auto max-w-7xl">
-        <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-3xl font-semibold">Admin Submissions</h1>
-            <p className="mt-1 text-sm text-gray-300">
-              Review, prepare and manually publish poll submissions.
-            </p>
+      <section className="mx-auto max-w-[1500px]">
+        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/" aria-label="Go to homepage">
+              <img
+                src="/logo.png"
+                alt="Poll & See"
+                className="block h-12 w-auto object-contain"
+              />
+            </Link>
+
+            <div>
+              <h1 className="text-3xl font-semibold">Admin</h1>
+              <p className="mt-1 text-sm text-gray-300">Review submissions and manage live polls.</p>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -353,13 +360,14 @@ export default function AdminSubmissionsPage() {
                 href="/admin/polls"
                 className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
               >
-                Polls
+                Live Polls
               </Link>
               <Link
                 href="/admin/submissions"
-                className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-black"
+                className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-black"
               >
-                Submissions
+                <span>Submissions</span>
+                {sortedSubmissions.length > 0 ? badge(sortedSubmissions.length, true) : null}
               </Link>
             </nav>
 
@@ -388,13 +396,12 @@ export default function AdminSubmissionsPage() {
         ) : null}
 
         <div className="overflow-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg max-h-[78vh]">
-          <table className="min-w-[1280px] text-sm">
+          <table className="min-w-[1380px] text-sm">
             <thead className="sticky top-0 z-10 bg-gray-900/95 text-left text-gray-300">
               <tr>
-                <th className="px-4 py-3 font-medium">Question / Description</th>
-                <th className="px-4 py-3 font-medium">Slug</th>
-                <th className="px-4 py-3 font-medium">Category / Privacy / Status</th>
-                <th className="px-4 py-3 font-medium">Options</th>
+                <th className="px-4 py-3 font-medium">Poll</th>
+                <th className="px-4 py-3 font-medium">Options / Images</th>
+                <th className="px-4 py-3 font-medium">Settings</th>
                 <th className="px-4 py-3 font-medium">Actions</th>
               </tr>
             </thead>
@@ -402,7 +409,7 @@ export default function AdminSubmissionsPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-gray-300">
+                  <td colSpan={4} className="px-4 py-6 text-center text-gray-300">
                     Loading submissions...
                   </td>
                 </tr>
@@ -410,194 +417,183 @@ export default function AdminSubmissionsPage() {
 
               {!loading && sortedSubmissions.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-gray-300">
+                  <td colSpan={4} className="px-4 py-6 text-center text-gray-300">
                     No submissions waiting.
                   </td>
                 </tr>
               ) : null}
 
               {!loading &&
-                sortedSubmissions.map((submission, index) => {
-                  const slugError = getSlugError(slugEdits[submission.id] || "", allPollSlugs);
+                sortedSubmissions.map((submission, index) => (
+                  <tr
+                    key={submission.id}
+                    className={`border-t border-gray-700 align-top ${
+                      index % 2 === 0 ? "bg-gray-800" : "bg-gray-900/35"
+                    }`}
+                  >
+                    <td className="px-4 py-4">
+                      <div className="min-w-[320px] max-w-[420px] space-y-2">
+                        <input
+                          type="text"
+                          value={questionEdits[submission.id] ?? ""}
+                          onChange={(event) =>
+                            setQuestionEdits((current) => ({
+                              ...current,
+                              [submission.id]: event.target.value,
+                            }))
+                          }
+                          className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                        />
+                        <textarea
+                          value={descriptionEdits[submission.id] ?? ""}
+                          onChange={(event) =>
+                            setDescriptionEdits((current) => ({
+                              ...current,
+                              [submission.id]: event.target.value,
+                            }))
+                          }
+                          rows={3}
+                          className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                        />
 
-                  return (
-                    <tr
-                      key={submission.id}
-                      className={`border-t border-gray-700 align-top ${
-                        index % 2 === 0 ? "bg-gray-800" : "bg-gray-900/35"
-                      }`}
-                    >
-                      <td className="px-4 py-4">
-                        <div className="min-w-[300px] max-w-[340px] space-y-2">
-                          <input
-                            type="text"
-                            value={questionEdits[submission.id] ?? ""}
-                            onChange={(event) =>
-                              setQuestionEdits((current) => ({
-                                ...current,
-                                [submission.id]: event.target.value,
-                              }))
-                            }
-                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
-                          />
+                        <p className="text-xs text-gray-400">
+                          Submission ID {submission.id}
+                          {submission.created_at
+                            ? ` • ${new Date(submission.created_at).toLocaleString()}`
+                            : ""}
+                          {submission.slug
+                            ? ` • /poll/${submission.slug}`
+                            : ` • ${createSlugFromQuestion(submission.question)}`}
+                        </p>
+                      </div>
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <div className="min-w-[320px] max-w-[360px] space-y-2">
+                        <div>
+                          <p className="mb-1 text-xs text-gray-400">Options (one per line)</p>
                           <textarea
-                            value={descriptionEdits[submission.id] ?? ""}
+                            value={optionsEdits[submission.id] ?? ""}
                             onChange={(event) =>
-                              setDescriptionEdits((current) => ({
+                              setOptionsEdits((current) => ({
                                 ...current,
                                 [submission.id]: event.target.value,
                               }))
                             }
-                            rows={3}
-                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                            rows={6}
+                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none transition focus:border-gray-500"
                           />
-                          <p className="text-xs text-gray-400">
-                            Submission ID {submission.id}
-                            {submission.created_at
-                              ? ` • ${new Date(submission.created_at).toLocaleString()}`
-                              : ""}
-                          </p>
                         </div>
-                      </td>
 
-                      <td className="px-4 py-4">
-                        <div className="min-w-[220px] max-w-[240px] space-y-2">
+                        <div>
+                          <p className="mb-1 text-xs text-gray-400">Image URLs (one per line, optional)</p>
+                          <textarea
+                            value={imageUrlEdits[submission.id] ?? ""}
+                            onChange={(event) =>
+                              setImageUrlEdits((current) => ({
+                                ...current,
+                                [submission.id]: event.target.value,
+                              }))
+                            }
+                            rows={6}
+                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none transition focus:border-gray-500"
+                          />
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <div className="min-w-[240px] space-y-3 text-xs text-gray-300">
+                        <div className="space-y-1">
+                          <span className="text-gray-400">Category</span>
+                          <select
+                            value={categoryEdits[submission.id] || "General"}
+                            onChange={(event) =>
+                              setCategoryEdits((current) => ({
+                                ...current,
+                                [submission.id]: event.target.value as CategoryOption,
+                              }))
+                            }
+                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none"
+                          >
+                            {CATEGORY_OPTIONS.map((category) => (
+                              <option key={category} value={category}>
+                                {category}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="space-y-1">
+                          <span className="text-gray-400">Privacy</span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPrivacyEdits((current) => ({
+                                ...current,
+                                [submission.id]: !current[submission.id],
+                              }))
+                            }
+                            className={`w-full rounded-lg px-3 py-2 text-left text-xs font-medium transition ${
+                              privacyEdits[submission.id]
+                                ? "bg-white text-black hover:bg-gray-200"
+                                : "border border-gray-700 bg-gray-900 text-white hover:bg-gray-800"
+                            }`}
+                          >
+                            {privacyEdits[submission.id] ? "Private" : "Public"}
+                          </button>
+                        </div>
+
+                        <div className="space-y-1">
+                          <span className="text-gray-400">Email</span>
                           <input
                             type="text"
-                            value={slugEdits[submission.id] ?? ""}
+                            value={emailEdits[submission.id] ?? ""}
                             onChange={(event) =>
-                              setSlugEdits((current) => ({
+                              setEmailEdits((current) => ({
                                 ...current,
                                 [submission.id]: event.target.value,
                               }))
                             }
-                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none transition focus:border-gray-500"
+                            placeholder="No email"
                           />
-                          {slugError ? (
-                            <p className="text-xs text-amber-300">{slugError}</p>
-                          ) : (
-                            <p className="text-xs text-green-300">Slug available.</p>
-                          )}
                         </div>
-                      </td>
+                      </div>
+                    </td>
 
-                      <td className="px-4 py-4">
-                        <div className="min-w-[240px] space-y-2 text-xs text-gray-300">
-                          <div className="space-y-1">
-                            <span className="text-gray-400">Category</span>
-                            <select
-                              value={categoryEdits[submission.id] || "General"}
-                              onChange={(event) =>
-                                setCategoryEdits((current) => ({
-                                  ...current,
-                                  [submission.id]: event.target.value as CategoryOption,
-                                }))
-                              }
-                              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none"
-                            >
-                              {CATEGORY_OPTIONS.map((category) => (
-                                <option key={category} value={category}>
-                                  {category}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
+                    <td className="px-4 py-4">
+                      <div className="flex min-w-[140px] flex-col gap-2">
+                        <button
+                          type="button"
+                          onClick={() => void saveSubmission(submission.id)}
+                          disabled={savingKey === `save:${submission.id}`}
+                          className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-left text-xs font-medium text-white transition hover:bg-gray-800 disabled:opacity-40"
+                        >
+                          Save row
+                        </button>
 
-                          <div className="space-y-1">
-                            <span className="text-gray-400">Privacy</span>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setPrivacyEdits((current) => ({
-                                  ...current,
-                                  [submission.id]: !current[submission.id],
-                                }))
-                              }
-                              className={`w-full rounded-lg px-3 py-2 text-left text-xs font-medium transition ${
-                                privacyEdits[submission.id]
-                                  ? "bg-white text-black hover:bg-gray-200"
-                                  : "border border-gray-700 bg-gray-900 text-white hover:bg-gray-800"
-                              }`}
-                            >
-                              {privacyEdits[submission.id] ? "Private" : "Public"}
-                            </button>
-                          </div>
+                        <button
+                          type="button"
+                          onClick={() => void approveSubmission(submission.id)}
+                          disabled={savingKey === `approve:${submission.id}`}
+                          className="rounded-lg bg-white px-3 py-2 text-left text-xs font-medium text-black transition hover:bg-gray-200 disabled:opacity-40"
+                        >
+                          Approve
+                        </button>
 
-                          <div className="space-y-1">
-                            <span className="text-gray-400">Status</span>
-                            <select
-                              value={statusEdits[submission.id] || "pending"}
-                              onChange={(event) =>
-                                setStatusEdits((current) => ({
-                                  ...current,
-                                  [submission.id]: event.target.value as "pending" | "ready",
-                                }))
-                              }
-                              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none"
-                            >
-                              <option value="pending">Pending</option>
-                              <option value="ready">Ready</option>
-                            </select>
-                          </div>
-
-                          <div className="space-y-1">
-                            <span className="text-gray-400">Email</span>
-                            <p>{submission.email || "—"}</p>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => void saveSubmission(submission.id)}
-                            disabled={Boolean(slugError) || savingKey === `save:${submission.id}`}
-                            className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800 disabled:opacity-40"
-                          >
-                            Save edits
-                          </button>
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-4">
-                        <div className="min-w-[260px] max-w-[300px] space-y-2">
-                          {(submission.options || []).map((option, optionIndex) => (
-                            <div
-                              key={`${submission.id}-${optionIndex}`}
-                              className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-gray-300"
-                            >
-                              <div>{option}</div>
-                              {submission.option_image_urls?.[optionIndex] ? (
-                                <div className="mt-1 break-all text-gray-500">
-                                  {submission.option_image_urls[optionIndex]}
-                                </div>
-                              ) : null}
-                            </div>
-                          ))}
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-4">
-                        <div className="flex min-w-[120px] flex-col gap-2">
-                          <button
-                            type="button"
-                            onClick={() => void approveSubmission(submission.id)}
-                            disabled={Boolean(slugError) || savingKey === `publish:${submission.id}`}
-                            className="rounded-lg bg-white px-3 py-2 text-left text-xs font-medium text-black transition hover:bg-gray-200 disabled:opacity-40"
-                          >
-                            Publish
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => void deleteSubmission(submission.id)}
-                            disabled={savingKey === `delete:${submission.id}`}
-                            className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-left text-xs font-medium text-white transition hover:bg-gray-800 disabled:opacity-60"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                        <button
+                          type="button"
+                          onClick={() => void deleteSubmission(submission.id)}
+                          disabled={savingKey === `delete:${submission.id}`}
+                          className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-left text-xs font-medium text-white transition hover:bg-gray-800 disabled:opacity-60"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>

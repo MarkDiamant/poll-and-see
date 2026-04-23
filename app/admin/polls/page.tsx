@@ -3,6 +3,14 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+type PollOptionRow = {
+  id: number;
+  poll_id: number;
+  option_text: string;
+  image_url: string | null;
+  vote_count: number;
+};
+
 type PollRow = {
   id: number;
   question: string;
@@ -15,10 +23,31 @@ type PollRow = {
   is_embeddable: boolean;
   embed_active: boolean;
   embed_voting_enabled: boolean;
+  is_publicly_listed?: boolean | null;
   created_at: string | null;
+  options: PollOptionRow[];
 };
 
+type CategoryOption =
+  | "General"
+  | "Lifestyle"
+  | "Community"
+  | "Finance"
+  | "Business"
+  | "Education"
+  | "Fun";
+
 type EmbedStatus = "live" | "closed" | "inactive";
+
+const CATEGORY_OPTIONS: CategoryOption[] = [
+  "General",
+  "Lifestyle",
+  "Community",
+  "Finance",
+  "Business",
+  "Education",
+  "Fun",
+];
 
 const ADMIN_KEY_STORAGE = "pollandsee-admin-key";
 const SITE_URL = "https://www.pollandsee.com";
@@ -57,55 +86,25 @@ function buildPollUrl(slug: string | null) {
   return slug ? `${SITE_URL}/poll/${slug}` : "";
 }
 
-function buildEmbedUrl(embedToken: string | null) {
-  return embedToken ? `${SITE_URL}/embed/${embedToken}` : "";
-}
-
-function estimateEmbedHeight(poll: PollRow) {
-  const questionLength = (poll.question || "").trim().length;
-  const descriptionLength = (poll.description || "").trim().length;
-
-  let height = 250;
-
-  if (questionLength > 70) height += 20;
-  if (questionLength > 120) height += 20;
-  if (questionLength > 180) height += 20;
-
-  if (descriptionLength > 0) height += 30;
-  if (descriptionLength > 120) height += 20;
-
-  return Math.max(280, Math.min(460, height));
-}
-
 function buildIframeCode(embedToken: string | null) {
   if (!embedToken) return "";
-
   return `<iframe src="${SITE_URL}/embed/${embedToken}" width="100%" height="100%" style="border:0; display:block; overflow:hidden; background:transparent;" loading="lazy" scrolling="no"></iframe>`;
 }
 
-function isValidSlug(slug: string) {
-  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug);
+function buildPollShareText(question: string, pollUrl: string) {
+  return `${question}\n\nVote and see what others think:\n\n${pollUrl}`;
 }
 
-function getSlugError(
-  slug: string,
-  currentId: number,
-  slugRecords: Array<{ id: number; slug: string }>
-) {
-  const trimmed = slug.trim();
-
-  if (!trimmed) return "Slug cannot be empty.";
-  if (!isValidSlug(trimmed)) {
-    return "Use lowercase letters, numbers and hyphens only.";
-  }
-
-  const duplicate = slugRecords.some(
-    (record) => record.id !== currentId && record.slug === trimmed
+function badge(count: number, isActive: boolean) {
+  return (
+    <span
+      className={`inline-flex min-w-[22px] items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold ${
+        isActive ? "bg-black/10 text-black" : "bg-white/10 text-white"
+      }`}
+    >
+      {count}
+    </span>
   );
-
-  if (duplicate) return "Slug already in use.";
-
-  return "";
 }
 
 export default function AdminPollsPage() {
@@ -114,10 +113,16 @@ export default function AdminPollsPage() {
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [polls, setPolls] = useState<PollRow[]>([]);
-  const [allSlugRecords, setAllSlugRecords] = useState<Array<{ id: number; slug: string }>>([]);
+  const [pendingSubmissionsCount, setPendingSubmissionsCount] = useState(0);
+
   const [questionEdits, setQuestionEdits] = useState<Record<number, string>>({});
   const [descriptionEdits, setDescriptionEdits] = useState<Record<number, string>>({});
-  const [slugEdits, setSlugEdits] = useState<Record<number, string>>({});
+  const [categoryEdits, setCategoryEdits] = useState<Record<number, CategoryOption>>({});
+  const [privacyEdits, setPrivacyEdits] = useState<Record<number, boolean>>({});
+  const [featuredEdits, setFeaturedEdits] = useState<Record<number, boolean>>({});
+  const [embedStatusEdits, setEmbedStatusEdits] = useState<Record<number, EmbedStatus>>({});
+  const [optionEdits, setOptionEdits] = useState<Record<number, PollOptionRow[]>>({});
+
   const [loading, setLoading] = useState(false);
   const [savingKey, setSavingKey] = useState("");
   const [error, setError] = useState("");
@@ -166,7 +171,7 @@ export default function AdminPollsPage() {
 
         const nextPolls = data.polls || [];
         setPolls(nextPolls);
-        setAllSlugRecords(data.allSlugs || []);
+        setPendingSubmissionsCount(data.pendingSubmissionsCount || 0);
 
         setQuestionEdits(
           Object.fromEntries(nextPolls.map((poll: PollRow) => [poll.id, poll.question || ""]))
@@ -174,8 +179,22 @@ export default function AdminPollsPage() {
         setDescriptionEdits(
           Object.fromEntries(nextPolls.map((poll: PollRow) => [poll.id, poll.description || ""]))
         );
-        setSlugEdits(
-          Object.fromEntries(nextPolls.map((poll: PollRow) => [poll.id, poll.slug || ""]))
+        setCategoryEdits(
+          Object.fromEntries(
+            nextPolls.map((poll: PollRow) => [poll.id, (poll.category as CategoryOption) || "General"])
+          )
+        );
+        setPrivacyEdits(
+          Object.fromEntries(nextPolls.map((poll: PollRow) => [poll.id, Boolean(poll.is_private)]))
+        );
+        setFeaturedEdits(
+          Object.fromEntries(nextPolls.map((poll: PollRow) => [poll.id, Boolean(poll.featured)]))
+        );
+        setEmbedStatusEdits(
+          Object.fromEntries(nextPolls.map((poll: PollRow) => [poll.id, getEmbedStatus(poll)]))
+        );
+        setOptionEdits(
+          Object.fromEntries(nextPolls.map((poll: PollRow) => [poll.id, poll.options || []]))
         );
       } catch (err) {
         setError(err instanceof Error ? err.message : "Could not load polls.");
@@ -201,15 +220,19 @@ export default function AdminPollsPage() {
     setAdminKey("");
     setAdminKeyInput("");
     setPolls([]);
-    setAllSlugRecords([]);
+    setPendingSubmissionsCount(0);
     setQuestionEdits({});
     setDescriptionEdits({});
-    setSlugEdits({});
+    setCategoryEdits({});
+    setPrivacyEdits({});
+    setFeaturedEdits({});
+    setEmbedStatusEdits({});
+    setOptionEdits({});
     setError("");
   };
 
-  const updatePoll = async (pollId: number, updates: Record<string, unknown>) => {
-    setSavingKey(`${pollId}:${Object.keys(updates).join(",")}`);
+  const updatePoll = async (pollId: number) => {
+    setSavingKey(`save:${pollId}`);
     setError("");
 
     try {
@@ -219,7 +242,19 @@ export default function AdminPollsPage() {
           "Content-Type": "application/json",
           "x-admin-key": adminKey,
         },
-        body: JSON.stringify(updates),
+        body: JSON.stringify({
+          question: (questionEdits[pollId] || "").trim(),
+          description: (descriptionEdits[pollId] || "").trim(),
+          category: categoryEdits[pollId] || "General",
+          is_private: Boolean(privacyEdits[pollId]),
+          featured: Boolean(featuredEdits[pollId]),
+          ...getEmbedPayload(embedStatusEdits[pollId] || "inactive"),
+          option_updates: (optionEdits[pollId] || []).map((option) => ({
+            id: option.id || null,
+            option_text: option.option_text,
+            image_url: option.image_url || null,
+          })),
+        }),
       });
 
       const data = await response.json();
@@ -253,14 +288,30 @@ export default function AdminPollsPage() {
         }));
       }
 
-      if (typeof data.poll?.slug === "string") {
-        setSlugEdits((current) => ({ ...current, [pollId]: data.poll.slug }));
-        setAllSlugRecords((current) => {
-          const withoutCurrent = current.filter((record) => record.id !== pollId);
-          return [...withoutCurrent, { id: pollId, slug: data.poll.slug }].sort((a, b) =>
-            a.slug.localeCompare(b.slug)
-          );
+      if (typeof data.poll?.category === "string") {
+        setCategoryEdits((current) => ({
+          ...current,
+          [pollId]: data.poll.category as CategoryOption,
+        }));
+      }
+
+      if (typeof data.poll?.is_private === "boolean") {
+        setPrivacyEdits((current) => ({ ...current, [pollId]: data.poll.is_private }));
+      }
+
+      if (typeof data.poll?.featured === "boolean") {
+        setFeaturedEdits((current) => {
+          const next = { ...current };
+          Object.keys(next).forEach((key) => {
+            next[Number(key)] = false;
+          });
+          next[pollId] = data.poll.featured;
+          return next;
         });
+      }
+
+      if (Array.isArray(data.poll?.options)) {
+        setOptionEdits((current) => ({ ...current, [pollId]: data.poll.options }));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not update poll.");
@@ -283,6 +334,38 @@ export default function AdminPollsPage() {
     }
   };
 
+  const addOptionRow = (pollId: number) => {
+    setOptionEdits((current) => ({
+      ...current,
+      [pollId]: [
+        ...(current[pollId] || []),
+        {
+          id: 0,
+          poll_id: pollId,
+          option_text: "",
+          image_url: "",
+          vote_count: 0,
+        },
+      ],
+    }));
+  };
+
+  const updateOptionText = (pollId: number, optionIndex: number, value: string) => {
+    setOptionEdits((current) => {
+      const next = [...(current[pollId] || [])];
+      next[optionIndex] = { ...next[optionIndex], option_text: value };
+      return { ...current, [pollId]: next };
+    });
+  };
+
+  const updateOptionImageUrl = (pollId: number, optionIndex: number, value: string) => {
+    setOptionEdits((current) => {
+      const next = [...(current[pollId] || [])];
+      next[optionIndex] = { ...next[optionIndex], image_url: value };
+      return { ...current, [pollId]: next };
+    });
+  };
+
   const sortedPolls = useMemo(() => {
     return [...polls].sort((a, b) => {
       const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
@@ -293,10 +376,20 @@ export default function AdminPollsPage() {
 
   if (!adminKey) {
     return (
-     <main className="m-0 w-full overflow-hidden bg-transparent p-0 text-white">
+      <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 px-6 py-10 text-white">
         <section className="mx-auto max-w-xl rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-lg">
-          <h1 className="mb-2 text-2xl font-semibold">Poll Admin</h1>
-          <p className="mb-5 text-sm text-gray-300">Enter your admin key to manage polls.</p>
+          <div className="mb-5 flex items-center gap-3">
+            <Link href="/" aria-label="Go to homepage">
+              <img
+                src="/logo.png"
+                alt="Poll & See"
+                className="block h-12 w-auto object-contain"
+              />
+            </Link>
+          </div>
+
+          <h1 className="mb-2 text-2xl font-semibold">Admin</h1>
+          <p className="mb-5 text-sm text-gray-300">Enter your admin key to manage polls and submissions.</p>
 
           <div className="space-y-3">
             <input
@@ -324,13 +417,21 @@ export default function AdminPollsPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 px-6 py-8 text-white">
-      <section className="mx-auto max-w-7xl">
-        <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-3xl font-semibold">Admin Polls</h1>
-            <p className="mt-1 text-sm text-gray-300">
-              Manage live polls without using Supabase directly.
-            </p>
+      <section className="mx-auto max-w-[1500px]">
+        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/" aria-label="Go to homepage">
+              <img
+                src="/logo.png"
+                alt="Poll & See"
+                className="block h-12 w-auto object-contain"
+              />
+            </Link>
+
+            <div>
+              <h1 className="text-3xl font-semibold">Admin</h1>
+              <p className="mt-1 text-sm text-gray-300">Review submissions and manage live polls.</p>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -339,13 +440,14 @@ export default function AdminPollsPage() {
                 href="/admin/polls"
                 className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-black"
               >
-                Polls
+                Live Polls
               </Link>
               <Link
                 href="/admin/submissions"
-                className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+                className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
               >
-                Submissions
+                <span>Submissions</span>
+                {pendingSubmissionsCount > 0 ? badge(pendingSubmissionsCount, false) : null}
               </Link>
             </nav>
 
@@ -353,7 +455,7 @@ export default function AdminPollsPage() {
               type="text"
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="Search question or slug..."
+              placeholder="Search live polls..."
               className="h-11 w-full min-w-[260px] rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500 md:w-[320px]"
             />
 
@@ -374,14 +476,12 @@ export default function AdminPollsPage() {
         ) : null}
 
         <div className="overflow-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg max-h-[78vh]">
-          <table className="min-w-[1280px] text-sm">
+          <table className="min-w-[1500px] text-sm">
             <thead className="sticky top-0 z-10 bg-gray-900/95 text-left text-gray-300">
               <tr>
-                <th className="px-4 py-3 font-medium">Question / Description</th>
-                <th className="px-4 py-3 font-medium">Slug</th>
-                <th className="px-4 py-3 font-medium">Private</th>
-                <th className="px-4 py-3 font-medium">Featured</th>
-                <th className="px-4 py-3 font-medium">Embed</th>
+                <th className="px-4 py-3 font-medium">Poll</th>
+                <th className="px-4 py-3 font-medium">Options / Images</th>
+                <th className="px-4 py-3 font-medium">Settings</th>
                 <th className="px-4 py-3 font-medium">Actions</th>
               </tr>
             </thead>
@@ -389,7 +489,7 @@ export default function AdminPollsPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-6 text-center text-gray-300">
+                  <td colSpan={4} className="px-4 py-6 text-center text-gray-300">
                     Loading polls...
                   </td>
                 </tr>
@@ -397,7 +497,7 @@ export default function AdminPollsPage() {
 
               {!loading && sortedPolls.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-6 text-center text-gray-300">
+                  <td colSpan={4} className="px-4 py-6 text-center text-gray-300">
                     No polls found.
                   </td>
                 </tr>
@@ -406,10 +506,7 @@ export default function AdminPollsPage() {
               {!loading &&
                 sortedPolls.map((poll, index) => {
                   const pollUrl = buildPollUrl(poll.slug);
-                  const embedUrl = buildEmbedUrl(poll.embed_token);
                   const iframeCode = buildIframeCode(poll.embed_token);
-                  const embedStatus = getEmbedStatus(poll);
-                  const slugError = getSlugError(slugEdits[poll.id] || "", poll.id, allSlugRecords);
 
                   return (
                     <tr
@@ -419,7 +516,7 @@ export default function AdminPollsPage() {
                       }`}
                     >
                       <td className="px-4 py-4">
-                        <div className="min-w-[300px] max-w-[340px] space-y-2">
+                        <div className="min-w-[320px] max-w-[420px] space-y-2">
                           <input
                             type="text"
                             value={questionEdits[poll.id] ?? ""}
@@ -442,123 +539,154 @@ export default function AdminPollsPage() {
                             rows={3}
                             className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
                           />
-                          <div className="flex items-center justify-between gap-3">
-                            <p className="text-xs text-gray-400">
-                              ID {poll.id}
-                              {poll.created_at
-                                ? ` • ${new Date(poll.created_at).toLocaleString()}`
-                                : ""}
-                            </p>
+                          <p className="text-xs text-gray-400">
+                            Poll ID {poll.id}
+                            {poll.created_at
+                              ? ` • ${new Date(poll.created_at).toLocaleString()}`
+                              : ""}
+                            {poll.slug ? ` • /poll/${poll.slug}` : ""}
+                          </p>
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-4">
+                        <div className="min-w-[340px] max-w-[420px] space-y-2">
+                          {(optionEdits[poll.id] || []).map((option, optionIndex) => (
+                            <div
+                              key={`${poll.id}-${option.id || `new-${optionIndex}`}`}
+                              className="grid grid-cols-[1fr_1fr_auto] gap-2 rounded-lg border border-gray-700 bg-gray-900 p-2"
+                            >
+                              <input
+                                type="text"
+                                value={option.option_text}
+                                onChange={(event) =>
+                                  updateOptionText(poll.id, optionIndex, event.target.value)
+                                }
+                                className="rounded-lg border border-gray-700 bg-black/20 px-3 py-2 text-xs text-white outline-none transition focus:border-gray-500"
+                                placeholder="Option text"
+                              />
+
+                              <input
+                                type="text"
+                                value={option.image_url || ""}
+                                onChange={(event) =>
+                                  updateOptionImageUrl(poll.id, optionIndex, event.target.value)
+                                }
+                                className="rounded-lg border border-gray-700 bg-black/20 px-3 py-2 text-xs text-white outline-none transition focus:border-gray-500"
+                                placeholder="Image URL (optional)"
+                              />
+
+                              <div className="flex items-center justify-end text-[11px] text-gray-400">
+                                {option.vote_count} votes
+                              </div>
+                            </div>
+                          ))}
+
+                          <button
+                            type="button"
+                            onClick={() => addOptionRow(poll.id)}
+                            className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-left text-xs font-medium text-white transition hover:bg-gray-800"
+                          >
+                            Add option
+                          </button>
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-4">
+                        <div className="min-w-[250px] space-y-3 text-xs text-gray-300">
+                          <div className="space-y-1">
+                            <span className="text-gray-400">Category</span>
+                            <select
+                              value={categoryEdits[poll.id] || "General"}
+                              onChange={(event) =>
+                                setCategoryEdits((current) => ({
+                                  ...current,
+                                  [poll.id]: event.target.value as CategoryOption,
+                                }))
+                              }
+                              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none"
+                            >
+                              {CATEGORY_OPTIONS.map((category) => (
+                                <option key={category} value={category}>
+                                  {category}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="space-y-1">
+                            <span className="text-gray-400">Privacy</span>
                             <button
                               type="button"
                               onClick={() =>
-                                void updatePoll(poll.id, {
-                                  question: (questionEdits[poll.id] || "").trim(),
-                                  description: (descriptionEdits[poll.id] || "").trim(),
-                                })
+                                setPrivacyEdits((current) => ({
+                                  ...current,
+                                  [poll.id]: !current[poll.id],
+                                }))
                               }
-                              disabled={savingKey === `${poll.id}:question,description`}
-                              className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800 disabled:opacity-60"
+                              className={`w-full rounded-lg px-3 py-2 text-left text-xs font-medium transition ${
+                                privacyEdits[poll.id]
+                                  ? "bg-white text-black hover:bg-gray-200"
+                                  : "border border-gray-700 bg-gray-900 text-white hover:bg-gray-800"
+                              }`}
                             >
-                              Save content
+                              {privacyEdits[poll.id] ? "Private" : "Public"}
                             </button>
+                          </div>
+
+                          <div className="space-y-1">
+                            <span className="text-gray-400">Featured</span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setFeaturedEdits((current) => ({
+                                  ...current,
+                                  [poll.id]: !current[poll.id],
+                                }))
+                              }
+                              className={`w-full rounded-lg px-3 py-2 text-left text-xs font-medium transition ${
+                                featuredEdits[poll.id]
+                                  ? "bg-white text-black hover:bg-gray-200"
+                                  : "border border-gray-700 bg-gray-900 text-white hover:bg-gray-800"
+                              }`}
+                            >
+                              {featuredEdits[poll.id] ? "Featured" : "Not featured"}
+                            </button>
+                          </div>
+
+                          <div className="space-y-1">
+                            <span className="text-gray-400">Embed</span>
+                            <select
+                              value={embedStatusEdits[poll.id] || "inactive"}
+                              onChange={(event) =>
+                                setEmbedStatusEdits((current) => ({
+                                  ...current,
+                                  [poll.id]: event.target.value as EmbedStatus,
+                                }))
+                              }
+                              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none"
+                            >
+                              <option value="live">Live</option>
+                              <option value="closed">Closed</option>
+                              <option value="inactive">Inactive</option>
+                            </select>
                           </div>
                         </div>
                       </td>
 
                       <td className="px-4 py-4">
-                        <div className="min-w-[220px] max-w-[240px] space-y-2">
-                          <input
-                            type="text"
-                            value={slugEdits[poll.id] ?? ""}
-                            onChange={(event) =>
-                              setSlugEdits((current) => ({
-                                ...current,
-                                [poll.id]: event.target.value,
-                              }))
-                            }
-                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
-                          />
-                          {slugError ? (
-                            <p className="text-xs text-amber-300">{slugError}</p>
-                          ) : (
-                            <p className="text-xs text-green-300">Slug available.</p>
-                          )}
+                        <div className="flex min-w-[170px] flex-col gap-2">
                           <button
                             type="button"
                             onClick={() =>
-                              void updatePoll(poll.id, {
-                                slug: (slugEdits[poll.id] || "").trim(),
-                              })
+                              void handleCopy(
+                                `share:${poll.id}`,
+                                buildPollShareText(questionEdits[poll.id] || poll.question, pollUrl)
+                              )
                             }
-                            disabled={Boolean(slugError) || savingKey === `${poll.id}:slug`}
-                            className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800 disabled:opacity-40"
-                          >
-                            Save slug
-                          </button>
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-4">
-                        <button
-                          type="button"
-                          onClick={() => void updatePoll(poll.id, { is_private: !poll.is_private })}
-                          disabled={savingKey === `${poll.id}:is_private`}
-                          className={`rounded-lg px-3 py-2 text-xs font-medium transition disabled:opacity-60 ${
-                            poll.is_private
-                              ? "bg-white text-black hover:bg-gray-200"
-                              : "border border-gray-700 bg-gray-900 text-white hover:bg-gray-800"
-                          }`}
-                        >
-                          {poll.is_private ? "Private" : "Public"}
-                        </button>
-                      </td>
-
-                      <td className="px-4 py-4">
-                        <button
-                          type="button"
-                          onClick={() => void updatePoll(poll.id, { featured: !poll.featured })}
-                          disabled={savingKey === `${poll.id}:featured`}
-                          className={`rounded-lg px-3 py-2 text-xs font-medium transition disabled:opacity-60 ${
-                            poll.featured
-                              ? "bg-white text-black hover:bg-gray-200"
-                              : "border border-gray-700 bg-gray-900 text-white hover:bg-gray-800"
-                          }`}
-                        >
-                          {poll.featured ? "Featured" : "Not featured"}
-                        </button>
-                      </td>
-
-                      <td className="px-4 py-4">
-                        <select
-                          value={embedStatus}
-                          onChange={(event) =>
-                            void updatePoll(poll.id, getEmbedPayload(event.target.value as EmbedStatus))
-                          }
-                          className="min-w-[110px] rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
-                        >
-                          <option value="live">Live</option>
-                          <option value="closed">Closed</option>
-                          <option value="inactive">Inactive</option>
-                        </select>
-                      </td>
-
-                      <td className="px-4 py-4">
-                        <div className="flex min-w-[150px] flex-col gap-2">
-                          <button
-                            type="button"
-                            onClick={() => void handleCopy(`poll:${poll.id}`, pollUrl)}
                             className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-left text-xs font-medium text-white transition hover:bg-gray-800"
                           >
-                            {copiedKey === `poll:${poll.id}` ? "Copied poll URL" : "Copy poll URL"}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => void handleCopy(`embed:${poll.id}`, embedUrl)}
-                            className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-left text-xs font-medium text-white transition hover:bg-gray-800"
-                          >
-                            {copiedKey === `embed:${poll.id}` ? "Copied embed URL" : "Copy embed URL"}
+                            {copiedKey === `share:${poll.id}` ? "Copied share text" : "Copy poll share text"}
                           </button>
 
                           <button
@@ -580,16 +708,14 @@ export default function AdminPollsPage() {
                             Open poll
                           </a>
 
-                          <a
-                            href={embedUrl || "#"}
-                            target="_blank"
-                            rel="noreferrer"
-                            className={`rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-left text-xs font-medium text-white transition hover:bg-gray-800 ${
-                              !embedUrl ? "pointer-events-none opacity-40" : ""
-                            }`}
+                          <button
+                            type="button"
+                            onClick={() => void updatePoll(poll.id)}
+                            disabled={savingKey === `save:${poll.id}`}
+                            className="rounded-lg bg-white px-3 py-2 text-left text-xs font-medium text-black transition hover:bg-gray-200 disabled:opacity-40"
                           >
-                            Open embed
-                          </a>
+                            Save row
+                          </button>
                         </div>
                       </td>
                     </tr>

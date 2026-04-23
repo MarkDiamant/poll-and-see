@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     let query = supabaseAdmin
       .from("polls")
       .select(
-        "id, question, description, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at"
+        "id, question, description, category, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed"
       )
       .order("created_at", { ascending: false });
 
@@ -57,20 +57,51 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const [{ data, error }, { data: slugRows, error: slugError }] = await Promise.all([
+    const [
+      { data: pollsData, error: pollsError },
+      { data: slugRows, error: slugError },
+      { data: optionRows, error: optionError },
+      submissionsCountResult,
+    ] = await Promise.all([
       query,
       supabaseAdmin.from("polls").select("id, slug").not("slug", "is", null),
+      supabaseAdmin
+        .from("poll_options")
+        .select("id, poll_id, option_text, image_url, vote_count")
+        .order("poll_id", { ascending: true })
+        .order("id", { ascending: true }),
+      supabaseAdmin.from("poll_submissions").select("id", { count: "exact", head: true }),
     ]);
 
-    if (error || slugError) {
+    if (pollsError || slugError || optionError) {
       return NextResponse.json({ error: "Could not load polls." }, { status: 500 });
     }
 
+    const optionsByPoll = new Map<number, Array<{
+      id: number;
+      poll_id: number;
+      option_text: string;
+      image_url: string | null;
+      vote_count: number;
+    }>>();
+
+    (optionRows || []).forEach((row) => {
+      const existing = optionsByPoll.get(row.poll_id) || [];
+      existing.push(row);
+      optionsByPoll.set(row.poll_id, existing);
+    });
+
+    const polls = (pollsData || []).map((poll) => ({
+      ...poll,
+      options: optionsByPoll.get(poll.id) || [],
+    }));
+
     return NextResponse.json({
-      polls: data || [],
+      polls,
       allSlugs: (slugRows || [])
         .filter((row) => row.slug)
         .map((row) => ({ id: row.id, slug: row.slug as string })),
+      pendingSubmissionsCount: submissionsCountResult.count || 0,
     });
   } catch {
     return NextResponse.json({ error: "Could not load polls." }, { status: 500 });

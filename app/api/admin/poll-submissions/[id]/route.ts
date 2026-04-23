@@ -8,6 +8,9 @@ type SubmissionUpdatePayload = {
   status?: "pending" | "ready";
   category?: string;
   is_private?: boolean;
+  email?: string | null;
+  options?: string[];
+  option_image_urls?: string[];
 };
 
 type SubmissionRow = {
@@ -152,6 +155,27 @@ export async function PATCH(
       const isPrivate = Boolean(body.is_private);
       updates.is_private = isPrivate;
       pollUpdates.is_private = isPrivate;
+      pollUpdates.is_publicly_listed = !isPrivate;
+    }
+
+    if ("email" in body) {
+      updates.email = (body.email || "").trim() || null;
+    }
+
+    if ("options" in body) {
+      const options = (body.options || []).map((item) => item.trim()).filter(Boolean);
+
+      if (options.length < 2) {
+        return NextResponse.json({ error: "At least 2 options are required." }, { status: 400 });
+      }
+
+      updates.options = options;
+    }
+
+    if ("option_image_urls" in body) {
+      const optionImageUrls = (body.option_image_urls || []).map((item) => item.trim());
+
+      updates.option_image_urls = optionImageUrls.some(Boolean) ? optionImageUrls : null;
     }
 
     if (Object.keys(updates).length === 0) {
@@ -169,19 +193,61 @@ export async function PATCH(
       return NextResponse.json({ error: "Could not update submission." }, { status: 500 });
     }
 
-    if (typedSubmission.poll_id && Object.keys(pollUpdates).length > 0) {
+    if (typedSubmission.poll_id) {
       const nextSlug =
         typeof pollUpdates.slug === "string"
           ? pollUpdates.slug
-          : typedSubmission.slug || "";
+          : (data.slug || "");
 
-      await supabaseAdmin
-        .from("polls")
-        .update({
-          ...pollUpdates,
-          full_url: nextSlug ? `https://www.pollandsee.com/poll/${nextSlug}` : undefined,
-        })
-        .eq("id", typedSubmission.poll_id);
+      if (Object.keys(pollUpdates).length > 0) {
+        await supabaseAdmin
+          .from("polls")
+          .update({
+            ...pollUpdates,
+            ...(nextSlug ? { full_url: `https://www.pollandsee.com/poll/${nextSlug}` } : {}),
+          })
+          .eq("id", typedSubmission.poll_id);
+      }
+
+      if ("options" in body || "option_image_urls" in body) {
+        const nextOptions = (data.options || []).map((item) => item.trim()).filter(Boolean);
+        const nextImageUrls = (data.option_image_urls || []).map((item) => (item || "").trim());
+
+        const { data: existingOptions } = await supabaseAdmin
+          .from("poll_options")
+          .select("id, poll_id, option_text, image_url, vote_count")
+          .eq("poll_id", typedSubmission.poll_id)
+          .order("id", { ascending: true });
+
+        const optionRows = existingOptions || [];
+
+        const limit = Math.max(nextOptions.length, optionRows.length);
+
+        for (let index = 0; index < limit; index += 1) {
+          const existingOption = optionRows[index];
+          const nextText = nextOptions[index];
+          const nextImageUrl = nextImageUrls[index] || null;
+
+          if (existingOption && nextText) {
+            await supabaseAdmin
+              .from("poll_options")
+              .update({
+                option_text: nextText,
+                image_url: nextImageUrl,
+              })
+              .eq("id", existingOption.id);
+          } else if (!existingOption && nextText) {
+            await supabaseAdmin
+              .from("poll_options")
+              .insert({
+                poll_id: typedSubmission.poll_id,
+                option_text: nextText,
+                image_url: nextImageUrl,
+                vote_count: 0,
+              });
+          }
+        }
+      }
     }
 
     return NextResponse.json({ submission: data });
