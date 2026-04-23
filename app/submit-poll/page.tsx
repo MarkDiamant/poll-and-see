@@ -617,10 +617,13 @@ setSuccessData(data as PollCreateResponse);
               </div>
 
               <div className="space-y-2">
-                <p className="text-xs text-gray-400">
-                  Polls may be edited for clarity, spelling, or shareability, and removed if they breach our guidelines.
-                </p>
-              </div>
+  <p className="text-xs text-gray-400">
+    Polls may be edited for clarity, spelling, or shareability, and removed if they don't meet our{" "}
+    <Link href="/guidelines" className="text-blue-300 hover:underline">
+      guidelines
+    </Link>.
+  </p>
+</div>
 
              <button
                 type="submit"

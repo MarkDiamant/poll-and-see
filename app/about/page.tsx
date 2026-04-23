@@ -44,13 +44,16 @@ export default function AboutPage() {
             </div>
 
             <div className="pt-2">
-              <h2 className="mb-2 text-xl font-semibold text-white">Use it on your website</h2>
-              <p>
-                You can add live polls directly to your website so visitors can vote without leaving
-                the page. If you'd like to embed a poll on your site, get in touch and we’ll help
-                you set it up.
-              </p>
-            </div>
+  <h2 className="mb-2 text-xl font-semibold text-white">Use it on your website</h2>
+  <p>
+    You can add live polls directly to your website so visitors can vote without leaving
+    the page. If you'd like to embed a poll on your site,{" "}
+    <Link href="/contact" className="text-blue-300 hover:underline">
+      Get in touch
+    </Link>{" "}
+    and we’ll help you set it up.
+  </p>
+</div>
           </div>
         </div>
       </section>

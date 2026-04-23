@@ -396,7 +396,7 @@ const [totalVoteCount, setTotalVoteCount] = useState(0);
                   <Link
                     key={poll.id}
                     href={`/poll/${poll.slug}`}
-                    className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 p-5 shadow-lg transition hover:border-gray-500 md:flex md:min-h-[220px] md:flex-col"
+                   className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 p-4 shadow-lg transition hover:border-gray-500 flex min-h-[190px] flex-col justify-between"
                   >
                     <div className="mb-3 flex items-center">
                       <span
@@ -411,10 +411,11 @@ const [totalVoteCount, setTotalVoteCount] = useState(0);
                       </span>
                     </div>
 
-                    <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
-                    <p className="mb-4 text-sm text-gray-300">{poll.description}</p>
+                    <div className="flex-1 py-2">
+  <h4 className="text-left text-lg font-semibold">{poll.question}</h4>
+</div>
 
-                    <div className="flex items-center justify-end gap-1.5 text-sm text-gray-400 md:mt-auto">
+<div className="flex items-center justify-end gap-1.5 text-sm text-gray-400">
                       <span>Vote now</span>
                       <span aria-hidden="true" className="text-base leading-none">
                         ›

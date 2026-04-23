@@ -4,19 +4,28 @@ import { useEffect, useRef, useState } from "react";
 
 export default function LiveVoteCounter({ value }: { value: number }) {
   const [displayValue, setDisplayValue] = useState(value);
-  const [animationFrom, setAnimationFrom] = useState(value);
-  const [animationTo, setAnimationTo] = useState(value);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [translateActive, setTranslateActive] = useState(false);
+const [animationFrom, setAnimationFrom] = useState(value);
+const [animationTo, setAnimationTo] = useState(value);
+const [isAnimating, setIsAnimating] = useState(false);
+const [translateActive, setTranslateActive] = useState(false);
+const [hasInitialised, setHasInitialised] = useState(false);
 
   const stepTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const settleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (isAnimating || displayValue === value) return;
+  if (!hasInitialised) {
+    setDisplayValue(value);
+    setAnimationFrom(value);
+    setAnimationTo(value);
+    setHasInitialised(true);
+    return;
+  }
 
-    const stepDelay = Math.abs(value - displayValue) > 10 ? 180 : 340;
+  if (isAnimating || displayValue === value) return;
+
+  const stepDelay = Math.abs(value - displayValue) > 10 ? 180 : 340;
 
     stepTimeoutRef.current = setTimeout(() => {
       const direction = value > displayValue ? 1 : -1;
@@ -45,7 +54,7 @@ export default function LiveVoteCounter({ value }: { value: number }) {
         clearTimeout(stepTimeoutRef.current);
       }
     };
-  }, [value, displayValue, isAnimating]);
+  }, [value, displayValue, isAnimating, hasInitialised]);
 
   useEffect(() => {
     return () => {
