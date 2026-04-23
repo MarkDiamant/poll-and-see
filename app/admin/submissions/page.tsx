@@ -75,7 +75,8 @@ const [categoryFilter, setCategoryFilter] = useState<"all" | CategoryOption>("al
   const [categoryEdits, setCategoryEdits] = useState<Record<number, CategoryOption>>({});
   const [privacyEdits, setPrivacyEdits] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+const [savingKey, setSavingKey] = useState("");
+const [error, setError] = useState("");
 const [showTopButton, setShowTopButton] = useState(false);
 
  useEffect(() => {
