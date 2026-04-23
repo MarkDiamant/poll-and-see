@@ -1,41 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-type CreatePollPayload = {
-  email?: string | null;
-  emailMeLink?: boolean;
-  question?: string;
-  description?: string | null;
-  category?: string | null;
-  options?: string[];
-  optionImageUrls?: string[];
-  isPrivate?: boolean;
-};
-
-type RateLimitStore = Map<string, number[]>;
-
-const BLOCKED_TERMS = [
-  "fuck",
-  "fucking",
-  "shit",
-  "cunt",
-  "motherfucker",
-  "nigger",
-  "nigga",
-  "faggot",
-  "slut",
-  "whore",
-  "porn",
-  "rape",
-  "rapist",
-  "dick",
-  "pussy",
-  "cock",
-  "blowjob",
-  "wank",
-  "twat",
-];
-
 function getAdminClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -52,69 +17,19 @@ function getAdminClient() {
   });
 }
 
-function getBaseUrl(request: NextRequest) {
-  const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
-  const protocol = request.headers.get("x-forwarded-proto") || "https";
+function isAuthorized(request: NextRequest) {
+  const expectedKey = process.env.POLL_ADMIN_KEY;
+  const providedKey = request.headers.get("x-admin-key");
 
-  if (host) {
-    return `${protocol}://${host}`;
+  if (!expectedKey) {
+    return { ok: false, error: "POLL_ADMIN_KEY is not configured." };
   }
 
-  return process.env.NEXT_PUBLIC_SITE_URL || "https://www.pollandsee.com";
-}
-
-function getClientIp(request: NextRequest) {
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) {
-    return forwarded.split(",")[0]?.trim() || "unknown";
+  if (!providedKey || providedKey !== expectedKey) {
+    return { ok: false, error: "Unauthorized." };
   }
 
-  return "unknown";
-}
-
-function getRateLimitStore(): RateLimitStore {
-  const globalWithStore = globalThis as typeof globalThis & {
-    __pollCreateRateLimit?: RateLimitStore;
-  };
-
-  if (!globalWithStore.__pollCreateRateLimit) {
-    globalWithStore.__pollCreateRateLimit = new Map<string, number[]>();
-  }
-
-  return globalWithStore.__pollCreateRateLimit;
-}
-
-function isRateLimited(ip: string) {
-  const now = Date.now();
-  const windowMs = 10 * 60 * 1000;
-  const maxCreates = 4;
-
-  const store = getRateLimitStore();
-  const existing = store.get(ip) || [];
-  const recent = existing.filter((timestamp) => now - timestamp < windowMs);
-
-  if (recent.length >= maxCreates) {
-    store.set(ip, recent);
-    return true;
-  }
-
-  recent.push(now);
-  store.set(ip, recent);
-  return false;
-}
-
-function containsBlockedWords(value: string) {
-  const normalised = value.toLowerCase();
-
-  return BLOCKED_TERMS.some((term) => {
-    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const regex = new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, "i");
-    return regex.test(normalised);
-  });
-}
-
-function makeShareText(question: string, fullLink: string) {
-  return `${question}\n\nVote and see what others think:\n\n${fullLink}`;
+  return { ok: true };
 }
 
 function generateShortId(length = 6) {
@@ -146,59 +61,90 @@ async function generateUniqueSlug(supabaseAdmin: ReturnType<typeof getAdminClien
   throw new Error("Could not generate a unique short ID.");
 }
 
-async function sendPollLinkEmail({
-  to,
-  question,
-  pollUrl,
-}: {
-  to: string;
-  question: string;
-  pollUrl: string;
-}) {
-  const resendApiKey = process.env.RESEND_API_KEY;
-  const fromEmail = process.env.POLL_LINK_FROM_EMAIL;
+function getBaseUrl(request: NextRequest) {
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
+  const protocol = request.headers.get("x-forwarded-proto") || "https";
 
-  if (!resendApiKey || !fromEmail) {
-    return false;
+  if (host) {
+    return `${protocol}://${host}`;
   }
 
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${resendApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: fromEmail,
-      to: [to],
-      subject: "Your Poll & See poll link",
-      html: `
-        <p>Your poll is live.</p>
-        <p><strong>${question}</strong></p>
-        <p><a href="${pollUrl}">${pollUrl}</a></p>
-      `,
-    }),
-  });
+  return process.env.NEXT_PUBLIC_SITE_URL || "https://www.pollandsee.com";
+}
 
-  return response.ok;
+export async function GET(request: NextRequest) {
+  const auth = isAuthorized(request);
+
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: 401 });
+  }
+
+  try {
+    const supabaseAdmin = getAdminClient();
+    const search = request.nextUrl.searchParams.get("q")?.trim() || "";
+
+    let query = supabaseAdmin
+      .from("poll_submissions")
+      .select("id, email, question, description, category, options, option_image_urls, is_private, slug, status, created_at")
+      .order("created_at", { ascending: false });
+
+    if (search) {
+      const safeSearch = search.replace(/[%(),]/g, " ");
+      query = query.or(
+        `question.ilike.%${safeSearch}%,description.ilike.%${safeSearch}%,email.ilike.%${safeSearch}%,slug.ilike.%${safeSearch}%`
+      );
+    }
+
+    const [
+      { data, error },
+      { data: pollSlugRows, error: slugError },
+      livePollCountResult,
+    ] = await Promise.all([
+      query,
+      supabaseAdmin.from("polls").select("slug").not("slug", "is", null),
+      supabaseAdmin.from("polls").select("id", { count: "exact", head: true }),
+    ]);
+
+    if (error || slugError) {
+      return NextResponse.json({ error: "Could not load submissions." }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      submissions: data || [],
+      allPollSlugs: (pollSlugRows || [])
+        .map((row) => row.slug)
+        .filter((slug): slug is string => Boolean(slug)),
+      livePollCount: livePollCountResult.count || 0,
+    });
+  } catch {
+    return NextResponse.json({ error: "Could not load submissions." }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = (await request.json()) as CreatePollPayload;
-    const supabaseAdmin = getAdminClient();
+  const auth = isAuthorized(request);
 
-    const email = (body.email || "").trim();
-    const emailMeLink = Boolean(body.emailMeLink);
-    const question = (body.question || "").trim();
-    const description = (body.description || "").trim();
-    const category = (body.category || "General").trim() || "General";
-    const options = (body.options || []).map((option) => option.trim()).filter(Boolean);
-    const optionImageUrls = (body.optionImageUrls || []).map((url) => url.trim());
-    const isPrivate = Boolean(body.isPrivate);
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: 401 });
+  }
+
+  try {
+    const supabaseAdmin = getAdminClient();
+    const body = await request.json();
+
+    const question = String(body.question || "").trim();
+    const description = String(body.description || "").trim();
+    const category = String(body.category || "General").trim() || "General";
+    const is_private = Boolean(body.is_private);
+    const options = Array.isArray(body.options)
+      ? body.options.map((item: unknown) => String(item || "").trim()).filter(Boolean)
+      : [];
+    const option_image_urls = Array.isArray(body.option_image_urls)
+      ? body.option_image_urls.map((item: unknown) => String(item || "").trim())
+      : [];
 
     if (!question) {
-      return NextResponse.json({ error: "Please fill in all required fields." }, { status: 400 });
+      return NextResponse.json({ error: "Question is required." }, { status: 400 });
     }
 
     if (question.length > 150) {
@@ -210,7 +156,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (options.length < 2) {
-      return NextResponse.json({ error: "Minimum 2 options required." }, { status: 400 });
+      return NextResponse.json({ error: "At least 2 options are required." }, { status: 400 });
     }
 
     if (options.length > 6) {
@@ -221,30 +167,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Each option must be 40 characters or fewer." }, { status: 400 });
     }
 
-    if (optionImageUrls.length > 0 && optionImageUrls.length !== options.length) {
+    if (option_image_urls.length > 0 && option_image_urls.length !== options.length) {
       return NextResponse.json(
-        { error: "If image mode is enabled, every option must include an image URL." },
+        { error: "If image URLs are used, every option must include one." },
         { status: 400 }
-      );
-    }
-
-    if (emailMeLink && !email) {
-      return NextResponse.json({ error: "Email is required." }, { status: 400 });
-    }
-
-    const blockedSource = [question, description, ...options].join(" ");
-    if (containsBlockedWords(blockedSource)) {
-      return NextResponse.json(
-        { error: "Please rephrase your question to meet our guidelines." },
-        { status: 400 }
-      );
-    }
-
-    const ip = getClientIp(request);
-    if (isRateLimited(ip)) {
-      return NextResponse.json(
-        { error: "Please wait a few minutes before creating another poll." },
-        { status: 429 }
       );
     }
 
@@ -260,7 +186,7 @@ export async function POST(request: NextRequest) {
         category,
         slug,
         featured: false,
-        is_private: isPrivate,
+        is_private,
         is_publicly_listed: false,
         total_votes: 0,
         full_url: pollUrl,
@@ -276,7 +202,7 @@ export async function POST(request: NextRequest) {
       poll_id: insertedPoll.id,
       option_text: optionText,
       vote_count: 0,
-      image_url: optionImageUrls[index] || null,
+      image_url: option_image_urls[index] || null,
     }));
 
     const { error: optionsInsertError } = await supabaseAdmin
@@ -288,49 +214,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Could not create poll options." }, { status: 500 });
     }
 
-    const { error: submissionInsertError } = await supabaseAdmin
+    const { data: submission, error: submissionInsertError } = await supabaseAdmin
       .from("poll_submissions")
       .insert({
         poll_id: insertedPoll.id,
         name: null,
-        email: emailMeLink ? email : null,
+        email: null,
         question,
         description: description || null,
         category,
         options,
-        option_image_urls: optionImageUrls.length > 0 ? optionImageUrls : null,
-        is_private: isPrivate,
+        option_image_urls: option_image_urls.length > 0 ? option_image_urls : null,
+        is_private,
         slug,
         status: "pending",
-      });
+      })
+      .select("id, email, question, description, category, options, option_image_urls, is_private, slug, status, created_at")
+      .single();
 
-    if (submissionInsertError) {
+    if (submissionInsertError || !submission) {
       await supabaseAdmin.from("poll_options").delete().eq("poll_id", insertedPoll.id);
       await supabaseAdmin.from("polls").delete().eq("id", insertedPoll.id);
-      return NextResponse.json({ error: "Could not create moderation record." }, { status: 500 });
-    }
-
-    let emailSent = false;
-
-    if (emailMeLink && email) {
-      try {
-        emailSent = await sendPollLinkEmail({
-          to: email,
-          question,
-          pollUrl,
-        });
-      } catch {
-        emailSent = false;
-      }
+      return NextResponse.json({ error: "Could not create submission." }, { status: 500 });
     }
 
     return NextResponse.json({
+      submission,
       pollUrl,
       slug,
-      shareText: makeShareText(question, pollUrl),
-      emailSent,
     });
   } catch {
-    return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
+    return NextResponse.json({ error: "Could not create submission." }, { status: 500 });
   }
 }
