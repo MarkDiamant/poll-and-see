@@ -455,7 +455,7 @@ setSuccessData(data as PollCreateResponse);
               Get your shareable link instantly below
             </p>
             <p className="text-sm text-gray-300 md:text-base">
-              Completely free. No sign-up required.
+              Completely free. No sign-up required. Takes 30 seconds.
             </p>
           </div>
         </div>
