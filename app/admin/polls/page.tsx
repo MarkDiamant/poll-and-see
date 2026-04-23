@@ -198,7 +198,7 @@ if (searchInput.trim()) {
     };
 
     void loadPolls();
-  }, [adminKey, searchTerm]);
+}, [adminKey, searchInput]);
 
   const handleUnlock = () => {
     const trimmed = adminKeyInput.trim();
