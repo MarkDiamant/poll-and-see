@@ -574,31 +574,31 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
                       </td>
 
                       <td className="px-4 py-4 align-top">
-                      <div className="min-w-[220px] max-w-[260px] space-y-2">
+                      <div className="min-w-[260px] max-w-[300px] space-y-2">
  {(optionEdits[poll.id] || []).map((option, optionIndex) => (
 <div
   key={`${poll.id}-${option.id || `new-${optionIndex}`}`}
-  className="grid grid-cols-[1fr_1fr_auto] items-start gap-2 rounded-lg border border-gray-700 bg-gray-900 p-2"
+  className="grid grid-cols-[1fr_140px_auto] items-start gap-2"
 >
-  <input
-    type="text"
-    value={option.option_text}
-    onChange={(event) =>
-      updateOptionText(poll.id, optionIndex, event.target.value)
-    }
-    className="rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
-    placeholder="Option text"
-  />
+ <input
+  type="text"
+  value={option.option_text}
+  onChange={(event) =>
+    updateOptionText(poll.id, optionIndex, event.target.value)
+  }
+  className="min-w-0 rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
+  placeholder="Option text"
+/>
 
-  <input
-    type="text"
-    value={option.image_url || ""}
-    onChange={(event) =>
-      updateOptionImageUrl(poll.id, optionIndex, event.target.value)
-    }
-    className="rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
-    placeholder="Image URL (optional)"
-  />
+<input
+  type="text"
+  value={option.image_url || ""}
+  onChange={(event) =>
+    updateOptionImageUrl(poll.id, optionIndex, event.target.value)
+  }
+  className="w-[140px] rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
+  placeholder="Image URL (optional)"
+/>
 
   <div className="flex min-w-[28px] items-start justify-end pt-1 text-[11px] text-gray-400">
     <div className="flex flex-col items-end gap-1">
@@ -611,7 +611,7 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
             next.splice(optionIndex, 1);
             setOptionEdits((current) => ({ ...current, [poll.id]: next }));
           }}
-          className="text-sm font-bold leading-none text-red-400 hover:text-red-300"
+        className="cursor-pointer text-sm font-bold leading-none text-red-400 hover:text-red-300"
           aria-label="Remove option"
           title="Remove option"
         >
@@ -634,7 +634,7 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
                       </td>
 
                       <td className="px-4 py-4 align-top">
-            <div className="min-w-[180px] grid grid-cols-2 gap-2 text-xs text-gray-300">
+            <div className="min-w-[160px] grid grid-cols-2 gap-2 text-xs text-gray-300">
                           <div className="space-y-1">
                             <span className="text-gray-400">Category</span>
                             <select
@@ -645,7 +645,7 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
                                   [poll.id]: event.target.value as CategoryOption,
                                 }))
                               }
-                              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none"
+                             className="w-full rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-xs text-white outline-none"
                             >
                               {CATEGORY_OPTIONS.map((category) => (
                                 <option key={category} value={category}>
@@ -665,7 +665,7 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
                                   [poll.id]: !current[poll.id],
                                 }))
                               }
-                              className={`w-full rounded-lg px-3 py-2 text-left text-xs font-medium transition ${
+                             className={`w-full rounded-lg px-2 py-1.5 text-left text-xs font-medium transition ${
                                 privacyEdits[poll.id]
                                   ? "bg-white text-black hover:bg-gray-200"
                                   : "border border-gray-700 bg-gray-900 text-white hover:bg-gray-800"
@@ -685,7 +685,7 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
                                   [poll.id]: !current[poll.id],
                                 }))
                               }
-                              className={`w-full rounded-lg px-3 py-2 text-left text-xs font-medium transition ${
+                             className={`w-full rounded-lg px-2 py-1.5 text-left text-xs font-medium transition ${
                                 featuredEdits[poll.id]
                                   ? "bg-white text-black hover:bg-gray-200"
                                   : "border border-gray-700 bg-gray-900 text-white hover:bg-gray-800"
@@ -705,7 +705,7 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
                                   [poll.id]: event.target.value as EmbedStatus,
                                 }))
                               }
-                              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none"
+                              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-xs text-white outline-none"
                             >
                               <option value="live">Live</option>
                               <option value="closed">Closed</option>

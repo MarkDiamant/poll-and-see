@@ -455,7 +455,7 @@ const sortedSubmissions = useMemo(() => {
                     }`}
                   >
                     <td className="px-4 py-4">
-                  <div className="min-w-[340px] max-w-[420px] space-y-2">
+                  <div className="min-w-[380px] max-w-[460px] space-y-2">
                         <input
                           type="text"
                           value={questionEdits[submission.id] ?? ""}
@@ -492,41 +492,41 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
                     </td>
 
                     <td className="px-4 py-4">
-<div className="min-w-[180px] max-w-[220px] space-y-2">
+<div className="min-w-[220px] max-w-[260px] space-y-2">
                         <div>
                           <p className="mb-1 text-xs text-gray-400">Options (one per line)</p>
-                          <textarea
-                            value={optionsEdits[submission.id] ?? ""}
-                            onChange={(event) =>
-                              setOptionsEdits((current) => ({
-                                ...current,
-                                [submission.id]: event.target.value,
-                              }))
-                            }
-                            rows={3}
-                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none transition focus:border-gray-500"
-                          />
+                        <textarea
+  value={optionsEdits[submission.id] ?? ""}
+  onChange={(event) =>
+    setOptionsEdits((current) => ({
+      ...current,
+      [submission.id]: event.target.value,
+    }))
+  }
+  rows={3}
+  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
+/>
                         </div>
 
                         <div>
                           <p className="mb-1 text-xs text-gray-400">Image URLs (one per line, optional)</p>
-                          <textarea
-                            value={imageUrlEdits[submission.id] ?? ""}
-                            onChange={(event) =>
-                              setImageUrlEdits((current) => ({
-                                ...current,
-                                [submission.id]: event.target.value,
-                              }))
-                            }
-                            rows={1}
-                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none transition focus:border-gray-500"
-                          />
+                        <textarea
+  value={imageUrlEdits[submission.id] ?? ""}
+  onChange={(event) =>
+    setImageUrlEdits((current) => ({
+      ...current,
+      [submission.id]: event.target.value,
+    }))
+  }
+  rows={1}
+  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-1.5 text-xs text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
+/>
                         </div>
                       </div>
                     </td>
 
                     <td className="px-4 py-4">
-                  <div className="min-w-[180px] grid grid-cols-2 gap-2 text-xs text-gray-300">
+                  <div className="min-w-[170px] grid grid-cols-2 gap-2 text-xs text-gray-300">
                      <div className="space-y-1">
   <span className="text-gray-400">Category</span>
   <select
@@ -537,7 +537,7 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
         [submission.id]: event.target.value as CategoryOption,
       }))
     }
-    className="w-full rounded-lg border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-white outline-none"
+   className="w-full rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-xs text-white outline-none"
   >
     {CATEGORY_OPTIONS.map((category) => (
       <option key={category} value={category}>
@@ -557,7 +557,7 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
         [submission.id]: !current[submission.id],
       }))
     }
-    className={`w-full rounded-lg px-2 py-2 text-left text-xs font-medium transition ${
+   className={`w-full rounded-lg px-2 py-1.5 text-left text-xs font-medium transition ${
       privacyEdits[submission.id]
         ? "bg-white text-black hover:bg-gray-200"
         : "border border-gray-700 bg-gray-900 text-white hover:bg-gray-800"
@@ -578,7 +578,7 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
         [submission.id]: event.target.value,
       }))
     }
-    className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none transition focus:border-gray-500"
+   className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
     placeholder="No email"
   />
 </div>
@@ -586,7 +586,7 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
                     </td>
 
                     <td className="px-4 py-4">
-<div className="flex min-w-[96px] flex-col gap-1.5">
+<div className="flex min-w-[90px] flex-col gap-1.5">
   <button
     type="button"
     onClick={() => void saveSubmission(submission.id)}
