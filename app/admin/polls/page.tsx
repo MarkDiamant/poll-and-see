@@ -110,8 +110,9 @@ function badge(count: number, isActive: boolean) {
 export default function AdminPollsPage() {
   const [adminKeyInput, setAdminKeyInput] = useState("");
   const [adminKey, setAdminKey] = useState("");
-  const [searchInput, setSearchInput] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
+const [searchInput, setSearchInput] = useState("");
+const [privacyFilter, setPrivacyFilter] = useState<"all" | "public" | "private">("all");
+const [categoryFilter, setCategoryFilter] = useState<"all" | CategoryOption>("all");
   const [polls, setPolls] = useState<PollRow[]>([]);
   const [pendingSubmissionsCount, setPendingSubmissionsCount] = useState(0);
 
@@ -366,13 +367,20 @@ export default function AdminPollsPage() {
     });
   };
 
-  const sortedPolls = useMemo(() => {
-    return [...polls].sort((a, b) => {
+const sortedPolls = useMemo(() => {
+  return [...polls]
+    .filter((poll) => {
+      if (privacyFilter === "public" && poll.is_private) return false;
+      if (privacyFilter === "private" && !poll.is_private) return false;
+      if (categoryFilter !== "all" && poll.category !== categoryFilter) return false;
+      return true;
+    })
+    .sort((a, b) => {
       const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
       const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
       return bTime - aTime;
     });
-  }, [polls]);
+}, [polls, privacyFilter, categoryFilter]);
 
   if (!adminKey) {
     return (
@@ -434,39 +442,63 @@ export default function AdminPollsPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <nav className="flex items-center gap-2">
-              <Link
-                href="/admin/polls"
-                className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-black"
-              >
-                Live Polls
-              </Link>
-              <Link
-                href="/admin/submissions"
-                className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
-              >
-                <span>Submissions</span>
-                {pendingSubmissionsCount > 0 ? badge(pendingSubmissionsCount, false) : null}
-              </Link>
-            </nav>
+ <div className="flex flex-wrap items-center gap-3">
+  <nav className="flex items-center gap-2">
+    <Link
+      href="/admin/polls"
+      className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-black"
+    >
+      <span>Live Polls</span>
+      {polls.length > 0 ? badge(polls.length, true) : null}
+    </Link>
+    <Link
+      href="/admin/submissions"
+      className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+    >
+      <span>Submissions</span>
+      {pendingSubmissionsCount > 0 ? badge(pendingSubmissionsCount, false) : null}
+    </Link>
+  </nav>
 
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="Search live polls..."
-              className="h-11 w-full min-w-[260px] rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500 md:w-[320px]"
-            />
+  <input
+    type="text"
+    value={searchInput}
+    onChange={(event) => setSearchInput(event.target.value)}
+    placeholder="Search live polls..."
+    className="h-11 w-full min-w-[260px] rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500 md:w-[320px]"
+  />
 
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="h-11 rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm font-medium text-white transition hover:bg-gray-800"
-            >
-              Lock
-            </button>
-          </div>
+  <select
+    value={privacyFilter}
+    onChange={(event) => setPrivacyFilter(event.target.value as "all" | "public" | "private")}
+    className="h-11 rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm text-white outline-none"
+  >
+    <option value="all">All</option>
+    <option value="public">Public</option>
+    <option value="private">Private</option>
+  </select>
+
+  <select
+    value={categoryFilter}
+    onChange={(event) => setCategoryFilter(event.target.value as "all" | CategoryOption)}
+    className="h-11 rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm text-white outline-none"
+  >
+    <option value="all">All categories</option>
+    {CATEGORY_OPTIONS.map((category) => (
+      <option key={category} value={category}>
+        {category}
+      </option>
+    ))}
+  </select>
+
+  <button
+    type="button"
+    onClick={handleLogout}
+    className="h-11 rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm font-medium text-white transition hover:bg-gray-800"
+  >
+    Lock
+  </button>
+</div>
         </div>
 
         {error ? (
@@ -475,8 +507,8 @@ export default function AdminPollsPage() {
           </div>
         ) : null}
 
-        <div className="overflow-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg max-h-[78vh]">
-          <table className="min-w-[1500px] text-sm">
+        <div className="overflow-x-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg">
+  <table className="min-w-[1320px] text-sm">
             <thead className="sticky top-0 z-10 bg-gray-900/95 text-left text-gray-300">
               <tr>
                 <th className="px-4 py-3 font-medium">Poll</th>
@@ -512,7 +544,7 @@ export default function AdminPollsPage() {
                     <tr
                       key={poll.id}
                       className={`border-t border-gray-700 align-top ${
-                        index % 2 === 0 ? "bg-gray-800" : "bg-gray-900/35"
+                      index % 2 === 0 ? "bg-gray-800" : "bg-black/40"
                       }`}
                     >
                       <td className="px-4 py-4">
@@ -585,7 +617,7 @@ export default function AdminPollsPage() {
                           <button
                             type="button"
                             onClick={() => addOptionRow(poll.id)}
-                            className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-left text-xs font-medium text-white transition hover:bg-gray-800"
+                         className="rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800"
                           >
                             Add option
                           </button>
@@ -593,7 +625,7 @@ export default function AdminPollsPage() {
                       </td>
 
                       <td className="px-4 py-4">
-                        <div className="min-w-[250px] space-y-3 text-xs text-gray-300">
+              <div className="min-w-[190px] space-y-2 text-xs text-gray-300">
                           <div className="space-y-1">
                             <span className="text-gray-400">Category</span>
                             <select
@@ -675,7 +707,7 @@ export default function AdminPollsPage() {
                       </td>
 
                       <td className="px-4 py-4">
-                        <div className="flex min-w-[170px] flex-col gap-2">
+                       <div className="flex min-w-[115px] flex-col gap-1.5">
                           <button
                             type="button"
                             onClick={() =>
@@ -684,7 +716,7 @@ export default function AdminPollsPage() {
                                 buildPollShareText(questionEdits[poll.id] || poll.question, pollUrl)
                               )
                             }
-                            className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-left text-xs font-medium text-white transition hover:bg-gray-800"
+                        className="rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800"
                           >
                             {copiedKey === `share:${poll.id}` ? "Copied share text" : "Copy poll share text"}
                           </button>
@@ -692,7 +724,7 @@ export default function AdminPollsPage() {
                           <button
                             type="button"
                             onClick={() => void handleCopy(`iframe:${poll.id}`, iframeCode)}
-                            className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-left text-xs font-medium text-white transition hover:bg-gray-800"
+                         className="rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800"
                           >
                             {copiedKey === `iframe:${poll.id}` ? "Copied iframe" : "Copy iframe"}
                           </button>
@@ -712,7 +744,7 @@ export default function AdminPollsPage() {
                             type="button"
                             onClick={() => void updatePoll(poll.id)}
                             disabled={savingKey === `save:${poll.id}`}
-                            className="rounded-lg bg-white px-3 py-2 text-left text-xs font-medium text-black transition hover:bg-gray-200 disabled:opacity-40"
+        className="rounded-lg bg-white px-2.5 py-1.5 text-left text-xs font-medium text-black transition hover:bg-gray-200 disabled:opacity-40"
                           >
                             Save row
                           </button>

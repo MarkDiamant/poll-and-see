@@ -64,7 +64,8 @@ export default function AdminSubmissionsPage() {
   const [adminKeyInput, setAdminKeyInput] = useState("");
   const [adminKey, setAdminKey] = useState("");
   const [searchInput, setSearchInput] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
+const [privacyFilter, setPrivacyFilter] = useState<"all" | "public" | "private">("all");
+const [categoryFilter, setCategoryFilter] = useState<"all" | CategoryOption>("all");
   const [submissions, setSubmissions] = useState<PollSubmissionRow[]>([]);
   const [questionEdits, setQuestionEdits] = useState<Record<number, string>>({});
   const [descriptionEdits, setDescriptionEdits] = useState<Record<number, string>>({});
@@ -286,13 +287,20 @@ export default function AdminSubmissionsPage() {
     }
   };
 
-  const sortedSubmissions = useMemo(() => {
-    return [...submissions].sort((a, b) => {
+const sortedSubmissions = useMemo(() => {
+  return [...submissions]
+    .filter((s) => {
+      if (privacyFilter === "public" && s.is_private) return false;
+      if (privacyFilter === "private" && !s.is_private) return false;
+      if (categoryFilter !== "all" && s.category !== categoryFilter) return false;
+      return true;
+    })
+    .sort((a, b) => {
       const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
       const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
       return bTime - aTime;
     });
-  }, [submissions]);
+}, [submissions, privacyFilter, categoryFilter]);
 
   if (!adminKey) {
     return (
@@ -354,39 +362,62 @@ export default function AdminSubmissionsPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <nav className="flex items-center gap-2">
-              <Link
-                href="/admin/polls"
-                className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
-              >
-                Live Polls
-              </Link>
-              <Link
-                href="/admin/submissions"
-                className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-black"
-              >
-                <span>Submissions</span>
-                {sortedSubmissions.length > 0 ? badge(sortedSubmissions.length, true) : null}
-              </Link>
-            </nav>
+<div className="flex flex-wrap items-center gap-3">
+  <nav className="flex items-center gap-2">
+    <Link
+      href="/admin/polls"
+      className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+    >
+      Live Polls
+    </Link>
+    <Link
+      href="/admin/submissions"
+      className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-black"
+    >
+      <span>Submissions</span>
+      {sortedSubmissions.length > 0 ? badge(sortedSubmissions.length, true) : null}
+    </Link>
+  </nav>
 
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="Search submissions..."
-              className="h-11 w-full min-w-[260px] rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500 md:w-[320px]"
-            />
+  <input
+    type="text"
+    value={searchInput}
+    onChange={(event) => setSearchInput(event.target.value)}
+    placeholder="Search submissions..."
+    className="h-11 w-full min-w-[260px] rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500 md:w-[320px]"
+  />
 
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="h-11 rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm font-medium text-white transition hover:bg-gray-800"
-            >
-              Lock
-            </button>
-          </div>
+  <select
+    value={privacyFilter}
+    onChange={(event) => setPrivacyFilter(event.target.value as "all" | "public" | "private")}
+    className="h-11 rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm text-white outline-none"
+  >
+    <option value="all">All</option>
+    <option value="public">Public</option>
+    <option value="private">Private</option>
+  </select>
+
+  <select
+    value={categoryFilter}
+    onChange={(event) => setCategoryFilter(event.target.value as "all" | CategoryOption)}
+    className="h-11 rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm text-white outline-none"
+  >
+    <option value="all">All categories</option>
+    {CATEGORY_OPTIONS.map((category) => (
+      <option key={category} value={category}>
+        {category}
+      </option>
+    ))}
+  </select>
+
+  <button
+    type="button"
+    onClick={handleLogout}
+    className="h-11 rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm font-medium text-white transition hover:bg-gray-800"
+  >
+    Lock
+  </button>
+</div>
         </div>
 
         {error ? (
@@ -395,8 +426,8 @@ export default function AdminSubmissionsPage() {
           </div>
         ) : null}
 
-        <div className="overflow-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg max-h-[78vh]">
-          <table className="min-w-[1380px] text-sm">
+<div className="overflow-x-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg">
+ <table className="min-w-[1180px] text-sm">
             <thead className="sticky top-0 z-10 bg-gray-900/95 text-left text-gray-300">
               <tr>
                 <th className="px-4 py-3 font-medium">Poll</th>
@@ -428,11 +459,11 @@ export default function AdminSubmissionsPage() {
                   <tr
                     key={submission.id}
                     className={`border-t border-gray-700 align-top ${
-                      index % 2 === 0 ? "bg-gray-800" : "bg-gray-900/35"
+                     index % 2 === 0 ? "bg-gray-800" : "bg-black/40"
                     }`}
                   >
                     <td className="px-4 py-4">
-                      <div className="min-w-[320px] max-w-[420px] space-y-2">
+                      <div className="min-w-[220px] max-w-[260px] space-y-2">
                         <input
                           type="text"
                           value={questionEdits[submission.id] ?? ""}
@@ -480,7 +511,7 @@ export default function AdminSubmissionsPage() {
                                 [submission.id]: event.target.value,
                               }))
                             }
-                            rows={6}
+                            rows={3}
                             className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none transition focus:border-gray-500"
                           />
                         </div>
@@ -495,7 +526,7 @@ export default function AdminSubmissionsPage() {
                                 [submission.id]: event.target.value,
                               }))
                             }
-                            rows={6}
+                            rows={3}
                             className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none transition focus:border-gray-500"
                           />
                         </div>
@@ -503,7 +534,7 @@ export default function AdminSubmissionsPage() {
                     </td>
 
                     <td className="px-4 py-4">
-                      <div className="min-w-[240px] space-y-3 text-xs text-gray-300">
+                    <div className="min-w-[180px] space-y-2 text-xs text-gray-300">
                         <div className="space-y-1">
                           <span className="text-gray-400">Category</span>
                           <select
@@ -563,7 +594,7 @@ export default function AdminSubmissionsPage() {
                     </td>
 
                     <td className="px-4 py-4">
-                      <div className="flex min-w-[140px] flex-col gap-2">
+<div className="flex min-w-[95px] flex-col gap-1.5">
                         <button
                           type="button"
                           onClick={() => void saveSubmission(submission.id)}
