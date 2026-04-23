@@ -419,7 +419,7 @@ const sortedSubmissions = useMemo(() => {
         ) : null}
 
 <div className="overflow-x-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg">
-<table className="min-w-[1040px] text-sm">
+<table className="w-full text-sm">
             <thead className="sticky top-0 z-10 bg-gray-900/95 text-left text-gray-300">
               <tr>
                 <th className="px-4 py-3 font-medium">Poll</th>
@@ -475,8 +475,8 @@ const sortedSubmissions = useMemo(() => {
                               [submission.id]: event.target.value,
                             }))
                           }
-                          rows={3}
-                          className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                         rows={2}
+className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
                         />
 
                         <p className="text-xs text-gray-400">

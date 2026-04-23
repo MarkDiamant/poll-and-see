@@ -500,7 +500,7 @@ const sortedPolls = useMemo(() => {
         ) : null}
 
         <div className="overflow-x-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg">
-  <table className="min-w-[1080px] text-sm">
+  <table className="w-full text-sm">
             <thead className="sticky top-0 z-10 bg-gray-900/95 text-left text-gray-300">
               <tr>
                 <th className="px-4 py-3 font-medium">Poll</th>
@@ -539,7 +539,7 @@ const sortedPolls = useMemo(() => {
                       index % 2 === 0 ? "bg-gray-800" : "bg-black/40"
                       }`}
                     >
-                      <td className="px-4 py-4">
+                      <td className="px-4 py-4 align-top">
                       <div className="min-w-[380px] max-w-[460px] space-y-2">
                           <input
                             type="text"
@@ -560,8 +560,8 @@ const sortedPolls = useMemo(() => {
                                 [poll.id]: event.target.value,
                               }))
                             }
-                            rows={3}
-                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                           rows={2}
+className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
                           />
                           <p className="text-xs text-gray-400">
                             Poll ID {poll.id}
@@ -573,12 +573,12 @@ const sortedPolls = useMemo(() => {
                         </div>
                       </td>
 
-                      <td className="px-4 py-4">
+                      <td className="px-4 py-4 align-top">
                       <div className="min-w-[220px] max-w-[260px] space-y-2">
  {(optionEdits[poll.id] || []).map((option, optionIndex) => (
 <div
   key={`${poll.id}-${option.id || `new-${optionIndex}`}`}
-  className="grid grid-cols-[1fr_auto] gap-2 rounded-lg border border-gray-700 bg-gray-900 p-2"
+  className="grid grid-cols-[1fr_1fr_auto] items-start gap-2 rounded-lg border border-gray-700 bg-gray-900 p-2"
 >
   <input
     type="text"
@@ -590,34 +590,36 @@ const sortedPolls = useMemo(() => {
     placeholder="Option text"
   />
 
-  <div className="flex min-w-[44px] flex-col items-end justify-center gap-1 text-[11px] text-gray-400">
-    <span>{option.vote_count}</span>
-    {(optionEdits[poll.id] || []).length > 2 ? (
-      <button
-        type="button"
-        onClick={() => {
-          const next = [...(optionEdits[poll.id] || [])];
-          next.splice(optionIndex, 1);
-          setOptionEdits((current) => ({ ...current, [poll.id]: next }));
-        }}
-        className="text-xs font-bold leading-none text-red-400 hover:text-red-300"
-        aria-label="Remove option"
-        title="Remove option"
-      >
-        ×
-      </button>
-    ) : null}
-  </div>
-
   <input
     type="text"
     value={option.image_url || ""}
     onChange={(event) =>
       updateOptionImageUrl(poll.id, optionIndex, event.target.value)
     }
-    className="col-span-2 rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
+    className="rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
     placeholder="Image URL (optional)"
   />
+
+  <div className="flex min-w-[28px] items-start justify-end pt-1 text-[11px] text-gray-400">
+    <div className="flex flex-col items-end gap-1">
+      <span>{option.vote_count}</span>
+      {(optionEdits[poll.id] || []).length > 2 ? (
+        <button
+          type="button"
+          onClick={() => {
+            const next = [...(optionEdits[poll.id] || [])];
+            next.splice(optionIndex, 1);
+            setOptionEdits((current) => ({ ...current, [poll.id]: next }));
+          }}
+          className="text-sm font-bold leading-none text-red-400 hover:text-red-300"
+          aria-label="Remove option"
+          title="Remove option"
+        >
+          X
+        </button>
+      ) : null}
+    </div>
+  </div>
 </div>
 ))}
 
@@ -631,7 +633,7 @@ const sortedPolls = useMemo(() => {
                         </div>
                       </td>
 
-                      <td className="px-4 py-4">
+                      <td className="px-4 py-4 align-top">
             <div className="min-w-[180px] grid grid-cols-2 gap-2 text-xs text-gray-300">
                           <div className="space-y-1">
                             <span className="text-gray-400">Category</span>
@@ -713,7 +715,7 @@ const sortedPolls = useMemo(() => {
                         </div>
                       </td>
 
-                      <td className="px-4 py-4">
+                      <td className="px-4 py-4 align-top">
                    <div className="flex min-w-[96px] flex-col gap-1.5">
                           <button
                             type="button"
