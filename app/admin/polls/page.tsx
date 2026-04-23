@@ -128,14 +128,25 @@ const [categoryFilter, setCategoryFilter] = useState<"all" | CategoryOption>("al
   const [savingKey, setSavingKey] = useState("");
   const [error, setError] = useState("");
   const [copiedKey, setCopiedKey] = useState("");
+const [showTopButton, setShowTopButton] = useState(false);const [copiedKey, setCopiedKey] = useState("");
 
   useEffect(() => {
-    const saved = sessionStorage.getItem(ADMIN_KEY_STORAGE) || "";
-    if (saved) {
-      setAdminKey(saved);
-      setAdminKeyInput(saved);
-    }
-  }, []);
+  const saved = sessionStorage.getItem(ADMIN_KEY_STORAGE) || "";
+  if (saved) {
+    setAdminKey(saved);
+    setAdminKeyInput(saved);
+  }
+}, []);
+
+useEffect(() => {
+  const onScroll = () => {
+    setShowTopButton(window.scrollY > 500);
+  };
+
+  onScroll();
+  window.addEventListener("scroll", onScroll);
+  return () => window.removeEventListener("scroll", onScroll);
+}, []);
 
   useEffect(() => {
     if (!adminKey) return;
@@ -764,6 +775,21 @@ className={`rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-lef
           </table>
         </div>
       </section>
+
+      {showTopButton ? (
+        <button
+          type="button"
+          onClick={() =>
+            window.scrollTo({
+              top: 0,
+              behavior: "smooth",
+            })
+          }
+          className="fixed bottom-5 right-5 z-50 rounded-2xl border border-gray-700 bg-gray-800 px-4 py-3 text-sm font-medium text-white shadow-lg transition hover:bg-gray-700 md:bottom-6 md:right-8 md:px-5"
+        >
+          Back to top
+        </button>
+      ) : null}
     </main>
   );
 }
