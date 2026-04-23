@@ -87,14 +87,6 @@ const [categoryFilter, setCategoryFilter] = useState<"all" | CategoryOption>("al
   }, []);
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      setSearchTerm(searchInput.trim());
-    }, 250);
-
-    return () => clearTimeout(timeout);
-  }, [searchInput]);
-
-  useEffect(() => {
     if (!adminKey) return;
 
     const loadSubmissions = async () => {
@@ -103,9 +95,9 @@ const [categoryFilter, setCategoryFilter] = useState<"all" | CategoryOption>("al
 
       try {
         const url = new URL("/api/admin/poll-submissions", window.location.origin);
-        if (searchTerm) {
-          url.searchParams.set("q", searchTerm);
-        }
+        if (searchInput.trim()) {
+  url.searchParams.set("q", searchInput.trim());
+}
 
         const response = await fetch(url.toString(), {
           headers: {
@@ -163,7 +155,7 @@ const [categoryFilter, setCategoryFilter] = useState<"all" | CategoryOption>("al
     };
 
     void loadSubmissions();
-  }, [adminKey, searchTerm]);
+  }, [adminKey, searchInput]);
 
   const handleUnlock = () => {
     const trimmed = adminKeyInput.trim();
