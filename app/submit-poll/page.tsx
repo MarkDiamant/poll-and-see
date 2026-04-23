@@ -446,10 +446,10 @@ setSuccessData(data as PollCreateResponse);
 
                      <div className="mt-6 space-y-2">
             <p className="text-[2rem] font-semibold text-white">
-              Get your shareable link instantly
+              Get your shareable link instantly below
             </p>
             <p className="text-sm text-gray-300 md:text-base">
-              No sign-up required. Your link will appear instantly below.
+              Your link will appear below. Completely free. No sign-up required.
             </p>
           </div>
         </div>
@@ -632,7 +632,7 @@ setSuccessData(data as PollCreateResponse);
                 </label>
 
                 <p className="text-xs text-gray-300">
-                  Never shown publicly on Poll & See.
+                  Private polls are never shown publicly on Poll & See.
                 </p>
 
                 <p className="text-xs text-gray-300">
