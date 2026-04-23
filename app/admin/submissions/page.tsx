@@ -67,6 +67,7 @@ export default function AdminSubmissionsPage() {
 const [privacyFilter, setPrivacyFilter] = useState<"all" | "public" | "private">("all");
 const [categoryFilter, setCategoryFilter] = useState<"all" | CategoryOption>("all");
   const [submissions, setSubmissions] = useState<PollSubmissionRow[]>([]);
+const [livePollCount, setLivePollCount] = useState(0);
   const [questionEdits, setQuestionEdits] = useState<Record<number, string>>({});
   const [descriptionEdits, setDescriptionEdits] = useState<Record<number, string>>({});
   const [optionsEdits, setOptionsEdits] = useState<Record<number, string>>({});
@@ -130,7 +131,8 @@ useEffect(() => {
         }
 
         const nextSubmissions = data.submissions || [];
-        setSubmissions(nextSubmissions);
+setSubmissions(nextSubmissions);
+setLivePollCount(data.livePollCount || 0);
 
         setQuestionEdits(
           Object.fromEntries(nextSubmissions.map((row: PollSubmissionRow) => [row.id, row.question]))
@@ -188,7 +190,8 @@ useEffect(() => {
     setAdminKey("");
     setAdminKeyInput("");
     setSubmissions([]);
-    setQuestionEdits({});
+setLivePollCount(0);
+setQuestionEdits({});
     setDescriptionEdits({});
     setOptionsEdits({});
     setImageUrlEdits({});
@@ -438,12 +441,13 @@ const sortedSubmissions = useMemo(() => {
 
 <div className="flex flex-wrap items-center gap-3">
   <nav className="flex items-center gap-2">
-    <Link
-      href="/admin/polls"
-      className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
-    >
-      Live Polls
-    </Link>
+   <Link
+  href="/admin/polls"
+  className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+>
+  <span>Live Polls</span>
+  {badge(livePollCount, false)}
+</Link>
     <Link
       href="/admin/submissions"
       className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-black"

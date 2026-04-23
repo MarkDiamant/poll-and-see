@@ -55,21 +55,27 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const [{ data, error }, { data: pollSlugRows, error: slugError }] = await Promise.all([
-      query,
-      supabaseAdmin.from("polls").select("slug").not("slug", "is", null),
-    ]);
+   const [
+  { data, error },
+  { data: pollSlugRows, error: slugError },
+  livePollCountResult,
+] = await Promise.all([
+  query,
+  supabaseAdmin.from("polls").select("slug").not("slug", "is", null),
+  supabaseAdmin.from("polls").select("id", { count: "exact", head: true }),
+]);
 
-    if (error || slugError) {
-      return NextResponse.json({ error: "Could not load submissions." }, { status: 500 });
-    }
+if (error || slugError) {
+  return NextResponse.json({ error: "Could not load submissions." }, { status: 500 });
+}
 
-    return NextResponse.json({
-      submissions: data || [],
-      allPollSlugs: (pollSlugRows || [])
-        .map((row) => row.slug)
-        .filter((slug): slug is string => Boolean(slug)),
-    });
+return NextResponse.json({
+  submissions: data || [],
+  allPollSlugs: (pollSlugRows || [])
+    .map((row) => row.slug)
+    .filter((slug): slug is string => Boolean(slug)),
+  livePollCount: livePollCountResult.count || 0,
+});
   } catch {
     return NextResponse.json({ error: "Could not load submissions." }, { status: 500 });
   }
