@@ -295,8 +295,8 @@ const [totalVoteCount, setTotalVoteCount] = useState<number | null>(null);
         table: "votes",
       },
       () => {
-        setTotalVoteCount((prev) => prev + 1);
-      }
+  setTotalVoteCount((prev) => (prev ?? 0) + 1);
+}
     )
     .subscribe();
 
