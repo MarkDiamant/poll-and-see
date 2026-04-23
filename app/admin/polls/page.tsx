@@ -114,6 +114,7 @@ const [searchInput, setSearchInput] = useState("");
 const [privacyFilter, setPrivacyFilter] = useState<"all" | "public" | "private">("all");
 const [categoryFilter, setCategoryFilter] = useState<"all" | CategoryOption>("all");
   const [polls, setPolls] = useState<PollRow[]>([]);
+  const totalPollCount = polls.length;
   const [pendingSubmissionsCount, setPendingSubmissionsCount] = useState(0);
 
   const [questionEdits, setQuestionEdits] = useState<Record<number, string>>({});
@@ -452,7 +453,7 @@ const sortedPolls = useMemo(() => {
       className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-black"
     >
       <span>Live Polls</span>
-  {badge(sortedPolls.length, true)}
+  {badge(totalPollCount, false)}
     </Link>
     <Link
       href="/admin/submissions"
