@@ -1301,10 +1301,9 @@ const trendingPolls = useMemo(() => {
                       </span>
                     </div>
 
-                    <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
-                    <p className="mb-3 text-sm text-gray-300">{poll.description}</p>
+                    <h4 className="mb-3 text-lg font-semibold">{poll.question}</h4>
 
-                    <div className="flex items-center justify-end gap-1.5 text-sm text-gray-400 md:mt-auto">
+<div className="flex items-center justify-end gap-1.5 text-sm text-gray-400 md:mt-auto">
                       <span>View poll</span>
                       <span aria-hidden="true" className="text-base leading-none">
                         ›
@@ -1493,10 +1492,9 @@ const trendingPolls = useMemo(() => {
                     ) : null}
                   </div>
 
-                  <h4 className="mb-2 text-lg font-semibold">{poll.question}</h4>
-                  <p className="mb-4 text-sm text-gray-300">{poll.description}</p>
+<h4 className="mb-4 text-lg font-semibold">{poll.question}</h4>
 
-                  <div className="flex items-center justify-between gap-3 md:mt-auto">
+<div className="flex items-center justify-between gap-3 md:mt-auto">
                     <div className="text-xs">
   {votedPollIds.includes(poll.id) ? (
     <span className="flex items-center gap-1 text-green-400">
