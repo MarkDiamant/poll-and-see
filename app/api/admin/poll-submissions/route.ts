@@ -137,8 +137,8 @@ export async function POST(request: NextRequest) {
     const category = String(body.category || "General").trim() || "General";
     const is_private = Boolean(body.is_private);
     const options = Array.isArray(body.options)
-      ? body.options.map((item: unknown) => String(item || "").trim()).filter(Boolean)
-      : [];
+  ? body.options.map((item: unknown) => String(item || "").trim()).filter(Boolean)
+  : [];
     const option_image_urls = Array.isArray(body.option_image_urls)
       ? body.option_image_urls.map((item: unknown) => String(item || "").trim())
       : [];
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Maximum 6 options allowed." }, { status: 400 });
     }
 
-    if (options.some((option) => option.length > 40)) {
+    if (options.some((option: string) => option.length > 40)) {
       return NextResponse.json({ error: "Each option must be 40 characters or fewer." }, { status: 400 });
     }
 
