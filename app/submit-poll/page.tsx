@@ -456,45 +456,54 @@ setSuccessData(data as PollCreateResponse);
 
         <div className="mt-9 bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
           {successData ? (
-            <div className="space-y-5">
-              <div>
-                <h2 className="text-2xl font-semibold text-white">Your poll is live</h2>
-              </div>
+  <div className="space-y-5">
+  <div className="space-y-2">
+    <p className="text-[2rem] font-semibold text-white">
+      Get your shareable link instantly
+    </p>
+    <p className="text-sm text-gray-300 md:text-base">
+      Completely free. No sign-up required.
+    </p>
+    <h2 className="pt-1 text-2xl font-semibold text-white">Your poll is live</h2>
+  </div>
 
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={() => void handleCopy()}
-                  className="rounded-xl bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-500"
-                >
-                  Copy link
-                </button>
+  <div className="flex flex-col gap-3 sm:flex-row">
+    <button
+      type="button"
+      onClick={() => void handleCopy()}
+      className="cursor-pointer rounded-xl bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-500"
+    >
+      Copy link
+    </button>
 
-                <button
-                  type="button"
-                  onClick={() => void handleShare()}
-                  className="rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800"
-                >
-                  Share
-                </button>
-              </div>
+    <button
+      type="button"
+      onClick={() => void handleShare()}
+      className="cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800"
+    >
+      Share
+    </button>
+  </div>
 
-              <div className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 break-all text-sm text-gray-200">
-                {successData.pollUrl}
-              </div>
+  <div className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 break-all text-sm text-gray-200">
+    {successData.pollUrl}
+  </div>
 
-              <p className="text-sm text-gray-400">
-                Public polls may appear on Poll & See after review.
-              </p>
+  <button
+    type="button"
+    onClick={resetPollFields}
+    className="cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800"
+  >
+    Create another poll
+  </button>
 
-              <button
-                type="button"
-                onClick={resetPollFields}
-                className="rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800"
-              >
-                Create another poll
-              </button>
-            </div>
+  <Link
+    href="/"
+    className="inline-flex cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800"
+  >
+    Back to home
+  </Link>
+</div>
                     ) : (
             <>
              
