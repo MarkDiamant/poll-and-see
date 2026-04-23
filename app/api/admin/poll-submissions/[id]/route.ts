@@ -210,8 +210,12 @@ export async function PATCH(
       }
 
       if ("options" in body || "option_image_urls" in body) {
-        const nextOptions = (data.options || []).map((item) => item.trim()).filter(Boolean);
-        const nextImageUrls = (data.option_image_urls || []).map((item) => (item || "").trim());
+const nextOptions = (data.options || [])
+  .map((item: string) => item.trim())
+  .filter(Boolean);
+
+const nextImageUrls = (data.option_image_urls || [])
+  .map((item: string | null) => (item || "").trim());
 
         const { data: existingOptions } = await supabaseAdmin
           .from("poll_options")
