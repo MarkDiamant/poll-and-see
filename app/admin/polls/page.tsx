@@ -586,7 +586,7 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
   onChange={(event) =>
     updateOptionText(poll.id, optionIndex, event.target.value)
   }
-  className="min-w-0 rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
+ className="w-full min-w-0 rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
   placeholder="Option text"
 />
 
@@ -596,30 +596,28 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
   onChange={(event) =>
     updateOptionImageUrl(poll.id, optionIndex, event.target.value)
   }
-  className="w-[140px] rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
+ className="w-[120px] rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
   placeholder="Image URL (optional)"
 />
 
-  <div className="flex min-w-[28px] items-start justify-end pt-1 text-[11px] text-gray-400">
-    <div className="flex flex-col items-end gap-1">
-      <span>{option.vote_count}</span>
-      {(optionEdits[poll.id] || []).length > 2 ? (
-        <button
-          type="button"
-          onClick={() => {
-            const next = [...(optionEdits[poll.id] || [])];
-            next.splice(optionIndex, 1);
-            setOptionEdits((current) => ({ ...current, [poll.id]: next }));
-          }}
-        className="cursor-pointer text-sm font-bold leading-none text-red-400 hover:text-red-300"
-          aria-label="Remove option"
-          title="Remove option"
-        >
-          X
-        </button>
-      ) : null}
-    </div>
-  </div>
+  <div className="flex items-center gap-2 text-[11px] text-gray-400">
+  <span>{option.vote_count}</span>
+  {(optionEdits[poll.id] || []).length > 2 ? (
+    <button
+      type="button"
+      onClick={() => {
+        const next = [...(optionEdits[poll.id] || [])];
+        next.splice(optionIndex, 1);
+        setOptionEdits((current) => ({ ...current, [poll.id]: next }));
+      }}
+      className="cursor-pointer text-base font-bold leading-none text-red-400 hover:text-red-300"
+      aria-label="Remove option"
+      title="Remove option"
+    >
+      X
+    </button>
+  ) : null}
+</div>
 </div>
 ))}
 
