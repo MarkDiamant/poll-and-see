@@ -139,8 +139,11 @@ export async function POST(
         .single();
 
       if (pollUpdateError || !updatedPoll) {
-        return NextResponse.json({ error: "Could not approve submission." }, { status: 500 });
-      }
+  return NextResponse.json(
+    { error: pollUpdateError?.message || "Could not approve submission." },
+    { status: 500 }
+  );
+}
 
       const options = typedSubmission.options || [];
       const optionImageUrls = typedSubmission.option_image_urls || [];
@@ -227,8 +230,11 @@ export async function POST(
       .single();
 
     if (pollInsertError || !insertedPoll) {
-      return NextResponse.json({ error: "Could not create poll." }, { status: 500 });
-    }
+  return NextResponse.json(
+    { error: pollInsertError?.message || "Could not create poll." },
+    { status: 500 }
+  );
+}
 
     const optionRows = options.map((optionText: string, index: number) => ({
       poll_id: insertedPoll.id,
@@ -242,9 +248,12 @@ export async function POST(
       .insert(optionRows);
 
     if (optionsInsertError) {
-      await supabaseAdmin.from("polls").delete().eq("id", insertedPoll.id);
-      return NextResponse.json({ error: "Could not create poll options." }, { status: 500 });
-    }
+  await supabaseAdmin.from("polls").delete().eq("id", insertedPoll.id);
+  return NextResponse.json(
+    { error: optionsInsertError.message || "Could not create poll options." },
+    { status: 500 }
+  );
+}
 
     const { error: deleteSubmissionError } = await supabaseAdmin
       .from("poll_submissions")
@@ -259,7 +268,10 @@ export async function POST(
     }
 
     return NextResponse.json({ poll: insertedPoll });
-  } catch {
-    return NextResponse.json({ error: "Could not approve submission." }, { status: 500 });
-  }
+  } catch (error) {
+  return NextResponse.json(
+    { error: error instanceof Error ? error.message : "Could not approve submission." },
+    { status: 500 }
+  );
+}
 }

@@ -207,8 +207,11 @@ const cleanedImageUrls = hasAnyImageUrls ? option_image_urls : [];
       .single();
 
     if (pollInsertError || !insertedPoll) {
-      return NextResponse.json({ error: "Could not create poll." }, { status: 500 });
-    }
+  return NextResponse.json(
+    { error: pollInsertError?.message || "Could not create poll." },
+    { status: 500 }
+  );
+}
 
     const optionRows = options.map((optionText: string, index: number) => ({
       poll_id: insertedPoll.id,
@@ -221,10 +224,13 @@ const cleanedImageUrls = hasAnyImageUrls ? option_image_urls : [];
       .from("poll_options")
       .insert(optionRows);
 
-    if (optionsInsertError) {
-      await supabaseAdmin.from("polls").delete().eq("id", insertedPoll.id);
-      return NextResponse.json({ error: "Could not create poll options." }, { status: 500 });
-    }
+  if (optionsInsertError) {
+  await supabaseAdmin.from("polls").delete().eq("id", insertedPoll.id);
+  return NextResponse.json(
+    { error: optionsInsertError.message || "Could not create poll options." },
+    { status: 500 }
+  );
+}
 
     const { data: submission, error: submissionInsertError } = await supabaseAdmin
       .from("poll_submissions")
@@ -244,10 +250,13 @@ const cleanedImageUrls = hasAnyImageUrls ? option_image_urls : [];
       .single();
 
     if (submissionInsertError || !submission) {
-      await supabaseAdmin.from("poll_options").delete().eq("poll_id", insertedPoll.id);
-      await supabaseAdmin.from("polls").delete().eq("id", insertedPoll.id);
-      return NextResponse.json({ error: "Could not create submission." }, { status: 500 });
-    }
+  await supabaseAdmin.from("poll_options").delete().eq("poll_id", insertedPoll.id);
+  await supabaseAdmin.from("polls").delete().eq("id", insertedPoll.id);
+  return NextResponse.json(
+    { error: submissionInsertError?.message || "Could not create submission." },
+    { status: 500 }
+  );
+}
 
     return NextResponse.json({
       submission: {
@@ -257,7 +266,10 @@ const cleanedImageUrls = hasAnyImageUrls ? option_image_urls : [];
       pollUrl,
       slug,
     });
-  } catch {
-    return NextResponse.json({ error: "Could not create submission." }, { status: 500 });
-  }
+  } catch (error) {
+  return NextResponse.json(
+    { error: error instanceof Error ? error.message : "Could not create submission." },
+    { status: 500 }
+  );
+}
 }
