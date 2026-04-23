@@ -453,7 +453,7 @@ const sortedPolls = useMemo(() => {
   className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-black"
 >
   <span>Live Polls</span>
-  {badge(sortedPolls.length, true)}
+  {badge(polls.length, true)}
 </Link>
     <Link
       href="/admin/submissions"
