@@ -201,7 +201,6 @@ const cleanedImageUrls = hasAnyImageUrls ? option_image_urls : [];
         is_private,
         is_publicly_listed: false,
         total_votes: 0,
-        full_url: pollUrl,
       })
       .select("id, slug")
       .single();

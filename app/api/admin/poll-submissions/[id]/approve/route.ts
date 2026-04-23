@@ -120,18 +120,15 @@ export async function POST(
         return NextResponse.json({ error: "Linked poll not found." }, { status: 404 });
       }
 
-      const { data: updatedPoll, error: pollUpdateError } = await supabaseAdmin
-        .from("polls")
-        .update({
-          question: typedSubmission.question,
-          description: typedSubmission.description || "",
-          category: typedSubmission.category || "General",
-          is_private: Boolean(typedSubmission.is_private),
-          is_publicly_listed: !Boolean(typedSubmission.is_private),
-          full_url: existingPoll.slug
-            ? `https://www.pollandsee.com/poll/${existingPoll.slug}`
-            : null,
-        })
+const { data: updatedPoll, error: pollUpdateError } = await supabaseAdmin
+  .from("polls")
+  .update({
+    question: typedSubmission.question,
+    description: typedSubmission.description || "",
+    category: typedSubmission.category || "General",
+    is_private: Boolean(typedSubmission.is_private),
+    is_publicly_listed: !Boolean(typedSubmission.is_private),
+  })
         .eq("id", typedSubmission.poll_id)
         .select(
           "id, question, description, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed"
@@ -222,7 +219,6 @@ export async function POST(
         is_private: Boolean(typedSubmission.is_private),
         is_publicly_listed: !Boolean(typedSubmission.is_private),
         total_votes: 0,
-        full_url: `https://www.pollandsee.com/poll/${slug}`,
       })
       .select(
         "id, question, description, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed"
