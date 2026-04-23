@@ -446,9 +446,11 @@ export default function AdminSubmissionsPage() {
             .split("\n")
             .map((item) => item.trim())
             .filter(Boolean),
-          option_image_urls: newImageUrls
-            .split("\n")
-            .map((item) => item.trim()),
+          option_image_urls: newImageUrls.trim()
+  ? newImageUrls
+      .split("\n")
+      .map((item) => item.trim())
+  : [],
         }),
       });
 

@@ -11,7 +11,6 @@ type SubmissionRow = {
   options: string[] | null;
   option_image_urls: string[] | null;
   is_private: boolean | null;
-  slug: string | null;
   status: "pending" | "ready";
   created_at: string | null;
 };
@@ -47,18 +46,33 @@ function isAuthorized(request: NextRequest) {
   return { ok: true };
 }
 
-function isValidSlug(slug: string) {
-  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug);
+function generateShortId(length = 6) {
+  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  let result = "";
+
+  for (let i = 0; i < length; i += 1) {
+    result += chars[Math.floor(Math.random() * chars.length)];
+  }
+
+  return result;
 }
 
-function createSlugFromQuestion(question: string) {
-  return question
-    .toLowerCase()
-    .trim()
-    .replace(/['’]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80);
+async function generateUniqueSlug(supabaseAdmin: ReturnType<typeof getAdminClient>) {
+  for (let i = 0; i < 20; i += 1) {
+    const candidate = generateShortId(6);
+
+    const { data: existingPoll } = await supabaseAdmin
+      .from("polls")
+      .select("id")
+      .eq("slug", candidate)
+      .maybeSingle();
+
+    if (!existingPoll) {
+      return candidate;
+    }
+  }
+
+  throw new Error("Could not generate a unique short ID.");
 }
 
 export async function POST(
@@ -79,12 +93,11 @@ export async function POST(
       return NextResponse.json({ error: "Invalid submission id." }, { status: 400 });
     }
 
-    const body = (await request.json()) as { slug?: string };
     const supabaseAdmin = getAdminClient();
 
     const { data: submission, error: submissionError } = await supabaseAdmin
       .from("poll_submissions")
-      .select("id, poll_id, email, question, description, category, options, option_image_urls, is_private, slug, status, created_at")
+      .select("id, poll_id, email, question, description, category, options, option_image_urls, is_private, status, created_at")
       .eq("id", submissionId)
       .single();
 
@@ -93,29 +106,18 @@ export async function POST(
     }
 
     const typedSubmission = submission as SubmissionRow;
-    const slug = (body.slug || typedSubmission.slug || createSlugFromQuestion(typedSubmission.question)).trim();
-
-    if (!slug) {
-      return NextResponse.json({ error: "Slug is required." }, { status: 400 });
-    }
-
-    if (!isValidSlug(slug)) {
-      return NextResponse.json(
-        { error: "Slug must use lowercase letters, numbers, and hyphens only." },
-        { status: 400 }
-      );
-    }
 
     if (typedSubmission.poll_id) {
-      const { data: existingPoll } = await supabaseAdmin
+      const { data: existingPoll, error: existingPollError } = await supabaseAdmin
         .from("polls")
-        .select("id")
-        .eq("slug", slug)
-        .neq("id", typedSubmission.poll_id)
-        .maybeSingle();
+        .select(
+          "id, question, description, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed"
+        )
+        .eq("id", typedSubmission.poll_id)
+        .single();
 
-      if (existingPoll) {
-        return NextResponse.json({ error: "Slug already exists." }, { status: 400 });
+      if (existingPollError || !existingPoll) {
+        return NextResponse.json({ error: "Linked poll not found." }, { status: 404 });
       }
 
       const { data: updatedPoll, error: pollUpdateError } = await supabaseAdmin
@@ -124,10 +126,11 @@ export async function POST(
           question: typedSubmission.question,
           description: typedSubmission.description || "",
           category: typedSubmission.category || "General",
-          slug,
           is_private: Boolean(typedSubmission.is_private),
           is_publicly_listed: !Boolean(typedSubmission.is_private),
-          full_url: `https://www.pollandsee.com/poll/${slug}`,
+          full_url: existingPoll.slug
+            ? `https://www.pollandsee.com/poll/${existingPoll.slug}`
+            : null,
         })
         .eq("id", typedSubmission.poll_id)
         .select(
@@ -136,7 +139,50 @@ export async function POST(
         .single();
 
       if (pollUpdateError || !updatedPoll) {
-        return NextResponse.json({ error: "Could not publish submission." }, { status: 500 });
+        return NextResponse.json({ error: "Could not approve submission." }, { status: 500 });
+      }
+
+      const options = typedSubmission.options || [];
+      const optionImageUrls = typedSubmission.option_image_urls || [];
+
+      if (options.length < 2) {
+        return NextResponse.json({ error: "Submission must have at least 2 options." }, { status: 400 });
+      }
+
+      const { data: existingOptions } = await supabaseAdmin
+        .from("poll_options")
+        .select("id")
+        .eq("poll_id", typedSubmission.poll_id)
+        .order("id", { ascending: true });
+
+      const optionRows = existingOptions || [];
+      const limit = Math.max(options.length, optionRows.length);
+
+      for (let index = 0; index < limit; index += 1) {
+        const existingOption = optionRows[index];
+        const nextText = options[index];
+        const nextImageUrl = optionImageUrls[index] || null;
+
+        if (existingOption && nextText) {
+          await supabaseAdmin
+            .from("poll_options")
+            .update({
+              option_text: nextText,
+              image_url: nextImageUrl,
+            })
+            .eq("id", existingOption.id);
+        } else if (!existingOption && nextText) {
+          await supabaseAdmin
+            .from("poll_options")
+            .insert({
+              poll_id: typedSubmission.poll_id,
+              option_text: nextText,
+              vote_count: 0,
+              image_url: nextImageUrl,
+            });
+        } else if (existingOption && !nextText) {
+          await supabaseAdmin.from("poll_options").delete().eq("id", existingOption.id);
+        }
       }
 
       const { error: deleteSubmissionError } = await supabaseAdmin
@@ -146,7 +192,7 @@ export async function POST(
 
       if (deleteSubmissionError) {
         return NextResponse.json(
-          { error: "Poll published, but submission could not be removed. Please delete it manually." },
+          { error: "Poll approved, but submission could not be removed. Please delete it manually." },
           { status: 500 }
         );
       }
@@ -154,16 +200,7 @@ export async function POST(
       return NextResponse.json({ poll: updatedPoll });
     }
 
-    const { data: existingPoll } = await supabaseAdmin
-      .from("polls")
-      .select("id")
-      .eq("slug", slug)
-      .maybeSingle();
-
-    if (existingPoll) {
-      return NextResponse.json({ error: "Slug already exists." }, { status: 400 });
-    }
-
+    const slug = await generateUniqueSlug(supabaseAdmin);
     const options = typedSubmission.options || [];
     const optionImageUrls = typedSubmission.option_image_urls || [];
 
@@ -193,7 +230,7 @@ export async function POST(
       return NextResponse.json({ error: "Could not create poll." }, { status: 500 });
     }
 
-    const optionRows = options.map((optionText, index) => ({
+    const optionRows = options.map((optionText: string, index: number) => ({
       poll_id: insertedPoll.id,
       option_text: optionText,
       vote_count: 0,

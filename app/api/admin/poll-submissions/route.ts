@@ -149,8 +149,11 @@ export async function POST(request: NextRequest) {
       ? body.options.map((item: unknown) => String(item || "").trim()).filter(Boolean)
       : [];
     const option_image_urls = Array.isArray(body.option_image_urls)
-      ? body.option_image_urls.map((item: unknown) => String(item || "").trim())
-      : [];
+  ? body.option_image_urls.map((item: unknown) => String(item || "").trim())
+  : [];
+
+const hasAnyImageUrls = option_image_urls.some(Boolean);
+const cleanedImageUrls = hasAnyImageUrls ? option_image_urls : [];
 
     if (!question) {
       return NextResponse.json({ error: "Question is required." }, { status: 400 });
@@ -176,12 +179,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Each option must be 40 characters or fewer." }, { status: 400 });
     }
 
-    if (option_image_urls.length > 0 && option_image_urls.length !== options.length) {
-      return NextResponse.json(
-        { error: "If image URLs are used, every option must include one." },
-        { status: 400 }
-      );
-    }
+   if (cleanedImageUrls.length > 0 && cleanedImageUrls.length !== options.length) {
+  return NextResponse.json(
+    { error: "If image URLs are used, every option must include one." },
+    { status: 400 }
+  );
+}
 
     const slug = await generateUniqueSlug(supabaseAdmin);
     const baseUrl = getBaseUrl(request);
@@ -211,7 +214,7 @@ export async function POST(request: NextRequest) {
       poll_id: insertedPoll.id,
       option_text: optionText,
       vote_count: 0,
-      image_url: option_image_urls[index] || null,
+      image_url: cleanedImageUrls[index] || null,
     }));
 
     const { error: optionsInsertError } = await supabaseAdmin
@@ -233,7 +236,7 @@ export async function POST(request: NextRequest) {
         description: description || null,
         category,
         options,
-        option_image_urls: option_image_urls.length > 0 ? option_image_urls : null,
+        option_image_urls: cleanedImageUrls.length > 0 ? cleanedImageUrls : null,
         is_private,
         status: "pending",
       })
