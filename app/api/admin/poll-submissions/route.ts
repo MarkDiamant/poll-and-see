@@ -90,11 +90,11 @@ export async function POST(request: NextRequest) {
     const category = String(body.category || "General").trim();
     const is_private = Boolean(body.is_private);
     const options = Array.isArray(body.options)
-      ? body.options.map((item) => String(item || "").trim()).filter(Boolean)
-      : [];
-    const option_image_urls = Array.isArray(body.option_image_urls)
-      ? body.option_image_urls.map((item) => String(item || "").trim())
-      : [];
+  ? body.options.map((item: unknown) => String(item || "").trim()).filter(Boolean)
+  : [];
+const option_image_urls = Array.isArray(body.option_image_urls)
+  ? body.option_image_urls.map((item: unknown) => String(item || "").trim())
+  : [];
 
     if (!question) {
       return NextResponse.json({ error: "Question is required." }, { status: 400 });
