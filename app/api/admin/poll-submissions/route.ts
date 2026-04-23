@@ -85,35 +85,44 @@ export async function GET(request: NextRequest) {
 
     let query = supabaseAdmin
       .from("poll_submissions")
-      .select("id, email, question, description, category, options, option_image_urls, is_private, slug, status, created_at")
+      .select("id, poll_id, email, question, description, category, options, option_image_urls, is_private, status, created_at")
       .order("created_at", { ascending: false });
 
     if (search) {
       const safeSearch = search.replace(/[%(),]/g, " ");
       query = query.or(
-        `question.ilike.%${safeSearch}%,description.ilike.%${safeSearch}%,email.ilike.%${safeSearch}%,slug.ilike.%${safeSearch}%`
+        `question.ilike.%${safeSearch}%,description.ilike.%${safeSearch}%,email.ilike.%${safeSearch}%`
       );
     }
 
     const [
       { data, error },
-      { data: pollSlugRows, error: slugError },
+      { data: pollRows, error: pollRowsError },
       livePollCountResult,
     ] = await Promise.all([
       query,
-      supabaseAdmin.from("polls").select("slug").not("slug", "is", null),
+      supabaseAdmin.from("polls").select("id, slug"),
       supabaseAdmin.from("polls").select("id", { count: "exact", head: true }),
     ]);
 
-    if (error || slugError) {
+    if (error || pollRowsError) {
       return NextResponse.json({ error: "Could not load submissions." }, { status: 500 });
     }
 
+    const slugByPollId = new Map<number, string>();
+    (pollRows || []).forEach((row) => {
+      if (row.slug) {
+        slugByPollId.set(row.id, row.slug);
+      }
+    });
+
+    const submissions = (data || []).map((row) => ({
+      ...row,
+      slug: row.poll_id ? slugByPollId.get(row.poll_id) || null : null,
+    }));
+
     return NextResponse.json({
-      submissions: data || [],
-      allPollSlugs: (pollSlugRows || [])
-        .map((row) => row.slug)
-        .filter((slug): slug is string => Boolean(slug)),
+      submissions,
       livePollCount: livePollCountResult.count || 0,
     });
   } catch {
@@ -137,8 +146,8 @@ export async function POST(request: NextRequest) {
     const category = String(body.category || "General").trim() || "General";
     const is_private = Boolean(body.is_private);
     const options = Array.isArray(body.options)
-  ? body.options.map((item: unknown) => String(item || "").trim()).filter(Boolean)
-  : [];
+      ? body.options.map((item: unknown) => String(item || "").trim()).filter(Boolean)
+      : [];
     const option_image_urls = Array.isArray(body.option_image_urls)
       ? body.option_image_urls.map((item: unknown) => String(item || "").trim())
       : [];
@@ -226,10 +235,9 @@ export async function POST(request: NextRequest) {
         options,
         option_image_urls: option_image_urls.length > 0 ? option_image_urls : null,
         is_private,
-        slug,
         status: "pending",
       })
-      .select("id, email, question, description, category, options, option_image_urls, is_private, slug, status, created_at")
+      .select("id, poll_id, email, question, description, category, options, option_image_urls, is_private, status, created_at")
       .single();
 
     if (submissionInsertError || !submission) {
@@ -239,7 +247,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      submission,
+      submission: {
+        ...submission,
+        slug,
+      },
       pollUrl,
       slug,
     });

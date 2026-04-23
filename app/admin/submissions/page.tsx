@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 type PollSubmissionRow = {
   id: number;
+  poll_id: number | null;
   email: string | null;
   question: string;
   description: string | null;
@@ -37,16 +38,6 @@ const CATEGORY_OPTIONS: CategoryOption[] = [
 ];
 
 const ADMIN_KEY_STORAGE = "pollandsee-admin-key";
-
-function createSlugFromQuestion(question: string) {
-  return question
-    .toLowerCase()
-    .trim()
-    .replace(/['’]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80);
-}
 
 function badge(count: number, isActive: boolean) {
   return (
@@ -828,9 +819,7 @@ export default function AdminSubmissionsPage() {
                           {submission.created_at
                             ? ` • ${new Date(submission.created_at).toLocaleString()}`
                             : ""}
-                          {submission.slug
-                            ? ` • /poll/${submission.slug}`
-                            : ` • ${createSlugFromQuestion(submission.question)}`}
+                          {submission.slug ? ` • /poll/${submission.slug}` : " • no live link yet"}
                         </p>
                       </div>
                     </td>
