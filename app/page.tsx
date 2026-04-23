@@ -1281,7 +1281,7 @@ const trendingPolls = useMemo(() => {
                     key={poll.id}
                     href={`/poll/${poll.slug}`}
                     onClick={() => handlePollClick(poll)}
-                   className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gray-900/60 p-4 transition hover:border-gray-500 flex flex-col min-h-[190px]"
+                   className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gray-900/60 p-4 transition hover:border-gray-500 flex min-h-[190px] flex-col justify-between"
                   >
                 
                        <div className="mb-3 flex items-start justify-between gap-3">
@@ -1301,11 +1301,11 @@ const trendingPolls = useMemo(() => {
                       </span>
                     </div>
 
-<div className="flex-1 flex items-start">
-  <h4 className="text-lg font-semibold">{poll.question}</h4>
+<div className="flex-1 py-2">
+  <h4 className="text-left text-lg font-semibold">{poll.question}</h4>
 </div>
 
-<div className="mt-4 flex items-center justify-end gap-1.5 text-sm text-gray-400">
+<div className="flex items-center justify-end gap-1.5 text-sm text-gray-400">
                       <span>View poll</span>
                       <span aria-hidden="true" className="text-base leading-none">
                         ›
@@ -1472,7 +1472,7 @@ const trendingPolls = useMemo(() => {
                   id={`poll-card-${poll.slug}`}
                   href={`/poll/${poll.slug}`}
                   onClick={() => handlePollClick(poll)}
-                  className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 p-4 shadow-lg transition hover:border-gray-500 flex flex-col min-h-[190px]"
+                  className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 p-4 shadow-lg transition hover:border-gray-500 flex min-h-[190px] flex-col justify-between"
                 >
                   
                                     <div className="mb-3 flex items-center">
@@ -1494,11 +1494,11 @@ const trendingPolls = useMemo(() => {
                     ) : null}
                   </div>
 
-<div className="flex-1 flex items-start">
-  <h4 className="text-lg font-semibold">{poll.question}</h4>
+<div className="flex-1 py-2">
+  <h4 className="text-left text-lg font-semibold">{poll.question}</h4>
 </div>
 
-<div className="mt-4 flex items-center justify-between gap-3">
+<div className="flex items-center justify-between gap-3">
                     <div className="text-xs">
   {votedPollIds.includes(poll.id) ? (
     <span className="flex items-center gap-1 text-green-400">
