@@ -138,14 +138,6 @@ const [categoryFilter, setCategoryFilter] = useState<"all" | CategoryOption>("al
   }, []);
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      setSearchTerm(searchInput.trim());
-    }, 250);
-
-    return () => clearTimeout(timeout);
-  }, [searchInput]);
-
-  useEffect(() => {
     if (!adminKey) return;
 
     const loadPolls = async () => {
