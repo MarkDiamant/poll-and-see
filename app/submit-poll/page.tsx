@@ -449,7 +449,7 @@ setSuccessData(data as PollCreateResponse);
               Get your shareable link instantly below
             </p>
             <p className="text-sm text-gray-300 md:text-base">
-              Your link will appear below. Completely free. No sign-up required.
+              Completely free. No sign-up required.
             </p>
           </div>
         </div>
