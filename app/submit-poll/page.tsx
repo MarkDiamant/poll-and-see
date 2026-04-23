@@ -353,30 +353,37 @@ export default function SubmitPollPage() {
     setMessageType("");
 
     try {
-      const response = await fetch("/api/polls/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: email.trim() || null,
-          emailMeLink,
-          question: question.trim(),
-          description: description.trim() || null,
-          category: resolvedCategory,
-          options: cleanedOptions.map((option) => option.text),
-          optionImageUrls: usesImages ? cleanedOptions.map((option) => option.imageUrl) : [],
-          isPrivate,
-        }),
-      });
+    const response = await fetch("/api/polls/create", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    email: email.trim() || null,
+    emailMeLink,
+    question: question.trim(),
+    description: description.trim() || null,
+    category: resolvedCategory,
+    options: cleanedOptions.map((option) => option.text),
+    optionImageUrls: usesImages ? cleanedOptions.map((option) => option.imageUrl) : [],
+    isPrivate,
+  }),
+});
 
-      const data = await response.json();
+const rawText = await response.text();
+let data: PollCreateResponse | { error?: string } | null = null;
 
-      if (!response.ok) {
-        throw new Error(data.error || "Something went wrong. Please try again.");
-      }
+try {
+  data = rawText ? JSON.parse(rawText) : null;
+} catch {
+  throw new Error("Server returned an invalid response.");
+}
 
-      setSuccessData(data as PollCreateResponse);
+if (!response.ok) {
+  throw new Error((data && "error" in data && data.error) || "Something went wrong. Please try again.");
+}
+
+setSuccessData(data as PollCreateResponse);
       setMessageType("success");
       setMessage("");
       setSubmitting(false);

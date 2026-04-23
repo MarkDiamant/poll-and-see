@@ -195,6 +195,8 @@ export async function POST(request: NextRequest) {
     const category = (body.category || "General").trim() || "General";
     const options = (body.options || []).map((option) => option.trim()).filter(Boolean);
     const optionImageUrls = (body.optionImageUrls || []).map((url) => url.trim());
+    const hasAnyImageUrls = optionImageUrls.some(Boolean);
+    const cleanedImageUrls = hasAnyImageUrls ? optionImageUrls : [];
     const isPrivate = Boolean(body.isPrivate);
 
     if (!question) {
@@ -221,7 +223,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Each option must be 40 characters or fewer." }, { status: 400 });
     }
 
-    if (optionImageUrls.length > 0 && optionImageUrls.length !== options.length) {
+    if (cleanedImageUrls.length > 0 && cleanedImageUrls.length !== options.length) {
       return NextResponse.json(
         { error: "If image mode is enabled, every option must include an image URL." },
         { status: 400 }
@@ -252,33 +254,33 @@ export async function POST(request: NextRequest) {
     const baseUrl = getBaseUrl(request);
     const pollUrl = `${baseUrl}/poll/${slug}`;
 
-const { data: insertedPoll, error: pollInsertError } = await supabaseAdmin
-  .from("polls")
-  .insert({
-    question,
-    description,
-    category,
-    slug,
-    featured: false,
-    is_private: isPrivate,
-    is_publicly_listed: false,
-    total_votes: 0,
-  })
-  .select("id, slug")
-  .single();
+    const { data: insertedPoll, error: pollInsertError } = await supabaseAdmin
+      .from("polls")
+      .insert({
+        question,
+        description,
+        category,
+        slug,
+        featured: false,
+        is_private: isPrivate,
+        is_publicly_listed: false,
+        total_votes: 0,
+      })
+      .select("id, slug")
+      .single();
 
-   if (pollInsertError || !insertedPoll) {
-  return NextResponse.json(
-    { error: pollInsertError?.message || "Could not create poll." },
-    { status: 500 }
-  );
-}
+    if (pollInsertError || !insertedPoll) {
+      return NextResponse.json(
+        { error: pollInsertError?.message || "Could not create poll." },
+        { status: 500 }
+      );
+    }
 
     const optionRows = options.map((optionText, index) => ({
       poll_id: insertedPoll.id,
       option_text: optionText,
       vote_count: 0,
-      image_url: optionImageUrls[index] || null,
+      image_url: cleanedImageUrls[index] || null,
     }));
 
     const { error: optionsInsertError } = await supabaseAdmin
@@ -287,7 +289,10 @@ const { data: insertedPoll, error: pollInsertError } = await supabaseAdmin
 
     if (optionsInsertError) {
       await supabaseAdmin.from("polls").delete().eq("id", insertedPoll.id);
-      return NextResponse.json({ error: "Could not create poll options." }, { status: 500 });
+      return NextResponse.json(
+        { error: optionsInsertError.message || "Could not create poll options." },
+        { status: 500 }
+      );
     }
 
     const { error: submissionInsertError } = await supabaseAdmin
@@ -300,16 +305,18 @@ const { data: insertedPoll, error: pollInsertError } = await supabaseAdmin
         description: description || null,
         category,
         options,
-        option_image_urls: optionImageUrls.length > 0 ? optionImageUrls : null,
+        option_image_urls: cleanedImageUrls.length > 0 ? cleanedImageUrls : null,
         is_private: isPrivate,
-        slug,
         status: "pending",
       });
 
     if (submissionInsertError) {
       await supabaseAdmin.from("poll_options").delete().eq("poll_id", insertedPoll.id);
       await supabaseAdmin.from("polls").delete().eq("id", insertedPoll.id);
-      return NextResponse.json({ error: "Could not create moderation record." }, { status: 500 });
+      return NextResponse.json(
+        { error: submissionInsertError.message || "Could not create moderation record." },
+        { status: 500 }
+      );
     }
 
     let emailSent = false;
@@ -332,7 +339,10 @@ const { data: insertedPoll, error: pollInsertError } = await supabaseAdmin
       shareText: makeShareText(question, pollUrl),
       emailSent,
     });
-  } catch {
-    return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Something went wrong. Please try again." },
+      { status: 500 }
+    );
   }
 }
