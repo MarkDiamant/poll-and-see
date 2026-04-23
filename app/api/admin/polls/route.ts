@@ -107,3 +107,69 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Could not load polls." }, { status: 500 });
   }
 }
+
+export async function POST(request: NextRequest) {
+  const auth = isAuthorized(request);
+
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: 401 });
+  }
+
+  try {
+    const supabaseAdmin = getAdminClient();
+    const body = await request.json();
+
+    const {
+      question,
+      description,
+      category,
+      is_private,
+      options,
+    } = body;
+
+    if (!question || !options || options.length < 2) {
+      return NextResponse.json({ error: "Invalid data." }, { status: 400 });
+    }
+
+    const slug = question
+      .toLowerCase()
+      .trim()
+      .replace(/['’]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80);
+
+    const { data: poll, error: pollError } = await supabaseAdmin
+      .from("polls")
+      .insert({
+        question,
+        description,
+        category,
+        is_private: Boolean(is_private),
+        slug,
+      })
+      .select()
+      .single();
+
+    if (pollError || !poll) {
+      return NextResponse.json({ error: "Could not create poll." }, { status: 500 });
+    }
+
+    const optionRows = options.map((opt: string) => ({
+      poll_id: poll.id,
+      option_text: opt,
+    }));
+
+    const { error: optionError } = await supabaseAdmin
+      .from("poll_options")
+      .insert(optionRows);
+
+    if (optionError) {
+      return NextResponse.json({ error: "Options failed." }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: "Could not create poll." }, { status: 500 });
+  }
+}
