@@ -466,7 +466,7 @@ setSuccessData(data as PollCreateResponse);
   <div className="space-y-2">
     <h2 className="text-2xl font-semibold text-white">Your poll is live! 🎉</h2>
     <p className="text-sm text-gray-300 md:text-base">
-      👉 Share it on WhatsApp or your socials to start getting votes.
+      Share it on WhatsApp or your socials to start getting votes.
     </p>
   </div>
 
