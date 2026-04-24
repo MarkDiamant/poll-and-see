@@ -1283,7 +1283,7 @@ const trendingPolls = useMemo(() => {
           <div className="text-center">
             <p className="mb-2 text-base font-medium text-white md:text-lg">Don’t miss the best polls</p>
             <p className="mb-3 text-sm text-gray-200">
-              Get the most interesting polls sent to you (max 1 per day)
+              Get interesting polls sent to you (max once per day)
             </p>
           </div>
 
