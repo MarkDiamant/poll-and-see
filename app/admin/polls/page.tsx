@@ -183,6 +183,8 @@ if (searchInput.trim()) {
 setPolls(nextPolls);
         setPendingSubmissionsCount(data.pendingSubmissionsCount || 0);
 
+        if (!showSpinner) return;
+
         setQuestionEdits(
           Object.fromEntries(nextPolls.map((poll: PollRow) => [poll.id, poll.question || ""]))
         );
