@@ -856,14 +856,18 @@ boxShadow: isSelected ? `0 0 8px ${colour}22` : "none",
 function PollCard({
   bundle,
   badgeLabel,
-  showGoToAllPolls,
+    showGoToAllPolls,
   onVoteComplete,
+  onSkipPoll,
+  isFollowOnPoll,
   totalVoteCount,
 }: {
   bundle: PollBundle;
   badgeLabel: BadgeLabel | null;
   showGoToAllPolls: boolean;
   onVoteComplete: (pollId: number, category: string) => void;
+  onSkipPoll: (pollId: number) => void;
+  isFollowOnPoll: boolean;
   totalVoteCount: number;
 }) {
   const [voted, setVoted] = useState<boolean>(false);
@@ -1126,14 +1130,27 @@ function PollCard({
           ))}
           {error ? <p className="text-sm text-red-300">{error}</p> : null}
 
-          <div className="flex justify-end pt-1">
+          <div className="flex items-center justify-between pt-1">
+            {isFollowOnPoll ? (
+              <button
+                type="button"
+                onClick={() => onSkipPoll(bundle.poll.id)}
+                className="inline-flex cursor-pointer items-center gap-1.5 text-sm font-medium text-gray-400 transition hover:text-white"
+              >
+                <span>See another poll</span>
+                <span aria-hidden="true" className="relative top-[1px] sm:-top-[1px] text-sm leading-none">›</span>
+              </button>
+            ) : (
+              <span />
+            )}
+
             <Link
-  href="/"
-  className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-400 transition hover:text-white"
->
-  <span>Home</span>
-<span aria-hidden="true" className="relative top-[1px] sm:-top-[1px] text-sm leading-none">›</span>
-</Link>
+              href="/"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-400 transition hover:text-white"
+            >
+              <span>Home</span>
+              <span aria-hidden="true" className="relative top-[1px] sm:-top-[1px] text-sm leading-none">›</span>
+            </Link>
           </div>
         </div>
       ) : (
@@ -1212,6 +1229,7 @@ export default function PollPage() {
   const previousShowInlineSubscribeRef = useRef(false);
   const preloadedQueueRef = useRef<PollBundle[]>([]);
   const pollsRef = useRef<PollBundle[]>([]);
+  const skippedPollIdsRef = useRef<Set<number>>(new Set());
 
   const [subscriberEmail, setSubscriberEmail] = useState("");
   const [subscriberCategories, setSubscriberCategories] = useState<string[]>(["All Categories"]);
@@ -1622,7 +1640,12 @@ export default function PollPage() {
       }
 
       const pollList = (data || []) as Poll[];
-      const unseen = pollList.filter((poll) => !excludeIds.includes(poll.id) && !hasLocalVote(poll.id));
+            const unseen = pollList.filter(
+        (poll) =>
+          !excludeIds.includes(poll.id) &&
+          !skippedPollIdsRef.current.has(poll.id) &&
+          !hasLocalVote(poll.id)
+      );
 
       const priorityCategories = getPriorityCategories(flowAnchorCategory);
       const ordered: Poll[] = [];
@@ -1774,6 +1797,52 @@ export default function PollPage() {
     }
   };
 
+  const handleSkipPoll = async (pollId: number) => {
+    skippedPollIdsRef.current.add(pollId);
+
+    const currentShownIds = pollsRef.current.map((item) => item.poll.id);
+    const flowAnchorCategory = anchorCategory || pollsRef.current[0]?.poll.category || "";
+
+    while (preloadedQueueRef.current.length > 0) {
+      const next = preloadedQueueRef.current.shift();
+      if (!next) break;
+      if (currentShownIds.includes(next.poll.id)) continue;
+      if (skippedPollIdsRef.current.has(next.poll.id)) continue;
+      if (hasLocalVote(next.poll.id)) continue;
+
+      setPolls((current) => {
+        const withoutSkipped = current.filter((item) => item.poll.id !== pollId);
+        if (withoutSkipped.some((item) => item.poll.id === next.poll.id)) return withoutSkipped;
+        return [...withoutSkipped, next];
+      });
+
+      return;
+    }
+
+    await preloadQueue(
+      [...currentShownIds, pollId, ...Array.from(skippedPollIdsRef.current)],
+      flowAnchorCategory
+    );
+
+    while (preloadedQueueRef.current.length > 0) {
+      const next = preloadedQueueRef.current.shift();
+      if (!next) break;
+      if (currentShownIds.includes(next.poll.id)) continue;
+      if (skippedPollIdsRef.current.has(next.poll.id)) continue;
+      if (hasLocalVote(next.poll.id)) continue;
+
+      setPolls((current) => {
+        const withoutSkipped = current.filter((item) => item.poll.id !== pollId);
+        if (withoutSkipped.some((item) => item.poll.id === next.poll.id)) return withoutSkipped;
+        return [...withoutSkipped, next];
+      });
+
+      return;
+    }
+
+    setPolls((current) => current.filter((item) => item.poll.id !== pollId));
+  };
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
       <header className="max-w-6xl mx-auto px-4 md:px-6 pt-5 pb-4">
@@ -1847,6 +1916,10 @@ export default function PollPage() {
                 onVoteComplete={(pollId) => {
                   void handleVoteComplete(pollId);
                 }}
+                onSkipPoll={(pollId) => {
+                  void handleSkipPoll(pollId);
+                }}
+                isFollowOnPoll={index > 0}
                 totalVoteCount={totalVoteCount}
               />
 
