@@ -1226,6 +1226,7 @@ export default function PollPage() {
 
   const pollRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const inlineSubscribeBoxRef = useRef<HTMLDivElement | null>(null);
+  const endOfFeedRef = useRef<HTMLElement | null>(null);
   const previousPollCountRef = useRef(0);
   const previousShowInlineSubscribeRef = useRef(false);
   const preloadedQueueRef = useRef<PollBundle[]>([]);
@@ -1742,6 +1743,13 @@ export default function PollPage() {
       return;
     }
 
+    if (showEndOfFeed && endOfFeedRef.current) {
+  smoothScrollToElement(endOfFeedRef.current, 650, 8);
+  previousShowInlineSubscribeRef.current = showInlineSubscribe;
+  previousPollCountRef.current = polls.length;
+  return;
+}
+
     if (polls.length > previousPollCountRef.current && polls.length > 1) {
       const lastPollId = polls[polls.length - 1]?.poll.id;
       if (lastPollId && pollRefs.current[lastPollId]) {
@@ -2038,9 +2046,9 @@ setShowEndOfFeed(true);
         })}
       </section>
 
-      {showEndOfFeed ? (
-        <section className="mx-auto max-w-3xl px-6 pb-8">
-          <div className="rounded-2xl border border-gray-700 bg-gray-800 p-6 text-center">
+{showEndOfFeed ? (
+  <section ref={endOfFeedRef} className="mx-auto max-w-3xl px-6 pb-8">
+    <div className="rounded-2xl border border-gray-700 bg-gray-800 p-6 text-center">
             <p className="mb-5 text-base font-medium text-white">
               You’ve voted on all live polls. Check back soon.
             </p>

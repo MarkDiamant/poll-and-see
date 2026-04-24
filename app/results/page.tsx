@@ -428,9 +428,16 @@ const [totalVoteCount, setTotalVoteCount] = useState<number | null>(null);
                 ))}
               </div>
             ) : (
-              <div className="rounded-2xl border border-gray-700 bg-gray-800 p-6 text-center text-gray-300">
-                You’ve voted on all live polls. Check back soon.
-              </div>
+<div className="rounded-2xl border border-gray-700 bg-gray-800 p-6 text-center">
+  <p className="text-gray-300">You’ve voted on all live polls. Check back soon.</p>
+
+  <Link
+    href="/"
+    className="mt-4 inline-flex items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-gray-200"
+  >
+    Back to home
+  </Link>
+</div>
             )}
           </>
         )}
