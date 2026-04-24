@@ -1,6 +1,8 @@
 import Head from "next/head";
 "use client";
 
+"use client";
+
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import Footer from "@/components/Footer";
