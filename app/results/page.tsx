@@ -317,7 +317,6 @@ const [totalVoteCount, setTotalVoteCount] = useState<number | null>(null);
     <Head>
       <link rel="canonical" href="https://www.pollandsee.com/" />
     </Head>
-    <main
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
       <SiteHeader />
 

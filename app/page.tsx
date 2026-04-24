@@ -1086,7 +1086,6 @@ const trendingPolls = useMemo(() => {
           </div>
         </section>
       </main>
-</>
     );
   }
 
@@ -1521,5 +1520,6 @@ const trendingPolls = useMemo(() => {
         </button>
       )}
     </main>
+</>
   );
 }
