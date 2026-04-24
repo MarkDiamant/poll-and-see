@@ -45,11 +45,10 @@ export async function GET(request: NextRequest) {
 
     let query = supabaseAdmin
       .from("polls")
-.select(
-  "id, question, description, category, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed"
-)
-.eq("is_publicly_listed", true)
-.order("created_at", { ascending: false });
+      .select(
+        "id, question, description, category, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed"
+      )
+      .order("created_at", { ascending: false });
 
     if (search) {
       const safeSearch = search.replace(/[%(),]/g, " ");
@@ -62,33 +61,40 @@ export async function GET(request: NextRequest) {
       { data: pollsData, error: pollsError },
       { data: slugRows, error: slugError },
       { data: optionRows, error: optionError },
+      { data: submissionRows, error: submissionRowsError },
       submissionsCountResult,
     ] = await Promise.all([
       query,
-      supabaseAdmin
-  .from("polls")
-  .select("id, slug")
-  .eq("is_publicly_listed", true)
-  .not("slug", "is", null),
+      supabaseAdmin.from("polls").select("id, slug").not("slug", "is", null),
       supabaseAdmin
         .from("poll_options")
         .select("id, poll_id, option_text, image_url, vote_count")
         .order("poll_id", { ascending: true })
         .order("id", { ascending: true }),
+      supabaseAdmin.from("poll_submissions").select("poll_id").not("poll_id", "is", null),
       supabaseAdmin.from("poll_submissions").select("id", { count: "exact", head: true }),
     ]);
 
-    if (pollsError || slugError || optionError) {
+    if (pollsError || slugError || optionError || submissionRowsError) {
       return NextResponse.json({ error: "Could not load polls." }, { status: 500 });
     }
 
-    const optionsByPoll = new Map<number, Array<{
-      id: number;
-      poll_id: number;
-      option_text: string;
-      image_url: string | null;
-      vote_count: number;
-    }>>();
+    const submissionPollIds = new Set(
+      (submissionRows || [])
+        .map((row) => row.poll_id)
+        .filter((pollId): pollId is number => typeof pollId === "number")
+    );
+
+    const optionsByPoll = new Map<
+      number,
+      Array<{
+        id: number;
+        poll_id: number;
+        option_text: string;
+        image_url: string | null;
+        vote_count: number;
+      }>
+    >();
 
     (optionRows || []).forEach((row) => {
       const existing = optionsByPoll.get(row.poll_id) || [];
@@ -96,10 +102,12 @@ export async function GET(request: NextRequest) {
       optionsByPoll.set(row.poll_id, existing);
     });
 
-    const polls = (pollsData || []).map((poll) => ({
-      ...poll,
-      options: optionsByPoll.get(poll.id) || [],
-    }));
+    const polls = (pollsData || [])
+      .filter((poll) => !submissionPollIds.has(poll.id))
+      .map((poll) => ({
+        ...poll,
+        options: optionsByPoll.get(poll.id) || [],
+      }));
 
     return NextResponse.json({
       polls,
@@ -124,13 +132,7 @@ export async function POST(request: NextRequest) {
     const supabaseAdmin = getAdminClient();
     const body = await request.json();
 
-    const {
-      question,
-      description,
-      category,
-      is_private,
-      options,
-    } = body;
+    const { question, description, category, is_private, options } = body;
 
     if (!question || !options || options.length < 2) {
       return NextResponse.json({ error: "Invalid data." }, { status: 400 });
@@ -165,9 +167,7 @@ export async function POST(request: NextRequest) {
       option_text: opt,
     }));
 
-    const { error: optionError } = await supabaseAdmin
-      .from("poll_options")
-      .insert(optionRows);
+    const { error: optionError } = await supabaseAdmin.from("poll_options").insert(optionRows);
 
     if (optionError) {
       return NextResponse.json({ error: "Options failed." }, { status: 500 });
