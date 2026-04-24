@@ -219,14 +219,16 @@ setPolls(nextPolls);
    void loadPolls(true);
 
 const refreshInterval = window.setInterval(() => {
-  void loadPolls(false);
+  if (!savingKey) {
+    void loadPolls(false);
+  }
 }, 8000);
 
 return () => {
   isCancelled = true;
   window.clearInterval(refreshInterval);
 };
-}, [adminKey, searchInput]);
+}, [adminKey, searchInput, savingKey]);
 
   const handleUnlock = () => {
     const trimmed = adminKeyInput.trim();

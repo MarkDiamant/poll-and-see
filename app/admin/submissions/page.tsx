@@ -331,14 +331,16 @@ setSubmissions(nextSubmissions);
     void loadSubmissions(true);
 
 const refreshInterval = window.setInterval(() => {
-  void loadSubmissions(false);
+  if (!savingKey && !creatingSubmission) {
+    void loadSubmissions(false);
+  }
 }, 8000);
 
 return () => {
   isCancelled = true;
   window.clearInterval(refreshInterval);
 };
-}, [adminKey, searchInput]);
+}, [adminKey, searchInput, savingKey, creatingSubmission]);
 
   const handleUnlock = () => {
     const trimmed = adminKeyInput.trim();
