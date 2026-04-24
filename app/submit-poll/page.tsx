@@ -1,3 +1,4 @@
+import Head from "next/head";
 "use client";
 
 import Link from "next/link";
@@ -402,6 +403,10 @@ setSuccessData(data as PollCreateResponse);
   };
 
   return (
+  <>
+    <Head>
+      <meta name="robots" content="noindex, follow" />
+    </Head>
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
      <SiteHeader />
 
@@ -650,5 +655,6 @@ setSuccessData(data as PollCreateResponse);
 
       <Footer />
     </main>
+</>
   );
 }

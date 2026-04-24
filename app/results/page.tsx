@@ -1,3 +1,4 @@
+import Head from "next/head";
 "use client";
 
 import Link from "next/link";
@@ -312,6 +313,11 @@ const [totalVoteCount, setTotalVoteCount] = useState<number | null>(null);
   }, [searchTerm, votedPolls]);
 
   return (
+  <>
+    <Head>
+      <link rel="canonical" href="https://www.pollandsee.com/" />
+    </Head>
+    <main
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
       <SiteHeader />
 
@@ -451,5 +457,6 @@ const [totalVoteCount, setTotalVoteCount] = useState<number | null>(null);
         </button>
       ) : null}
     </main>
+</>
   );
 }

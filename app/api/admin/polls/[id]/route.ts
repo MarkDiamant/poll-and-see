@@ -201,12 +201,11 @@ export async function PATCH(
     }
 
     if ("featured" in body && body.featured === true) {
-      await supabaseAdmin
-        .from("polls")
-        .update({ featured: false })
-        .neq("id", pollId)
-        .eq("featured", true);
-    }
+  await supabaseAdmin
+    .from("polls")
+    .update({ featured: false })
+    .neq("id", pollId);
+}
 
     if (Object.keys(updates).length > 0) {
       const { error: updateError } = await supabaseAdmin
