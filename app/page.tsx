@@ -1071,7 +1071,6 @@ const trendingPolls = useMemo(() => {
 
   if (loading) {
     return (
-  <>
       <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
         <section className="mx-auto max-w-6xl px-6 pb-12 pt-10">
           <div className="animate-pulse">
@@ -1082,6 +1081,8 @@ const trendingPolls = useMemo(() => {
           </div>
         </section>
       </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
@@ -1514,6 +1515,5 @@ const trendingPolls = useMemo(() => {
         </button>
       )}
     </main>
-</>
   );
 }
