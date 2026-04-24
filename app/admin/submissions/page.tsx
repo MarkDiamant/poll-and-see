@@ -373,7 +373,18 @@ return () => {
     setNewCategory(value.trim() ? suggestCategory(value) : "General");
   };
 
-  const saveSubmission = async (submissionId: number) => {
+   const saveSubmission = async (
+    submissionId: number,
+    overrides: Partial<{
+      question: string;
+      description: string;
+      category: CategoryOption;
+      is_private: boolean;
+      email: string;
+      options: string[];
+      option_image_urls: string[];
+    }> = {}
+  ) => {
     setSavingKey(`save:${submissionId}`);
     setError("");
 
@@ -385,18 +396,20 @@ return () => {
           "x-admin-key": adminKey,
         },
         body: JSON.stringify({
-          question: (questionEdits[submissionId] || "").trim(),
-          description: (descriptionEdits[submissionId] || "").trim(),
-          category: categoryEdits[submissionId] || "General",
-          is_private: Boolean(privacyEdits[submissionId]),
-          email: (emailEdits[submissionId] || "").trim(),
-          options: (optionsEdits[submissionId] || "")
+          question: (overrides.question ?? questionEdits[submissionId] || "").trim(),
+          description: (overrides.description ?? descriptionEdits[submissionId] || "").trim(),
+          category: overrides.category ?? categoryEdits[submissionId] ?? "General",
+          is_private: overrides.is_private ?? Boolean(privacyEdits[submissionId]),
+          email: (overrides.email ?? emailEdits[submissionId] || "").trim(),
+          options: overrides.options ?? (optionsEdits[submissionId] || "")
             .split("\n")
             .map((item) => item.trim())
             .filter(Boolean),
-          option_image_urls: (imageUrlEdits[submissionId] || "")
-            .split("\n")
-            .map((item) => item.trim()),
+          option_image_urls:
+            overrides.option_image_urls ??
+            (imageUrlEdits[submissionId] || "")
+              .split("\n")
+              .map((item) => item.trim()),
         }),
       });
 
@@ -822,6 +835,7 @@ return () => {
                               [submission.id]: event.target.value,
                             }))
                           }
+                          onBlur={() => void saveSubmission(submission.id)}
                           className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
                         />
                         <textarea
@@ -832,6 +846,7 @@ return () => {
                               [submission.id]: event.target.value,
                             }))
                           }
+                          onBlur={() => void saveSubmission(submission.id)}
                           rows={2}
                           className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
                         />
@@ -858,6 +873,7 @@ return () => {
                                 [submission.id]: event.target.value,
                               }))
                             }
+                            onBlur={() => void saveSubmission(submission.id)}
                             rows={3}
                             className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
                           />
@@ -873,6 +889,7 @@ return () => {
                                 [submission.id]: event.target.value,
                               }))
                             }
+                            onBlur={() => void saveSubmission(submission.id)}
                             rows={1}
                             className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-1.5 text-xs text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
                           />
@@ -906,12 +923,14 @@ return () => {
                           <span className="text-gray-400">Privacy</span>
                           <button
                             type="button"
-                            onClick={() =>
+                            onClick={() => {
+                              const nextPrivate = !privacyEdits[submission.id];
                               setPrivacyEdits((current) => ({
                                 ...current,
-                                [submission.id]: !current[submission.id],
-                              }))
-                            }
+                                [submission.id]: nextPrivate,
+                              }));
+                              void saveSubmission(submission.id, { is_private: nextPrivate });
+                            }}
                             className={`w-full rounded-lg px-2 py-1.5 text-left text-xs font-medium transition ${
                               privacyEdits[submission.id]
                                 ? "bg-white text-black hover:bg-gray-200"
@@ -933,6 +952,7 @@ return () => {
                                 [submission.id]: event.target.value,
                               }))
                             }
+                            onBlur={() => void saveSubmission(submission.id)}
                             className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
                             placeholder="No email"
                           />
@@ -942,14 +962,6 @@ return () => {
 
                     <td className="px-4 py-4">
                       <div className="flex min-w-[90px] flex-col gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => void saveSubmission(submission.id)}
-                          disabled={savingKey === `save:${submission.id}`}
-                          className="rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800 disabled:opacity-40"
-                        >
-                          Save row
-                        </button>
 
                         <a
                           href={submission.slug ? `/poll/${submission.slug}` : "#"}

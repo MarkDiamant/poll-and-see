@@ -256,7 +256,18 @@ return () => {
     setError("");
   };
 
-  const updatePoll = async (pollId: number) => {
+    const updatePoll = async (
+    pollId: number,
+    overrides: Partial<{
+      question: string;
+      description: string;
+      category: CategoryOption;
+      is_private: boolean;
+      featured: boolean;
+      embedStatus: EmbedStatus;
+      option_updates: PollOptionRow[];
+    }> = {}
+  ) => {
     setSavingKey(`save:${pollId}`);
     setError("");
 
@@ -268,13 +279,13 @@ return () => {
           "x-admin-key": adminKey,
         },
         body: JSON.stringify({
-          question: (questionEdits[pollId] || "").trim(),
-          description: (descriptionEdits[pollId] || "").trim(),
-          category: categoryEdits[pollId] || "General",
-          is_private: Boolean(privacyEdits[pollId]),
-          featured: Boolean(featuredEdits[pollId]),
-          ...getEmbedPayload(embedStatusEdits[pollId] || "inactive"),
-          option_updates: (optionEdits[pollId] || []).map((option) => ({
+                    question: (overrides.question ?? questionEdits[pollId] || "").trim(),
+          description: (overrides.description ?? descriptionEdits[pollId] || "").trim(),
+          category: overrides.category ?? categoryEdits[pollId] ?? "General",
+          is_private: overrides.is_private ?? Boolean(privacyEdits[pollId]),
+          featured: overrides.featured ?? Boolean(featuredEdits[pollId]),
+          ...getEmbedPayload(overrides.embedStatus ?? embedStatusEdits[pollId] ?? "inactive"),
+          option_updates: (overrides.option_updates ?? optionEdits[pollId] ?? []).map((option) => ({
             id: option.id || null,
             option_text: option.option_text,
             image_url: option.image_url || null,
@@ -582,6 +593,7 @@ const sortedPolls = useMemo(() => {
                                 [poll.id]: event.target.value,
                               }))
                             }
+                            onBlur={() => void updatePoll(poll.id)}
                             className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
                           />
                           <textarea
@@ -592,6 +604,7 @@ const sortedPolls = useMemo(() => {
                                 [poll.id]: event.target.value,
                               }))
                             }
+                            onBlur={() => void updatePoll(poll.id)}
                            rows={2}
 className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
                           />
@@ -669,12 +682,14 @@ className="w-full min-w-0 rounded-lg border border-gray-700 bg-black/20 px-2.5 p
                             <span className="text-gray-400">Category</span>
                             <select
                               value={categoryEdits[poll.id] || "General"}
-                              onChange={(event) =>
+                                                            onChange={(event) => {
+                                const nextCategory = event.target.value as CategoryOption;
                                 setCategoryEdits((current) => ({
                                   ...current,
-                                  [poll.id]: event.target.value as CategoryOption,
-                                }))
-                              }
+                                  [poll.id]: nextCategory,
+                                }));
+                                void updatePoll(poll.id, { category: nextCategory });
+                              }}
                              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-xs text-white outline-none"
                             >
                               {CATEGORY_OPTIONS.map((category) => (
@@ -689,12 +704,14 @@ className="w-full min-w-0 rounded-lg border border-gray-700 bg-black/20 px-2.5 p
                             <span className="text-gray-400">Privacy</span>
                             <button
                               type="button"
-                              onClick={() =>
+                              onClick={() => {
+                                const nextPrivate = !privacyEdits[poll.id];
                                 setPrivacyEdits((current) => ({
                                   ...current,
-                                  [poll.id]: !current[poll.id],
-                                }))
-                              }
+                                  [poll.id]: nextPrivate,
+                                }));
+                                void updatePoll(poll.id, { is_private: nextPrivate });
+                              }}
                              className={`w-full rounded-lg px-2 py-1.5 text-left text-xs font-medium transition ${
                                 privacyEdits[poll.id]
                                   ? "bg-white text-black hover:bg-gray-200"
@@ -709,12 +726,14 @@ className="w-full min-w-0 rounded-lg border border-gray-700 bg-black/20 px-2.5 p
                             <span className="text-gray-400">Featured</span>
                             <button
                               type="button"
-                              onClick={() =>
+                              onClick={() => {
+                                const nextFeatured = !featuredEdits[poll.id];
                                 setFeaturedEdits((current) => ({
                                   ...current,
-                                  [poll.id]: !current[poll.id],
-                                }))
-                              }
+                                  [poll.id]: nextFeatured,
+                                }));
+                                void updatePoll(poll.id, { featured: nextFeatured });
+                              }}
                              className={`w-full rounded-lg px-2 py-1.5 text-left text-xs font-medium transition ${
                                 featuredEdits[poll.id]
                                   ? "bg-white text-black hover:bg-gray-200"
@@ -729,12 +748,14 @@ className="w-full min-w-0 rounded-lg border border-gray-700 bg-black/20 px-2.5 p
                             <span className="text-gray-400">Embed</span>
                             <select
                               value={embedStatusEdits[poll.id] || "inactive"}
-                              onChange={(event) =>
+                              onChange={(event) => {
+                                const nextEmbedStatus = event.target.value as EmbedStatus;
                                 setEmbedStatusEdits((current) => ({
                                   ...current,
-                                  [poll.id]: event.target.value as EmbedStatus,
-                                }))
-                              }
+                                  [poll.id]: nextEmbedStatus,
+                                }));
+                                void updatePoll(poll.id, { embedStatus: nextEmbedStatus });
+                              }}
                               className="w-full rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-xs text-white outline-none"
                             >
                               <option value="live">Live</option>
@@ -779,14 +800,6 @@ className={`rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-lef
                             Open poll
                           </a>
 
-                          <button
-                            type="button"
-                            onClick={() => void updatePoll(poll.id)}
-                            disabled={savingKey === `save:${poll.id}`}
-        className="rounded-lg bg-white px-2.5 py-1.5 text-left text-xs font-medium text-black transition hover:bg-gray-200 disabled:opacity-40"
-                          >
-                            Save row
-                          </button>
                         </div>
                       </td>
                     </tr>
