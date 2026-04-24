@@ -152,11 +152,11 @@ export async function PATCH(
     }
 
     if ("is_private" in body) {
-      const isPrivate = Boolean(body.is_private);
-      updates.is_private = isPrivate;
-      pollUpdates.is_private = isPrivate;
-      pollUpdates.is_publicly_listed = !isPrivate;
-    }
+  const isPrivate = Boolean(body.is_private);
+  updates.is_private = isPrivate;
+  pollUpdates.is_private = isPrivate;
+  pollUpdates.is_publicly_listed = false;
+}
 
     if ("email" in body) {
       updates.email = (body.email || "").trim() || null;

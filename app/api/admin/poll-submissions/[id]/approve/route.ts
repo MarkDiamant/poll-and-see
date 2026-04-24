@@ -128,6 +128,7 @@ const { data: updatedPoll, error: pollUpdateError } = await supabaseAdmin
     category: typedSubmission.category || "General",
     is_private: Boolean(typedSubmission.is_private),
     is_publicly_listed: !Boolean(typedSubmission.is_private),
+created_at: new Date().toISOString(),
   })
         .eq("id", typedSubmission.poll_id)
         .select(
@@ -218,7 +219,9 @@ const { data: updatedPoll, error: pollUpdateError } = await supabaseAdmin
         featured: false,
         is_private: Boolean(typedSubmission.is_private),
         is_publicly_listed: !Boolean(typedSubmission.is_private),
+created_at: new Date().toISOString(),
         total_votes: 0,
+created_at: new Date().toISOString(),
       })
       .select(
         "id, question, description, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed"

@@ -252,11 +252,15 @@ export default function AdminSubmissionsPage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => {
-    if (!adminKey) return;
+useEffect(() => {
+  if (!adminKey) return;
 
-    const loadSubmissions = async () => {
-      setLoading(true);
+  let isCancelled = false;
+
+  const loadSubmissions = async (showSpinner = true) => {
+      if (showSpinner) {
+  setLoading(true);
+}
       setError("");
 
       try {
@@ -278,7 +282,8 @@ export default function AdminSubmissionsPage() {
         }
 
         const nextSubmissions = data.submissions || [];
-        setSubmissions(nextSubmissions);
+        if (isCancelled) return;
+setSubmissions(nextSubmissions);
         setLivePollCount(data.livePollCount || 0);
 
         setQuestionEdits(
@@ -317,12 +322,23 @@ export default function AdminSubmissionsPage() {
         setError(err instanceof Error ? err.message : "Could not load submissions.");
         setSubmissions([]);
       } finally {
-        setLoading(false);
-      }
+  if (!isCancelled && showSpinner) {
+    setLoading(false);
+  }
+}
     };
 
-    void loadSubmissions();
-  }, [adminKey, searchInput]);
+    void loadSubmissions(true);
+
+const refreshInterval = window.setInterval(() => {
+  void loadSubmissions(false);
+}, 8000);
+
+return () => {
+  isCancelled = true;
+  window.clearInterval(refreshInterval);
+};
+}, [adminKey, searchInput]);
 
   const handleUnlock = () => {
     const trimmed = adminKeyInput.trim();

@@ -149,11 +149,15 @@ useEffect(() => {
   return () => window.removeEventListener("scroll", onScroll);
 }, []);
 
-  useEffect(() => {
-    if (!adminKey) return;
+useEffect(() => {
+  if (!adminKey) return;
 
-    const loadPolls = async () => {
-      setLoading(true);
+  let isCancelled = false;
+
+  const loadPolls = async (showSpinner = true) => {
+      if (showSpinner) {
+  setLoading(true);
+}
       setError("");
 
       try {
@@ -175,7 +179,8 @@ if (searchInput.trim()) {
         }
 
         const nextPolls = data.polls || [];
-        setPolls(nextPolls);
+        if (isCancelled) return;
+setPolls(nextPolls);
         setPendingSubmissionsCount(data.pendingSubmissionsCount || 0);
 
         setQuestionEdits(
@@ -205,11 +210,22 @@ if (searchInput.trim()) {
         setError(err instanceof Error ? err.message : "Could not load polls.");
         setPolls([]);
       } finally {
-        setLoading(false);
-      }
+  if (!isCancelled && showSpinner) {
+    setLoading(false);
+  }
+}
     };
 
-    void loadPolls();
+   void loadPolls(true);
+
+const refreshInterval = window.setInterval(() => {
+  void loadPolls(false);
+}, 8000);
+
+return () => {
+  isCancelled = true;
+  window.clearInterval(refreshInterval);
+};
 }, [adminKey, searchInput]);
 
   const handleUnlock = () => {
