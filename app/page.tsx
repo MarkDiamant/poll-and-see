@@ -1,4 +1,3 @@
-import Head from "next/head";
 "use client";
 
 import Link from "next/link";
@@ -1073,10 +1072,7 @@ const trendingPolls = useMemo(() => {
   if (loading) {
     return (
   <>
-    <Head>
-      <link rel="canonical" href="https://www.pollandsee.com/results" />
-    </Head>
-    <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
+      <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
         <section className="mx-auto max-w-6xl px-6 pb-12 pt-10">
           <div className="animate-pulse">
             <div className="mb-6 h-12 w-48 rounded-xl bg-gray-800" />

@@ -1,7 +1,5 @@
 "use client";
 
-import type { Metadata } from "next";
-
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -108,13 +106,6 @@ function badge(count: number, isActive: boolean) {
     </span>
   );
 }
-
-export const metadata: Metadata = {
-  robots: {
-    index: false,
-    follow: false,
-  },
-};
 
 export default function AdminPollsPage() {
   const [adminKeyInput, setAdminKeyInput] = useState("");

@@ -1,7 +1,5 @@
 "use client";
 
-import type { Metadata } from "next";
-
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
@@ -202,13 +200,6 @@ function EmbedFooter() {
     </div>
   );
 }
-
-export const metadata: Metadata = {
-  robots: {
-    index: false,
-    follow: false,
-  },
-};
 
 export default function EmbedPollPage() {
   const params = useParams();

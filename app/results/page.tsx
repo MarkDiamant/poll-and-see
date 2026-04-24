@@ -1,4 +1,3 @@
-import Head from "next/head";
 "use client";
 
 import Link from "next/link";
@@ -314,10 +313,7 @@ const [totalVoteCount, setTotalVoteCount] = useState<number | null>(null);
 
   return (
   <>
-    <Head>
-      <link rel="canonical" href="https://www.pollandsee.com/" />
-    </Head>
-    <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
+     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
       <SiteHeader />
 
       <section className="mx-auto max-w-4xl px-6 pt-2 pb-8">
