@@ -123,7 +123,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       submissions,
-      livePollCount: livePollCountResult.count || 0,
+     livePollCount: Math.max(
+  (livePollCountResult.count || 0) - ((data || []).length),
+  0
+),
     });
   } catch {
     return NextResponse.json({ error: "Could not load submissions." }, { status: 500 });
