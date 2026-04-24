@@ -219,7 +219,6 @@ created_at: new Date().toISOString(),
         featured: false,
         is_private: Boolean(typedSubmission.is_private),
         is_publicly_listed: !Boolean(typedSubmission.is_private),
-created_at: new Date().toISOString(),
         total_votes: 0,
 created_at: new Date().toISOString(),
       })
