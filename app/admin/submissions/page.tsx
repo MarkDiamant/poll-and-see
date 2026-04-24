@@ -400,7 +400,7 @@ return () => {
           description: (overrides.description ?? descriptionEdits[submissionId] || "").trim(),
           category: overrides.category ?? categoryEdits[submissionId] ?? "General",
           is_private: overrides.is_private ?? Boolean(privacyEdits[submissionId]),
-          email: (overrides.email ?? emailEdits[submissionId] || "").trim(),
+                    email: ((overrides.email ?? emailEdits[submissionId]) || "").trim(),
           options: overrides.options ?? (optionsEdits[submissionId] || "")
             .split("\n")
             .map((item) => item.trim())
