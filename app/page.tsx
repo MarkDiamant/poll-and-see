@@ -1082,8 +1082,6 @@ const trendingPolls = useMemo(() => {
           </div>
         </section>
       </main>
-    );
-  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
