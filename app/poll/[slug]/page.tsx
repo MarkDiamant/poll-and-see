@@ -1,5 +1,7 @@
 "use client";
 
+import type { Metadata } from "next";
+
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -1191,6 +1193,14 @@ function PollCard({
       )}
     </div>
   );
+}
+
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  return {
+    alternates: {
+      canonical: `https://www.pollandsee.com/poll/${params.slug}`,
+    },
+  };
 }
 
 export default function PollPage() {
