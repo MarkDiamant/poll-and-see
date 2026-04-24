@@ -1222,6 +1222,7 @@ export default function PollPage() {
   const [popularPollIds, setPopularPollIds] = useState<number[]>([]);
   const [votesLast24, setVotesLast24] = useState(0);
   const [showActivityIndicator, setShowActivityIndicator] = useState(false);
+  const [showEndOfFeed, setShowEndOfFeed] = useState(false);
 
   const pollRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const inlineSubscribeBoxRef = useRef<HTMLDivElement | null>(null);
@@ -1678,7 +1679,9 @@ export default function PollPage() {
   };
 
   useEffect(() => {
-    const init = async () => {
+     const init = async () => {
+      setShowEndOfFeed(false);
+
       const cached = getCachedPollBundle(slug);
       if (cached) {
         setPolls([cached]);
@@ -1772,21 +1775,7 @@ export default function PollPage() {
       if (currentShownIds.includes(next.poll.id)) continue;
       if (hasLocalVote(next.poll.id)) continue;
 
-      setPolls((current) => {
-        if (current.some((item) => item.poll.id === next.poll.id)) return current;
-        return [...current, next];
-      });
-
-      return;
-    }
-
-    await preloadQueue([...currentShownIds, pollId], flowAnchorCategory);
-
-    while (preloadedQueueRef.current.length > 0) {
-      const next = preloadedQueueRef.current.shift();
-      if (!next) break;
-      if (currentShownIds.includes(next.poll.id)) continue;
-      if (hasLocalVote(next.poll.id)) continue;
+      setShowEndOfFeed(false);
 
       setPolls((current) => {
         if (current.some((item) => item.poll.id === next.poll.id)) return current;
@@ -1795,7 +1784,27 @@ export default function PollPage() {
 
       return;
     }
-  };
+
+await preloadQueue([...currentShownIds, pollId], flowAnchorCategory);
+
+while (preloadedQueueRef.current.length > 0) {
+  const next = preloadedQueueRef.current.shift();
+  if (!next) break;
+  if (currentShownIds.includes(next.poll.id)) continue;
+  if (hasLocalVote(next.poll.id)) continue;
+
+  setShowEndOfFeed(false);
+
+  setPolls((current) => {
+    if (current.some((item) => item.poll.id === next.poll.id)) return current;
+    return [...current, next];
+  });
+
+  return;
+}
+
+setShowEndOfFeed(true);
+};
 
   const handleSkipPoll = async (pollId: number) => {
     skippedPollIdsRef.current.add(pollId);
@@ -1809,6 +1818,8 @@ export default function PollPage() {
       if (currentShownIds.includes(next.poll.id)) continue;
       if (skippedPollIdsRef.current.has(next.poll.id)) continue;
       if (hasLocalVote(next.poll.id)) continue;
+
+       setShowEndOfFeed(false);
 
       setPolls((current) => {
         const withoutSkipped = current.filter((item) => item.poll.id !== pollId);
@@ -1831,6 +1842,8 @@ export default function PollPage() {
       if (skippedPollIdsRef.current.has(next.poll.id)) continue;
       if (hasLocalVote(next.poll.id)) continue;
 
+        setShowEndOfFeed(false);
+
       setPolls((current) => {
         const withoutSkipped = current.filter((item) => item.poll.id !== pollId);
         if (withoutSkipped.some((item) => item.poll.id === next.poll.id)) return withoutSkipped;
@@ -1841,6 +1854,7 @@ export default function PollPage() {
     }
 
     setPolls((current) => current.filter((item) => item.poll.id !== pollId));
+    setShowEndOfFeed(true);
   };
 
   return (
@@ -2022,7 +2036,24 @@ export default function PollPage() {
             </div>
           );
         })}
-          </section>
+      </section>
+
+      {showEndOfFeed ? (
+        <section className="mx-auto max-w-3xl px-6 pb-8">
+          <div className="rounded-2xl border border-gray-700 bg-gray-800 p-6 text-center">
+            <p className="mb-5 text-base font-medium text-white">
+              You’ve voted on all live polls. Check back soon.
+            </p>
+
+            <Link
+              href="/"
+              className="inline-flex items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-gray-200"
+            >
+              Back to home
+            </Link>
+          </div>
+        </section>
+      ) : null}
 
       <div className="-mt-8">
         <Footer />
