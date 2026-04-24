@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type PollSubmissionRow = {
   id: number;
@@ -226,6 +226,7 @@ export default function AdminSubmissionsPage() {
   const [savingKey, setSavingKey] = useState("");
   const [error, setError] = useState("");
   const [showTopButton, setShowTopButton] = useState(false);
+const savingKeyRef = useRef("");
   const [newQuestion, setNewQuestion] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [newCategory, setNewCategory] = useState<CategoryOption>("General");
@@ -251,6 +252,10 @@ export default function AdminSubmissionsPage() {
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+useEffect(() => {
+  savingKeyRef.current = savingKey;
+}, [savingKey]);
 
 useEffect(() => {
   if (!adminKey) return;
@@ -333,7 +338,7 @@ setSubmissions(nextSubmissions);
     void loadSubmissions(true);
 
 const refreshInterval = window.setInterval(() => {
-  if (!savingKey && !creatingSubmission) {
+  if (!savingKeyRef.current && !creatingSubmission) {
     void loadSubmissions(false);
   }
 }, 8000);
@@ -342,7 +347,7 @@ return () => {
   isCancelled = true;
   window.clearInterval(refreshInterval);
 };
-}, [adminKey, searchInput, savingKey, creatingSubmission]);
+}, [adminKey, searchInput, creatingSubmission]);
 
   const handleUnlock = () => {
     const trimmed = adminKeyInput.trim();

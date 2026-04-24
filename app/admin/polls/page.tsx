@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type PollOptionRow = {
   id: number;
@@ -130,6 +130,7 @@ const [categoryFilter, setCategoryFilter] = useState<"all" | CategoryOption>("al
   const [error, setError] = useState("");
   const [copiedKey, setCopiedKey] = useState("");
 const [showTopButton, setShowTopButton] = useState(false);
+const savingKeyRef = useRef("");
 
   useEffect(() => {
   const saved = sessionStorage.getItem(ADMIN_KEY_STORAGE) || "";
@@ -148,6 +149,10 @@ useEffect(() => {
   window.addEventListener("scroll", onScroll);
   return () => window.removeEventListener("scroll", onScroll);
 }, []);
+
+useEffect(() => {
+  savingKeyRef.current = savingKey;
+}, [savingKey]);
 
 useEffect(() => {
   if (!adminKey) return;
@@ -221,7 +226,7 @@ setPolls(nextPolls);
    void loadPolls(true);
 
 const refreshInterval = window.setInterval(() => {
-  if (!savingKey) {
+  if (!savingKeyRef.current) {
     void loadPolls(false);
   }
 }, 8000);
@@ -230,7 +235,7 @@ return () => {
   isCancelled = true;
   window.clearInterval(refreshInterval);
 };
-}, [adminKey, searchInput, savingKey]);
+}, [adminKey, searchInput]);
 
   const handleUnlock = () => {
     const trimmed = adminKeyInput.trim();
