@@ -1,6 +1,3 @@
-import Head from "next/head";
-"use client";
-
 "use client";
 
 import Link from "next/link";
@@ -201,7 +198,7 @@ export default function SubmitPollPage() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "">("");
   const [successData, setSuccessData] = useState<PollCreateResponse | null>(null);
-const [linkCopied, setLinkCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const canAddOption = useMemo(() => options.length < 6, [options.length]);
   const canRemoveOption = useMemo(() => options.length > 2, [options.length]);
@@ -238,19 +235,19 @@ const [linkCopied, setLinkCopied] = useState(false);
   };
 
   const resetPollFields = () => {
-  setEmail("");
-  setQuestion("");
-  setDescription("");
-  setCategory("");
-  setOptions([createEmptyOption(), createEmptyOption()]);
-  setUsesImages(false);
-  setIsPrivate(false);
-  setSubmitting(false);
-  setMessage("");
-  setMessageType("");
-  setSuccessData(null);
-  setLinkCopied(false);
-};
+    setEmail("");
+    setQuestion("");
+    setDescription("");
+    setCategory("");
+    setOptions([createEmptyOption(), createEmptyOption()]);
+    setUsesImages(false);
+    setIsPrivate(false);
+    setSubmitting(false);
+    setMessage("");
+    setMessageType("");
+    setSuccessData(null);
+    setLinkCopied(false);
+  };
 
   const handleQuestionChange = (value: string) => {
     setQuestion(value);
@@ -259,19 +256,19 @@ const [linkCopied, setLinkCopied] = useState(false);
 
   const shouldShowEmailField = false;
 
- const handleCopy = async () => {
-  if (!successData) return;
-  try {
-    await navigator.clipboard.writeText(successData.shareText);
-    setLinkCopied(true);
-    window.setTimeout(() => {
-      setLinkCopied(false);
-    }, 1600);
-  } catch {
-    setMessageType("error");
-    setMessage("Could not copy link.");
-  }
-};
+  const handleCopy = async () => {
+    if (!successData) return;
+    try {
+      await navigator.clipboard.writeText(successData.shareText);
+      setLinkCopied(true);
+      window.setTimeout(() => {
+        setLinkCopied(false);
+      }, 1600);
+    } catch {
+      setMessageType("error");
+      setMessage("Could not copy link.");
+    }
+  };
 
   const handleShare = async () => {
     if (!successData) return;
@@ -363,37 +360,37 @@ const [linkCopied, setLinkCopied] = useState(false);
     setMessageType("");
 
     try {
-    const response = await fetch("/api/polls/create", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    email: email.trim() || null,
-    emailMeLink,
-    question: question.trim(),
-    description: description.trim() || null,
-    category: resolvedCategory,
-    options: cleanedOptions.map((option) => option.text),
-    optionImageUrls: usesImages ? cleanedOptions.map((option) => option.imageUrl) : [],
-    isPrivate,
-  }),
-});
+      const response = await fetch("/api/polls/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email.trim() || null,
+          emailMeLink,
+          question: question.trim(),
+          description: description.trim() || null,
+          category: resolvedCategory,
+          options: cleanedOptions.map((option) => option.text),
+          optionImageUrls: usesImages ? cleanedOptions.map((option) => option.imageUrl) : [],
+          isPrivate,
+        }),
+      });
 
-const rawText = await response.text();
-let data: PollCreateResponse | { error?: string } | null = null;
+      const rawText = await response.text();
+      let data: PollCreateResponse | { error?: string } | null = null;
 
-try {
-  data = rawText ? JSON.parse(rawText) : null;
-} catch {
-  throw new Error("Server returned an invalid response.");
-}
+      try {
+        data = rawText ? JSON.parse(rawText) : null;
+      } catch {
+        throw new Error("Server returned an invalid response.");
+      }
 
-if (!response.ok) {
-  throw new Error((data && "error" in data && data.error) || "Something went wrong. Please try again.");
-}
+      if (!response.ok) {
+        throw new Error((data && "error" in data && data.error) || "Something went wrong. Please try again.");
+      }
 
-setSuccessData(data as PollCreateResponse);
+      setSuccessData(data as PollCreateResponse);
       setMessageType("success");
       setMessage("");
       setSubmitting(false);
@@ -405,18 +402,14 @@ setSuccessData(data as PollCreateResponse);
   };
 
   return (
-  <>
-    <Head>
-      <meta name="robots" content="noindex, follow" />
-    </Head>
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
-     <SiteHeader />
+      <SiteHeader />
 
       <section className="max-w-3xl mx-auto px-6 pt-1 pb-6">
         <div className="text-center">
-             <h1 className="text-4xl font-bold md:text-[3.75rem]">Create a Poll</h1>
+          <h1 className="text-4xl font-bold md:text-[3.75rem]">Create a Poll</h1>
 
-                     <div className="mt-6 space-y-2">
+          <div className="mt-6 space-y-2">
             <p className="text-[2rem] font-semibold text-white">
               Get your shareable link instantly below
             </p>
@@ -428,228 +421,225 @@ setSuccessData(data as PollCreateResponse);
 
         <div className="mt-9 bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
           {successData ? (
-  <div className="space-y-5">
-  <div className="space-y-2">
-    <h2 className="text-2xl font-semibold text-white">Your poll is live! 🎉</h2>
-    <p className="text-sm text-gray-300 md:text-base">
-      Share it on WhatsApp or your socials to start getting votes.
-    </p>
-  </div>
-
-  <div className="flex flex-col gap-3 sm:flex-row sm:gap-3">
-    <button
-      type="button"
-      onClick={() => void handleCopy()}
-      className="w-full cursor-pointer rounded-xl bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-500 sm:flex-1"
-    >
-      {linkCopied ? "Copied ✓" : "Copy link"}
-    </button>
-
-    <button
-      type="button"
-      onClick={() => void handleShare()}
-      className="w-full cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800 sm:flex-1"
-    >
-      Share
-    </button>
-
-    <Link
-      href={successData.pollUrl}
-      className="inline-flex w-full cursor-pointer items-center justify-center rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800 sm:flex-1"
-    >
-      View poll
-    </Link>
-  </div>
-
-  <button
-    type="button"
-    onClick={() => void handleCopy()}
-    className="w-full cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-left text-sm text-gray-200 transition hover:bg-gray-800"
-    title={successData.pollUrl}
-  >
-    {linkCopied ? "Copied ✓" : successData.pollUrl}
-  </button>
-
-  <div className="pt-2 flex flex-col gap-3 sm:flex-row sm:gap-3">
-    <button
-      type="button"
-      onClick={resetPollFields}
-      className="w-full cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800 sm:flex-1"
-    >
-      Create another poll
-    </button>
-
-    <Link
-      href="/"
-      className="inline-flex w-full cursor-pointer items-center justify-center rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800 sm:flex-1"
-    >
-      Back to home
-    </Link>
-  </div>
-</div>
-                    ) : (
-            <>
-             
-              <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label className={labelClasses}>Poll Question</label>
-                <input
-                  maxLength={150}
-                  value={question}
-                  onChange={(e) => handleQuestionChange(e.target.value)}
-                  className={inputClasses}
-                  placeholder="e.g. A job you love with low pay, or a job you hate with high pay?"
-                />
-                <p className="mt-1 text-sm text-gray-400 md:text-base">{question.length}/150</p>
-              </div>
-
-              <div>
-                <label className={labelClasses}>Description (optional)</label>
-                <textarea
-                  maxLength={200}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className={textareaClasses}
-                  rows={3}
-                  placeholder="Add context if helpful"
-                />
-                <p className="mt-1 text-sm text-gray-400 md:text-base">{description.length}/200</p>
-              </div>
-
-              <div>
-                <label className={checkboxLabelClasses}>
-                  <input
-                    type="checkbox"
-                    checked={usesImages}
-                    onChange={(e) => setUsesImages(e.target.checked)}
-                    className={checkboxClasses}
-                  />
-                  <span>This poll uses images</span>
-                </label>
-
-                {usesImages ? (
-                  <div className="mt-2 space-y-1">
-                    <p className={helperTextClasses}>
-                      Paste a direct image link into each option. All options must include an image.
-                    </p>
-                    <p className={helperTextClasses}>
-                      Best results: square images (1:1), minimal empty space. Ideal size 700×700 or 1000×1000 px.
-                    </p>
-                  </div>
-                ) : null}
-              </div>
-
-              <div>
-            <label className={labelClasses}>
-                  Poll options (2–6)
-                </label>
-
-            <p className="mb-2 text-xs text-gray-400">
-                  Fewer options usually give clearer results
-                </p>
-
-                <div className="space-y-4">
-                  {options.map((option, i) => {
-                    const optionPlaceholder =
-                      i === 0 ? "Yes" : i === 1 ? "No" : i === 2 ? "Depends" : `Option ${i + 1}`;
-
-                    return (
-                      <div key={i} className="space-y-2">
-                        <div className="flex gap-2">
-                          <input
-                            maxLength={40}
-                            value={option.text}
-                            onChange={(e) => updateOptionText(i, e.target.value)}
-                            className={inputClasses}
-                            placeholder={optionPlaceholder}
-                          />
-                          {canRemoveOption && (
-                            <button
-                              type="button"
-                              onClick={() => removeOption(i)}
-                              className="px-3 bg-gray-700 rounded-xl whitespace-nowrap transition hover:bg-gray-600"
-                            >
-                              Remove
-                            </button>
-                          )}
-                        </div>
-
-                        {usesImages ? (
-                          <div>
-                            <input
-                              value={option.imageUrl}
-                              onChange={(e) => updateOptionImageUrl(i, e.target.value)}
-                              className={inputClasses}
-                              placeholder="https://example.com/image.jpg"
-                            />
-                            <p className="mt-1 text-sm text-gray-400 md:text-base">
-                              Direct image URL (jpg, png, webp etc.)
-                            </p>
-                          </div>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {canAddOption && (
-                  <button
-                    type="button"
-                    onClick={addOption}
-                    className="mt-3 text-sm text-blue-300"
-                  >
-                    + Add option
-                  </button>
-                )}
-              </div>
-
-                    <div className="space-y-2">
-                <label className={checkboxLabelClasses}>
-                  <input
-                    type="checkbox"
-                    checked={isPrivate}
-                    onChange={(e) => setIsPrivate(e.target.checked)}
-                    className={checkboxClasses}
-                  />
-                  <span>Make this poll private</span>
-                </label>
-
-                <p className="text-xs text-gray-300">
-                  Private polls are never shown publicly on Poll & See.
-                </p>
-
-                <p className="text-xs text-gray-300">
-                  Public polls may appear on the Poll & See homepage after review.
-                </p>
-              </div>
-
+            <div className="space-y-5">
               <div className="space-y-2">
-  <p className="text-xs text-gray-400">
-    Polls may be edited for clarity, spelling, or shareability, and removed if they don't meet our{" "}
-    <Link href="/guidelines" className="text-blue-300 hover:underline">
-      guidelines
-    </Link>.
-  </p>
-</div>
+                <h2 className="text-2xl font-semibold text-white">Your poll is live! 🎉</h2>
+                <p className="text-sm text-gray-300 md:text-base">
+                  Share it on WhatsApp or your socials to start getting votes.
+                </p>
+              </div>
 
-             <button
-                type="submit"
-                disabled={submitting}
-                className="mt-1 rounded-xl bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-500 disabled:opacity-60"
+              <div className="flex flex-col gap-3 sm:flex-row sm:gap-3">
+                <button
+                  type="button"
+                  onClick={() => void handleCopy()}
+                  className="w-full cursor-pointer rounded-xl bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-500 sm:flex-1"
+                >
+                  {linkCopied ? "Copied ✓" : "Copy link"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => void handleShare()}
+                  className="w-full cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800 sm:flex-1"
+                >
+                  Share
+                </button>
+
+                <Link
+                  href={successData.pollUrl}
+                  className="inline-flex w-full cursor-pointer items-center justify-center rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800 sm:flex-1"
+                >
+                  View poll
+                </Link>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => void handleCopy()}
+                className="w-full cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-left text-sm text-gray-200 transition hover:bg-gray-800"
+                title={successData.pollUrl}
               >
-                {submitting ? "Creating..." : "Create Poll"}
+                {linkCopied ? "Copied ✓" : successData.pollUrl}
               </button>
 
-              {message && (
-                <p
-                  className={`text-sm ${
-                    messageType === "success" ? "text-green-400" : "text-red-400"
-                  }`}
+              <div className="pt-2 flex flex-col gap-3 sm:flex-row sm:gap-3">
+                <button
+                  type="button"
+                  onClick={resetPollFields}
+                  className="w-full cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800 sm:flex-1"
                 >
-                  {message}
-                </p>
-              )}
-                </form>
+                  Create another poll
+                </button>
+
+                <Link
+                  href="/"
+                  className="inline-flex w-full cursor-pointer items-center justify-center rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800 sm:flex-1"
+                >
+                  Back to home
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <>
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div>
+                  <label className={labelClasses}>Poll Question</label>
+                  <input
+                    maxLength={150}
+                    value={question}
+                    onChange={(e) => handleQuestionChange(e.target.value)}
+                    className={inputClasses}
+                    placeholder="e.g. A job you love with low pay, or a job you hate with high pay?"
+                  />
+                  <p className="mt-1 text-sm text-gray-400 md:text-base">{question.length}/150</p>
+                </div>
+
+                <div>
+                  <label className={labelClasses}>Description (optional)</label>
+                  <textarea
+                    maxLength={200}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className={textareaClasses}
+                    rows={3}
+                    placeholder="Add context if helpful"
+                  />
+                  <p className="mt-1 text-sm text-gray-400 md:text-base">{description.length}/200</p>
+                </div>
+
+                <div>
+                  <label className={checkboxLabelClasses}>
+                    <input
+                      type="checkbox"
+                      checked={usesImages}
+                      onChange={(e) => setUsesImages(e.target.checked)}
+                      className={checkboxClasses}
+                    />
+                    <span>This poll uses images</span>
+                  </label>
+
+                  {usesImages ? (
+                    <div className="mt-2 space-y-1">
+                      <p className={helperTextClasses}>
+                        Paste a direct image link into each option. All options must include an image.
+                      </p>
+                      <p className={helperTextClasses}>
+                        Best results: square images (1:1), minimal empty space. Ideal size 700×700 or 1000×1000 px.
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div>
+                  <label className={labelClasses}>Poll options (2–6)</label>
+
+                  <p className="mb-2 text-xs text-gray-400">
+                    Fewer options usually give clearer results
+                  </p>
+
+                  <div className="space-y-4">
+                    {options.map((option, i) => {
+                      const optionPlaceholder =
+                        i === 0 ? "Yes" : i === 1 ? "No" : i === 2 ? "Depends" : `Option ${i + 1}`;
+
+                      return (
+                        <div key={i} className="space-y-2">
+                          <div className="flex gap-2">
+                            <input
+                              maxLength={40}
+                              value={option.text}
+                              onChange={(e) => updateOptionText(i, e.target.value)}
+                              className={inputClasses}
+                              placeholder={optionPlaceholder}
+                            />
+                            {canRemoveOption && (
+                              <button
+                                type="button"
+                                onClick={() => removeOption(i)}
+                                className="px-3 bg-gray-700 rounded-xl whitespace-nowrap transition hover:bg-gray-600"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+
+                          {usesImages ? (
+                            <div>
+                              <input
+                                value={option.imageUrl}
+                                onChange={(e) => updateOptionImageUrl(i, e.target.value)}
+                                className={inputClasses}
+                                placeholder="https://example.com/image.jpg"
+                              />
+                              <p className="mt-1 text-sm text-gray-400 md:text-base">
+                                Direct image URL (jpg, png, webp etc.)
+                              </p>
+                            </div>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {canAddOption && (
+                    <button
+                      type="button"
+                      onClick={addOption}
+                      className="mt-3 text-sm text-blue-300"
+                    >
+                      + Add option
+                    </button>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className={checkboxLabelClasses}>
+                    <input
+                      type="checkbox"
+                      checked={isPrivate}
+                      onChange={(e) => setIsPrivate(e.target.checked)}
+                      className={checkboxClasses}
+                    />
+                    <span>Make this poll private</span>
+                  </label>
+
+                  <p className="text-xs text-gray-300">
+                    Private polls are never shown publicly on Poll & See.
+                  </p>
+
+                  <p className="text-xs text-gray-300">
+                    Public polls may appear on the Poll & See homepage after review.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs text-gray-400">
+                    Polls may be edited for clarity, spelling, or shareability, and removed if they don't meet our{" "}
+                    <Link href="/guidelines" className="text-blue-300 hover:underline">
+                      guidelines
+                    </Link>.
+                  </p>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="mt-1 rounded-xl bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-500 disabled:opacity-60"
+                >
+                  {submitting ? "Creating..." : "Create Poll"}
+                </button>
+
+                {message && (
+                  <p
+                    className={`text-sm ${
+                      messageType === "success" ? "text-green-400" : "text-red-400"
+                    }`}
+                  >
+                    {message}
+                  </p>
+                )}
+              </form>
             </>
           )}
         </div>
@@ -657,6 +647,5 @@ setSuccessData(data as PollCreateResponse);
 
       <Footer />
     </main>
-</>
   );
 }
