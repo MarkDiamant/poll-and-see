@@ -1610,9 +1610,10 @@ export default function PollPage() {
     try {
       const { data, error } = await supabase
         .from("polls")
-        .select("id, question, description, category, slug, is_private, created_at")
-        .eq("is_private", false)
-        .order("id", { ascending: false });
+.select("id, question, description, category, slug, is_private, created_at")
+.eq("is_private", false)
+.eq("is_publicly_listed", true)
+.order("id", { ascending: false });
 
       if (error) {
         console.error("Poll page preload poll list query failed", error);

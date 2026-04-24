@@ -45,10 +45,11 @@ export async function GET(request: NextRequest) {
 
     let query = supabaseAdmin
       .from("polls")
-      .select(
-        "id, question, description, category, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed"
-      )
-      .order("created_at", { ascending: false });
+.select(
+  "id, question, description, category, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed"
+)
+.eq("is_publicly_listed", true)
+.order("created_at", { ascending: false });
 
     if (search) {
       const safeSearch = search.replace(/[%(),]/g, " ");
@@ -64,7 +65,11 @@ export async function GET(request: NextRequest) {
       submissionsCountResult,
     ] = await Promise.all([
       query,
-      supabaseAdmin.from("polls").select("id, slug").not("slug", "is", null),
+      supabaseAdmin
+  .from("polls")
+  .select("id, slug")
+  .eq("is_publicly_listed", true)
+  .not("slug", "is", null),
       supabaseAdmin
         .from("poll_options")
         .select("id, poll_id, option_text, image_url, vote_count")
