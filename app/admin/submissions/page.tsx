@@ -396,8 +396,8 @@ return () => {
           "x-admin-key": adminKey,
         },
         body: JSON.stringify({
-          question: (overrides.question ?? questionEdits[submissionId] || "").trim(),
-          description: (overrides.description ?? descriptionEdits[submissionId] || "").trim(),
+          question: ((overrides.question ?? questionEdits[submissionId]) || "").trim(),
+          description: ((overrides.description ?? descriptionEdits[submissionId]) || "").trim(),
           category: overrides.category ?? categoryEdits[submissionId] ?? "General",
           is_private: overrides.is_private ?? Boolean(privacyEdits[submissionId]),
                     email: ((overrides.email ?? emailEdits[submissionId]) || "").trim(),
