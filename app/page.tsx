@@ -1280,11 +1280,12 @@ const trendingPolls = useMemo(() => {
         </div>
 
                 <div className="mt-6 rounded-2xl border border-gray-600 bg-gray-800/80 p-5 md:mx-auto md:max-w-[560px] md:p-6">
-          <p className="mb-2 text-base font-medium text-white md:text-lg">See new polls first</p>
-          <p className="mb-3 text-sm text-gray-200">
-            Get new polls by email based on your interests.
-          </p>
-          <p className="mb-3 text-sm text-gray-300">Choose categories below. Max 1 email per day. Unsubscribe anytime.</p>
+          <div className="text-center">
+            <p className="mb-2 text-base font-medium text-white md:text-lg">Don’t miss the best polls</p>
+            <p className="mb-3 text-sm text-gray-200">
+              Get the most interesting polls sent to you (max 1 per day)
+            </p>
+          </div>
 
           <form onSubmit={handleSubscribe} className="mt-3 space-y-3">
             <input
@@ -1296,58 +1297,15 @@ const trendingPolls = useMemo(() => {
               className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
             />
 
-            <div ref={categoryMenuRef} className="relative">
-              <button
-                type="button"
-                onClick={() => setIsCategoryMenuOpen((current) => !current)}
-                className="flex w-full items-center justify-between rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 pr-6 text-left text-sm text-white outline-none transition hover:border-gray-500"
-              >
-                <span className="truncate">{getCategorySummary(subscriberCategories)}</span>
-                <span className="ml-4 shrink-0 text-gray-400">▾</span>
-              </button>
-
-              {isCategoryMenuOpen ? (
-                <div className="absolute z-20 mt-2 w-full rounded-xl border border-gray-700 bg-gray-900 p-2 shadow-xl">
-                  <button
-                    type="button"
-                    onClick={() => toggleSubscriberCategory("All Categories")}
-                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-white transition hover:bg-gray-800"
-                  >
-                    <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 text-xs">
-                      {subscriberCategories.includes("All Categories") ? "✓" : ""}
-                    </span>
-                    <span>All Categories</span>
-                  </button>
-
-                  <div className="my-1 border-t border-gray-800" />
-
-                  {SIGNUP_CATEGORIES.map((category) => (
-                    <button
-                      key={category}
-                      type="button"
-                      onClick={() => toggleSubscriberCategory(category)}
-                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-white transition hover:bg-gray-800"
-                    >
-                      <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-gray-500 text-xs">
-                        {subscriberCategories.includes("All Categories") ||
-                        subscriberCategories.includes(category)
-                          ? "✓"
-                          : ""}
-                      </span>
-                      <span>{category}</span>
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-
             <button
               type="submit"
               disabled={subscribeLoading}
               className="w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-70"
             >
-              {subscribeLoading ? "Subscribing..." : "Subscribe"}
+              {subscribeLoading ? "Subscribing..." : "Get polls"}
             </button>
+
+            <p className="text-center text-xs text-gray-400">No spam. Unsubscribe anytime.</p>
           </form>
 
           {subscribeMessage ? (
