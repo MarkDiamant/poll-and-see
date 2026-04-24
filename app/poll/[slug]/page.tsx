@@ -1576,7 +1576,7 @@ export default function PollPage() {
       }
 
       markEmailSubscribedLocally();
-      setSubscribeMessage("Subscribed.");
+      setSubscribeMessage("Done.");
       setSubscriberEmail("");
       setSubscriberCategories(["All Categories"]);
       setIsCategoryMenuOpen(false);
@@ -1973,7 +1973,7 @@ setShowEndOfFeed(true);
                         disabled={subscribeLoading}
                         className="w-full rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-70"
                       >
-                        {subscribeLoading ? "Subscribing..." : "Get polls"}
+                        {subscribeLoading ? "Sending..." : "Get polls"}
                       </button>
 
                       <p className="text-center text-xs text-gray-400">No spam. Unsubscribe anytime.</p>

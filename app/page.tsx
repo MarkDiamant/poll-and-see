@@ -952,7 +952,7 @@ let last24Total = 0;
       }
 
       localStorage.setItem(POLL_EMAIL_SUBSCRIBED_KEY, "true");
-      setSubscribeMessage("Subscribed.");
+      setSubscribeMessage("Done.");
       setSubscriberEmail("");
       setSubscriberCategories(["All Categories"]);
       setIsCategoryMenuOpen(false);
@@ -1302,7 +1302,7 @@ const trendingPolls = useMemo(() => {
               disabled={subscribeLoading}
               className="w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-70"
             >
-              {subscribeLoading ? "Subscribing..." : "Get polls"}
+              {subscribeLoading ? "Sending..." : "Get polls"}
             </button>
 
             <p className="text-center text-xs text-gray-400">No spam. Unsubscribe anytime.</p>
