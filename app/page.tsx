@@ -583,7 +583,7 @@ let last24Total = 0;
           .select("id, question, description, category, slug, featured, is_private, is_publicly_listed, created_at")
           .eq("is_private", false)
           .eq("is_publicly_listed", true)
-          .order("id", { ascending: false }),
+.order("created_at", { ascending: false }),
         supabase
           .from("site_stats")
           .select("total_polls")
