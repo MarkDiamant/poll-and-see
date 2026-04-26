@@ -271,14 +271,9 @@ export async function GET(request: NextRequest) {
                   return (
                     <span
                       key={`${lineIndex}-${wordIndex}`}
-                      style={{
-                        color: isLast ? "transparent" : "#ffffff",
-                        backgroundImage: isLast
-                          ? "linear-gradient(90deg, #a5f545 0%, #22d3ee 55%, #38bdf8 100%)"
-                          : undefined,
-                        backgroundClip: isLast ? "text" : undefined,
-                        WebkitBackgroundClip: isLast ? "text" : undefined,
-                      }}
+style={{
+  color: isLast ? "#35d8f2" : "#ffffff",
+}}
                     >
                       {word}
                     </span>
@@ -351,7 +346,7 @@ export async function GET(request: NextRequest) {
                 fontWeight: 900,
               }}
             >
-              🔒
+              ✓
             </div>
             <span>Anonymous</span>
             <span style={{ color: "#b7f238" }}>•</span>
