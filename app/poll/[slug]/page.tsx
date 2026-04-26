@@ -926,8 +926,8 @@ function PollCard({
   }, []);
 
  const shareLinkText = bundle.poll.is_private
-  ? `PRIVATE POLL\n\n${bundle.poll.question}\n\nVote and see what others think:\n\n${window.location.origin}/poll/${bundle.poll.slug}`
-  : `${bundle.poll.question}\n\nVote and see what others think:\n\n${window.location.origin}/poll/${bundle.poll.slug}`;
+  ? `PRIVATE POLL\n\n${bundle.poll.question}\n\n${window.location.origin}/poll/${bundle.poll.slug}`
+  : `${bundle.poll.question}\n\n${window.location.origin}/poll/${bundle.poll.slug}`;
   const shareImageLinkText = `${window.location.origin}/poll/${bundle.poll.slug}`;
   const toggleShareMenu = () => {
     if (!shareMenuOpen && shareMenuRef.current) {

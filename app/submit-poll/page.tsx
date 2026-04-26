@@ -259,7 +259,7 @@ export default function SubmitPollPage() {
   const handleCopy = async () => {
     if (!successData) return;
     try {
-      await navigator.clipboard.writeText(successData.shareText);
+    await navigator.clipboard.writeText(successData.pollUrl);
       setLinkCopied(true);
       window.setTimeout(() => {
         setLinkCopied(false);
@@ -275,9 +275,9 @@ export default function SubmitPollPage() {
 
     if (navigator.share) {
       try {
-        await navigator.share({
-          text: successData.shareText,
-        });
+await navigator.share({
+  text: successData.pollUrl,
+});
         return;
       } catch {
         // fall through to clipboard
