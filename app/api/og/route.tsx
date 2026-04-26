@@ -125,25 +125,31 @@ export async function GET(request: NextRequest) {
           }}
         />
 
-        <div
-          style={{
-            position: "absolute",
-            left: "70px",
-            right: "70px",
-            top: "185px",
-            height: "260px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            textAlign: "center",
-            lineHeight: 1.04,
-            fontWeight: 900,
-            fontSize,
-            letterSpacing: "-4px",
-            color: "#ffffff",
-          }}
-        >
+<div
+  style={{
+    position: "absolute",
+    left: "70px",
+    right: "70px",
+    top: "120px", // 👈 move UP (was 185)
+    height: "220px",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    textAlign: "center",
+    lineHeight: 1.02,
+    fontWeight: 900, // 👈 thicker (max weight)
+    fontSize: fontSize + 10,
+    letterSpacing: "-4.5px",
+    color: "#ffffff",
+   textShadow: `
+  0 0 1px #fff,
+  0 0 2px #fff,
+  0 0 3px #fff,
+  0 4px 14px rgba(255,255,255,0.25)
+`,
+  }}
+>
           {lines.map((line, lineIndex) => (
             <div
               key={`line-${lineIndex}`}
@@ -152,7 +158,7 @@ export async function GET(request: NextRequest) {
                 justifyContent: "center",
                 flexWrap: "wrap",
                 gap: "0.25em",
-                marginBottom: "8px",
+                marginBottom: "4px",
               }}
             >
               {line.map((word, wordIndex) => {
