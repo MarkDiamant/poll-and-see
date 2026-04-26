@@ -35,11 +35,12 @@ const slug = rawSlug.replace(/^\/+/, "");
 
   const title = data?.question || "Poll & See";
   const description = "Vote and see what others think";
-const imageUrl = `${SITE_URL}/api/og?slug=${encodeURIComponent(cleanSlug)}`;
+const imageUrl = `${SITE_URL}/api/og/${encodeURIComponent(cleanSlug)}`;
 
-  return {
-    title,
-    description,
+return {
+  metadataBase: new URL(SITE_URL),
+  title,
+  description,
     openGraph: {
       title,
       description,

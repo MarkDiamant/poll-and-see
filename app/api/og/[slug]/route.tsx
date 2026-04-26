@@ -84,10 +84,12 @@ function getGradientColour(index: number, total: number) {
   return colours[colourIndex];
 }
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-const rawSlug = (searchParams.get("slug") || "").trim();
-const slug = rawSlug.replace(/^\/+/, "").trim();
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ slug: string }> }
+) {
+  const { slug: rawSlug } = await context.params;
+  const slug = rawSlug.replace(/^\/+/, "").trim();
 
   const supabase = getSupabaseServerClient();
 
