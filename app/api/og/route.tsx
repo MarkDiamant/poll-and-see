@@ -21,18 +21,18 @@ function getSupabaseServerClient() {
 
 function getFontSize(question: string) {
   const length = question.length;
-  if (length <= 40) return 86;
-  if (length <= 80) return 74;
-  if (length <= 120) return 62;
+  if (length <= 40) return 94;
+  if (length <= 80) return 78;
+  if (length <= 120) return 64;
   return 52;
 }
 
 function getLineLimit(question: string) {
   const length = question.length;
-  if (length <= 40) return 20;
-  if (length <= 80) return 26;
+  if (length <= 40) return 18;
+  if (length <= 80) return 25;
   if (length <= 120) return 32;
-  return 38;
+  return 39;
 }
 
 function splitQuestion(question: string) {
@@ -82,8 +82,6 @@ export async function GET(request: NextRequest) {
   const question = data?.question || "What do you think?";
   const lines = splitQuestion(question);
   const fontSize = getFontSize(question);
-  const lastWordIndex = question.trim().split(/\s+/).filter(Boolean).length - 1;
-
   const flattenedWords = lines.flat();
 
   return new ImageResponse(
@@ -95,119 +93,122 @@ export async function GET(request: NextRequest) {
           display: "flex",
           position: "relative",
           overflow: "hidden",
-          background: "#050b24",
+          background: "#030827",
           fontFamily: "Arial, Helvetica, sans-serif",
           color: "white",
         }}
       >
+        {/* background glow */}
         <div
           style={{
             position: "absolute",
             inset: 0,
             background:
-              "radial-gradient(circle at 6% 0%, rgba(190, 0, 255, 0.48), transparent 28%), radial-gradient(circle at 94% 0%, rgba(224, 0, 205, 0.42), transparent 30%), radial-gradient(circle at 50% 48%, rgba(24, 38, 96, 0.6), transparent 55%), linear-gradient(180deg, #050729 0%, #050b24 100%)",
+              "radial-gradient(circle at 4% -8%, rgba(190,0,255,0.55), transparent 28%), radial-gradient(circle at 98% -4%, rgba(226,0,196,0.52), transparent 30%), radial-gradient(circle at 50% 43%, rgba(16,28,82,0.88), transparent 62%), linear-gradient(180deg, #05072a 0%, #02051c 100%)",
           }}
         />
 
+        {/* top-left check mark */}
         <div
           style={{
             position: "absolute",
-            left: "-74px",
-            top: "96px",
-            width: "238px",
-            height: "78px",
+            left: "-48px",
+            top: "66px",
+            width: "205px",
+            height: "72px",
             borderRadius: "42px",
-            background: "linear-gradient(135deg, #ec00d9, #2936d8)",
-            transform: "rotate(-40deg)",
+            background: "linear-gradient(135deg, #eb12d8 0%, #2535d8 100%)",
+            transform: "rotate(42deg)",
             opacity: 0.78,
           }}
         />
         <div
           style={{
             position: "absolute",
-            left: "52px",
-            top: "42px",
-            width: "132px",
-            height: "48px",
-            borderRadius: "34px",
-            background: "#2936d8",
-            transform: "rotate(-40deg)",
+            left: "66px",
+            top: "34px",
+            width: "150px",
+            height: "74px",
+            borderRadius: "45px",
+            background: "linear-gradient(135deg, #2736e5 0%, #1d2aad 100%)",
+            transform: "rotate(-47deg)",
+            opacity: 0.84,
+          }}
+        />
+
+        {/* top-right speech bubble */}
+        <div
+          style={{
+            position: "absolute",
+            right: "66px",
+            top: "47px",
+            width: "165px",
+            height: "93px",
+            borderRadius: "31px",
+            border: "8px solid #b000ff",
             opacity: 0.82,
           }}
         />
-
         <div
           style={{
             position: "absolute",
-            right: "70px",
-            top: "52px",
-            width: "160px",
-            height: "88px",
-            borderRadius: "28px",
-            border: "7px solid #b000ff",
+            right: "120px",
+            top: "126px",
+            width: "66px",
+            height: "42px",
+            borderRadius: "12px",
+            borderLeft: "8px solid #b000ff",
+            borderBottom: "8px solid #b000ff",
+            transform: "rotate(-12deg)",
             opacity: 0.75,
           }}
         />
-        <div
-          style={{
-            position: "absolute",
-            right: "118px",
-            top: "130px",
-            width: "76px",
-            height: "34px",
-            borderRadius: "12px",
-            border: "6px solid #2630c9",
-            transform: "rotate(8deg)",
-            opacity: 0.55,
-          }}
-        />
 
+        {/* right poll bars */}
         <div
           style={{
             position: "absolute",
-            right: "0px",
-            top: "184px",
+            right: "-6px",
+            top: "210px",
             display: "flex",
             gap: "12px",
             alignItems: "flex-end",
-            transform: "rotate(12deg)",
-            opacity: 0.42,
+            transform: "rotate(13deg)",
+            opacity: 0.43,
           }}
         >
-          <div style={{ width: 36, height: 54, borderRadius: 8, background: "#1727ca" }} />
-          <div style={{ width: 36, height: 96, borderRadius: 8, background: "#2536f0" }} />
-          <div style={{ width: 36, height: 142, borderRadius: 8, background: "#8900ff" }} />
+          <div style={{ width: 36, height: 50, borderRadius: 8, background: "#1322b9" }} />
+          <div style={{ width: 36, height: 92, borderRadius: 8, background: "#2436e8" }} />
+          <div style={{ width: 36, height: 142, borderRadius: 8, background: "#8200ff" }} />
         </div>
 
+        {/* bottom accents */}
         <div
           style={{
             position: "absolute",
-            left: "-58px",
-            bottom: "-112px",
-            width: "245px",
-            height: "265px",
-            borderRadius: "80px",
-            border: "48px solid transparent",
-            borderLeftColor: "#94f043",
-            borderTopColor: "#22c9d6",
-            transform: "rotate(-20deg)",
-            opacity: 0.98,
+            left: "-74px",
+            bottom: "-135px",
+            width: "270px",
+            height: "292px",
+            borderRadius: "95px",
+            border: "52px solid transparent",
+            borderLeftColor: "#a5f545",
+            borderTopColor: "#16c6e9",
+            transform: "rotate(-21deg)",
           }}
         />
-
         <div
           style={{
             position: "absolute",
-            right: "-92px",
-            bottom: "-70px",
-            width: "260px",
-            height: "260px",
+            right: "-105px",
+            bottom: "-84px",
+            width: "285px",
+            height: "285px",
             borderRadius: "999px",
-            border: "46px solid transparent",
-            borderLeftColor: "#ec0fa9",
-            borderTopColor: "#a400ff",
-            transform: "rotate(-20deg)",
-            opacity: 0.95,
+            border: "50px solid transparent",
+            borderLeftColor: "#ec12ad",
+            borderTopColor: "#a500ff",
+            transform: "rotate(-18deg)",
           }}
         />
 
@@ -224,29 +225,30 @@ export async function GET(request: NextRequest) {
         >
           <img
             src={`${SITE_URL}/logo.png`}
-            width="360"
-            height="96"
+            width="350"
+            height="90"
             style={{
               objectFit: "contain",
               marginTop: "42px",
-              marginBottom: "32px",
+              marginBottom: "20px",
             }}
           />
 
+          {/* question */}
           <div
             style={{
-              width: "1050px",
-              minHeight: "270px",
+              width: "1085px",
+              minHeight: "286px",
               display: "flex",
               flexDirection: "column",
               justifyContent: "center",
               alignItems: "center",
               textAlign: "center",
-              lineHeight: 1.08,
-              fontWeight: 900,
+              lineHeight: 1.06,
+              fontWeight: 950,
               fontSize,
-              letterSpacing: "-3px",
-              textShadow: "0 3px 7px rgba(255,255,255,0.16)",
+              letterSpacing: "-3.8px",
+              textShadow: "0 3px 6px rgba(255,255,255,0.16)",
             }}
           >
             {lines.map((line, lineIndex) => (
@@ -261,17 +263,22 @@ export async function GET(request: NextRequest) {
                 }}
               >
                 {line.map((word, wordIndex) => {
-const currentWordIndex = lines
-  .slice(0, lineIndex)
-  .reduce((sum, currentLine) => sum + currentLine.length, 0) + wordIndex;
+                  const currentWordIndex =
+                    lines.slice(0, lineIndex).reduce((sum, currentLine) => sum + currentLine.length, 0) +
+                    wordIndex;
 
-const isLast = currentWordIndex === flattenedWords.length - 1;
+                  const isLast = currentWordIndex === flattenedWords.length - 1;
 
                   return (
                     <span
-style={{
-  color: isLast ? "#37d8f4" : "#ffffff",
-}}
+                      key={`${lineIndex}-${wordIndex}`}
+                      style={{
+                        color: isLast ? "transparent" : "#ffffff",
+                        backgroundImage: isLast
+                          ? "linear-gradient(90deg, #b7f238 0%, #42df7d 38%, #18c9df 72%, #31b8ff 100%)"
+                          : undefined,
+                        backgroundClip: isLast ? "text" : undefined,
+                      }}
                     >
                       {word}
                     </span>
@@ -281,38 +288,74 @@ style={{
             ))}
           </div>
 
+          {/* CTA */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              border: "3px solid #26bfff",
+              border: "3px solid #29bfff",
               borderLeftColor: "#b7f238",
-              borderRadius: "25px",
-              padding: "21px 58px",
-              marginTop: "4px",
-              fontSize: "35px",
-              fontWeight: 700,
+              borderRadius: "26px",
+              padding: "19px 55px",
+              marginTop: "-1px",
+              fontSize: "34px",
+              fontWeight: 750,
               color: "#ffffff",
-              boxShadow: "0 0 22px rgba(38,191,255,0.32)",
+              boxShadow: "0 0 20px rgba(38,191,255,0.34)",
             }}
           >
-            <span style={{ marginRight: "24px", fontSize: "42px", color: "#b7f238" }}>◉</span>
-            Vote and see what others think
+            <div
+              style={{
+                width: "72px",
+                height: "72px",
+                marginRight: "26px",
+                borderRadius: "999px",
+                border: "4px solid #b7f238",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                position: "relative",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
+                <div style={{ width: 8, height: 18, border: "3px solid #b7f238", borderRadius: 3 }} />
+                <div style={{ width: 8, height: 30, border: "3px solid #26bfff", borderRadius: 3 }} />
+                <div style={{ width: 8, height: 43, border: "3px solid #ec12ad", borderRadius: 3 }} />
+              </div>
+            </div>
+
+            <span>Vote and see what others think</span>
           </div>
 
+          {/* bottom line */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
               gap: "16px",
-              marginTop: "24px",
+              marginTop: "22px",
               fontSize: "28px",
-              fontWeight: 500,
+              fontWeight: 550,
               color: "#ffffff",
             }}
           >
-            <span style={{ color: "#b7f238", fontSize: "30px" }}>▢</span>
+            <div
+              style={{
+                width: "42px",
+                height: "46px",
+                border: "4px solid #b7f238",
+                borderRadius: "9px 9px 13px 13px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#b7f238",
+                fontSize: "22px",
+                fontWeight: 900,
+              }}
+            >
+              🔒
+            </div>
             <span>Anonymous</span>
             <span style={{ color: "#b7f238" }}>•</span>
             <span>Quick</span>
