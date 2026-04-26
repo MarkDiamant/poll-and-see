@@ -116,18 +116,19 @@ const question = error
           fontFamily: "Arial, Helvetica, sans-serif",
         }}
       >
-        <img
-          src={new URL("/og-bg.png", request.url).toString()}
-          width="1200"
-          height="630"
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "1200px",
-            height: "630px",
-            objectFit: "cover",
-          }}
-        />
+<img
+  src={new URL("/og-bg.png", request.url).toString()}
+  width="1200"
+  height="630"
+  style={{
+    position: "absolute",
+    left: "-60px",
+    top: "-32px",
+    width: "1320px",
+    height: "694px",
+    objectFit: "cover",
+  }}
+/>
 
 <div
   style={{

@@ -35,7 +35,7 @@ const slug = rawSlug.replace(/^\/+/, "");
 
   const title = data?.question || "Poll & See";
   const description = "Vote and see what others think";
-  const imageUrl = `${SITE_URL}/api/og?slug=${cleanSlug}`;
+const imageUrl = `${SITE_URL}/api/og?slug=${encodeURIComponent(cleanSlug)}`;
 
   return {
     title,
@@ -47,12 +47,14 @@ const slug = rawSlug.replace(/^\/+/, "");
       siteName: "Poll & See",
       type: "website",
       images: [
-        {
-          url: imageUrl,
-          width: 1200,
-          height: 630,
-          alt: title,
-        },
+{
+  url: imageUrl,
+  secureUrl: imageUrl,
+  width: 1200,
+  height: 630,
+  alt: title,
+  type: "image/png",
+},
       ],
     },
     twitter: {
