@@ -907,15 +907,20 @@ return () => {
                         <div className="space-y-1">
                           <span className="text-gray-400">Category</span>
                           <select
-                            value={categoryEdits[submission.id] || "General"}
-                            onChange={(event) =>
-                              setCategoryEdits((current) => ({
-                                ...current,
-                                [submission.id]: event.target.value as CategoryOption,
-                              }))
-                            }
-                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-xs text-white outline-none"
-                          >
+ <select
+  value={categoryEdits[submission.id] || "General"}
+  onChange={(event) => {
+    const nextCategory = event.target.value as CategoryOption;
+
+    setCategoryEdits((current) => ({
+      ...current,
+      [submission.id]: nextCategory,
+    }));
+
+    void saveSubmission(submission.id, { category: nextCategory });
+  }}
+  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-xs text-white outline-none"
+>
                             {CATEGORY_OPTIONS.map((category) => (
                               <option key={category} value={category}>
                                 {category}
