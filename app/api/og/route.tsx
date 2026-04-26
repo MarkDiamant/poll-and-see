@@ -21,10 +21,10 @@ function getSupabaseServerClient() {
 
 function getFontSize(question: string) {
   const length = question.length;
-  if (length <= 40) return 94;
-  if (length <= 80) return 78;
-  if (length <= 120) return 64;
-  return 52;
+  if (length <= 40) return 100;
+  if (length <= 80) return 82;
+  if (length <= 120) return 66;
+  return 54;
 }
 
 function getLineLimit(question: string) {
@@ -59,7 +59,11 @@ function splitQuestion(question: string) {
     if (extra) lines[lines.length - 1] = [...lines[lines.length - 1], ...extra];
   }
 
-  if (lines.length > 1 && lines[lines.length - 1].length === 1 && lines[lines.length - 2].length > 2) {
+  if (
+    lines.length > 1 &&
+    lines[lines.length - 1].length === 1 &&
+    lines[lines.length - 2].length > 2
+  ) {
     const moved = lines[lines.length - 2].pop();
     if (moved) lines[lines.length - 1] = [moved, ...lines[lines.length - 1]];
   }
@@ -98,17 +102,15 @@ export async function GET(request: NextRequest) {
           color: "white",
         }}
       >
-        {/* background glow */}
         <div
           style={{
             position: "absolute",
             inset: 0,
             background:
-              "radial-gradient(circle at 4% -8%, rgba(190,0,255,0.55), transparent 28%), radial-gradient(circle at 98% -4%, rgba(226,0,196,0.52), transparent 30%), radial-gradient(circle at 50% 43%, rgba(16,28,82,0.88), transparent 62%), linear-gradient(180deg, #05072a 0%, #02051c 100%)",
+              "radial-gradient(circle at 4% -8%, rgba(190,0,255,0.58), transparent 28%), radial-gradient(circle at 98% -4%, rgba(226,0,196,0.52), transparent 30%), radial-gradient(circle at 50% 42%, rgba(14,28,82,0.92), transparent 62%), linear-gradient(180deg, #05072a 0%, #02051c 100%)",
           }}
         />
 
-        {/* top-left check mark */}
         <div
           style={{
             position: "absolute",
@@ -136,7 +138,6 @@ export async function GET(request: NextRequest) {
           }}
         />
 
-        {/* top-right speech bubble */}
         <div
           style={{
             position: "absolute",
@@ -164,7 +165,6 @@ export async function GET(request: NextRequest) {
           }}
         />
 
-        {/* right poll bars */}
         <div
           style={{
             position: "absolute",
@@ -182,7 +182,6 @@ export async function GET(request: NextRequest) {
           <div style={{ width: 36, height: 142, borderRadius: 8, background: "#8200ff" }} />
         </div>
 
-        {/* bottom accents */}
         <div
           style={{
             position: "absolute",
@@ -197,6 +196,7 @@ export async function GET(request: NextRequest) {
             transform: "rotate(-21deg)",
           }}
         />
+
         <div
           style={{
             position: "absolute",
@@ -225,29 +225,28 @@ export async function GET(request: NextRequest) {
         >
           <img
             src={`${SITE_URL}/logo.png`}
-            width="350"
-            height="90"
+            width="365"
+            height="94"
             style={{
               objectFit: "contain",
-              marginTop: "42px",
-              marginBottom: "20px",
+              marginTop: "39px",
+              marginBottom: "12px",
             }}
           />
 
-          {/* question */}
           <div
             style={{
-              width: "1085px",
-              minHeight: "286px",
+              width: "1095px",
+              minHeight: "296px",
               display: "flex",
               flexDirection: "column",
               justifyContent: "center",
               alignItems: "center",
               textAlign: "center",
-              lineHeight: 1.06,
-              fontWeight: 900,
+              lineHeight: 1.04,
+              fontWeight: 950,
               fontSize,
-              letterSpacing: "-3.8px",
+              letterSpacing: "-4.2px",
               textShadow: "0 3px 6px rgba(255,255,255,0.16)",
             }}
           >
@@ -272,9 +271,14 @@ export async function GET(request: NextRequest) {
                   return (
                     <span
                       key={`${lineIndex}-${wordIndex}`}
-style={{
-  color: isLast ? "#35d8f2" : "#ffffff",
-}}
+                      style={{
+                        color: isLast ? "transparent" : "#ffffff",
+                        backgroundImage: isLast
+                          ? "linear-gradient(90deg, #a5f545 0%, #22d3ee 55%, #38bdf8 100%)"
+                          : undefined,
+                        backgroundClip: isLast ? "text" : undefined,
+                        WebkitBackgroundClip: isLast ? "text" : undefined,
+                      }}
                     >
                       {word}
                     </span>
@@ -284,7 +288,6 @@ style={{
             ))}
           </div>
 
-          {/* CTA */}
           <div
             style={{
               display: "flex",
@@ -293,8 +296,8 @@ style={{
               border: "3px solid #29bfff",
               borderLeftColor: "#b7f238",
               borderRadius: "26px",
-              padding: "19px 55px",
-              marginTop: "-1px",
+              padding: "18px 55px",
+              marginTop: "-4px",
               fontSize: "34px",
               fontWeight: 750,
               color: "#ffffff",
@@ -311,7 +314,6 @@ style={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                position: "relative",
               }}
             >
               <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
@@ -324,13 +326,12 @@ style={{
             <span>Vote and see what others think</span>
           </div>
 
-          {/* bottom line */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
               gap: "16px",
-              marginTop: "22px",
+              marginTop: "21px",
               fontSize: "28px",
               fontWeight: 550,
               color: "#ffffff",
@@ -338,10 +339,10 @@ style={{
           >
             <div
               style={{
-                width: "42px",
-                height: "46px",
+                width: "44px",
+                height: "50px",
                 border: "4px solid #b7f238",
-                borderRadius: "9px 9px 13px 13px",
+                borderRadius: "22px 22px 12px 12px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -350,7 +351,7 @@ style={{
                 fontWeight: 900,
               }}
             >
-              ✓
+              🔒
             </div>
             <span>Anonymous</span>
             <span style={{ color: "#b7f238" }}>•</span>
