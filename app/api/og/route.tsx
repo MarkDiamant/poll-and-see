@@ -85,7 +85,7 @@ function getGradientColour(index: number, total: number) {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const slug = searchParams.get("slug") || "";
+  const slug = (searchParams.get("slug") || "").trim();
 
   const supabase = getSupabaseServerClient();
 
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
     .eq("slug", slug)
     .maybeSingle();
 
-  const question = data?.question || "What do you think?";
+  const question = data?.question || "Poll not found";
   const lines = splitQuestion(question);
   const fontSize = getFontSize(question);
   const flattenedWords = lines.flat();
