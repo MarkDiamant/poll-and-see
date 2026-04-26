@@ -6,20 +6,6 @@ export const runtime = "edge";
 
 const SITE_URL = "https://www.pollandsee.com";
 
-async function getOgBackgroundDataUrl(request: NextRequest) {
-  const imageUrl = new URL("/og-bg.png", request.url);
-  const response = await fetch(imageUrl.toString());
-
-  if (!response.ok) {
-    throw new Error("Could not load OG background image.");
-  }
-
-  const buffer = await response.arrayBuffer();
-  const base64 = Buffer.from(buffer).toString("base64");
-
-  return `data:image/png;base64,${base64}`;
-}
-
 function getSupabaseServerClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -113,7 +99,6 @@ export async function GET(request: NextRequest) {
   const lines = splitQuestion(question);
   const fontSize = getFontSize(question);
   const flattenedWords = lines.flat();
-  const backgroundDataUrl = await getOgBackgroundDataUrl(request);
 
   return new ImageResponse(
     (
@@ -128,7 +113,7 @@ export async function GET(request: NextRequest) {
         }}
       >
         <img
-          src={backgroundDataUrl}
+          src={new URL("/og-bg.png", request.url).toString()}
           width="1200"
           height="630"
           style={{
