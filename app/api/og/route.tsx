@@ -130,8 +130,8 @@ export async function GET(request: NextRequest) {
     position: "absolute",
     left: "70px",
     right: "70px",
-    top: "120px", // 👈 move UP (was 185)
-    height: "220px",
+    top: "150px", // 👈 move UP (was 185)
+    height: "240px",
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
@@ -139,15 +139,10 @@ export async function GET(request: NextRequest) {
     textAlign: "center",
     lineHeight: 1.02,
     fontWeight: 900, // 👈 thicker (max weight)
-    fontSize: fontSize + 10,
+    fontSize: fontSize + 6,
     letterSpacing: "-4.5px",
     color: "#ffffff",
-   textShadow: `
-  0 0 1px #fff,
-  0 0 2px #fff,
-  0 0 3px #fff,
-  0 4px 14px rgba(255,255,255,0.25)
-`,
+textShadow: "0 2px 6px rgba(255,255,255,0.12)", // 👈 clean, crisp
   }}
 >
           {lines.map((line, lineIndex) => (
