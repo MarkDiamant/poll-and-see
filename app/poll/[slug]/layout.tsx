@@ -35,8 +35,7 @@ const slug = rawSlug.replace(/^\/+/, "");
 
   const title = data?.question || "Poll & See";
   const description = "Vote and see what others think";
-const imageUrl = `${SITE_URL}/api/og/${encodeURIComponent(cleanSlug)}.png`;
-const fallbackImageUrl = `${SITE_URL}/og-bg.png`;
+const imageUrl = `${SITE_URL}/api/og/${encodeURIComponent(cleanSlug)}`;
 
 return {
   metadataBase: new URL(SITE_URL),
@@ -57,21 +56,13 @@ images: [
     alt: title,
     type: "image/png",
   },
-  {
-    url: fallbackImageUrl,
-    secureUrl: fallbackImageUrl,
-    width: 1200,
-    height: 630,
-    alt: "Poll & See",
-    type: "image/png",
-  },
 ],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [imageUrl, fallbackImageUrl],
+      images: [imageUrl],
     },
   };
 }
