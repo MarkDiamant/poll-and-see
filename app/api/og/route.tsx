@@ -245,7 +245,7 @@ export async function GET(request: NextRequest) {
               alignItems: "center",
               textAlign: "center",
               lineHeight: 1.06,
-              fontWeight: 950,
+              fontWeight: 900,
               fontSize,
               letterSpacing: "-3.8px",
               textShadow: "0 3px 6px rgba(255,255,255,0.16)",
@@ -272,13 +272,9 @@ export async function GET(request: NextRequest) {
                   return (
                     <span
                       key={`${lineIndex}-${wordIndex}`}
-                      style={{
-                        color: isLast ? "transparent" : "#ffffff",
-                        backgroundImage: isLast
-                          ? "linear-gradient(90deg, #b7f238 0%, #42df7d 38%, #18c9df 72%, #31b8ff 100%)"
-                          : undefined,
-                        backgroundClip: isLast ? "text" : undefined,
-                      }}
+style={{
+  color: isLast ? "#35d8f2" : "#ffffff",
+}}
                     >
                       {word}
                     </span>
@@ -354,7 +350,7 @@ export async function GET(request: NextRequest) {
                 fontWeight: 900,
               }}
             >
-              🔒
+              ✓
             </div>
             <span>Anonymous</span>
             <span style={{ color: "#b7f238" }}>•</span>
