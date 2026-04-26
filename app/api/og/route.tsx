@@ -89,13 +89,15 @@ export async function GET(request: NextRequest) {
 
   const supabase = getSupabaseServerClient();
 
-  const { data } = await supabase
-    .from("polls")
-    .select("question")
-    .eq("slug", slug)
-    .maybeSingle();
+const { data, error } = await supabase
+  .from("polls")
+  .select("id, question, slug")
+  .eq("slug", slug)
+  .maybeSingle();
 
-  const question = data?.question || "Poll not found";
+const question = error
+  ? `OG error: ${error.message}`
+  : data?.question || `Poll not found: ${slug}`;
   const lines = splitQuestion(question);
   const fontSize = getFontSize(question);
   const flattenedWords = lines.flat();
