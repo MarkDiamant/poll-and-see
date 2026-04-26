@@ -22,10 +22,10 @@ function getSupabaseServerClient() {
 
 function getFontSize(question: string) {
   const length = question.length;
-  if (length <= 40) return 100;
-  if (length <= 80) return 82;
-  if (length <= 120) return 66;
-  return 54;
+  if (length <= 40) return 88;
+  if (length <= 80) return 70;
+  if (length <= 120) return 56;
+  return 46;
 }
 
 function getLineLimit(question: string) {
@@ -137,7 +137,7 @@ const question = error
     position: "absolute",
     left: "70px",
     right: "70px",
-    top: "145px", // 👈 move UP (was 185)
+    top: "150px", // 👈 move UP (was 185)
     height: "230px",
     display: "flex",
     flexDirection: "column",
@@ -146,10 +146,10 @@ const question = error
     textAlign: "center",
   lineHeight: 1.04,
     fontWeight: 900, // 👈 thicker (max weight)
-    fontSize: fontSize + 2,
+    fontSize: fontSize,
     letterSpacing: "-4.5px",
     color: "#ffffff",
-textShadow: "0 2px 6px rgba(255,255,255,0.12)", // 👈 clean, crisp
+textShadow: "0 3px 10px rgba(0,0,0,0.45)",
   }}
 >
           {lines.map((line, lineIndex) => (
