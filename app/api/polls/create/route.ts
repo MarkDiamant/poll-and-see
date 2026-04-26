@@ -114,7 +114,7 @@ function containsBlockedWords(value: string) {
 }
 
 function makeShareText(question: string, fullLink: string) {
-  return `${question}\n\nVote and see what others think:\n\n${fullLink}`;
+  return `${question}\n\n${fullLink}`;
 }
 
 function generateShortId(length = 6) {
