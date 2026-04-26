@@ -21,7 +21,8 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
+const { slug: rawSlug } = await params;
+const slug = rawSlug.replace(/^\/+/, "");
   const cleanSlug = slug.trim();
 
   const supabase = getSupabaseServerClient();

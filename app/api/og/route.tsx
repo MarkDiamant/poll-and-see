@@ -85,7 +85,8 @@ function getGradientColour(index: number, total: number) {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const slug = (searchParams.get("slug") || "").trim();
+const rawSlug = (searchParams.get("slug") || "").trim();
+const slug = rawSlug.replace(/^\/+/, "");
 
   const supabase = getSupabaseServerClient();
 
