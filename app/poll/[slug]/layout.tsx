@@ -35,7 +35,7 @@ const slug = rawSlug.replace(/^\/+/, "");
 
   const title = data?.question || "Poll & See";
   const description = "Vote and see what others think";
-const imageUrl = `${SITE_URL}/api/og/${encodeURIComponent(cleanSlug)}`;
+const imageUrl = `${SITE_URL}/api/og/${encodeURIComponent(cleanSlug)}.png`;
 
 return {
   metadataBase: new URL(SITE_URL),

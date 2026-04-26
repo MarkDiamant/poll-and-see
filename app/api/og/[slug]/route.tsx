@@ -89,7 +89,7 @@ export async function GET(
   context: { params: Promise<{ slug: string }> }
 ) {
   const { slug: rawSlug } = await context.params;
-  const slug = rawSlug.replace(/^\/+/, "").trim();
+ const slug = rawSlug.replace(/^\/+/, "").replace(/\.png$/, "").trim();
 
   const supabase = getSupabaseServerClient();
 
