@@ -204,9 +204,13 @@ textShadow: "0 2px 6px rgba(255,255,255,0.12)", // 👈 clean, crisp
         </div>
       </div>
     ),
-    {
-      width: 1200,
-      height: 630,
-    }
+{
+  width: 1200,
+  height: 630,
+  headers: {
+    "Content-Type": "image/png",
+    "Cache-Control": "public, max-age=3600, s-maxage=3600",
+  },
+}
   );
 }
