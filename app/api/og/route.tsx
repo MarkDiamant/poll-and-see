@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
   const fontSize = getFontSize(question);
   const lastWordIndex = question.trim().split(/\s+/).filter(Boolean).length - 1;
 
-  let wordCounter = 0;
+  const flattenedWords = lines.flat();
 
   return new ImageResponse(
     (
@@ -261,19 +261,17 @@ export async function GET(request: NextRequest) {
                 }}
               >
                 {line.map((word, wordIndex) => {
-                  const isLast = wordCounter === lastWordIndex;
-                  wordCounter += 1;
+const currentWordIndex = lines
+  .slice(0, lineIndex)
+  .reduce((sum, currentLine) => sum + currentLine.length, 0) + wordIndex;
+
+const isLast = currentWordIndex === flattenedWords.length - 1;
 
                   return (
                     <span
-                      key={`${lineIndex}-${wordIndex}`}
-                      style={{
-                        color: isLast ? "#41d9f4" : "#ffffff",
-                        backgroundImage: isLast
-                          ? "linear-gradient(90deg, #b7f238 0%, #38e0d5 70%, #30c8ff 100%)"
-                          : "none",
-                        backgroundClip: isLast ? "text" : "border-box",
-                      }}
+style={{
+  color: isLast ? "#37d8f4" : "#ffffff",
+}}
                     >
                       {word}
                     </span>
