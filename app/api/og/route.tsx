@@ -134,16 +134,16 @@ const question = error
     position: "absolute",
     left: "70px",
     right: "70px",
-    top: "150px", // 👈 move UP (was 185)
-    height: "240px",
+    top: "165px", // 👈 move UP (was 185)
+    height: "220px",
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
     textAlign: "center",
-    lineHeight: 1.02,
+    lineHeight: 1.08,
     fontWeight: 900, // 👈 thicker (max weight)
-    fontSize: fontSize + 6,
+    fontSize: fontSize - 6,
     letterSpacing: "-4.5px",
     color: "#ffffff",
 textShadow: "0 2px 6px rgba(255,255,255,0.12)", // 👈 clean, crisp
