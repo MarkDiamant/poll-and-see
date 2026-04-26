@@ -907,7 +907,6 @@ return () => {
                         <div className="space-y-1">
                           <span className="text-gray-400">Category</span>
                           <select
- <select
   value={categoryEdits[submission.id] || "General"}
   onChange={(event) => {
     const nextCategory = event.target.value as CategoryOption;
