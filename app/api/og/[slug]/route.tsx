@@ -22,9 +22,9 @@ function getSupabaseServerClient() {
 
 function getFontSize(question: string) {
   const length = question.length;
-  if (length <= 40) return 88;
-  if (length <= 80) return 70;
-  if (length <= 120) return 56;
+  if (length <= 40) return 86;
+  if (length <= 80) return 66;
+  if (length <= 120) return 52;
   return 46;
 }
 
@@ -137,7 +137,7 @@ const question = error
     position: "absolute",
     left: "70px",
     right: "70px",
-    top: "150px", // 👈 move UP (was 185)
+    top: "165px", // 👈 move UP (was 185)
     height: "230px",
     display: "flex",
     flexDirection: "column",
