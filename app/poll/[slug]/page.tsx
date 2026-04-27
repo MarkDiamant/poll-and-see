@@ -42,6 +42,20 @@ const INLINE_SUBSCRIBE_VOTE_COUNT_KEY = "poll-flow-vote-count";
 const INLINE_SUBSCRIBE_SHOWN_KEY = "poll-flow-inline-subscribe-shown";
 const POLL_FLOW_COUNTED_VOTE_PREFIX = "poll-flow-counted-vote-";
 const POLL_EMAIL_SUBSCRIBED_KEY = "poll-email-subscribed";
+
+const CREATE_POLL_PROMPTS = [
+  "Got a better question?",
+  "What would your friends say?",
+  "Want to test something?",
+  "Got something to ask?",
+  "Curious what people would say?",
+  "Got an interesting thought?",
+];
+
+function getRandomCreatePollPrompt() {
+  return CREATE_POLL_PROMPTS[Math.floor(Math.random() * CREATE_POLL_PROMPTS.length)];
+}
+
 const SIGNUP_CATEGORIES = [
   "Business",
   "Community",
@@ -1241,6 +1255,7 @@ export default function PollPage() {
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
   const [totalVoteCount, setTotalVoteCount] = useState(0);
   const [anchorCategory, setAnchorCategory] = useState("");
+  const [createPollPromptText, setCreatePollPromptText] = useState(getRandomCreatePollPrompt());
 
   const categoryMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -1991,12 +2006,17 @@ className="mx-auto block w-[68%] md:w-[55%] cursor-pointer rounded-lg bg-gray-10
               ) : null}
 
               {index > 0 && (index + 1) % 5 === 0 ? (
-                <div className="mb-8 mt-4 text-center">
+                <div className="mb-8 mt-4 rounded-2xl border border-gray-700 bg-gray-800/80 p-5 text-center">
+                  <p className="mb-3 text-base font-medium text-white">
+                    {createPollPromptText}
+                  </p>
+
                   <Link
                     href="/submit-poll"
-                    className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-500"
+                    onClick={() => setCreatePollPromptText(getRandomCreatePollPrompt())}
+                    className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-500"
                   >
-                    Create your own poll
+                    Create your own poll in seconds
                   </Link>
                 </div>
               ) : null}
@@ -2012,12 +2032,21 @@ className="mx-auto block w-[68%] md:w-[55%] cursor-pointer rounded-lg bg-gray-10
               You’ve voted on all live polls. Check back soon.
             </p>
 
-            <Link
-              href="/"
-              className="inline-flex items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-gray-200"
-            >
-              Back to home
-            </Link>
+            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Link
+                href="/results"
+                className="inline-flex items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-gray-200"
+              >
+                View your results
+              </Link>
+
+              <Link
+                href="/"
+                className="inline-flex items-center justify-center rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-gray-800"
+              >
+                Go to home
+              </Link>
+            </div>
           </div>
         </section>
       ) : null}

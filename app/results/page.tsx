@@ -41,6 +41,17 @@ type PollBundle = {
 const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899", "#8b5cf6", "#14b8a6", "#f97316", "#ef4444"];
 const RESULTS_BROWSER_ID_KEY = "pollandsee-results-browser-id";
 
+const RESULTS_CREATE_POLL_PROMPTS = [
+  "Curious what others think about yours?",
+  "Want to ask your own question?",
+  "Got something people would vote on?",
+  "Try your own poll",
+];
+
+function getRandomResultsCreatePollPrompt() {
+  return RESULTS_CREATE_POLL_PROMPTS[Math.floor(Math.random() * RESULTS_CREATE_POLL_PROMPTS.length)];
+}
+
 const REACTIONS: Array<{ type: ReactionType; emoji: string; label: string }> = [
   { type: "surprising", emoji: "😮", label: "Surprising" },
   { type: "agree", emoji: "👍", label: "Agree" },
@@ -548,6 +559,7 @@ export default function ResultsPage() {
   const [browserId, setBrowserId] = useState("");
   const [reactionCountsByPoll, setReactionCountsByPoll] = useState<Record<number, ReactionCounts>>({});
   const [selectedReactionsByPoll, setSelectedReactionsByPoll] = useState<Record<number, ReactionType | null>>({});
+  const [resultsPromptText, setResultsPromptText] = useState(getRandomResultsCreatePollPrompt());
 
   useEffect(() => {
     setBrowserId(getResultsBrowserId());
@@ -925,16 +937,33 @@ export default function ResultsPage() {
             <>
               <div className="space-y-5">
                 {filteredVotedPolls.length > 0 ? (
-                  filteredVotedPolls.map((bundle) => (
-                    <ResultCard
-                      key={bundle.poll.id}
-                      bundle={bundle}
-                      reactionCounts={reactionCountsByPoll[bundle.poll.id] || getEmptyReactionCounts()}
-                      selectedReaction={selectedReactionsByPoll[bundle.poll.id] || null}
-                      onReaction={(pollId, reactionType) => {
-                        void handleReaction(pollId, reactionType);
-                      }}
-                    />
+                  filteredVotedPolls.map((bundle, index) => (
+                    <div key={bundle.poll.id}>
+                      <ResultCard
+                        bundle={bundle}
+                        reactionCounts={reactionCountsByPoll[bundle.poll.id] || getEmptyReactionCounts()}
+                        selectedReaction={selectedReactionsByPoll[bundle.poll.id] || null}
+                        onReaction={(pollId, reactionType) => {
+                          void handleReaction(pollId, reactionType);
+                        }}
+                      />
+
+                      {(index + 1) % 10 === 0 ? (
+                        <div className="mt-5 rounded-2xl border border-gray-700 bg-gray-800/80 p-5 text-center">
+                          <p className="mb-3 text-base font-medium text-white">
+                            {resultsPromptText}
+                          </p>
+
+                          <Link
+                            href="/submit-poll"
+                            onClick={() => setResultsPromptText(getRandomResultsCreatePollPrompt())}
+                            className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-500"
+                          >
+                            Create your own poll in seconds
+                          </Link>
+                        </div>
+                      ) : null}
+                    </div>
                   ))
                 ) : (
                   <div className="rounded-2xl border border-gray-700 bg-gray-800 p-6 text-gray-300">
