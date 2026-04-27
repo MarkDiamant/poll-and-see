@@ -40,7 +40,7 @@ type PollBundle = {
 };
 
 type BadgeLabel = "New" | "Trending" | "Popular";
-type SortFilter = "All" | "Trending" | "Popular";
+type SortFilter = "Newest" | "Trending" | "Popular";
 
 type IdleWindow = Window &
   typeof globalThis & {
@@ -71,7 +71,7 @@ const LIVE_POLL_CATEGORIES = [
   "Lifestyle",
 ];
 
-const SORT_FILTERS: SortFilter[] = ["All", "Trending", "Popular"];
+const SORT_FILTERS: SortFilter[] = ["Newest", "Trending", "Popular"];
 
 const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: string; solid: string }> = {
   All: {
@@ -458,8 +458,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [featuredPollVoted, setFeaturedPollVoted] = useState(false);
   const [featuredSelectedOptionId, setFeaturedSelectedOptionId] = useState<number | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedSortFilter, setSelectedSortFilter] = useState<SortFilter>("All");
+const [selectedCategory, setSelectedCategory] = useState("All");
+const [selectedSortFilter, setSelectedSortFilter] = useState<SortFilter>("Newest");
   const [searchTerm, setSearchTerm] = useState("");
   const [subscriberEmail, setSubscriberEmail] = useState("");
   const [subscriberCategories, setSubscriberCategories] = useState<string[]>(["All Categories"]);
@@ -974,10 +974,10 @@ let last24Total = 0;
 
   const totalFeaturedVotes = Object.values(featuredVoteCounts).reduce((sum, count) => sum + count, 0);
 
-   const categories = LIVE_POLL_CATEGORIES;
+   const categories = ["All", ...LIVE_POLL_CATEGORIES];
 
   const filteredPolls = useMemo(() => {
-    if (!selectedCategory) return polls;
+   if (selectedCategory === "All") return polls;
     return polls.filter((poll) => poll.category === selectedCategory);
   }, [polls, selectedCategory]);
 
@@ -990,7 +990,7 @@ let last24Total = 0;
   const livePolls = useMemo(() => {
     const basePolls = searchedPolls.filter((poll) => poll.id !== featuredPoll?.id);
 
-    if (selectedSortFilter === "Trending") {
+   if (selectedSortFilter === "Popular") {
       return [...basePolls].sort((a, b) => {
         const diff = (recentVoteCounts[b.id] || 0) - (recentVoteCounts[a.id] || 0);
         if (diff !== 0) return diff;
@@ -1019,7 +1019,7 @@ const trendingPolls = useMemo(() => {
 }, [polls, trendingPollIds, featuredPoll?.id]);
 
   const activePollCount =
-  selectedCategory === "" && searchTerm.trim() === "" && selectedSortFilter === "All"
+selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter === "Newest"
     ? totalPollCount
     : searchedPolls.length;
   const trendingIdSet = useMemo(() => new Set(trendingPollIds), [trendingPollIds]);
@@ -1369,7 +1369,7 @@ const trendingPolls = useMemo(() => {
                 <button
                   key={category}
                   type="button"
-                  onClick={() => handleCategoryChange(isActive ? "" : category)}
+                  onClick={() => handleCategoryChange(category)}
                   className={`col-span-2 h-10 rounded-xl px-2 text-sm font-medium transition lg:min-w-0 lg:flex-1 ${mobileCenterClass}`}
                   style={
                     isActive
