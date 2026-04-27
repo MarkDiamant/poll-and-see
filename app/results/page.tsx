@@ -258,12 +258,12 @@ function ResultCard({
         selectedOptionId={bundle.selectedOptionId}
       />
 
-      <div className="mt-5 flex flex-col gap-3 border-t border-gray-700 pt-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative w-full sm:w-auto">
+       <div className="mt-6 flex w-full items-center justify-between gap-3 border-t border-gray-700 pt-5">
+          <div className="relative shrink-0">
           <button
             type="button"
             onClick={() => setShareMenuOpen((current) => !current)}
-            className="inline-flex h-9 w-full cursor-pointer items-center justify-center rounded-xl bg-white px-4 text-sm font-medium text-black transition hover:bg-gray-200 sm:w-auto"
+             className="inline-flex h-8 cursor-pointer items-center justify-center rounded-lg border border-gray-700 bg-gray-900 px-3 text-xs font-medium text-gray-200 transition hover:border-gray-600 hover:bg-gray-800"
           >
             {shareButtonText}
           </button>
@@ -288,7 +288,7 @@ function ResultCard({
           ) : null}
         </div>
 
-        <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-end">
+         <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5">
           {REACTIONS.map((reaction) => {
             const isSelected = selectedReaction === reaction.type;
 
@@ -297,10 +297,10 @@ function ResultCard({
                 key={reaction.type}
                 type="button"
                 onClick={() => onReaction(bundle.poll.id, reaction.type)}
-                className={`inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition ${
+                 className={`inline-flex h-8 min-w-[48px] cursor-pointer items-center justify-center gap-1.5 rounded-full border px-2.5 text-sm transition duration-150 active:scale-[0.97] ${
                   isSelected
                     ? "border-white bg-white text-black"
-                    : "border-gray-700 bg-gray-900 text-gray-200 hover:bg-gray-800"
+                    : "border-gray-700 bg-gray-900 text-gray-300 hover:border-gray-600 hover:bg-gray-800"
                 }`}
                 aria-label={reaction.label}
                 title={reaction.label}
