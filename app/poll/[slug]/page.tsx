@@ -2029,7 +2029,7 @@ className="mx-auto block w-[68%] md:w-[55%] cursor-pointer rounded-lg bg-gray-10
 
 {showEndOfFeed ? (
   <section ref={endOfFeedRef} className="mx-auto max-w-3xl px-6 pb-8">
-    <div className="rounded-2xl border border-gray-700 bg-gray-800 p-6 text-center">
+   <div className="mx-auto w-full max-w-md rounded-2xl border border-gray-700 bg-gray-800 p-6 text-center">
             <p className="mb-5 text-base font-medium text-white">
               You’ve voted on all live polls.
             </p>
@@ -2037,14 +2037,14 @@ className="mx-auto block w-[68%] md:w-[55%] cursor-pointer rounded-lg bg-gray-10
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link
                 href="/results"
-                className="inline-flex items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-gray-200"
+               className="inline-flex items-center justify-center rounded-xl bg-white px-5 py-2.5 text-sm font-medium text-black transition hover:bg-gray-200"
               >
                 View your results
               </Link>
 
               <Link
                 href="/"
-                className="inline-flex items-center justify-center rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-gray-800"
+               className="inline-flex items-center justify-center rounded-xl border border-gray-700 bg-gray-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800"
               >
                 Go to home
               </Link>
