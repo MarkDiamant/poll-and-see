@@ -36,7 +36,7 @@ type PollBundle = {
 const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899", "#8b5cf6", "#14b8a6", "#f97316", "#ef4444"];
 const SAME_POLL_CLICK_GUARD_MS = 400;
 const POLL_BUNDLE_CACHE_PREFIX = "poll-bundle-cache:";
-const PRELOAD_QUEUE_LIMIT = 50;
+const PRELOAD_QUEUE_LIMIT = 30;
 const INLINE_SUBSCRIBE_VOTE_THRESHOLD = 3;
 const INLINE_SUBSCRIBE_VOTE_COUNT_KEY = "poll-flow-vote-count";
 const INLINE_SUBSCRIBE_SHOWN_KEY = "poll-flow-inline-subscribe-shown";
@@ -1831,6 +1831,24 @@ while (preloadedQueueRef.current.length > 0) {
   return;
 }
 
+await preloadQueue([...currentShownIds, pollId], flowAnchorCategory);
+
+while (preloadedQueueRef.current.length > 0) {
+  const next = preloadedQueueRef.current.shift();
+  if (!next) break;
+  if (currentShownIds.includes(next.poll.id)) continue;
+  if (hasLocalVote(next.poll.id)) continue;
+
+  setShowEndOfFeed(false);
+
+  setPolls((current) => {
+    if (current.some((item) => item.poll.id === next.poll.id)) return current;
+    return [...current, next];
+  });
+
+  return;
+}
+
 setShowEndOfFeed(true);
 };
 
@@ -1858,6 +1876,29 @@ setShowEndOfFeed(true);
       return;
     }
 
+      await preloadQueue(
+      [...currentShownIds, pollId, ...Array.from(skippedPollIdsRef.current)],
+      flowAnchorCategory
+    );
+
+    while (preloadedQueueRef.current.length > 0) {
+      const next = preloadedQueueRef.current.shift();
+      if (!next) break;
+      if (currentShownIds.includes(next.poll.id)) continue;
+      if (skippedPollIdsRef.current.has(next.poll.id)) continue;
+      if (hasLocalVote(next.poll.id)) continue;
+
+      setShowEndOfFeed(false);
+
+      setPolls((current) => {
+        const withoutSkipped = current.filter((item) => item.poll.id !== pollId);
+        if (withoutSkipped.some((item) => item.poll.id === next.poll.id)) return withoutSkipped;
+        return [...withoutSkipped, next];
+      });
+
+      return;
+    }
+
     await preloadQueue(
       [...currentShownIds, pollId, ...Array.from(skippedPollIdsRef.current)],
       flowAnchorCategory
@@ -1870,7 +1911,7 @@ setShowEndOfFeed(true);
       if (skippedPollIdsRef.current.has(next.poll.id)) continue;
       if (hasLocalVote(next.poll.id)) continue;
 
-        setShowEndOfFeed(false);
+      setShowEndOfFeed(false);
 
       setPolls((current) => {
         const withoutSkipped = current.filter((item) => item.poll.id !== pollId);
