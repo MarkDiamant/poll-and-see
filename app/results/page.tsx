@@ -116,6 +116,190 @@ function getShareText(poll: Poll) {
   return `${poll.question}\n\n${window.location.origin}/poll/${poll.slug}`;
 }
 
+function drawRoundedRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number
+) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+}
+
+function wrapCanvasText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, maxLines: number) {
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let currentLine = "";
+
+  for (const word of words) {
+    const nextLine = currentLine ? `${currentLine} ${word}` : word;
+
+    if (ctx.measureText(nextLine).width <= maxWidth) {
+      currentLine = nextLine;
+      continue;
+    }
+
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+
+    currentLine = word;
+
+    if (lines.length === maxLines - 1) {
+      break;
+    }
+  }
+
+  if (currentLine && lines.length < maxLines) {
+    lines.push(currentLine);
+  }
+
+  if (lines.length === 0) return [text];
+
+  const rebuilt = lines.join(" ");
+  if (rebuilt.length < text.trim().length) {
+    const last = lines[lines.length - 1];
+    lines[lines.length - 1] = last.length > 2 ? `${last.slice(0, -1)}…` : `${last}…`;
+  }
+
+  return lines;
+}
+
+async function buildResultsShareFile(bundle: PollBundle) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 680;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  const totalVotes = Object.values(bundle.voteCounts).reduce((sum, count) => sum + count, 0);
+
+  ctx.font = "700 42px Arial";
+  const questionLines = wrapCanvasText(ctx, bundle.poll.question, 560, 5);
+
+  const cardHeight = 230 + questionLines.length * 54 + bundle.options.length * 120 + 150;
+  canvas.height = cardHeight;
+
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradient.addColorStop(0, "#050816");
+  gradient.addColorStop(1, "#111827");
+
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "rgba(255,255,255,0.05)";
+  drawRoundedRect(ctx, 24, 24, 632, cardHeight - 48, 28);
+  ctx.fill();
+
+  ctx.font = "600 20px Arial";
+  ctx.fillStyle = "rgba(255,255,255,0.75)";
+  ctx.fillText(bundle.poll.category, 60, 82);
+
+  ctx.textAlign = "right";
+  ctx.fillText(`${totalVotes.toLocaleString()} votes`, 620, 82);
+  ctx.textAlign = "left";
+
+  ctx.font = "700 42px Arial";
+  ctx.fillStyle = "#ffffff";
+
+  let y = 145;
+
+  questionLines.forEach((line) => {
+    ctx.fillText(line, 60, y);
+    y += 54;
+  });
+
+  y += 30;
+
+  for (const [index, option] of bundle.options.entries()) {
+    const votes = bundle.voteCounts[option.id] || 0;
+    const percent = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
+    const colour = OPTION_COLOURS[index] || OPTION_COLOURS[0];
+
+    ctx.fillStyle = "rgba(255,255,255,0.06)";
+    drawRoundedRect(ctx, 46, y, 588, 92, 18);
+    ctx.fill();
+
+    ctx.font = "600 25px Arial";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(option.option_text, 64, y + 34);
+
+    ctx.textAlign = "right";
+    ctx.font = "700 26px Arial";
+    ctx.fillText(`${percent}%`, 612, y + 34);
+    ctx.textAlign = "left";
+
+    ctx.fillStyle = "rgba(255,255,255,0.12)";
+    drawRoundedRect(ctx, 64, y + 58, 430, 14, 8);
+    ctx.fill();
+
+    const fill = percent > 0 ? Math.max((430 * percent) / 100, 10) : 0;
+    ctx.fillStyle = colour;
+    drawRoundedRect(ctx, 64, y + 58, fill, 14, 8);
+    ctx.fill();
+
+    y += 120;
+  }
+
+  y += 28;
+
+  ctx.textAlign = "center";
+  ctx.font = "600 26px Arial";
+  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  ctx.fillText("pollandsee.com", 340, y);
+
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob((b) => resolve(b), "image/png");
+  });
+
+  if (!blob) return null;
+
+  return new File([blob], `pollandsee-results-${bundle.poll.slug}.png`, {
+    type: "image/png",
+  });
+}
+
+async function shareImageFile(file: File, text: string) {
+  if (
+    navigator.share &&
+    typeof navigator.canShare === "function" &&
+    navigator.canShare({ files: [file] })
+  ) {
+    await navigator.share({
+      files: [file],
+      text,
+    });
+    return "shared";
+  }
+
+  const objectUrl = URL.createObjectURL(file);
+  const anchor = document.createElement("a");
+  anchor.href = objectUrl;
+  anchor.download = file.name;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(objectUrl);
+
+  try {
+    await navigator.clipboard.writeText(text);
+    return "downloaded_and_copied";
+  } catch {
+    return "downloaded";
+  }
+}
+
 function ResultOptions({
   options,
   voteCounts,
@@ -239,6 +423,32 @@ function ResultCard({
     }
   };
 
+  const handleShareResults = async () => {
+    const text = getShareText(bundle.poll);
+    setShareMenuOpen(false);
+
+    try {
+      const file = await buildResultsShareFile(bundle);
+      if (!file) return;
+
+      const result = await shareImageFile(file, text);
+
+      if (result === "downloaded_and_copied") {
+        setShareButtonText("Image saved + link copied");
+      } else if (result === "downloaded") {
+        setShareButtonText("Image saved");
+      } else {
+        setShareButtonText("Share");
+      }
+
+      if (result !== "shared") {
+        window.setTimeout(() => setShareButtonText("Share"), 2200);
+      }
+    } catch {
+      setShareButtonText("Share");
+    }
+  };
+
   return (
     <div className="rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-lg">
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -291,7 +501,7 @@ function ResultCard({
               </button>
               <button
                 type="button"
-                onClick={() => void handleShare()}
+                onClick={() => void handleShareResults()}
                 className="block w-full border-t border-gray-800 px-4 py-3 text-left text-sm text-white transition hover:bg-gray-800"
               >
                 Share results
