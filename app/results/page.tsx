@@ -710,6 +710,22 @@ export default function ResultsPage() {
     };
   }, [browserId, visiblePollIds, refreshReactions]);
 
+  const refreshTotalVoteCount = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("site_stats")
+        .select("total_votes")
+        .eq("key", "global")
+        .single();
+
+      if (!error) {
+        setTotalVoteCount(data?.total_votes ?? 0);
+      }
+    } catch {
+      // ignore total vote refresh failures
+    }
+  }, []);
+
   const refreshDisplayedVoteCounts = useCallback(async () => {
     if (visiblePollIds.length === 0) return;
 
@@ -767,6 +783,7 @@ export default function ResultsPage() {
 
    useEffect(() => {
     const refreshVisibleResults = () => {
+      void refreshTotalVoteCount();
       void refreshDisplayedVoteCounts();
       void refreshReactions();
     };
@@ -795,7 +812,7 @@ export default function ResultsPage() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("focus", handleFocus);
     };
-  }, [refreshDisplayedVoteCounts, refreshReactions]);
+  }, [refreshTotalVoteCount, refreshDisplayedVoteCounts, refreshReactions]);
 
   const filteredVotedPolls = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
