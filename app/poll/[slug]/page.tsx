@@ -326,14 +326,17 @@ function StatusRibbon({ label }: { label: BadgeLabel }) {
   );
 }
 
-function smoothScrollToElement(element: HTMLElement, duration = 650) {
+function smoothScrollToElement(element: HTMLElement, duration = 650, topOffset?: number) {
   const startY = window.scrollY;
 
   // 👇 key change: place element higher in viewport (not at top)
   const elementTop = element.getBoundingClientRect().top + window.scrollY;
 
   // show it around upper-middle of screen
-  const targetY = elementTop - window.innerHeight * 0.35;
+  const targetY =
+  typeof topOffset === "number"
+    ? elementTop - topOffset
+    : elementTop - window.innerHeight * 0.35;
 
   const distance = targetY - startY;
   const startTime = performance.now();
