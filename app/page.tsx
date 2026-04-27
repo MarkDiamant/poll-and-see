@@ -1355,7 +1355,8 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
             </span>
           </div>
 
-          <div className="mt-4 grid grid-cols-6 gap-2 lg:flex lg:flex-nowrap lg:gap-2">
+          <p className="mt-4 mb-2 text-xs text-gray-400 uppercase tracking-wide">Categories</p>
+<div className="grid grid-cols-6 gap-2 lg:flex lg:flex-nowrap lg:gap-2">
             {categories.map((category, index) => {
               const isActive = selectedCategory === category;
               const mobileCenterClass =
@@ -1391,7 +1392,10 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
             })}
           </div>
 
-          <div className="mt-3 grid grid-cols-3 gap-2 sm:flex sm:justify-center">
+          <p className="mt-4 mb-2 text-xs text-gray-400 uppercase tracking-wide text-center sm:text-left">
+  Sort by
+</p>
+<div className="grid grid-cols-3 gap-2 sm:flex sm:justify-center">
             {SORT_FILTERS.map((filter) => {
               const isActive = selectedSortFilter === filter;
 
@@ -1400,11 +1404,11 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
                   key={filter}
                   type="button"
                   onClick={() => setSelectedSortFilter(filter)}
-                  className={`h-9 rounded-xl border px-4 text-sm font-medium transition ${
-                    isActive
-                      ? "border-white bg-white text-black"
-                      : "border-gray-700 bg-gray-800 text-gray-300 hover:border-gray-600 hover:bg-gray-700"
-                  }`}
+className={`h-8 rounded-lg border px-3 text-xs font-medium transition ${
+  isActive
+    ? "border-gray-400 bg-gray-200 text-black"
+    : "border-gray-700 bg-gray-900 text-gray-400 hover:border-gray-600 hover:bg-gray-800"
+}`}
                 >
                   {filter}
                 </button>
