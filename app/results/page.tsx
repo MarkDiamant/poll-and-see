@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Footer from "@/components/Footer";
 import SiteHeader from "@/components/SiteHeader";
@@ -203,6 +203,18 @@ function ResultCard({
 }) {
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [shareButtonText, setShareButtonText] = useState("Share");
+  const shareMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (shareMenuRef.current && !shareMenuRef.current.contains(event.target as Node)) {
+        setShareMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
 
   const handleShare = async () => {
     const text = getShareText(bundle.poll);
@@ -259,7 +271,7 @@ function ResultCard({
       />
 
        <div className="mt-6 flex w-full items-center justify-between gap-3 border-t border-gray-700 pt-5">
-          <div className="relative shrink-0">
+        <div ref={shareMenuRef} className="relative shrink-0">
           <button
             type="button"
             onClick={() => setShareMenuOpen((current) => !current)}
@@ -288,7 +300,7 @@ function ResultCard({
           ) : null}
         </div>
 
-         <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5">
+          <div className="flex min-w-0 flex-wrap items-center justify-end gap-2.5">
           {REACTIONS.map((reaction) => {
             const isSelected = selectedReaction === reaction.type;
 
@@ -299,7 +311,7 @@ function ResultCard({
                 onClick={() => onReaction(bundle.poll.id, reaction.type)}
                  className={`inline-flex h-8 min-w-[48px] cursor-pointer items-center justify-center gap-1.5 rounded-full border px-2.5 text-sm transition duration-150 active:scale-[0.97] ${
                   isSelected
-                    ? "border-white bg-white text-black"
+                    ? "border-gray-300 bg-gray-200 text-black"
                     : "border-gray-700 bg-gray-900 text-gray-300 hover:border-gray-600 hover:bg-gray-800"
                 }`}
                 aria-label={reaction.label}
