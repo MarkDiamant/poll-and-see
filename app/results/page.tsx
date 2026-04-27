@@ -482,7 +482,7 @@ export default function ResultsPage() {
     return () => {
       window.clearInterval(interval);
     };
-  }, [browserId, visiblePollIds, refreshReactions]););
+  }, [browserId, visiblePollIds, refreshReactions]);
 
   const refreshDisplayedVoteCounts = useCallback(async () => {
     if (visiblePollIds.length === 0) return;
