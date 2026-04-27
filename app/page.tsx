@@ -40,6 +40,7 @@ type PollBundle = {
 };
 
 type BadgeLabel = "New" | "Trending" | "Popular";
+type SortFilter = "All" | "Trending" | "Popular";
 
 type IdleWindow = Window &
   typeof globalThis & {
@@ -59,6 +60,18 @@ const SIGNUP_CATEGORIES = [
   "General",
   "Lifestyle",
 ];
+
+const LIVE_POLL_CATEGORIES = [
+  "Business",
+  "Community",
+  "Education",
+  "Finance",
+  "Fun",
+  "General",
+  "Lifestyle",
+];
+
+const SORT_FILTERS: SortFilter[] = ["All", "Trending", "Popular"];
 
 const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: string; solid: string }> = {
   All: {
@@ -274,15 +287,15 @@ function getBadgeLabel(
   const now = Date.now();
   const fortyEightHoursAgo = now - 48 * 60 * 60 * 1000;
 
-  if (trendingIds.has(poll.id)) {
-    return "Trending";
-  }
-
   if (poll.created_at) {
     const createdAtTime = new Date(poll.created_at).getTime();
     if (!Number.isNaN(createdAtTime) && createdAtTime >= fortyEightHoursAgo) {
       return "New";
     }
+  }
+
+  if (trendingIds.has(poll.id)) {
+    return "Trending";
   }
 
   if (popularIds.has(poll.id)) {
@@ -441,10 +454,12 @@ export default function Home() {
   const [trendingPollIds, setTrendingPollIds] = useState<number[]>([]);
   const [popularPollIds, setPopularPollIds] = useState<number[]>([]);
   const [recentVoteCounts, setRecentVoteCounts] = useState<Record<number, number>>({});
+  const [totalVoteCountsByPoll, setTotalVoteCountsByPoll] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(true);
   const [featuredPollVoted, setFeaturedPollVoted] = useState(false);
   const [featuredSelectedOptionId, setFeaturedSelectedOptionId] = useState<number | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedSortFilter, setSelectedSortFilter] = useState<SortFilter>("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [subscriberEmail, setSubscriberEmail] = useState("");
   const [subscriberCategories, setSubscriberCategories] = useState<string[]>(["All Categories"]);
@@ -503,6 +518,7 @@ export default function Home() {
     setTrendingPollIds([]);
     setPopularPollIds([]);
     setRecentVoteCounts({});
+    setTotalVoteCountsByPoll({});
     setVotesLast24(0);
     return;
   }
@@ -546,13 +562,13 @@ let last24Total = 0;
       totalVoteCounts[pollId] = (totalVoteCounts[pollId] || 0) + (option.vote_count || 0);
     });
 
-    const trendingIds = Object.entries(recentCounts)
+     const trendingIds = Object.entries(recentCounts)
       .sort((a, b) => {
         const diff = Number(b[1]) - Number(a[1]);
         if (diff !== 0) return diff;
         return Number(b[0]) - Number(a[0]);
       })
-      .slice(0, 5)
+      .slice(0, 8)
       .map(([pollId]) => Number(pollId));
 
     const popularIds = Object.entries(totalVoteCounts)
@@ -561,10 +577,11 @@ let last24Total = 0;
         if (diff !== 0) return diff;
         return Number(b[0]) - Number(a[0]);
       })
-      .slice(0, 10)
+      .slice(0, 8)
       .map(([pollId]) => Number(pollId));
 
     setRecentVoteCounts(recentCounts);
+    setTotalVoteCountsByPoll(totalVoteCounts);
     setTrendingPollIds(trendingIds);
     setPopularPollIds(popularIds);
     setVotesLast24(last24Total);
@@ -603,26 +620,17 @@ let last24Total = 0;
       setPolls(safePolls);
        setTotalPollCount(totalPollCountResult.data?.total_polls || 0);
 
-      const availableCategories = [
-        "All",
-        ...Array.from(
-          new Set(
-            safePolls
-              .map((poll) => poll.category?.trim())
-              .filter((category): category is string => Boolean(category))
-          )
-        ).sort((a, b) => a.localeCompare(b)),
-      ];
+      const availableCategories = LIVE_POLL_CATEGORIES;
 
       const params = new URLSearchParams(window.location.search);
       const queryCategory = params.get("category");
       const savedCategory = sessionStorage.getItem("selectedPollCategory");
-      const preferredCategory = queryCategory || savedCategory || "All";
+      const preferredCategory = queryCategory || savedCategory || "";
 
-      if (availableCategories.includes(preferredCategory)) {
+      if (preferredCategory && availableCategories.includes(preferredCategory)) {
         setSelectedCategory(preferredCategory);
       } else {
-        setSelectedCategory("All");
+        setSelectedCategory("");
       }
 
       const chosenFeaturedPoll = safePolls.find((p) => p.featured) || safePolls[0];
@@ -669,6 +677,7 @@ let last24Total = 0;
       setTrendingPollIds([]);
       setPopularPollIds([]);
       setRecentVoteCounts({});
+      setTotalVoteCountsByPoll({});
     } finally {
       setLoading(false);
     }
@@ -965,20 +974,10 @@ let last24Total = 0;
 
   const totalFeaturedVotes = Object.values(featuredVoteCounts).reduce((sum, count) => sum + count, 0);
 
-  const categories = useMemo(() => {
-    const uniqueCategories = Array.from(
-      new Set(
-        polls
-          .map((poll) => poll.category?.trim())
-          .filter((category): category is string => Boolean(category))
-      )
-    ).sort((a, b) => a.localeCompare(b));
-
-    return ["All", ...uniqueCategories];
-  }, [polls]);
+   const categories = LIVE_POLL_CATEGORIES;
 
   const filteredPolls = useMemo(() => {
-    if (selectedCategory === "All") return polls;
+    if (!selectedCategory) return polls;
     return polls.filter((poll) => poll.category === selectedCategory);
   }, [polls, selectedCategory]);
 
@@ -989,8 +988,26 @@ let last24Total = 0;
   }, [filteredPolls, searchTerm]);
 
   const livePolls = useMemo(() => {
-    return searchedPolls.filter((poll) => poll.id !== featuredPoll?.id);
-  }, [searchedPolls, featuredPoll]);
+    const basePolls = searchedPolls.filter((poll) => poll.id !== featuredPoll?.id);
+
+    if (selectedSortFilter === "Trending") {
+      return [...basePolls].sort((a, b) => {
+        const diff = (recentVoteCounts[b.id] || 0) - (recentVoteCounts[a.id] || 0);
+        if (diff !== 0) return diff;
+        return b.id - a.id;
+      });
+    }
+
+    if (selectedSortFilter === "Popular") {
+      return [...basePolls].sort((a, b) => {
+        const diff = (totalVoteCountsByPoll[b.id] || 0) - (totalVoteCountsByPoll[a.id] || 0);
+        if (diff !== 0) return diff;
+        return b.id - a.id;
+      });
+    }
+
+    return basePolls;
+  }, [searchedPolls, featuredPoll?.id, selectedSortFilter, recentVoteCounts, totalVoteCountsByPoll]);
 
 const trendingPolls = useMemo(() => {
   const pollMap = new Map(polls.map((poll) => [poll.id, poll]));
@@ -1002,7 +1019,7 @@ const trendingPolls = useMemo(() => {
 }, [polls, trendingPollIds, featuredPoll?.id]);
 
   const activePollCount =
-  selectedCategory === "All" && searchTerm.trim() === ""
+  selectedCategory === "" && searchTerm.trim() === "" && selectedSortFilter === "All"
     ? totalPollCount
     : searchedPolls.length;
   const trendingIdSet = useMemo(() => new Set(trendingPollIds), [trendingPollIds]);
@@ -1342,10 +1359,8 @@ const trendingPolls = useMemo(() => {
             {categories.map((category, index) => {
               const isActive = selectedCategory === category;
               const mobileCenterClass =
-                categories.length === 8 && index === 6
-                  ? "col-start-2"
-                  : categories.length === 8 && index === 7
-                  ? "col-start-4"
+                categories.length === 7 && index === 6
+                  ? "col-start-3"
                   : "";
 
               const categoryColours = getCategoryColours(category);
@@ -1354,7 +1369,7 @@ const trendingPolls = useMemo(() => {
                 <button
                   key={category}
                   type="button"
-                  onClick={() => handleCategoryChange(category)}
+                  onClick={() => handleCategoryChange(isActive ? "" : category)}
                   className={`col-span-2 h-10 rounded-xl px-2 text-sm font-medium transition lg:min-w-0 lg:flex-1 ${mobileCenterClass}`}
                   style={
                     isActive
@@ -1371,6 +1386,27 @@ const trendingPolls = useMemo(() => {
                   }
                 >
                   {category}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-3 grid grid-cols-3 gap-2 sm:flex sm:justify-center">
+            {SORT_FILTERS.map((filter) => {
+              const isActive = selectedSortFilter === filter;
+
+              return (
+                <button
+                  key={filter}
+                  type="button"
+                  onClick={() => setSelectedSortFilter(filter)}
+                  className={`h-9 rounded-xl border px-4 text-sm font-medium transition ${
+                    isActive
+                      ? "border-white bg-white text-black"
+                      : "border-gray-700 bg-gray-800 text-gray-300 hover:border-gray-600 hover:bg-gray-700"
+                  }`}
+                >
+                  {filter}
                 </button>
               );
             })}
