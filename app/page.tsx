@@ -1314,11 +1314,11 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
               className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
             />
 
-            <button
-              type="submit"
-              disabled={subscribeLoading}
-              className="w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-70"
-            >
+<button
+  type="submit"
+  disabled={subscribeLoading}
+  className="mx-auto block w-[68%] rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-medium text-black transition hover:bg-white disabled:opacity-70"
+>
               {subscribeLoading ? "Sending..." : "Get polls"}
             </button>
 
@@ -1355,14 +1355,10 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
             </span>
           </div>
 
-         <p className="mt-4 mb-2 text-xs text-gray-400 uppercase tracking-wide text-center">Categories</p>
-<div className="grid grid-cols-6 gap-2 lg:flex lg:flex-nowrap lg:gap-2">
+<p className="mt-4 mb-2 text-xs text-gray-400 uppercase tracking-wide text-center">Categories</p>
+<div className="flex flex-wrap justify-center gap-2 lg:flex-nowrap">
             {categories.map((category, index) => {
               const isActive = selectedCategory === category;
-              const mobileCenterClass =
-                categories.length === 7 && index === 6
-                  ? "col-start-3"
-                  : "";
 
               const categoryColours = getCategoryColours(category);
 
@@ -1371,7 +1367,7 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
                   key={category}
                   type="button"
                   onClick={() => handleCategoryChange(category)}
-                  className={`col-span-2 h-10 rounded-xl px-2 text-sm font-medium transition lg:min-w-0 lg:flex-1 ${mobileCenterClass}`}
+className="h-10 w-[calc((100%-16px)/3)] cursor-pointer rounded-xl px-2 text-sm font-medium transition lg:min-w-0 lg:flex-1"
                   style={
                     isActive
                       ? {
@@ -1404,7 +1400,7 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
                   key={filter}
                   type="button"
                   onClick={() => setSelectedSortFilter(filter)}
-className={`h-8 rounded-lg border px-3 text-xs font-medium transition ${
+className={`h-8 cursor-pointer rounded-lg border px-3 text-xs font-medium transition ${
   isActive
     ? "border-gray-400 bg-gray-200 text-black"
     : "border-gray-700 bg-gray-900 text-gray-400 hover:border-gray-600 hover:bg-gray-800"
