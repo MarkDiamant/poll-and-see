@@ -707,21 +707,7 @@ export default function ResultsPage() {
     void refreshReactions();
   }, [refreshReactions]);
 
-  useEffect(() => {
-    if (!browserId || visiblePollIds.length === 0) return;
-
-    void refreshReactions();
-
-    const interval = window.setInterval(() => {
-      void refreshReactions();
-    }, 5000);
-
-    return () => {
-      window.clearInterval(interval);
-    };
-  }, [browserId, visiblePollIds, refreshReactions]);
-
-  const refreshTotalVoteCount = useCallback(async () => {
+   const refreshTotalVoteCount = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("site_stats")
@@ -793,11 +779,10 @@ export default function ResultsPage() {
   }, []);
 
    useEffect(() => {
-    const refreshVisibleResults = () => {
-      void refreshTotalVoteCount();
-      void refreshDisplayedVoteCounts();
-      void refreshReactions();
-    };
+const refreshVisibleResults = () => {
+  void refreshTotalVoteCount();
+  void refreshDisplayedVoteCounts();
+};
 
     refreshVisibleResults();
 
@@ -823,7 +808,7 @@ export default function ResultsPage() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("focus", handleFocus);
     };
-  }, [refreshTotalVoteCount, refreshDisplayedVoteCounts, refreshReactions]);
+  }, [refreshTotalVoteCount, refreshDisplayedVoteCounts]);
 
   const filteredVotedPolls = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
