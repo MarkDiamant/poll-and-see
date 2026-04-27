@@ -486,6 +486,7 @@ const [selectedSortFilter, setSelectedSortFilter] = useState<SortFilter>("Newest
   const [votedPollIds, setVotedPollIds] = useState<number[]>([]);
 
   const categoryMenuRef = useRef<HTMLDivElement | null>(null);
+  const adminRefreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const syncTotalVoteCount = useCallback(async () => {
     try {
@@ -801,10 +802,16 @@ if (preferredCategory === "All" || availableCategories.includes(preferredCategor
   }, [loading, selectedCategory]);
 
   const featuredPoll = polls.find((p) => p.featured) || polls[0];
-  useEffect(() => {
+   useEffect(() => {
     const refreshHomePolls = () => {
-      clearCachedPollBundles();
-      void loadHomeData();
+      if (adminRefreshTimeoutRef.current) {
+        clearTimeout(adminRefreshTimeoutRef.current);
+      }
+
+      adminRefreshTimeoutRef.current = setTimeout(() => {
+        clearCachedPollBundles();
+        void loadHomeData();
+      }, 700);
     };
 
     const channel = supabase
@@ -830,6 +837,10 @@ if (preferredCategory === "All" || availableCategories.includes(preferredCategor
       .subscribe();
 
     return () => {
+      if (adminRefreshTimeoutRef.current) {
+        clearTimeout(adminRefreshTimeoutRef.current);
+      }
+
       supabase.removeChannel(channel);
     };
   }, [loadHomeData]);

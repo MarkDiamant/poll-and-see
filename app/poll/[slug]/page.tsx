@@ -1266,6 +1266,7 @@ export default function PollPage() {
   const [anchorCategory, setAnchorCategory] = useState("");
 
   const categoryMenuRef = useRef<HTMLDivElement | null>(null);
+  const adminRefreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     pollsRef.current = polls;
@@ -1648,6 +1649,65 @@ export default function PollPage() {
     setCachedPollBundle(bundle);
     return bundle;
   };
+
+    const refreshVisiblePollBundles = useCallback(async () => {
+    const currentPolls = pollsRef.current;
+    if (currentPolls.length === 0) return;
+
+    const refreshed = await Promise.all(
+      currentPolls.map(async (bundle) => {
+        try {
+          return await loadBundle(bundle.poll.id);
+        } catch {
+          return bundle;
+        }
+      })
+    );
+
+    setPolls(refreshed);
+  }, []);
+
+  useEffect(() => {
+    const refreshPollPageAfterAdminUpdate = () => {
+      if (adminRefreshTimeoutRef.current) {
+        clearTimeout(adminRefreshTimeoutRef.current);
+      }
+
+      adminRefreshTimeoutRef.current = setTimeout(() => {
+        void refreshVisiblePollBundles();
+      }, 700);
+    };
+
+    const channel = supabase
+      .channel("poll-page-admin-poll-updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "polls",
+        },
+        refreshPollPageAfterAdminUpdate
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "poll_options",
+        },
+        refreshPollPageAfterAdminUpdate
+      )
+      .subscribe();
+
+    return () => {
+      if (adminRefreshTimeoutRef.current) {
+        clearTimeout(adminRefreshTimeoutRef.current);
+      }
+
+      supabase.removeChannel(channel);
+    };
+  }, [refreshVisiblePollBundles]);
 
   const preloadQueue = async (excludeIds: number[], flowAnchorCategory: string) => {
     try {
