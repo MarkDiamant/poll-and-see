@@ -444,10 +444,10 @@ export default function ResultsPage() {
 
 
 
-  const refreshReactions = useCallback(async () => {
-    if (!browserId || votedPolls.length === 0) return;
+   const refreshReactions = useCallback(async () => {
+    if (!browserId || visiblePollIds.length === 0) return;
 
-    const pollIds = votedPolls.map((bundle) => bundle.poll.id).join(",");
+    const pollIds = visiblePollIds.join(",");
 
     try {
       const response = await fetch(
@@ -464,44 +464,30 @@ export default function ResultsPage() {
     } catch {
       // ignore reaction load failures
     }
-  }, [browserId, votedPolls]);
+  }, [browserId, visiblePollIds]);
 
   useEffect(() => {
     void refreshReactions();
   }, [refreshReactions]);
 
   useEffect(() => {
-    if (!browserId || votedPolls.length === 0) return;
+    if (!browserId || visiblePollIds.length === 0) return;
 
-    const channel = supabase
-      .channel("results-live-reactions")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "poll_reactions",
-        },
-        () => {
-          void refreshReactions();
-        }
-      )
-      .subscribe();
+    void refreshReactions();
 
     const interval = window.setInterval(() => {
       void refreshReactions();
-    }, 10000);
+    }, 5000);
 
     return () => {
       window.clearInterval(interval);
-      supabase.removeChannel(channel);
     };
-  }, [browserId, votedPolls.length, refreshReactions]);
+  }, [browserId, visiblePollIds, refreshReactions]););
 
   const refreshDisplayedVoteCounts = useCallback(async () => {
-    if (votedPolls.length === 0) return;
+    if (visiblePollIds.length === 0) return;
 
-    const pollIds = votedPolls.map((bundle) => bundle.poll.id);
+    const pollIds = visiblePollIds;
 
     try {
       const { data, error } = await supabase
@@ -541,7 +527,7 @@ export default function ResultsPage() {
     } catch {
       // ignore vote refresh failures
     }
-  }, [votedPolls]);
+  }, [visiblePollIds]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -553,38 +539,26 @@ export default function ResultsPage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => {
-    const channel = supabase
-      .channel("results-live-votes")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "votes",
-        },
-        () => {
-          setTotalVoteCount((prev) => (prev ?? 0) + 1);
-          void refreshDisplayedVoteCounts();
-        }
-      )
-      .subscribe();
-
-    const interval = window.setInterval(() => {
+   useEffect(() => {
+    const refreshVisibleResults = () => {
       void refreshDisplayedVoteCounts();
       void refreshReactions();
-    }, 10000);
+    };
+
+    refreshVisibleResults();
+
+    const interval = window.setInterval(() => {
+      refreshVisibleResults();
+    }, 5000);
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        void refreshDisplayedVoteCounts();
-        void refreshReactions();
+        refreshVisibleResults();
       }
     };
 
     const handleFocus = () => {
-      void refreshDisplayedVoteCounts();
-      void refreshReactions();
+      refreshVisibleResults();
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -594,9 +568,12 @@ export default function ResultsPage() {
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("focus", handleFocus);
-      supabase.removeChannel(channel);
     };
   }, [refreshDisplayedVoteCounts, refreshReactions]);
+
+  const visiblePollIds = useMemo(() => {
+    return votedPolls.map((bundle) => bundle.poll.id);
+  }, [votedPolls]);
 
   const filteredVotedPolls = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
