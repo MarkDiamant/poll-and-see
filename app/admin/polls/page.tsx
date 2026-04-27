@@ -391,21 +391,25 @@ return () => {
     }));
   };
 
-  const updateOptionText = (pollId: number, optionIndex: number, value: string) => {
-    setOptionEdits((current) => {
-      const next = [...(current[pollId] || [])];
-      next[optionIndex] = { ...next[optionIndex], option_text: value };
-      return { ...current, [pollId]: next };
-    });
-  };
+const updateOptionText = (pollId: number, optionIndex: number, value: string) => {
+  const currentOptions = optionEdits[pollId] || [];
+  const next = [...currentOptions];
+  next[optionIndex] = { ...next[optionIndex], option_text: value };
 
-  const updateOptionImageUrl = (pollId: number, optionIndex: number, value: string) => {
-    setOptionEdits((current) => {
-      const next = [...(current[pollId] || [])];
-      next[optionIndex] = { ...next[optionIndex], image_url: value };
-      return { ...current, [pollId]: next };
-    });
-  };
+  setOptionEdits((current) => ({ ...current, [pollId]: next }));
+
+  return next;
+};
+
+const updateOptionImageUrl = (pollId: number, optionIndex: number, value: string) => {
+  const currentOptions = optionEdits[pollId] || [];
+  const next = [...currentOptions];
+  next[optionIndex] = { ...next[optionIndex], image_url: value };
+
+  setOptionEdits((current) => ({ ...current, [pollId]: next }));
+
+  return next;
+};
 
 const sortedPolls = useMemo(() => {
   return [...polls]
@@ -633,10 +637,13 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
 <input
   type="text"
   value={option.option_text}
-  onChange={(event) =>
-    updateOptionText(poll.id, optionIndex, event.target.value)
-  }
-  onBlur={() => void updatePoll(poll.id)}
+  onChange={(event) => {
+    updateOptionText(poll.id, optionIndex, event.target.value);
+  }}
+  onBlur={(event) => {
+    const nextOptions = updateOptionText(poll.id, optionIndex, event.target.value);
+    void updatePoll(poll.id, { option_updates: nextOptions });
+  }}
   className="w-full min-w-0 rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
   placeholder="Option text"
 />
@@ -644,10 +651,13 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
 <input
   type="text"
   value={option.image_url || ""}
-  onChange={(event) =>
-    updateOptionImageUrl(poll.id, optionIndex, event.target.value)
-  }
-  onBlur={() => void updatePoll(poll.id)}
+ onChange={(event) => {
+  updateOptionImageUrl(poll.id, optionIndex, event.target.value);
+}}
+onBlur={(event) => {
+  const nextOptions = updateOptionImageUrl(poll.id, optionIndex, event.target.value);
+  void updatePoll(poll.id, { option_updates: nextOptions });
+}}
   className="w-[84px] rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
   placeholder="Image URL (optional)"
 />
