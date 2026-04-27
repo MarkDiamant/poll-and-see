@@ -557,8 +557,9 @@ export default function ResultsPage() {
   const [showTopButton, setShowTopButton] = useState(false);
   const [totalVoteCount, setTotalVoteCount] = useState<number | null>(null);
   const [browserId, setBrowserId] = useState("");
-  const [reactionCountsByPoll, setReactionCountsByPoll] = useState<Record<number, ReactionCounts>>({});
-  const [selectedReactionsByPoll, setSelectedReactionsByPoll] = useState<Record<number, ReactionType | null>>({});
+const [reactionCountsByPoll, setReactionCountsByPoll] = useState<Record<number, ReactionCounts>>({});
+const [selectedReactionsByPoll, setSelectedReactionsByPoll] = useState<Record<number, ReactionType | null>>({});
+const lastReactionRefreshRef = useRef(0);
 
   useEffect(() => {
     setBrowserId(getResultsBrowserId());
@@ -681,10 +682,12 @@ export default function ResultsPage() {
     return votedPolls.map((bundle) => bundle.poll.id);
   }, [votedPolls]);
 
-  const refreshReactions = useCallback(async () => {
-    if (!browserId || visiblePollIds.length === 0) return;
+  const visiblePollIdsKey = useMemo(() => visiblePollIds.join(","), [visiblePollIds]);
 
-    const pollIds = visiblePollIds.join(",");
+  const refreshReactions = useCallback(async () => {
+    if (!browserId || !visiblePollIdsKey) return;
+
+    const pollIds = visiblePollIdsKey;
 
     try {
       const response = await fetch(
@@ -701,11 +704,43 @@ export default function ResultsPage() {
     } catch {
       // ignore reaction load failures
     }
-  }, [browserId, visiblePollIds]);
+  }, [browserId, visiblePollIdsKey]);
 
-  useEffect(() => {
+useEffect(() => {
+  void refreshReactions();
+}, [refreshReactions]);
+
+useEffect(() => {
+  if (!browserId || visiblePollIds.length === 0) return;
+
+  const refreshReactionsThrottled = () => {
+    const now = Date.now();
+
+    if (now - lastReactionRefreshRef.current < 2500) {
+      return;
+    }
+
+    lastReactionRefreshRef.current = now;
     void refreshReactions();
-  }, [refreshReactions]);
+  };
+
+  const channel = supabase
+    .channel("results-live-reactions")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "poll_reactions",
+      },
+      refreshReactionsThrottled
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, [browserId, visiblePollIdsKey, refreshReactions]);
 
    const refreshTotalVoteCount = useCallback(async () => {
     try {
