@@ -448,9 +448,10 @@ export default function ResultsPage() {
     const pollIds = votedPolls.map((bundle) => bundle.poll.id).join(",");
 
     try {
-      const response = await fetch(
-        `/api/poll-reactions?pollIds=${encodeURIComponent(pollIds)}&browserId=${encodeURIComponent(browserId)}`
-      );
+ const response = await fetch(
+  `/api/poll-reactions?pollIds=${encodeURIComponent(pollIds)}&browserId=${encodeURIComponent(browserId)}&t=${Date.now()}`,
+  { cache: "no-store" }
+);
 
       const data = await response.json();
 

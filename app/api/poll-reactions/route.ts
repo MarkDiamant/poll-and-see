@@ -3,6 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 
 type ReactionType = "surprising" | "agree" | "funny";
 
+export const dynamic = "force-dynamic";
+
 const VALID_REACTIONS: ReactionType[] = ["surprising", "agree", "funny"];
 
 function getAdminClient() {
