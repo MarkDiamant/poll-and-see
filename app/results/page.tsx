@@ -659,8 +659,7 @@ export default function ResultsPage() {
           .select("id, question, description, category, slug, is_private, is_publicly_listed, total_votes")
           .eq("is_private", false)
           .eq("is_publicly_listed", true)
-          .order("id", { ascending: false })
-          .limit(30);
+          .order("id", { ascending: false });
 
         const votedSet = new Set(votedPollIds);
         setNewPolls(((newPollRows || []) as Poll[]).filter((poll) => !votedSet.has(poll.id)));
