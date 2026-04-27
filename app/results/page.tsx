@@ -1013,8 +1013,8 @@ export default function ResultsPage() {
                   ))}
                 </div>
               ) : (
-                <div className="rounded-2xl border border-gray-700 bg-gray-800 p-6 text-center">
-                  <p className="text-gray-300">You’ve voted on all live polls. Check back soon.</p>
+                <div className="mx-auto w-full max-w-md rounded-2xl border border-gray-700 bg-gray-800 p-6 text-center">
+                  <p className="text-gray-300">You’ve voted on all live polls.</p>
 
                   <Link
                     href="/"
