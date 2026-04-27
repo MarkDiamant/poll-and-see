@@ -1355,7 +1355,7 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
             </span>
           </div>
 
-          <p className="mt-4 mb-2 text-xs text-gray-400 uppercase tracking-wide">Categories</p>
+         <p className="mt-4 mb-2 text-xs text-gray-400 uppercase tracking-wide text-center">Categories</p>
 <div className="grid grid-cols-6 gap-2 lg:flex lg:flex-nowrap lg:gap-2">
             {categories.map((category, index) => {
               const isActive = selectedCategory === category;
@@ -1392,7 +1392,7 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
             })}
           </div>
 
-          <p className="mt-4 mb-2 text-xs text-gray-400 uppercase tracking-wide text-center sm:text-left">
+<p className="mt-4 mb-2 text-xs text-gray-400 uppercase tracking-wide text-center">
   Sort by
 </p>
 <div className="grid grid-cols-3 gap-2 sm:flex sm:justify-center">
