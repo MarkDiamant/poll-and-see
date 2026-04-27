@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Footer from "@/components/Footer";
 import SiteHeader from "@/components/SiteHeader";
@@ -442,30 +442,58 @@ export default function ResultsPage() {
     void loadResults();
   }, []);
 
+   const refreshReactions = useCallback(async () => {
+    if (!browserId || votedPolls.length === 0) return;
+
+    const pollIds = votedPolls.map((bundle) => bundle.poll.id).join(",");
+
+    try {
+      const response = await fetch(
+        `/api/poll-reactions?pollIds=${encodeURIComponent(pollIds)}&browserId=${encodeURIComponent(browserId)}`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) return;
+
+      setReactionCountsByPoll(data.counts || {});
+      setSelectedReactionsByPoll(data.selected || {});
+    } catch {
+      // ignore reaction load failures
+    }
+  }, [browserId, votedPolls]);
+
+  useEffect(() => {
+    void refreshReactions();
+  }, [refreshReactions]);
+
   useEffect(() => {
     if (!browserId || votedPolls.length === 0) return;
 
-    const loadReactions = async () => {
-      const pollIds = votedPolls.map((bundle) => bundle.poll.id).join(",");
+    const channel = supabase
+      .channel("results-live-reactions")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "poll_reactions",
+        },
+        () => {
+          void refreshReactions();
+        }
+      )
+      .subscribe();
 
-      try {
-        const response = await fetch(
-          `/api/poll-reactions?pollIds=${encodeURIComponent(pollIds)}&browserId=${encodeURIComponent(browserId)}`
-        );
+    const interval = window.setInterval(() => {
+      void refreshReactions();
+    }, 10000);
 
-        const data = await response.json();
-
-        if (!response.ok) return;
-
-        setReactionCountsByPoll(data.counts || {});
-        setSelectedReactionsByPoll(data.selected || {});
-      } catch {
-        // ignore reaction load failures
-      }
+    return () => {
+      window.clearInterval(interval);
+      supabase.removeChannel(channel);
     };
-
-    void loadReactions();
-  }, [browserId, votedPolls]);
+  }, [browserId, votedPolls.length, refreshReactions]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -507,6 +535,30 @@ export default function ResultsPage() {
   const handleReaction = async (pollId: number, reactionType: ReactionType) => {
     if (!browserId) return;
 
+    const previousSelected = selectedReactionsByPoll[pollId] || null;
+    const previousCounts = reactionCountsByPoll[pollId] || getEmptyReactionCounts();
+    const nextSelected = previousSelected === reactionType ? null : reactionType;
+
+    const optimisticCounts = { ...previousCounts };
+
+    if (previousSelected) {
+      optimisticCounts[previousSelected] = Math.max((optimisticCounts[previousSelected] || 0) - 1, 0);
+    }
+
+    if (nextSelected) {
+      optimisticCounts[nextSelected] = (optimisticCounts[nextSelected] || 0) + 1;
+    }
+
+    setSelectedReactionsByPoll((current) => ({
+      ...current,
+      [pollId]: nextSelected,
+    }));
+
+    setReactionCountsByPoll((current) => ({
+      ...current,
+      [pollId]: optimisticCounts,
+    }));
+
     try {
       const response = await fetch("/api/poll-reactions", {
         method: "POST",
@@ -522,7 +574,19 @@ export default function ResultsPage() {
 
       const data = await response.json();
 
-      if (!response.ok) return;
+      if (!response.ok) {
+        setSelectedReactionsByPoll((current) => ({
+          ...current,
+          [pollId]: previousSelected,
+        }));
+
+        setReactionCountsByPoll((current) => ({
+          ...current,
+          [pollId]: previousCounts,
+        }));
+
+        return;
+      }
 
       setReactionCountsByPoll((current) => ({
         ...current,
