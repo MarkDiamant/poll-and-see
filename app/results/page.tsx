@@ -401,7 +401,7 @@ function ResultCard({
   }, []);
 
   const handleShare = async () => {
-   const text = `${window.location.origin}/poll/${bundle.poll.slug}`;
+    const text = getShareText(bundle.poll);
 
     if (navigator.share) {
       try {
@@ -424,7 +424,7 @@ function ResultCard({
   };
 
   const handleShareResults = async () => {
-    const text = getShareText(bundle.poll);
+    const text = `${window.location.origin}/poll/${bundle.poll.slug}`;
     setShareMenuOpen(false);
 
     try {
