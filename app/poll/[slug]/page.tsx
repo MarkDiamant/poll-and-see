@@ -1764,7 +1764,7 @@ export default function PollPage() {
     }
 
     if (showEndOfFeed && endOfFeedRef.current) {
-  smoothScrollToElement(endOfFeedRef.current, 650, 8);
+smoothScrollToElement(endOfFeedRef.current, 650, 170);
   previousShowInlineSubscribeRef.current = showInlineSubscribe;
   previousPollCountRef.current = polls.length;
   return;
