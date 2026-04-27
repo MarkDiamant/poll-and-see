@@ -1255,7 +1255,6 @@ export default function PollPage() {
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
   const [totalVoteCount, setTotalVoteCount] = useState(0);
   const [anchorCategory, setAnchorCategory] = useState("");
-  const [createPollPromptText, setCreatePollPromptText] = useState(getRandomCreatePollPrompt());
 
   const categoryMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -2008,12 +2007,11 @@ className="mx-auto block w-[68%] md:w-[55%] cursor-pointer rounded-lg bg-gray-10
               {index > 0 && (index + 1) % 5 === 0 ? (
                 <div className="mb-8 mt-4 rounded-2xl border border-gray-700 bg-gray-800/80 p-5 text-center">
                   <p className="mb-3 text-base font-medium text-white">
-                    {createPollPromptText}
+                   {CREATE_POLL_PROMPTS[Math.floor(index / 5) % CREATE_POLL_PROMPTS.length]}
                   </p>
 
                   <Link
                     href="/submit-poll"
-                    onClick={() => setCreatePollPromptText(getRandomCreatePollPrompt())}
                     className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-500"
                   >
                     Create your own poll in seconds
