@@ -443,7 +443,7 @@ export default function ResultsPage() {
   }, []);
 
 
-    if (!browserId || votedPolls.length === 0) return;
+
   const refreshReactions = useCallback(async () => {
     if (!browserId || votedPolls.length === 0) return;
 
