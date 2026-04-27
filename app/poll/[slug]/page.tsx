@@ -326,9 +326,15 @@ function StatusRibbon({ label }: { label: BadgeLabel }) {
   );
 }
 
-function smoothScrollToElement(element: HTMLElement, duration = 650, topOffset = 12) {
+function smoothScrollToElement(element: HTMLElement, duration = 650) {
   const startY = window.scrollY;
-  const targetY = element.getBoundingClientRect().top + window.scrollY - topOffset;
+
+  // 👇 key change: place element higher in viewport (not at top)
+  const elementTop = element.getBoundingClientRect().top + window.scrollY;
+
+  // show it around upper-middle of screen
+  const targetY = elementTop - window.innerHeight * 0.35;
+
   const distance = targetY - startY;
   const startTime = performance.now();
 
@@ -1764,7 +1770,7 @@ export default function PollPage() {
     }
 
     if (showEndOfFeed && endOfFeedRef.current) {
-smoothScrollToElement(endOfFeedRef.current, 650, 24);
+smoothScrollToElement(endOfFeedRef.current, 650);
   previousShowInlineSubscribeRef.current = showInlineSubscribe;
   previousPollCountRef.current = polls.length;
   return;
@@ -2075,7 +2081,7 @@ className="mx-auto block w-[68%] md:w-[55%] cursor-pointer rounded-lg bg-gray-10
       </section>
 
 {showEndOfFeed ? (
- <section ref={endOfFeedRef} className="mx-auto max-w-3xl px-6 pb-40 md:pb-24">
+ <section ref={endOfFeedRef} className="mx-auto max-w-3xl px-6 pb-8">
    <div className="mx-auto w-full max-w-md rounded-2xl border border-gray-700 bg-gray-800 p-6 text-center">
             <p className="mb-5 text-base font-medium text-white">
               You’ve voted on all live polls.
