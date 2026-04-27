@@ -444,7 +444,11 @@ export default function ResultsPage() {
 
 
 
-   const refreshReactions = useCallback(async () => {
+   const visiblePollIds = useMemo(() => {
+    return votedPolls.map((bundle) => bundle.poll.id);
+  }, [votedPolls]);
+
+  const refreshReactions = useCallback(async () => {
     if (!browserId || visiblePollIds.length === 0) return;
 
     const pollIds = visiblePollIds.join(",");
@@ -570,10 +574,6 @@ export default function ResultsPage() {
       window.removeEventListener("focus", handleFocus);
     };
   }, [refreshDisplayedVoteCounts, refreshReactions]);
-
-  const visiblePollIds = useMemo(() => {
-    return votedPolls.map((bundle) => bundle.poll.id);
-  }, [votedPolls]);
 
   const filteredVotedPolls = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
