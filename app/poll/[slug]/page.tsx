@@ -1773,7 +1773,7 @@ export default function PollPage() {
 
     previousShowInlineSubscribeRef.current = showInlineSubscribe;
     previousPollCountRef.current = polls.length;
-  }, [polls, showInlineSubscribe]);
+    }, [polls, showInlineSubscribe, showEndOfFeed]);
 
   const handleVoteComplete = async (pollId: number) => {
     const countedVotes = recordInlineSubscribeVote(pollId);
@@ -2031,7 +2031,7 @@ className="mx-auto block w-[68%] md:w-[55%] cursor-pointer rounded-lg bg-gray-10
   <section ref={endOfFeedRef} className="mx-auto max-w-3xl px-6 pb-8">
     <div className="rounded-2xl border border-gray-700 bg-gray-800 p-6 text-center">
             <p className="mb-5 text-base font-medium text-white">
-              You’ve voted on all live polls. Check back soon.
+              You’ve voted on all live polls.
             </p>
 
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
