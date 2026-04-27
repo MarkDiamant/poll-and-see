@@ -1764,7 +1764,7 @@ export default function PollPage() {
     }
 
     if (showEndOfFeed && endOfFeedRef.current) {
-smoothScrollToElement(endOfFeedRef.current, 650, -120);
+smoothScrollToElement(endOfFeedRef.current, 650, 24);
   previousShowInlineSubscribeRef.current = showInlineSubscribe;
   previousPollCountRef.current = polls.length;
   return;
@@ -2075,7 +2075,7 @@ className="mx-auto block w-[68%] md:w-[55%] cursor-pointer rounded-lg bg-gray-10
       </section>
 
 {showEndOfFeed ? (
-  <section ref={endOfFeedRef} className="mx-auto max-w-3xl px-6 pb-8">
+ <section ref={endOfFeedRef} className="mx-auto max-w-3xl px-6 pb-40 md:pb-24">
    <div className="mx-auto w-full max-w-md rounded-2xl border border-gray-700 bg-gray-800 p-6 text-center">
             <p className="mb-5 text-base font-medium text-white">
               You’ve voted on all live polls.
