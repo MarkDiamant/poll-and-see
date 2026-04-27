@@ -267,6 +267,20 @@ function setCachedPollBundle(bundle: PollBundle) {
   }
 }
 
+function clearCachedPollBundles() {
+  if (typeof window === "undefined") return;
+
+  try {
+    Object.keys(sessionStorage).forEach((key) => {
+      if (key.startsWith(POLL_BUNDLE_CACHE_PREFIX)) {
+        sessionStorage.removeItem(key);
+      }
+    });
+  } catch {
+    // ignore cache failures
+  }
+}
+
 function getCategorySummary(selected: string[]) {
   if (selected.length === 0 || selected.includes("All Categories")) {
     return "All Categories";
@@ -787,7 +801,38 @@ if (preferredCategory === "All" || availableCategories.includes(preferredCategor
   }, [loading, selectedCategory]);
 
   const featuredPoll = polls.find((p) => p.featured) || polls[0];
+  useEffect(() => {
+    const refreshHomePolls = () => {
+      clearCachedPollBundles();
+      void loadHomeData();
+    };
 
+    const channel = supabase
+      .channel("homepage-admin-poll-updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "polls",
+        },
+        refreshHomePolls
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "poll_options",
+        },
+        refreshHomePolls
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [loadHomeData]);
     useEffect(() => {
     const channel = supabase
       .channel("homepage-live-votes")
