@@ -27,6 +27,8 @@ type PollOption = {
 };
 
 type VoteCounts = Record<number, number>;
+type ReactionType = "surprising" | "agree" | "funny";
+type ReactionCounts = Record<ReactionType, number>;
 
 type PollBundle = {
   poll: Poll;
@@ -37,6 +39,13 @@ type PollBundle = {
 };
 
 const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899", "#8b5cf6", "#14b8a6", "#f97316", "#ef4444"];
+const RESULTS_BROWSER_ID_KEY = "pollandsee-results-browser-id";
+
+const REACTIONS: Array<{ type: ReactionType; emoji: string; label: string }> = [
+  { type: "surprising", emoji: "😮", label: "Surprising" },
+  { type: "agree", emoji: "👍", label: "Agree" },
+  { type: "funny", emoji: "😂", label: "Funny" },
+];
 
 const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: string; solid: string }> = {
   All: { text: "#e5e7eb", bg: "rgba(31, 41, 55, 0.9)", border: "rgba(75, 85, 99, 1)", solid: "#374151" },
@@ -78,6 +87,33 @@ function getCategoryColours(category: string) {
   }
 
   return FALLBACK_CATEGORY_COLOURS[Math.abs(hash) % FALLBACK_CATEGORY_COLOURS.length];
+}
+
+function getEmptyReactionCounts(): ReactionCounts {
+  return {
+    surprising: 0,
+    agree: 0,
+    funny: 0,
+  };
+}
+
+function getResultsBrowserId() {
+  if (typeof window === "undefined") return "";
+
+  const existing = localStorage.getItem(RESULTS_BROWSER_ID_KEY);
+  if (existing) return existing;
+
+  const next =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+  localStorage.setItem(RESULTS_BROWSER_ID_KEY, next);
+  return next;
+}
+
+function getShareText(poll: Poll) {
+  return `${poll.question}\n\n${window.location.origin}/poll/${poll.slug}`;
 }
 
 function ResultOptions({
@@ -122,7 +158,7 @@ function ResultOptions({
                 </div>
               ) : null}
 
-                            <div className="grid grid-cols-[1fr_auto] items-start gap-x-3">
+              <div className="grid grid-cols-[1fr_auto] items-start gap-x-3">
                 <div className="flex min-w-0 items-center gap-2">
                   {isSelected ? (
                     <span className="shrink-0 text-sm font-bold leading-5 sm:text-base" style={{ color: colour }}>
@@ -133,7 +169,7 @@ function ResultOptions({
                     {option.option_text}
                   </span>
                 </div>
-             <span className="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-gray-300">
+                <span className="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-gray-300">
                   {percent}% <span className="font-normal text-gray-400">• {count} votes</span>
                 </span>
               </div>
@@ -147,10 +183,135 @@ function ResultOptions({
                 />
               </div>
             </div>
-
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function ResultCard({
+  bundle,
+  reactionCounts,
+  selectedReaction,
+  onReaction,
+}: {
+  bundle: PollBundle;
+  reactionCounts: ReactionCounts;
+  selectedReaction: ReactionType | null;
+  onReaction: (pollId: number, reactionType: ReactionType) => void;
+}) {
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [shareButtonText, setShareButtonText] = useState("Share");
+
+  const handleShare = async () => {
+    const text = getShareText(bundle.poll);
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ text });
+        setShareMenuOpen(false);
+        return;
+      } catch {
+        // fall through
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setShareButtonText("Copied");
+      setShareMenuOpen(false);
+      window.setTimeout(() => setShareButtonText("Share"), 1600);
+    } catch {
+      setShareButtonText("Share");
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-lg">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <span
+          className="rounded-full px-2 py-1 text-xs"
+          style={{
+            color: getCategoryColours(bundle.poll.category).text,
+            backgroundColor: getCategoryColours(bundle.poll.category).bg,
+            border: `1px solid ${getCategoryColours(bundle.poll.category).border}`,
+          }}
+        >
+          {bundle.poll.category}
+        </span>
+
+        <span className="text-sm text-gray-400">
+          {Object.values(bundle.voteCounts).reduce((sum, count) => sum + count, 0)} votes
+        </span>
+      </div>
+
+      <h2 className="mb-2 text-2xl font-bold">{bundle.poll.question}</h2>
+
+      {bundle.poll.description ? (
+        <p className="mb-4 text-gray-300">{bundle.poll.description}</p>
+      ) : null}
+
+      <ResultOptions
+        options={bundle.options}
+        voteCounts={bundle.voteCounts}
+        selectedOptionId={bundle.selectedOptionId}
+      />
+
+      <div className="mt-5 flex flex-col gap-3 border-t border-gray-700 pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative w-full sm:w-auto">
+          <button
+            type="button"
+            onClick={() => setShareMenuOpen((current) => !current)}
+            className="inline-flex h-9 w-full cursor-pointer items-center justify-center rounded-xl bg-white px-4 text-sm font-medium text-black transition hover:bg-gray-200 sm:w-auto"
+          >
+            {shareButtonText}
+          </button>
+
+          {shareMenuOpen ? (
+            <div className="absolute bottom-full left-0 z-40 mb-2 w-full min-w-[210px] overflow-hidden rounded-xl border border-gray-700 bg-gray-900 shadow-xl sm:w-[210px]">
+              <button
+                type="button"
+                onClick={() => void handleShare()}
+                className="block w-full px-4 py-3 text-left text-sm text-white transition hover:bg-gray-800"
+              >
+                Share poll link
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleShare()}
+                className="block w-full border-t border-gray-800 px-4 py-3 text-left text-sm text-white transition hover:bg-gray-800"
+              >
+                Share results
+              </button>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {REACTIONS.map((reaction) => {
+            const isSelected = selectedReaction === reaction.type;
+
+            return (
+              <button
+                key={reaction.type}
+                type="button"
+                onClick={() => onReaction(bundle.poll.id, reaction.type)}
+                className={`inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition ${
+                  isSelected
+                    ? "border-white bg-white text-black"
+                    : "border-gray-700 bg-gray-900 text-gray-200 hover:bg-gray-800"
+                }`}
+                aria-label={reaction.label}
+                title={reaction.label}
+              >
+                <span>{reaction.emoji}</span>
+                <span>{reactionCounts[reaction.type] || 0}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
@@ -161,22 +322,29 @@ export default function ResultsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [showTopButton, setShowTopButton] = useState(false);
-const [totalVoteCount, setTotalVoteCount] = useState<number | null>(null);
+  const [totalVoteCount, setTotalVoteCount] = useState<number | null>(null);
+  const [browserId, setBrowserId] = useState("");
+  const [reactionCountsByPoll, setReactionCountsByPoll] = useState<Record<number, ReactionCounts>>({});
+  const [selectedReactionsByPoll, setSelectedReactionsByPoll] = useState<Record<number, ReactionType | null>>({});
+
+  useEffect(() => {
+    setBrowserId(getResultsBrowserId());
+  }, []);
 
   useEffect(() => {
     const loadResults = async () => {
-  setLoading(true);
+      setLoading(true);
 
-  try {
-    const { data: statsRow } = await supabase
-      .from("site_stats")
-      .select("total_votes")
-      .eq("key", "global")
-      .single();
+      try {
+        const { data: statsRow } = await supabase
+          .from("site_stats")
+          .select("total_votes")
+          .eq("key", "global")
+          .single();
 
-    setTotalVoteCount(statsRow?.total_votes ?? 0);
+        setTotalVoteCount(statsRow?.total_votes ?? 0);
 
-    const votedMeta: Array<{ pollId: number; selectedOptionId: number | null; votedAt: number }> = [];
+        const votedMeta: Array<{ pollId: number; selectedOptionId: number | null; votedAt: number }> = [];
 
         for (let i = 0; i < localStorage.length; i += 1) {
           const key = localStorage.key(i) || "";
@@ -202,7 +370,7 @@ const [totalVoteCount, setTotalVoteCount] = useState<number | null>(null);
 
         if (votedPollIds.length > 0) {
           const [{ data: pollRows }, { data: optionRows }] = await Promise.all([
-               supabase
+            supabase
               .from("polls")
               .select("id, question, description, category, slug, is_private, is_publicly_listed, total_votes")
               .in("id", votedPollIds),
@@ -253,7 +421,7 @@ const [totalVoteCount, setTotalVoteCount] = useState<number | null>(null);
           setVotedPolls([]);
         }
 
-          const { data: newPollRows } = await supabase
+        const { data: newPollRows } = await supabase
           .from("polls")
           .select("id, question, description, category, slug, is_private, is_publicly_listed, total_votes")
           .eq("is_private", false)
@@ -275,6 +443,31 @@ const [totalVoteCount, setTotalVoteCount] = useState<number | null>(null);
   }, []);
 
   useEffect(() => {
+    if (!browserId || votedPolls.length === 0) return;
+
+    const loadReactions = async () => {
+      const pollIds = votedPolls.map((bundle) => bundle.poll.id).join(",");
+
+      try {
+        const response = await fetch(
+          `/api/poll-reactions?pollIds=${encodeURIComponent(pollIds)}&browserId=${encodeURIComponent(browserId)}`
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) return;
+
+        setReactionCountsByPoll(data.counts || {});
+        setSelectedReactionsByPoll(data.selected || {});
+      } catch {
+        // ignore reaction load failures
+      }
+    };
+
+    void loadReactions();
+  }, [browserId, votedPolls]);
+
+  useEffect(() => {
     const onScroll = () => {
       setShowTopButton(window.scrollY > 800);
     };
@@ -285,25 +478,25 @@ const [totalVoteCount, setTotalVoteCount] = useState<number | null>(null);
   }, []);
 
   useEffect(() => {
-  const channel = supabase
-    .channel("results-live-votes")
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "votes",
-      },
-      () => {
-  setTotalVoteCount((prev) => (prev ?? 0) + 1);
-}
-    )
-    .subscribe();
+    const channel = supabase
+      .channel("results-live-votes")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "votes",
+        },
+        () => {
+          setTotalVoteCount((prev) => (prev ?? 0) + 1);
+        }
+      )
+      .subscribe();
 
-  return () => {
-    supabase.removeChannel(channel);
-  };
-}, []);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const filteredVotedPolls = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
@@ -311,154 +504,163 @@ const [totalVoteCount, setTotalVoteCount] = useState<number | null>(null);
     return votedPolls.filter((bundle) => bundle.poll.question.toLowerCase().includes(term));
   }, [searchTerm, votedPolls]);
 
+  const handleReaction = async (pollId: number, reactionType: ReactionType) => {
+    if (!browserId) return;
+
+    try {
+      const response = await fetch("/api/poll-reactions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          pollId,
+          reactionType,
+          browserId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) return;
+
+      setReactionCountsByPoll((current) => ({
+        ...current,
+        [pollId]: data.counts || getEmptyReactionCounts(),
+      }));
+
+      setSelectedReactionsByPoll((current) => ({
+        ...current,
+        [pollId]: data.selected || null,
+      }));
+    } catch {
+      // ignore reaction save failures
+    }
+  };
+
   return (
-  <>
-     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
-      <SiteHeader />
+    <>
+      <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
+        <SiteHeader />
 
-      <section className="mx-auto max-w-4xl px-6 pt-2 pb-8">
-       <div className="mb-5 text-center">
-  <h1 className="mb-2 text-4xl font-bold md:text-5xl">Poll & See</h1>
-  <p className="text-lg text-gray-300">See what people really think</p>
-  {totalVoteCount !== null && (
-  <LiveVoteCounter value={totalVoteCount} />
-)}
-</div>
-
-<div className="mb-6 text-center">
-  <h2 className="text-4xl font-bold md:text-5xl">Your results</h2>
-  <p className="mt-2 text-lg text-gray-300">Polls you’ve voted on, with full results</p>
-</div>
-
-        <div className="mb-6">
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Search by question..."
-            className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
-          />
-        </div>
-
-        {loading ? (
-          <div className="rounded-2xl border border-gray-700 bg-gray-800 p-6 text-gray-300">
-            Loading results...
+        <section className="mx-auto max-w-4xl px-6 pt-2 pb-8">
+          <div className="mb-5 text-center">
+            <h1 className="mb-2 text-4xl font-bold md:text-5xl">Poll & See</h1>
+            <p className="text-lg text-gray-300">See what people really think</p>
+            {totalVoteCount !== null && <LiveVoteCounter value={totalVoteCount} />}
           </div>
-        ) : (
-          <>
-            <div className="space-y-5">
-              {filteredVotedPolls.length > 0 ? (
-                filteredVotedPolls.map((bundle) => (
-                  <div
-                    key={bundle.poll.id}
-                    className="rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-lg"
-                  >
-                    <div className="mb-3 flex items-center justify-between gap-3">
-                      <span
-                        className="rounded-full px-2 py-1 text-xs"
-                        style={{
-                          color: getCategoryColours(bundle.poll.category).text,
-                          backgroundColor: getCategoryColours(bundle.poll.category).bg,
-                          border: `1px solid ${getCategoryColours(bundle.poll.category).border}`,
-                        }}
-                      >
-                        {bundle.poll.category}
-                      </span>
 
-                      <span className="text-sm text-gray-400">
-                        {Object.values(bundle.voteCounts).reduce((sum, count) => sum + count, 0)} votes
-                      </span>
-                    </div>
+          <div className="mb-6 text-center">
+            <h2 className="text-4xl font-bold md:text-5xl">Your results</h2>
+            <p className="mt-2 text-lg text-gray-300">Polls you’ve voted on, with full results</p>
+          </div>
 
-                    <h2 className="mb-2 text-2xl font-bold">{bundle.poll.question}</h2>
-                    {bundle.poll.description ? (
-                      <p className="mb-4 text-gray-300">{bundle.poll.description}</p>
-                    ) : null}
+          <div className="mb-6">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search by question..."
+              className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
+            />
+          </div>
 
-                    <ResultOptions
-                      options={bundle.options}
-                      voteCounts={bundle.voteCounts}
-                      selectedOptionId={bundle.selectedOptionId}
+          {loading ? (
+            <div className="rounded-2xl border border-gray-700 bg-gray-800 p-6 text-gray-300">
+              Loading results...
+            </div>
+          ) : (
+            <>
+              <div className="space-y-5">
+                {filteredVotedPolls.length > 0 ? (
+                  filteredVotedPolls.map((bundle) => (
+                    <ResultCard
+                      key={bundle.poll.id}
+                      bundle={bundle}
+                      reactionCounts={reactionCountsByPoll[bundle.poll.id] || getEmptyReactionCounts()}
+                      selectedReaction={selectedReactionsByPoll[bundle.poll.id] || null}
+                      onReaction={(pollId, reactionType) => {
+                        void handleReaction(pollId, reactionType);
+                      }}
                     />
+                  ))
+                ) : (
+                  <div className="rounded-2xl border border-gray-700 bg-gray-800 p-6 text-gray-300">
+                    You haven’t voted on any polls yet.
                   </div>
-                ))
+                )}
+              </div>
+
+              <div className="mt-10 mb-5">
+                <h2 className="text-2xl font-semibold">New polls to vote on</h2>
+              </div>
+
+              {newPolls.length > 0 ? (
+                <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                  {newPolls.map((poll) => (
+                    <Link
+                      key={poll.id}
+                      href={`/poll/${poll.slug}`}
+                      className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 p-4 shadow-lg transition hover:border-gray-500 flex min-h-[190px] flex-col justify-between"
+                    >
+                      <div className="mb-3 flex items-center">
+                        <span
+                          className="rounded-full px-2 py-1 text-xs"
+                          style={{
+                            color: getCategoryColours(poll.category).text,
+                            backgroundColor: getCategoryColours(poll.category).bg,
+                            border: `1px solid ${getCategoryColours(poll.category).border}`,
+                          }}
+                        >
+                          {poll.category}
+                        </span>
+                      </div>
+
+                      <div className="flex-1 py-2">
+                        <h4 className="text-left text-lg font-semibold">{poll.question}</h4>
+                      </div>
+
+                      <div className="flex items-center justify-end gap-1.5 text-sm text-gray-400">
+                        <span>Vote now</span>
+                        <span aria-hidden="true" className="text-base leading-none">
+                          ›
+                        </span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
               ) : (
-                <div className="rounded-2xl border border-gray-700 bg-gray-800 p-6 text-gray-300">
-                  You haven’t voted on any polls yet.
+                <div className="rounded-2xl border border-gray-700 bg-gray-800 p-6 text-center">
+                  <p className="text-gray-300">You’ve voted on all live polls. Check back soon.</p>
+
+                  <Link
+                    href="/"
+                    className="mt-4 inline-flex items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-gray-200"
+                  >
+                    Back to home
+                  </Link>
                 </div>
               )}
-            </div>
+            </>
+          )}
+        </section>
 
-            <div className="mt-10 mb-5">
-              <h2 className="text-2xl font-semibold">New polls to vote on</h2>
-            </div>
+        <Footer />
 
-                       {newPolls.length > 0 ? (
-              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {newPolls.map((poll) => (
-                  <Link
-                    key={poll.id}
-                    href={`/poll/${poll.slug}`}
-                   className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 p-4 shadow-lg transition hover:border-gray-500 flex min-h-[190px] flex-col justify-between"
-                  >
-                    <div className="mb-3 flex items-center">
-                      <span
-                        className="rounded-full px-2 py-1 text-xs"
-                        style={{
-                          color: getCategoryColours(poll.category).text,
-                          backgroundColor: getCategoryColours(poll.category).bg,
-                          border: `1px solid ${getCategoryColours(poll.category).border}`,
-                        }}
-                      >
-                        {poll.category}
-                      </span>
-                    </div>
-
-                    <div className="flex-1 py-2">
-  <h4 className="text-left text-lg font-semibold">{poll.question}</h4>
-</div>
-
-<div className="flex items-center justify-end gap-1.5 text-sm text-gray-400">
-                      <span>Vote now</span>
-                      <span aria-hidden="true" className="text-base leading-none">
-                        ›
-                      </span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-<div className="rounded-2xl border border-gray-700 bg-gray-800 p-6 text-center">
-  <p className="text-gray-300">You’ve voted on all live polls. Check back soon.</p>
-
-  <Link
-    href="/"
-    className="mt-4 inline-flex items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-gray-200"
-  >
-    Back to home
-  </Link>
-</div>
-            )}
-          </>
-        )}
-      </section>
-
-      <Footer />
-
-      {showTopButton ? (
-        <button
-          onClick={() =>
-            window.scrollTo({
-              top: 0,
-              behavior: "smooth",
-            })
-          }
-          className="fixed bottom-5 right-5 z-50 rounded-2xl border border-gray-700 bg-gray-800 px-4 py-3 text-sm font-medium text-white shadow-lg transition hover:bg-gray-700 md:bottom-6 md:right-8 md:px-5"
-        >
-          Back to top
-        </button>
-      ) : null}
-    </main>
-</>
+        {showTopButton ? (
+          <button
+            onClick={() =>
+              window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+              })
+            }
+            className="fixed bottom-5 right-5 z-50 rounded-2xl border border-gray-700 bg-gray-800 px-4 py-3 text-sm font-medium text-white shadow-lg transition hover:bg-gray-700 md:bottom-6 md:right-8 md:px-5"
+          >
+            Back to top
+          </button>
+        ) : null}
+      </main>
+    </>
   );
 }
