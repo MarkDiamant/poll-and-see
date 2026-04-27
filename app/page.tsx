@@ -990,7 +990,7 @@ let last24Total = 0;
   const livePolls = useMemo(() => {
     const basePolls = searchedPolls.filter((poll) => poll.id !== featuredPoll?.id);
 
-   if (selectedSortFilter === "Popular") {
+   if (selectedSortFilter === "Trending") {
       return [...basePolls].sort((a, b) => {
         const diff = (recentVoteCounts[b.id] || 0) - (recentVoteCounts[a.id] || 0);
         if (diff !== 0) return diff;
