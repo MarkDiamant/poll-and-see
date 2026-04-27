@@ -1728,12 +1728,18 @@ export default function PollPage() {
 
         await preloadQueue([firstBundle.poll.id], resolvedAnchorCategory);
 
-        if (firstPollAlreadyVoted && preloadedQueueRef.current.length > 0) {
-          const next = preloadedQueueRef.current.shift();
+        if (firstPollAlreadyVoted) {
+          if (preloadedQueueRef.current.length > 0) {
+            const next = preloadedQueueRef.current.shift();
 
-          if (next && !hasLocalVote(next.poll.id)) {
-            setPolls([firstBundle, next]);
+            if (next && !hasLocalVote(next.poll.id)) {
+              setPolls([firstBundle, next]);
+              setShowEndOfFeed(false);
+              return;
+            }
           }
+
+          setShowEndOfFeed(true);
         }
       } catch (error) {
         console.error("Poll page init failed", error);
