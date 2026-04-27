@@ -625,13 +625,13 @@ let last24Total = 0;
       const params = new URLSearchParams(window.location.search);
       const queryCategory = params.get("category");
       const savedCategory = sessionStorage.getItem("selectedPollCategory");
-      const preferredCategory = queryCategory || savedCategory || "";
+   const preferredCategory = queryCategory || savedCategory || "All";
 
-      if (preferredCategory && availableCategories.includes(preferredCategory)) {
-        setSelectedCategory(preferredCategory);
-      } else {
-        setSelectedCategory("");
-      }
+if (preferredCategory === "All" || availableCategories.includes(preferredCategory)) {
+  setSelectedCategory(preferredCategory);
+} else {
+  setSelectedCategory("All");
+}
 
       const chosenFeaturedPoll = safePolls.find((p) => p.featured) || safePolls[0];
 
