@@ -630,13 +630,14 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
   key={`${poll.id}-${option.id || `new-${optionIndex}`}`}
  className="grid grid-cols-[1.5fr_84px_auto] items-center gap-2"
 >
- <input
+<input
   type="text"
   value={option.option_text}
   onChange={(event) =>
     updateOptionText(poll.id, optionIndex, event.target.value)
   }
-className="w-full min-w-0 rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
+  onBlur={() => void updatePoll(poll.id)}
+  className="w-full min-w-0 rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
   placeholder="Option text"
 />
 
@@ -646,7 +647,8 @@ className="w-full min-w-0 rounded-lg border border-gray-700 bg-black/20 px-2.5 p
   onChange={(event) =>
     updateOptionImageUrl(poll.id, optionIndex, event.target.value)
   }
- className="w-[84px] rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
+  onBlur={() => void updatePoll(poll.id)}
+  className="w-[84px] rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
   placeholder="Image URL (optional)"
 />
 
