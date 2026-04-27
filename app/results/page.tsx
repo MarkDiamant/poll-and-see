@@ -442,16 +442,18 @@ export default function ResultsPage() {
     void loadResults();
   }, []);
 
-   const refreshReactions = useCallback(async () => {
+
+    if (!browserId || votedPolls.length === 0) return;
+  const refreshReactions = useCallback(async () => {
     if (!browserId || votedPolls.length === 0) return;
 
     const pollIds = votedPolls.map((bundle) => bundle.poll.id).join(",");
 
     try {
- const response = await fetch(
-  `/api/poll-reactions?pollIds=${encodeURIComponent(pollIds)}&browserId=${encodeURIComponent(browserId)}&t=${Date.now()}`,
-  { cache: "no-store" }
-);
+      const response = await fetch(
+        `/api/poll-reactions?pollIds=${encodeURIComponent(pollIds)}&browserId=${encodeURIComponent(browserId)}&t=${Date.now()}`,
+        { cache: "no-store" }
+      );
 
       const data = await response.json();
 
@@ -496,6 +498,51 @@ export default function ResultsPage() {
     };
   }, [browserId, votedPolls.length, refreshReactions]);
 
+  const refreshDisplayedVoteCounts = useCallback(async () => {
+    if (votedPolls.length === 0) return;
+
+    const pollIds = votedPolls.map((bundle) => bundle.poll.id);
+
+    try {
+      const { data, error } = await supabase
+        .from("poll_options")
+        .select("id, poll_id, option_text, vote_count, image_url")
+        .in("poll_id", pollIds)
+        .order("id", { ascending: true });
+
+      if (error || !data) return;
+
+      const optionsByPoll = new Map<number, PollOption[]>();
+
+      data.forEach((option) => {
+        const typed = option as PollOption;
+        const existing = optionsByPoll.get(typed.poll_id) || [];
+        existing.push(typed);
+        optionsByPoll.set(typed.poll_id, existing);
+      });
+
+      setVotedPolls((current) =>
+        current.map((bundle) => {
+          const options = optionsByPoll.get(bundle.poll.id);
+          if (!options) return bundle;
+
+          const voteCounts: VoteCounts = {};
+          options.forEach((option) => {
+            voteCounts[option.id] = option.vote_count || 0;
+          });
+
+          return {
+            ...bundle,
+            options,
+            voteCounts,
+          };
+        })
+      );
+    } catch {
+      // ignore vote refresh failures
+    }
+  }, [votedPolls]);
+
   useEffect(() => {
     const onScroll = () => {
       setShowTopButton(window.scrollY > 800);
@@ -518,14 +565,38 @@ export default function ResultsPage() {
         },
         () => {
           setTotalVoteCount((prev) => (prev ?? 0) + 1);
+          void refreshDisplayedVoteCounts();
         }
       )
       .subscribe();
 
+    const interval = window.setInterval(() => {
+      void refreshDisplayedVoteCounts();
+      void refreshReactions();
+    }, 10000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void refreshDisplayedVoteCounts();
+        void refreshReactions();
+      }
+    };
+
+    const handleFocus = () => {
+      void refreshDisplayedVoteCounts();
+      void refreshReactions();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
+
     return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [refreshDisplayedVoteCounts, refreshReactions]);
 
   const filteredVotedPolls = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
