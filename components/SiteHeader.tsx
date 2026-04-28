@@ -29,12 +29,19 @@ export default function SiteHeader() {
             Home
           </Link>
 
-          <Link
-            href="/results"
-            className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm font-medium text-white transition hover:bg-gray-800 md:px-5"
-          >
-            Results
-          </Link>
+<Link
+  href="/results"
+  className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm font-medium text-white transition hover:bg-gray-800 md:px-5"
+>
+  Results
+</Link>
+
+<Link
+  href="/add-to-website"
+  className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm font-medium text-white transition hover:bg-gray-800 md:px-5"
+>
+  Add polls to your website
+</Link>
 
           <Link
             href="/submit-poll"
