@@ -822,13 +822,26 @@ onBlur={(event) => {
                             type="button"
                             onClick={() =>
                               void handleCopy(
-                                `iframe:${poll.id}`,
+                                `iframe-dark:${poll.id}`,
                                 buildIframeCode(poll.embed_token, "dark")
                               )
                             }
                             className="rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800"
                           >
-                            {copiedKey === `iframe:${poll.id}` ? "Copied iframe" : "Copy iframe"}
+                            {copiedKey === `iframe-dark:${poll.id}` ? "Copied dark iframe" : "Copy dark iframe"}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void handleCopy(
+                                `iframe-light:${poll.id}`,
+                                buildIframeCode(poll.embed_token, "light")
+                              )
+                            }
+                            className="rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800"
+                          >
+                            {copiedKey === `iframe-light:${poll.id}` ? "Copied light iframe" : "Copy light iframe"}
                           </button>
 
                           <a
