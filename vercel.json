@@ -1,7 +1,7 @@
 {
   "crons": [
     {
-      "path": "/api/digest",
+      "path": "/api/digest?secret=pollandsee_daily_digest_4k9x2m8q7z1r5t",
       "schedule": "0 11 * * *"
     }
   ]
