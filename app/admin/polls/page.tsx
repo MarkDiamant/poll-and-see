@@ -86,9 +86,20 @@ function buildPollUrl(slug: string | null) {
   return slug ? `${SITE_URL}/poll/${slug}` : "";
 }
 
-function buildIframeCode(embedToken: string | null) {
+function buildIframeCode(embedToken: string | null, embedStyle: "dark" | "light" | "custom" = "dark", customColor = "") {
   if (!embedToken) return "";
-  return `<iframe src="${SITE_URL}/embed/${embedToken}" width="100%" height="100%" style="border:0; display:block; overflow:hidden; background:transparent;" loading="lazy" scrolling="no"></iframe>`;
+
+  let src = `${SITE_URL}/embed/${embedToken}`;
+
+  if (embedStyle === "light") {
+    src += "?theme=light";
+  }
+
+  if (embedStyle === "custom" && customColor.trim()) {
+    src += `?color=${encodeURIComponent(customColor.trim())}`;
+  }
+
+  return `<iframe src="${src}" width="100%" height="100%" style="border:0; display:block; overflow:hidden; background:transparent;" loading="lazy" scrolling="no"></iframe>`;
 }
 
 function buildPollShareText(question: string, pollUrl: string) {
@@ -814,7 +825,30 @@ onBlur={(event) => {
 
                           <button
                             type="button"
-                            onClick={() => void handleCopy(`iframe:${poll.id}`, iframeCode)}
+                            onClick={() => {
+                              const styleChoice = window.prompt(
+                                "Embed style: type dark, light, or custom",
+                                "dark"
+                              );
+
+                              if (!styleChoice) return;
+
+                              const cleanedStyle = styleChoice.trim().toLowerCase();
+
+                              if (cleanedStyle === "light") {
+                                void handleCopy(`iframe:${poll.id}`, buildIframeCode(poll.embed_token, "light"));
+                                return;
+                              }
+
+                              if (cleanedStyle === "custom") {
+                                const customColor = window.prompt("Enter custom HEX colour, e.g. #061B52", "#061B52");
+                                if (!customColor) return;
+                                void handleCopy(`iframe:${poll.id}`, buildIframeCode(poll.embed_token, "custom", customColor));
+                                return;
+                              }
+
+                              void handleCopy(`iframe:${poll.id}`, buildIframeCode(poll.embed_token, "dark"));
+                            }}
                          className="rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800"
                           >
                             {copiedKey === `iframe:${poll.id}` ? "Copied iframe" : "Copy iframe"}

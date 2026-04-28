@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 type Poll = {
@@ -110,10 +110,14 @@ function ResultOptions({
   options,
   voteCounts,
   selectedOptionId,
+  accentColor,
+  isLightTheme,
 }: {
   options: PollOption[];
   voteCounts: VoteCounts;
   selectedOptionId: number | null;
+  accentColor: string | null;
+  isLightTheme: boolean;
 }) {
   const total = Object.values(voteCounts).reduce((sum, count) => sum + count, 0);
 
@@ -123,7 +127,7 @@ function ResultOptions({
         const count = voteCounts[option.id] || 0;
         const percent = total > 0 ? Math.round((count / total) * 100) : 0;
 const animatedPercent = percent > 0 ? Math.max(12, percent) : 0;
-        const colour = OPTION_COLOURS[index] || OPTION_COLOURS[0];
+                const colour = accentColor || OPTION_COLOURS[index] || OPTION_COLOURS[0];
         const isSelected = selectedOptionId === option.id;
 
         return (
@@ -156,18 +160,18 @@ const animatedPercent = percent > 0 ? Math.max(12, percent) : 0;
                       ✓
                     </span>
                   ) : null}
-                 <span className="min-w-0 break-words text-sm leading-5 text-white sm:text-base">
+                 <span className={`min-w-0 break-words text-sm leading-5 sm:text-base ${isLightTheme ? "text-gray-900" : "text-white"}`}>
   {option.option_text}
 </span>
                 </div>
-                <span className="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-gray-300">
+                <span className={`shrink-0 whitespace-nowrap text-right text-sm font-semibold ${isLightTheme ? "text-gray-700" : "text-gray-300"}`}>
                   {percent}%
                 </span>
               </div>
             </div>
 
             <div className="px-2.5 pb-1 pt-0.5">
-              <div className="h-5 w-full overflow-hidden rounded-full bg-gray-700">
+              <div className={`h-5 w-full overflow-hidden rounded-full ${isLightTheme ? "bg-gray-200" : "bg-gray-700"}`}>
   <div
     className="h-5 transition-[width] duration-300 ease-out"
     style={{ width: `${animatedPercent}%`, backgroundColor: colour, opacity: 0.96 }}
@@ -181,14 +185,14 @@ const animatedPercent = percent > 0 ? Math.max(12, percent) : 0;
   );
 }
 
-function EmbedFooter() {
+function EmbedFooter({ isLightTheme }: { isLightTheme: boolean }) {
   return (
-    <div className="mt-4 border-t border-gray-700 pt-4 text-center">
+    <div className={`mt-4 border-t pt-4 text-center ${isLightTheme ? "border-gray-200" : "border-gray-700"}`}>
       <Link
         href="https://www.pollandsee.com"
         target="_blank"
         rel="noreferrer"
-        className="inline-flex items-center justify-center gap-1 text-sm text-gray-400 transition hover:text-white"
+        className={`inline-flex items-center justify-center gap-1 text-sm transition ${isLightTheme ? "text-gray-500 hover:text-gray-900" : "text-gray-400 hover:text-white"}`}
       >
         <img
           src="/favicon.ico"
@@ -203,7 +207,14 @@ function EmbedFooter() {
 
 export default function EmbedPollPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const token = String(params.token);
+
+  const requestedTheme = searchParams.get("theme");
+  const requestedColor = searchParams.get("color");
+  const isLightTheme = requestedTheme === "light";
+  const accentColor =
+    requestedColor && /^#[0-9A-Fa-f]{6}$/.test(requestedColor) ? requestedColor : null;
 
   const [poll, setPoll] = useState<Poll | null>(null);
   const [options, setOptions] = useState<PollOption[]>([]);
@@ -551,7 +562,7 @@ const scaledCardStyle = isCompactMode
   }`}
 >
                 <p className="text-base font-medium text-white">This poll is not currently active.</p>
-  <EmbedFooter />
+  <EmbedFooter isLightTheme={isLightTheme} />
               </div>
             </div>
           </div>
@@ -566,7 +577,7 @@ const scaledCardStyle = isCompactMode
         <div className="mx-auto" style={scaledWrapperStyle}>
           <div ref={cardRef} style={scaledCardStyle}>
            <div
-  className={`w-full overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 ${
+  className={`w-full overflow-hidden rounded-2xl border ${isLightTheme ? "border-gray-200 bg-white" : "border-gray-700 bg-gray-800"} ${
     isCompactMode ? "p-4" : "p-6"
   }`}
 >
@@ -575,13 +586,13 @@ const scaledCardStyle = isCompactMode
 }`}>
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div></div>
-                <span className="text-sm text-gray-400">
+                <span className={`text-sm ${isLightTheme ? "text-gray-500" : "text-gray-400"}`}>
                   {totalVotes.toLocaleString()} {totalVotes === 1 ? "vote" : "votes"}
                 </span>
               </div>
 
              <h1
-  className={`mb-2 break-words font-bold text-white ${
+  className={`mb-2 break-words font-bold ${isLightTheme ? "text-gray-950" : "text-white"} ${
     isCompactMode ? "text-lg leading-7" : "text-2xl"
   }`}
 >
@@ -590,7 +601,7 @@ const scaledCardStyle = isCompactMode
 
               {poll.description ? (
               <p
-  className={`mb-4 break-words text-gray-300 ${
+  className={`mb-4 break-words ${isLightTheme ? "text-gray-700" : "text-gray-300"} ${
     isCompactMode ? "text-sm leading-6" : ""
   }`}
 >
@@ -612,11 +623,13 @@ const scaledCardStyle = isCompactMode
                       onClick={() => handleVote(option.id)}
                       className={
                         option.image_url
-                          ? "w-full cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600"
-                      : `w-full cursor-pointer overflow-hidden rounded-xl bg-gray-700 text-left text-white transition hover:bg-gray-600 ${
+                          ? `w-full cursor-pointer overflow-hidden rounded-xl text-left text-white transition ${accentColor ? "" : isLightTheme ? "bg-gray-100 text-gray-900 hover:bg-gray-200" : "bg-gray-700 hover:bg-gray-600"}`
+                      : `w-full cursor-pointer overflow-hidden rounded-xl text-left transition ${accentColor ? "text-white" : isLightTheme ? "bg-gray-100 text-gray-900 hover:bg-gray-200" : "bg-gray-700 text-white hover:bg-gray-600"} ${
     isCompactMode ? "px-3 py-3 text-sm" : "px-4 py-3.5"
   }`
                       }
+                    >
+style={accentColor ? { backgroundColor: accentColor } : undefined}
                     >
                       {option.image_url ? (
                         <>
@@ -644,7 +657,13 @@ const scaledCardStyle = isCompactMode
                 </div>
               ) : (
                 <>
-                  <ResultOptions options={options} voteCounts={counts} selectedOptionId={selected} />
+                 <ResultOptions
+  options={options}
+  voteCounts={counts}
+  selectedOptionId={selected}
+  accentColor={accentColor}
+  isLightTheme={isLightTheme}
+/>
 
                   {resultsOnly ? (
                  <div
