@@ -57,11 +57,11 @@ export default function AddToWebsitePage() {
 
       <section className="mx-auto max-w-5xl px-6 pb-12 pt-6">
         <div className="mb-8 rounded-2xl border border-gray-700 bg-gray-800 p-6 text-center shadow-lg">
-          <h1 className="mb-3 text-3xl font-bold md:text-4xl">
+          <h1 className="mb-5 text-3xl font-bold md:text-4xl">
             Add Poll &amp; See to your website
           </h1>
           <p className="mb-6 text-base text-gray-300 md:text-lg">
-            Turn visitors into participants in seconds
+            Add a simple poll to your website so visitors can vote without leaving your site
           </p>
 
           <img
@@ -78,34 +78,48 @@ export default function AddToWebsitePage() {
 
 <div className="grid gap-6 md:grid-cols-2">
   <div className="flex flex-col items-center">
-    <img
-      src="/embed-assets/plm-after.png"
-      alt="Poll & See embed example after voting"
-      className="w-full rounded-xl border border-gray-700 shadow-lg"
-    />
     <a
       href="https://www.precisionlinemarking.co.uk/"
       target="_blank"
       rel="noreferrer"
-      className="mt-2 text-sm text-gray-400 hover:text-white underline"
+      className="w-full"
     >
-      View live site
+      <img
+        src="/embed-assets/plm-after.png"
+        alt="Poll & See embed example after voting"
+        className="w-full rounded-xl border border-gray-700 shadow-lg transition hover:opacity-90"
+      />
+    </a>
+    <a
+      href="https://www.precisionlinemarking.co.uk/"
+      target="_blank"
+      rel="noreferrer"
+      className="mt-3 text-base text-gray-300 hover:text-white underline"
+    >
+      See it live
     </a>
   </div>
 
   <div className="flex flex-col items-center">
-    <img
-      src="/embed-assets/diamant-before.png"
-      alt="Poll & See embedded on another website"
-      className="w-full rounded-xl border border-gray-700 shadow-lg"
-    />
     <a
       href="https://www.diamantsolutions.co.uk/"
       target="_blank"
       rel="noreferrer"
-      className="mt-2 text-sm text-gray-400 hover:text-white underline"
+      className="w-full"
     >
-      View live site
+      <img
+        src="/embed-assets/diamant-before.png"
+        alt="Poll & See embedded on another website"
+        className="w-full rounded-xl border border-gray-700 shadow-lg transition hover:opacity-90"
+      />
+    </a>
+    <a
+      href="https://www.diamantsolutions.co.uk/"
+      target="_blank"
+      rel="noreferrer"
+      className="mt-3 text-base text-gray-300 hover:text-white underline"
+    >
+      See it live
     </a>
   </div>
 </div>
