@@ -58,31 +58,65 @@ function suggestCategory(question: string): CategoryOption {
 
   const hasAny = (terms: string[]) => terms.some((term) => q.includes(term));
 
-  if (hasAny(["child", "children", "kid", "kids", "parent", "parents", "parenting", "school", "teacher", "teachers", "homework", "nursery", "playgroup", "discipline", "chinuch", "student", "students", "learning", "education"])) {
-    return "Education";
+  const scores: Record<CategoryOption, number> = {
+    General: 0,
+    Lifestyle: 0,
+    Community: 0,
+    Finance: 0,
+    Business: 0,
+    Education: 0,
+    Fun: 0,
+  };
+
+  if (hasAny(["child", "children", "kid", "kids", "parent", "parents", "parenting", "school", "teacher", "teachers", "nursery", "playgroup", "homework", "discipline", "chinuch", "learning", "student", "students", "classroom", "school communication", "privileges"])) {
+    scores.Education += 4;
+  }
+
+  if (hasAny(["money", "debt", "income", "spending", "afford", "affordability", "salary", "earn", "value", "bills", "saving", "savings", "prices", "price", "cost", "costs", "rent", "mortgage", "tax", "financial", "finance", "split a bill", "splitting a bill", "charity giving"])) {
+    scores.Finance += 4;
   }
 
   if (hasAny(["business", "work", "job", "hiring", "customers", "customer", "pricing", "productivity", "management", "manager", "employee", "employees", "boss", "pay rise", "underpaid", "workplace", "branding", "career", "office"])) {
-    return "Business";
+    scores.Business += 4;
   }
 
-  if (hasAny(["money", "debt", "income", "spending", "afford", "salary", "value", "bills", "saving", "savings", "price", "prices", "cost", "costs", "charity", "donation", "rent", "mortgage", "tax", "financial", "finance", "split the bill", "earn", "paid"])) {
-    return "Finance";
+  if (hasAny(["rude", "reply", "message", "cancel", "last minute", "interrupt", "awkward", "manners", "etiquette", "pressure", "social norms", "friend", "friends", "guest", "guests", "invite", "invited", "community", "communal", "neighbour", "neighbor"])) {
+    scores.Community += 4;
   }
 
-  if (hasAny(["rude", "reply", "message", "cancel", "last minute", "interrupt", "awkward", "manners", "etiquette", "neighbour", "neighbor", "community", "communal", "pressure", "friend", "friends", "guest", "invite", "invited"])) {
-    return "Community";
+  if (hasAny(["gym", "sleep", "food", "travel", "airport", "shabbos", "routine", "habit", "habits", "phone", "phones", "screen time", "daily", "morning", "evening", "weekend", "holiday", "eat", "coffee", "exercise", "fitness"])) {
+    scores.Lifestyle += 4;
   }
 
-  if (hasAny(["gym", "sleep", "food", "travel", "airport", "shabbos", "routine", "habit", "habits", "phone", "phones", "screen time", "daily", "morning", "evening", "holiday", "weekend", "eat", "coffee", "exercise", "fitness"])) {
-    return "Lifestyle";
+  if (hasAny(["would you rather", "dance", "sing", "cold showers", "air conditioning", "silly", "fun", "absurd", "playful", "movie", "game", "games", "favourite", "favorite"])) {
+    scores.Fun += 4;
   }
 
-  if (hasAny(["would you rather", "dance", "sing", "cold showers", "air conditioning", "silly", "fun", "absurd", "movie", "game", "games", "favourite", "favorite"])) {
+  if (hasAny(["salary", "pay rise", "underpaid", "hiring", "workplace", "manager", "employee", "boss", "customers", "pricing"])) {
+    scores.Business += 2;
+  }
+
+  if (hasAny(["salary", "earn", "debt", "bills", "afford", "split a bill", "spending", "saving", "savings"])) {
+    scores.Finance += 2;
+  }
+
+  if (hasAny(["read a message", "not reply", "cancels last minute", "interrupts", "rude"])) {
+    scores.Community += 3;
+  }
+
+  if (scores.Education > 0 && hasAny(["child", "children", "kid", "kids", "school", "teacher", "parent", "parents", "homework", "discipline"])) {
+    return "Education";
+  }
+
+  if (scores.Fun > 0 && hasAny(["would you rather", "silly", "absurd", "dance", "sing", "cold showers", "air conditioning"])) {
     return "Fun";
   }
 
-  return "General";
+  const ranked = CATEGORY_OPTIONS.filter((category) => category !== "General").sort(
+    (a, b) => scores[b] - scores[a]
+  );
+
+  return scores[ranked[0]] > 0 ? ranked[0] : "General";
 }
 
 export default function AdminSubmissionsPage() {
