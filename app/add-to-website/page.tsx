@@ -76,21 +76,21 @@ export default function AddToWebsitePage() {
             See how it works on real websites
           </h2>
 
-          <div className="space-y-6">
+          <div className="flex flex-col items-center justify-center gap-6 md:flex-row">
             <img
               src="/embed-assets/plm-before.png"
               alt="Poll & See embed example before voting"
-              className="mx-auto w-full max-w-3xl rounded-xl border border-gray-700 shadow-lg"
+              className="w-full max-w-[300px] rounded-xl border border-gray-700 shadow-lg"
             />
             <img
               src="/embed-assets/plm-after.png"
               alt="Poll & See embed example after voting"
-              className="mx-auto w-full max-w-3xl rounded-xl border border-gray-700 shadow-lg"
+              className="w-full max-w-[300px] rounded-xl border border-gray-700 shadow-lg"
             />
             <img
               src="/embed-assets/diamant-before.png"
               alt="Poll & See embedded on another website"
-              className="mx-auto w-full max-w-3xl rounded-xl border border-gray-700 shadow-lg"
+              className="w-full max-w-[300px] rounded-xl border border-gray-700 shadow-lg"
             />
           </div>
         </div>
