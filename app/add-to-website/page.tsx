@@ -64,11 +64,11 @@ export default function AddToWebsitePage() {
             Add a simple poll to your website so visitors can vote without leaving your site
           </p>
 
-          <img
-            src="/embed-assets/plm-before.png"
-            alt="Poll & See embedded on a website"
-            className="mx-auto w-full max-w-4xl rounded-xl border border-gray-700 shadow-lg"
-          />
+<img
+  src="/embed-assets/plm-before.png"
+  alt="Poll & See embedded on a website"
+  className="-mx-3 w-[calc(100%+24px)] max-w-none rounded-xl border border-gray-700 shadow-lg md:mx-auto md:w-full md:max-w-4xl"
+/>
         </div>
 
         <div className="mb-8 rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-lg">
@@ -87,7 +87,7 @@ export default function AddToWebsitePage() {
       <img
         src="/embed-assets/plm-after.png"
         alt="Poll & See embed example after voting"
-        className="w-full rounded-xl border border-gray-700 shadow-lg transition hover:opacity-90"
+        className="-mx-3 w-[calc(100%+24px)] max-w-none rounded-xl border border-gray-700 shadow-lg transition hover:opacity-90 md:mx-0 md:w-full"
       />
     </a>
     <a
@@ -110,7 +110,7 @@ export default function AddToWebsitePage() {
       <img
         src="/embed-assets/diamant-before.png"
         alt="Poll & See embedded on another website"
-        className="w-full rounded-xl border border-gray-700 shadow-lg transition hover:opacity-90"
+      className="-mx-3 w-[calc(100%+24px)] max-w-none rounded-xl border border-gray-700 shadow-lg transition hover:opacity-90 md:mx-0 md:w-full"
       />
     </a>
     <a
