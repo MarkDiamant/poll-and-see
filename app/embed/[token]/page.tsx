@@ -620,12 +620,18 @@ const scaledCardStyle = isCompactMode
                       onClick={() => handleVote(option.id)}
                       className={
                         option.image_url
-                          ? `w-full cursor-pointer overflow-hidden rounded-xl text-left text-white transition ${accentColor ? "" : isLightTheme ? "bg-gray-100 text-gray-900 hover:bg-gray-200" : "bg-gray-700 hover:bg-gray-600"}`
-                      : `w-full cursor-pointer overflow-hidden rounded-xl text-left transition ${accentColor ? "text-white" : isLightTheme ? "bg-gray-100 text-gray-900 hover:bg-gray-200" : "bg-gray-700 text-white hover:bg-gray-600"} ${
-    isCompactMode ? "px-3 py-3 text-sm" : "px-4 py-3.5"
-  }`
+                          ? `w-full cursor-pointer overflow-hidden rounded-xl text-left transition ${
+                              isLightTheme
+                                ? "bg-gray-100 text-gray-900 hover:bg-gray-200"
+                                : "bg-gray-700 text-white hover:bg-gray-600"
+                            }`
+                          : `w-full cursor-pointer overflow-hidden rounded-xl text-left transition ${
+                              isLightTheme
+                                ? "bg-gray-100 text-gray-900 hover:bg-gray-200"
+                                : "bg-gray-700 text-white hover:bg-gray-600"
+                            } ${isCompactMode ? "px-3 py-3 text-sm" : "px-4 py-3.5"}`
                       }
-                      style={accentColor ? { backgroundColor: accentColor } : undefined}
+                      }
                     >
                       {option.image_url ? (
                         <>
