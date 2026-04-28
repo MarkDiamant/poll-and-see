@@ -411,6 +411,22 @@ const updateOptionImageUrl = (pollId: number, optionIndex: number, value: string
   return next;
 };
 
+const saveOptionText = (pollId: number, optionIndex: number, value: string) => {
+  const next = [...(optionEdits[pollId] || [])];
+  next[optionIndex] = { ...next[optionIndex], option_text: value };
+
+  setOptionEdits((current) => ({ ...current, [pollId]: next }));
+  void updatePoll(pollId, { option_updates: next });
+};
+
+const saveOptionImageUrl = (pollId: number, optionIndex: number, value: string) => {
+  const next = [...(optionEdits[pollId] || [])];
+  next[optionIndex] = { ...next[optionIndex], image_url: value };
+
+  setOptionEdits((current) => ({ ...current, [pollId]: next }));
+  void updatePoll(pollId, { option_updates: next });
+};
+
 const sortedPolls = useMemo(() => {
   return [...polls]
     .filter((poll) => {
@@ -640,10 +656,9 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
   onChange={(event) => {
     updateOptionText(poll.id, optionIndex, event.target.value);
   }}
-  onBlur={(event) => {
-    const nextOptions = updateOptionText(poll.id, optionIndex, event.target.value);
-    void updatePoll(poll.id, { option_updates: nextOptions });
-  }}
+onBlur={(event) => {
+  saveOptionText(poll.id, optionIndex, event.target.value);
+}}
   className="w-full min-w-0 rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
   placeholder="Option text"
 />
@@ -655,8 +670,7 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
   updateOptionImageUrl(poll.id, optionIndex, event.target.value);
 }}
 onBlur={(event) => {
-  const nextOptions = updateOptionImageUrl(poll.id, optionIndex, event.target.value);
-  void updatePoll(poll.id, { option_updates: nextOptions });
+  saveOptionImageUrl(poll.id, optionIndex, event.target.value);
 }}
   className="w-[84px] rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
   placeholder="Image URL (optional)"
