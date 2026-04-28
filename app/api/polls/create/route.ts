@@ -230,9 +230,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (emailMeLink && !email) {
-      return NextResponse.json({ error: "Email is required." }, { status: 400 });
-    }
+if ((emailMeLink || isPrivate) && !email) {
+  return NextResponse.json({ error: "Email is required." }, { status: 400 });
+}
 
     const blockedSource = [question, description, ...options].join(" ");
     if (containsBlockedWords(blockedSource)) {
@@ -300,7 +300,7 @@ export async function POST(request: NextRequest) {
       .insert({
         poll_id: insertedPoll.id,
         name: null,
-        email: emailMeLink ? email : null,
+        email: email || null,
         question,
         description: description || null,
         category,

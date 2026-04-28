@@ -103,7 +103,7 @@ export default function SubmitPollPage() {
   const [category, setCategory] = useState<Category>("");
   const [usesImages, setUsesImages] = useState(false);
   const [isPrivate, setIsPrivate] = useState(false);
-  const [emailMeLink] = useState(false);
+  const [emailMeLink, setEmailMeLink] = useState(false);
   const [options, setOptions] = useState([createEmptyOption(), createEmptyOption()]);
 
   const [submitting, setSubmitting] = useState(false);
@@ -154,6 +154,7 @@ export default function SubmitPollPage() {
     setOptions([createEmptyOption(), createEmptyOption()]);
     setUsesImages(false);
     setIsPrivate(false);
+    setEmailMeLink(false);
     setSubmitting(false);
     setMessage("");
     setMessageType("");
@@ -166,7 +167,7 @@ export default function SubmitPollPage() {
     setCategory(value.trim() ? suggestCategory(value) : "");
   };
 
-  const shouldShowEmailField = false;
+  const shouldShowEmailField = emailMeLink || isPrivate;
 
   const handleCopy = async () => {
     if (!successData) return;
@@ -528,6 +529,27 @@ export default function SubmitPollPage() {
                   <p className="text-xs text-gray-300">
                     Public polls may appear on the Poll & See homepage after review.
                   </p>
+
+                  <label className={checkboxLabelClasses}>
+                    <input
+                      type="checkbox"
+                      checked={emailMeLink}
+                      onChange={(e) => setEmailMeLink(e.target.checked)}
+                      className={checkboxClasses}
+                    />
+                    <span>Email me when my poll is live</span>
+                  </label>
+
+                  {shouldShowEmailField ? (
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      placeholder="you@example.com"
+                      required
+                      className={inputClasses}
+                    />
+                  ) : null}
                 </div>
 
                 <div className="space-y-2">
