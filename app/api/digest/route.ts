@@ -150,13 +150,7 @@ function escapeHtmlAttribute(value: string) {
   return escapeHtml(value);
 }
 
-function getLookbackHours(now: Date) {
-  const utcDay = now.getUTCDay();
-
-  if (utcDay === 0) {
-    return 48;
-  }
-
+function getLookbackHours() {
   return 24;
 }
 
