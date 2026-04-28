@@ -820,37 +820,13 @@ onBlur={(event) => {
 
                           <button
                             type="button"
-                            onClick={() => {
-                             <button
-  type="button"
-  onClick={() => void handleCopy(`iframe:${poll.id}`, buildIframeCode(poll.embed_token, "dark"))}
-  className="rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800"
->
-  {copiedKey === `iframe:${poll.id}` ? "Copied iframe" : "Copy iframe"}
-</button>
-                                "Embed style: type dark, light, or custom",
-                                "dark"
-                              );
-
-                              if (!styleChoice) return;
-
-                              const cleanedStyle = styleChoice.trim().toLowerCase();
-
-                              if (cleanedStyle === "light") {
-                                void handleCopy(`iframe:${poll.id}`, buildIframeCode(poll.embed_token, "light"));
-                                return;
-                              }
-
-                              if (cleanedStyle === "custom") {
-                                const customColor = window.prompt("Enter custom HEX colour, e.g. #061B52", "#061B52");
-                                if (!customColor) return;
-                                void handleCopy(`iframe:${poll.id}`, buildIframeCode(poll.embed_token, "custom", customColor));
-                                return;
-                              }
-
-                              void handleCopy(`iframe:${poll.id}`, buildIframeCode(poll.embed_token, "dark"));
-                            }}
-                         className="rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800"
+                            onClick={() =>
+                              void handleCopy(
+                                `iframe:${poll.id}`,
+                                buildIframeCode(poll.embed_token, "dark")
+                              )
+                            }
+                            className="rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800"
                           >
                             {copiedKey === `iframe:${poll.id}` ? "Copied iframe" : "Copy iframe"}
                           </button>
