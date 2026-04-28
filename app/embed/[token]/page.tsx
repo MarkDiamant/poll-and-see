@@ -628,8 +628,7 @@ const scaledCardStyle = isCompactMode
     isCompactMode ? "px-3 py-3 text-sm" : "px-4 py-3.5"
   }`
                       }
-                    >
-style={accentColor ? { backgroundColor: accentColor } : undefined}
+                      style={accentColor ? { backgroundColor: accentColor } : undefined}
                     >
                       {option.image_url ? (
                         <>
