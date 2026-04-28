@@ -51,6 +51,16 @@ function badge(count: number, isActive: boolean) {
   );
 }
 
+function isNewSubmission(createdAt: string | null) {
+  if (!createdAt) return false;
+  return Date.now() - new Date(createdAt).getTime() <= 24 * 60 * 60 * 1000;
+}
+
+function categorySortIndex(category: string | null) {
+  const index = CATEGORY_OPTIONS.indexOf((category || "General") as CategoryOption);
+  return index === -1 ? CATEGORY_OPTIONS.indexOf("General") : index;
+}
+
 function suggestCategory(question: string): CategoryOption {
   const q = question.toLowerCase().trim();
 
@@ -76,7 +86,7 @@ function suggestCategory(question: string): CategoryOption {
     scores.Finance += 4;
   }
 
-  if (hasAny(["business", "work", "job", "hiring", "customers", "customer", "pricing", "productivity", "management", "manager", "employee", "employees", "boss", "pay rise", "underpaid", "workplace", "branding", "career", "office"])) {
+  if (hasAny(["business", "work", "job", "hire", "hiring", "customers", "customer", "pricing", "productivity", "management", "manager", "employee", "employees", "boss", "pay rise", "underpaid", "workplace", "branding", "career", "office"])) {
     scores.Business += 4;
   }
 
@@ -146,6 +156,7 @@ const savingKeyRef = useRef("");
   const [newOptions, setNewOptions] = useState("");
   const [newImageUrls, setNewImageUrls] = useState("");
   const [creatingSubmission, setCreatingSubmission] = useState(false);
+  const [createError, setCreateError] = useState("");
 
   useEffect(() => {
     const saved = sessionStorage.getItem(ADMIN_KEY_STORAGE) || "";
@@ -376,9 +387,10 @@ return () => {
     }
   };
 
-  const createSubmission = async () => {
+const createSubmission = async () => {
     setCreatingSubmission(true);
     setError("");
+    setCreateError("");
 
     try {
       const response = await fetch("/api/admin/poll-submissions", {
@@ -439,7 +451,9 @@ return () => {
       setNewOptions("");
       setNewImageUrls("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not create submission.");
+      const message = err instanceof Error ? err.message : "Could not create submission.";
+      setError(message);
+      setCreateError(message);
     } finally {
       setCreatingSubmission(false);
     }
@@ -480,6 +494,9 @@ return () => {
         return true;
       })
       .sort((a, b) => {
+        const categoryDiff = categorySortIndex(a.category) - categorySortIndex(b.category);
+        if (categoryDiff !== 0) return categoryDiff;
+
         const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
         const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
         return bTime - aTime;
@@ -686,17 +703,22 @@ return () => {
                   />
                 </div>
 
-<button
-  type="button"
-  onClick={() => {
-    void createSubmission();
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }}
-                  disabled={creatingSubmission}
-                  className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-40"
-                >
-                  {creatingSubmission ? "Creating..." : "Create submission"}
-                </button>
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => void createSubmission()}
+                    disabled={creatingSubmission}
+                    className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-40"
+                  >
+                    {creatingSubmission ? "Creating..." : "Create submission"}
+                  </button>
+
+                  {createError ? (
+                    <p className="rounded-lg border border-red-500 bg-red-900 px-3 py-2 text-sm font-medium text-red-100">
+                      ⚠️ {createError}
+                    </p>
+                  ) : null}
+                </div>
               </div>
             </div>
           </div>
@@ -773,6 +795,11 @@ return () => {
 
                         <p className="text-xs text-gray-400">
                           Submission ID {submission.id}
+                          {isNewSubmission(submission.created_at) ? (
+                            <span className="ml-2 rounded-full bg-green-500 px-2 py-0.5 text-[10px] font-bold text-black">
+                              NEW
+                            </span>
+                          ) : null}
                           {submission.created_at
                             ? ` • ${new Date(submission.created_at).toLocaleString()}`
                             : ""}
