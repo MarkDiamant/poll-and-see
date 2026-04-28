@@ -29,151 +29,29 @@ function suggestCategory(question: string): Category {
 
   if (!q) return "";
 
-  if (
-    q.includes("school") ||
-    q.includes("teacher") ||
-    q.includes("student") ||
-    q.includes("students") ||
-    q.includes("homework") ||
-    q.includes("university") ||
-    q.includes("college") ||
-    q.includes("exam") ||
-    q.includes("education") ||
-    q.includes("classroom") ||
-    q.includes("learning") ||
-    q.includes("degree") ||
-    q.includes("tuition")
-  ) {
+  const hasAny = (terms: string[]) => terms.some((term) => q.includes(term));
+
+  if (hasAny(["child", "children", "kid", "kids", "parent", "parents", "parenting", "school", "teacher", "teachers", "homework", "nursery", "playgroup", "discipline", "chinuch", "student", "students", "learning", "education"])) {
     return "Education";
   }
 
-  if (
-    q.includes("money") ||
-    q.includes("salary") ||
-    q.includes("cost") ||
-    q.includes("price") ||
-    q.includes("prices") ||
-    q.includes("rent") ||
-    q.includes("mortgage") ||
-    q.includes("tax") ||
-    q.includes("income") ||
-    q.includes("finance") ||
-    q.includes("financial") ||
-    q.includes("bills") ||
-    q.includes("saving") ||
-    q.includes("savings") ||
-    q.includes("afford") ||
-    q.includes("affording") ||
-    q.includes("expenses") ||
-    q.includes("paid") ||
-    q.includes("pay rise") ||
-    q.includes("wages") ||
-    q.includes("debt")
-  ) {
-    return "Finance";
-  }
-
-  if (
-    q.includes("business") ||
-    q.includes("startup") ||
-    q.includes("marketing") ||
-    q.includes("customer") ||
-    q.includes("customers") ||
-    q.includes("sales") ||
-    q.includes("office") ||
-    q.includes("remote work") ||
-    q.includes("hybrid work") ||
-    q.includes("workplace") ||
-    q.includes("company") ||
-    q.includes("career") ||
-    q.includes("job market") ||
-    q.includes("manager") ||
-    q.includes("employee") ||
-    q.includes("employees") ||
-    q.includes("boss") ||
-    q.includes("entrepreneur") ||
-    q.includes("freelance")
-  ) {
+  if (hasAny(["business", "work", "job", "hiring", "customers", "customer", "pricing", "productivity", "management", "manager", "employee", "employees", "boss", "pay rise", "underpaid", "workplace", "branding", "career", "office"])) {
     return "Business";
   }
 
-  if (
-    q.includes("community") ||
-    q.includes("local") ||
-    q.includes("neighbour") ||
-    q.includes("neighbor") ||
-    q.includes("neighbourhood") ||
-    q.includes("neighborhood") ||
-    q.includes("communal") ||
-    q.includes("public support") ||
-    q.includes("charity") ||
-    q.includes("volunteer") ||
-    q.includes("volunteering") ||
-    q.includes("council") ||
-    q.includes("area") ||
-    q.includes("high street") ||
-    q.includes("public services")
-  ) {
+  if (hasAny(["money", "debt", "income", "spending", "afford", "salary", "value", "bills", "saving", "savings", "price", "prices", "cost", "costs", "charity", "donation", "rent", "mortgage", "tax", "financial", "finance", "split the bill", "earn", "paid"])) {
+    return "Finance";
+  }
+
+  if (hasAny(["rude", "reply", "message", "cancel", "last minute", "interrupt", "awkward", "manners", "etiquette", "neighbour", "neighbor", "community", "communal", "pressure", "friend", "friends", "guest", "invite", "invited"])) {
     return "Community";
   }
 
-  if (
-    q.includes("dating") ||
-    q.includes("relationship") ||
-    q.includes("relationships") ||
-    q.includes("marriage") ||
-    q.includes("married") ||
-    q.includes("parent") ||
-    q.includes("parents") ||
-    q.includes("parenting") ||
-    q.includes("family") ||
-    q.includes("kids") ||
-    q.includes("children") ||
-    q.includes("child") ||
-    q.includes("baby") ||
-    q.includes("babies") ||
-    q.includes("health") ||
-    q.includes("healthy") ||
-    q.includes("mental health") ||
-    q.includes("fitness") ||
-    q.includes("exercise") ||
-    q.includes("gym") ||
-    q.includes("diet") ||
-    q.includes("sleep") ||
-    q.includes("routine") ||
-    q.includes("work life balance") ||
-    q.includes("work-life balance") ||
-    q.includes("social media") ||
-    q.includes("screen time") ||
-    q.includes("phone use") ||
-    q.includes("phones") ||
-    q.includes("lifestyle") ||
-    q.includes("home life") ||
-    q.includes("stress") ||
-    q.includes("wellbeing") ||
-    q.includes("well-being")
-  ) {
+  if (hasAny(["gym", "sleep", "food", "travel", "airport", "shabbos", "routine", "habit", "habits", "phone", "phones", "screen time", "daily", "morning", "evening", "holiday", "weekend", "eat", "coffee", "exercise", "fitness"])) {
     return "Lifestyle";
   }
 
-  if (
-    q.includes("fun") ||
-    q.includes("favourite") ||
-    q.includes("favorite") ||
-    q.includes("movie") ||
-    q.includes("film") ||
-    q.includes("music") ||
-    q.includes("pizza") ||
-    q.includes("game") ||
-    q.includes("games") ||
-    q.includes("holiday") ||
-    q.includes("weekend") ||
-    q.includes("tv show") ||
-    q.includes("series") ||
-    q.includes("food") ||
-    q.includes("best snack") ||
-    q.includes("would you rather")
-  ) {
+  if (hasAny(["would you rather", "dance", "sing", "cold showers", "air conditioning", "silly", "fun", "absurd", "movie", "game", "games", "favourite", "favorite"])) {
     return "Fun";
   }
 
