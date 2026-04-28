@@ -41,7 +41,7 @@ const OPTION_COLOURS = [
 ];
 
 const SAME_POLL_CLICK_GUARD_MS = 400;
-const BASE_CARD_WIDTH = 520;
+const BASE_CARD_WIDTH = 420;
 const COMPACT_BREAKPOINT = 360;
 function canVoteNow(pollId: number): string | null {
   const last = Number(localStorage.getItem(`poll-last-click-${pollId}`) || 0);
@@ -579,7 +579,7 @@ const scaledCardStyle = isCompactMode
   }`}
 >
 <div className={`flex flex-col ${
-  voted || resultsOnly ? "" : "min-h-[400px]"
+  voted || resultsOnly ? "" : "min-h-[320px]"
 }`}>
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div></div>
