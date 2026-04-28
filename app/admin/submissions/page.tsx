@@ -686,9 +686,12 @@ return () => {
                   />
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => void createSubmission()}
+<button
+  type="button"
+  onClick={() => {
+    void createSubmission();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }}
                   disabled={creatingSubmission}
                   className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-40"
                 >
@@ -699,11 +702,11 @@ return () => {
           </div>
         </div>
 
-        {error ? (
-          <div className="mb-4 rounded-xl border border-red-500/40 bg-red-950/50 px-4 py-3 text-sm text-red-200">
-            {error}
-          </div>
-        ) : null}
+{error ? (
+  <div className="mb-4 rounded-xl border border-red-500 bg-red-900 px-4 py-3 text-sm text-red-100 font-medium">
+    ⚠️ {error}
+  </div>
+) : null}
 
         <div className="overflow-x-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg">
           <table className="w-full text-sm">
