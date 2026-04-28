@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 type Poll = {
@@ -110,13 +110,11 @@ function ResultOptions({
   options,
   voteCounts,
   selectedOptionId,
-  accentColor,
   isLightTheme,
 }: {
   options: PollOption[];
   voteCounts: VoteCounts;
   selectedOptionId: number | null;
-  accentColor: string | null;
   isLightTheme: boolean;
 }) {
   const total = Object.values(voteCounts).reduce((sum, count) => sum + count, 0);
@@ -127,7 +125,7 @@ function ResultOptions({
         const count = voteCounts[option.id] || 0;
         const percent = total > 0 ? Math.round((count / total) * 100) : 0;
 const animatedPercent = percent > 0 ? Math.max(12, percent) : 0;
-                const colour = accentColor || OPTION_COLOURS[index] || OPTION_COLOURS[0];
+         const colour = OPTION_COLOURS[index] || OPTION_COLOURS[0];
         const isSelected = selectedOptionId === option.id;
 
         return (
@@ -207,14 +205,13 @@ function EmbedFooter({ isLightTheme }: { isLightTheme: boolean }) {
 
 export default function EmbedPollPage() {
   const params = useParams();
-  const searchParams = useSearchParams();
   const token = String(params.token);
+  const [isLightTheme, setIsLightTheme] = useState(false);
 
-  const requestedTheme = searchParams.get("theme");
-  const requestedColor = searchParams.get("color");
-  const isLightTheme = requestedTheme === "light";
-  const accentColor =
-    requestedColor && /^#[0-9A-Fa-f]{6}$/.test(requestedColor) ? requestedColor : null;
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    setIsLightTheme(searchParams.get("theme") === "light");
+  }, []);
 
   const [poll, setPoll] = useState<Poll | null>(null);
   const [options, setOptions] = useState<PollOption[]>([]);
@@ -660,7 +657,6 @@ const scaledCardStyle = isCompactMode
   options={options}
   voteCounts={counts}
   selectedOptionId={selected}
-  accentColor={accentColor}
   isLightTheme={isLightTheme}
 />
 
