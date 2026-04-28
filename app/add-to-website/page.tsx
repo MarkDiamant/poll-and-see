@@ -55,7 +55,7 @@ export default function AddToWebsitePage() {
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
       <SiteHeader />
 
-      <section className="mx-auto max-w-5xl px-6 pb-12 pt-6">
+     <section className="mx-auto max-w-5xl px-3 pb-12 pt-6 md:px-6">
         <div className="mb-8 rounded-2xl border border-gray-700 bg-gray-800 p-6 text-center shadow-lg">
           <h1 className="mb-5 text-3xl font-bold md:text-4xl">
             Add Poll &amp; See to your website
