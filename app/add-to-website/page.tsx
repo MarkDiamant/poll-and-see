@@ -1,9 +1,11 @@
 "use client";
 
-import type { CSSProperties, FormEvent } from "react";
+import type { FormEvent } from "react";
 import { useState } from "react";
+import Footer from "@/components/Footer";
+import SiteHeader from "@/components/SiteHeader";
 
-export default function EmbedPage() {
+export default function AddToWebsitePage() {
   const [website, setWebsite] = useState("");
   const [pollText, setPollText] = useState("");
   const [email, setEmail] = useState("");
@@ -50,171 +52,114 @@ export default function EmbedPage() {
   };
 
   return (
-    <main style={styles.main}>
-      <section style={styles.center}>
-        <h1 style={styles.h1}>Add Poll &amp; See to your website</h1>
-        <p style={styles.h2}>Turn visitors into participants in seconds</p>
+    <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
+      <SiteHeader />
 
-        <img
-          src="/embed-assets/plm-before.png"
-          alt="Poll & See embedded on a website"
-          style={styles.heroImg}
-        />
-      </section>
-
-      <section style={styles.center}>
-        <h2 style={styles.h3}>See how it works on real websites</h2>
-
-        <img
-          src="/embed-assets/plm-before.png"
-          alt="Poll & See embed example before voting"
-          style={styles.img}
-        />
-        <img
-          src="/embed-assets/plm-after.png"
-          alt="Poll & See embed example after voting"
-          style={styles.img}
-        />
-        <img
-          src="/embed-assets/diamant-before.png"
-          alt="Poll & See embedded on another website"
-          style={styles.img}
-        />
-      </section>
-
-      <section style={styles.center}>
-        <p style={styles.oneLine}>Works instantly. No signup. Just add and go.</p>
-      </section>
-
-      <section style={styles.center}>
-        <h3 style={styles.h3}>Get this on your site</h3>
-        <p style={styles.sub}>Early access — free while we’re testing</p>
-
-        <form style={styles.form} onSubmit={handleSubmit}>
-          <input
-            value={website}
-            onChange={(event) => setWebsite(event.target.value)}
-            placeholder="yourwebsite.com"
-            required
-            style={styles.input}
-          />
-
-          <textarea
-            value={pollText}
-            onChange={(event) => setPollText(event.target.value)}
-            placeholder="Write your question + options (e.g. What matters most… Price / Quality / Speed)"
-            required
-            style={styles.textarea}
-          />
-
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="your@email.com"
-            required
-            style={styles.input}
-          />
-
-          <button type="submit" disabled={submitting} style={styles.button}>
-            {submitting ? "Sending..." : "Request access"}
-          </button>
-        </form>
-
-        {success ? (
-          <p style={styles.success}>
-            We’ll set this up and send everything you need to get live.
+      <section className="mx-auto max-w-5xl px-6 pb-12 pt-6">
+        <div className="mb-8 rounded-2xl border border-gray-700 bg-gray-800 p-6 text-center shadow-lg">
+          <h1 className="mb-3 text-3xl font-bold md:text-4xl">
+            Add Poll &amp; See to your website
+          </h1>
+          <p className="mb-6 text-base text-gray-300 md:text-lg">
+            Turn visitors into participants in seconds
           </p>
-        ) : null}
 
-        {error ? <p style={styles.error}>{error}</p> : null}
+          <img
+            src="/embed-assets/plm-before.png"
+            alt="Poll & See embedded on a website"
+            className="mx-auto w-full max-w-4xl rounded-xl border border-gray-700 shadow-lg"
+          />
+        </div>
+
+        <div className="mb-8 rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-lg">
+          <h2 className="mb-6 text-center text-2xl font-semibold">
+            See how it works on real websites
+          </h2>
+
+          <div className="space-y-6">
+            <img
+              src="/embed-assets/plm-before.png"
+              alt="Poll & See embed example before voting"
+              className="mx-auto w-full max-w-3xl rounded-xl border border-gray-700 shadow-lg"
+            />
+            <img
+              src="/embed-assets/plm-after.png"
+              alt="Poll & See embed example after voting"
+              className="mx-auto w-full max-w-3xl rounded-xl border border-gray-700 shadow-lg"
+            />
+            <img
+              src="/embed-assets/diamant-before.png"
+              alt="Poll & See embedded on another website"
+              className="mx-auto w-full max-w-3xl rounded-xl border border-gray-700 shadow-lg"
+            />
+          </div>
+        </div>
+
+        <div className="mb-8 rounded-2xl border border-gray-700 bg-gray-800 p-5 text-center shadow-lg">
+          <p className="text-base font-medium text-gray-200">
+            Works instantly. No signup. Just add and go.
+          </p>
+        </div>
+
+        <div className="mx-auto max-w-2xl rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-lg">
+          <h3 className="mb-2 text-center text-2xl font-semibold">
+            Get this on your site
+          </h3>
+          <p className="mb-6 text-center text-sm text-gray-300">
+            Early access — free while we’re testing
+          </p>
+
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <input
+              value={website}
+              onChange={(event) => setWebsite(event.target.value)}
+              placeholder="yourwebsite.com"
+              required
+              className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
+            />
+
+            <textarea
+              value={pollText}
+              onChange={(event) => setPollText(event.target.value)}
+              placeholder="Write your question + options (e.g. What matters most… Price / Quality / Speed)"
+              required
+              rows={4}
+              className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
+            />
+
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="your@email.com"
+              required
+              className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
+            />
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full rounded-xl bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-500 disabled:opacity-60"
+            >
+              {submitting ? "Sending..." : "Request access"}
+            </button>
+          </form>
+
+          {success ? (
+            <p className="mt-4 rounded-xl border border-green-500/40 bg-green-950/40 px-4 py-3 text-sm text-green-200">
+              We’ll set this up and send everything you need to get live.
+            </p>
+          ) : null}
+
+          {error ? (
+            <p className="mt-4 rounded-xl border border-red-500/40 bg-red-950/40 px-4 py-3 text-sm text-red-200">
+              {error}
+            </p>
+          ) : null}
+        </div>
       </section>
+
+      <Footer />
     </main>
   );
 }
-
-const styles: Record<string, CSSProperties> = {
-  main: {
-    maxWidth: "1000px",
-    margin: "0 auto",
-    padding: "40px 20px",
-    fontFamily: "sans-serif",
-  },
-  center: {
-    textAlign: "center",
-    marginBottom: "60px",
-  },
-  h1: {
-    fontSize: "32px",
-    fontWeight: 700,
-    marginBottom: "10px",
-  },
-  h2: {
-    fontSize: "18px",
-    color: "#555",
-    marginBottom: "30px",
-  },
-  h3: {
-    fontSize: "22px",
-    marginBottom: "20px",
-  },
-  heroImg: {
-    width: "100%",
-    maxWidth: "900px",
-    borderRadius: "12px",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-  },
-  img: {
-    width: "100%",
-    maxWidth: "800px",
-    marginBottom: "25px",
-    borderRadius: "12px",
-    boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
-  },
-  oneLine: {
-    fontSize: "16px",
-    color: "#666",
-  },
-  sub: {
-    fontSize: "14px",
-    color: "#777",
-    marginBottom: "20px",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-    maxWidth: "500px",
-    margin: "0 auto",
-  },
-  input: {
-    padding: "12px",
-    borderRadius: "8px",
-    border: "1px solid #ddd",
-  },
-  textarea: {
-    padding: "12px",
-    borderRadius: "8px",
-    border: "1px solid #ddd",
-    minHeight: "90px",
-  },
-  button: {
-    padding: "14px",
-    borderRadius: "8px",
-    border: "none",
-    background: "#000",
-    color: "#fff",
-    fontWeight: 600,
-    cursor: "pointer",
-  },
-  success: {
-    marginTop: "15px",
-    fontSize: "13px",
-    color: "#166534",
-  },
-  error: {
-    marginTop: "15px",
-    fontSize: "13px",
-    color: "#b91c1c",
-  },
-};
