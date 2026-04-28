@@ -76,18 +76,25 @@ export default function AddToWebsitePage() {
             See how it works on real websites
           </h2>
 
-<div className="flex flex-col items-center justify-center gap-6 md:flex-row md:gap-8">            <img
-              src="/embed-assets/plm-before.png"
-              alt="Poll & See embed example before voting"
-className="w-full md:w-1/3 max-w-[420px] rounded-xl border border-gray-700 shadow-lg"            />
+          <div className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              <img
+                src="/embed-assets/plm-before.png"
+                alt="Poll & See embed example before voting"
+                className="w-full rounded-xl border border-gray-700 shadow-lg"
+              />
+              <img
+                src="/embed-assets/diamant-before.png"
+                alt="Poll & See embedded on another website"
+                className="w-full rounded-xl border border-gray-700 shadow-lg"
+              />
+            </div>
+
             <img
               src="/embed-assets/plm-after.png"
               alt="Poll & See embed example after voting"
-className="w-full md:w-1/3 max-w-[420px] rounded-xl border border-gray-700 shadow-lg"            />
-            <img
-              src="/embed-assets/diamant-before.png"
-              alt="Poll & See embedded on another website"
-className="w-full md:w-1/3 max-w-[420px] rounded-xl border border-gray-700 shadow-lg"            />
+              className="mx-auto w-full max-w-2xl rounded-xl border border-gray-700 shadow-lg"
+            />
           </div>
         </div>
 
