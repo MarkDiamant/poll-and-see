@@ -626,7 +626,7 @@ export async function GET(request: NextRequest) {
     });
 
     const now = new Date();
-    const lookbackHours = getLookbackHours(now);
+    const lookbackHours = getLookbackHours();
     const cutoff = new Date(now.getTime() - lookbackHours * 60 * 60 * 1000).toISOString();
 
     const [
