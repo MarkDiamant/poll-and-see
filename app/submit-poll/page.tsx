@@ -537,7 +537,7 @@ export default function SubmitPollPage() {
                       onChange={(e) => setEmailMeLink(e.target.checked)}
                       className={checkboxClasses}
                     />
-                    <span>Email me when my poll is live</span>
+                    <span>Email me if my poll goes live on the homepage</span>
                   </label>
 
                   {shouldShowEmailField ? (
@@ -566,7 +566,7 @@ export default function SubmitPollPage() {
                   disabled={submitting}
                   className="mt-1 rounded-xl bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-500 disabled:opacity-60"
                 >
-                  {submitting ? "Creating..." : "Create Poll"}
+                  {submitting ? "Creating..." : "Create poll & get my link"}
                 </button>
 
                 {message && (
