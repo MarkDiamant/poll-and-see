@@ -631,7 +631,6 @@ const scaledCardStyle = isCompactMode
                                 : "bg-gray-700 text-white hover:bg-gray-600"
                             } ${isCompactMode ? "px-3 py-3 text-sm" : "px-4 py-3.5"}`
                       }
-                      }
                     >
                       {option.image_url ? (
                         <>
