@@ -71,7 +71,7 @@ export default function AddToWebsitePage() {
 />
         </div>
 
-       <div className="mb-8 rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-lg overflow-hidden">
+       <div className="mb-8 rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-lg overflow-visible">
           <h2 className="mb-6 text-center text-2xl font-semibold">
             See how it works on real websites
           </h2>
@@ -87,7 +87,7 @@ export default function AddToWebsitePage() {
       <img
         src="/embed-assets/plm-after.png"
         alt="Poll & See embed example after voting"
-      className="-mx-7 w-[calc(100%+56px)] max-w-none rounded-xl border border-gray-700 shadow-lg transition hover:opacity-90 md:mx-0 md:w-full"
+      className="-mx-10 w-[calc(100%+80px)] max-w-none rounded-xl border border-gray-700 shadow-2xl relative z-10 transition hover:opacity-90 md:mx-0 md:w-full"
       />
     </a>
     <a
@@ -110,7 +110,7 @@ export default function AddToWebsitePage() {
       <img
         src="/embed-assets/diamant-before.png"
         alt="Poll & See embedded on another website"
-      className="-mx-7 w-[calc(100%+56px)] max-w-none rounded-xl border border-gray-700 shadow-lg transition hover:opacity-90 md:mx-0 md:w-full"
+     className="-mx-10 w-[calc(100%+80px)] max-w-none rounded-xl border border-gray-700 shadow-2xl relative z-10 transition hover:opacity-90 md:mx-0 md:w-full"
       />
     </a>
     <a
