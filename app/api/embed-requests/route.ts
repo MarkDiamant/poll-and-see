@@ -56,6 +56,32 @@ export async function POST(request: Request) {
       );
     }
 
+    const resendApiKey = process.env.RESEND_API_KEY;
+    const fromEmail = process.env.EMAIL_FROM;
+
+    if (resendApiKey && fromEmail) {
+      await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${resendApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: fromEmail,
+          to: ["hello@pollandsee.com"],
+          subject: "New Poll & See website embed request",
+          html: `
+            <p><strong>New embed request</strong></p>
+            <p><strong>Website:</strong> ${website}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Poll idea:</strong></p>
+            <p>${pollText.replace(/\n/g, "<br />")}</p>
+            <p><strong>Source:</strong> ${source}</p>
+          `,
+        }),
+      });
+    }
+
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json(
