@@ -679,7 +679,7 @@ const scaledCardStyle = isCompactMode
               )}
 
               <div className="mt-auto pt-2">
-                <EmbedFooter />
+<EmbedFooter isLightTheme={isLightTheme} />
               </div>
             </div>
           </div>
