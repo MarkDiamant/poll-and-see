@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Footer from "@/components/Footer";
+import SiteHeader from "@/components/SiteHeader";
 
 type Poll = {
   id: number;
@@ -1997,49 +1998,7 @@ setShowEndOfFeed(true);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
-      <header className="max-w-6xl mx-auto px-4 md:px-6 pt-5 pb-4">
-         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-          <div className="flex w-full items-center justify-between sm:w-auto sm:block">
-            <Link href="/" aria-label="Go to homepage" className="shrink-0">
-              <img
-                src="/logo.png"
-                alt="Poll & See"
-                className="h-12 md:h-16 w-auto object-contain block"
-              />
-            </Link>
-
-            <Link
-              href="/submit-poll"
-              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-3 text-sm font-medium text-white transition hover:bg-blue-500 sm:hidden"
-            >
-              Create Poll
-            </Link>
-          </div>
-
-          <div className="flex w-full items-center justify-center gap-2 shrink-0 sm:w-auto sm:justify-end">
-            <Link
-              href="/"
-              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-gray-800"
-            >
-              Home
-            </Link>
-
-            <Link
-              href="/results"
-              className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-gray-800"
-            >
-              Results
-            </Link>
-
-            <Link
-              href="/submit-poll"
-              className="hidden h-11 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-3 md:px-5 text-sm font-medium text-white transition hover:bg-blue-500 sm:inline-flex"
-            >
-              Create Poll
-            </Link>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       <section className="mx-auto max-w-3xl px-6 pt-2 pb-8">
         <button
