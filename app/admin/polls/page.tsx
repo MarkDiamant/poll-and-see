@@ -821,7 +821,13 @@ onBlur={(event) => {
                           <button
                             type="button"
                             onClick={() => {
-                              const styleChoice = window.prompt(
+                             <button
+  type="button"
+  onClick={() => void handleCopy(`iframe:${poll.id}`, buildIframeCode(poll.embed_token, "dark"))}
+  className="rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800"
+>
+  {copiedKey === `iframe:${poll.id}` ? "Copied iframe" : "Copy iframe"}
+</button>
                                 "Embed style: type dark, light, or custom",
                                 "dark"
                               );
