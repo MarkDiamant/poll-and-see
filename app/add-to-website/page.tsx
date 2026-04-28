@@ -97,7 +97,7 @@ export default function AddToWebsitePage() {
 
         <div className="mb-8 rounded-2xl border border-gray-700 bg-gray-800 p-5 text-center shadow-lg">
           <p className="text-base font-medium text-gray-200">
-            Works instantly. No signup. Just add and go.
+            We’ll set everything up and send you what you need.
           </p>
         </div>
 
