@@ -2,893 +2,732 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
-type PollOptionRow = {
-  id: number;
-  poll_id: number;
-  option_text: string;
-  image_url: string | null;
-  vote_count: number;
-};
-
-type PollRow = {
+type Poll = {
   id: number;
   question: string;
-  description: string | null;
-  slug: string | null;
-  category: string | null;
-  is_private: boolean | null;
-  featured: boolean | null;
-  embed_token: string | null;
+  description: string;
+  category: string;
+  slug: string;
+  is_private?: boolean;
+  created_at?: string | null;
   is_embeddable: boolean;
   embed_active: boolean;
   embed_voting_enabled: boolean;
-  is_publicly_listed?: boolean | null;
-  created_at: string | null;
-  options: PollOptionRow[];
+  embed_token: string;
 };
 
-type CategoryOption =
-  | "General"
-  | "Lifestyle"
-  | "Community"
-  | "Finance"
-  | "Business"
-  | "Education"
-  | "Fun";
+type PollOption = {
+  id: number;
+  poll_id: number;
+  option_text: string;
+  vote_count: number;
+  image_url?: string | null;
+};
 
-type EmbedStatus = "live" | "closed" | "inactive";
+type VoteCounts = Record<number, number>;
 
-const CATEGORY_OPTIONS: CategoryOption[] = [
-  "General",
-  "Lifestyle",
-  "Community",
-  "Finance",
-  "Business",
-  "Education",
-  "Fun",
+const OPTION_COLOURS = [
+  "#2563eb",
+  "#22c55e",
+  "#fbbf24",
+  "#ec4899",
+  "#8b5cf6",
+  "#14b8a6",
+  "#f97316",
+  "#ef4444",
 ];
 
-const ADMIN_KEY_STORAGE = "pollandsee-admin-key";
-const SITE_URL = "https://www.pollandsee.com";
+const SAME_POLL_CLICK_GUARD_MS = 400;
+const BASE_CARD_WIDTH = 520;
+const COMPACT_BREAKPOINT = 360;
 
-function getEmbedStatus(poll: PollRow): EmbedStatus {
-  if (!poll.is_embeddable || !poll.embed_active) return "inactive";
-  if (!poll.embed_voting_enabled) return "closed";
-  return "live";
+function canVoteNow(pollId: number): string | null {
+  const last = Number(localStorage.getItem(`poll-last-click-${pollId}`) || 0);
+  if (Date.now() - last < SAME_POLL_CLICK_GUARD_MS) return "Please try again.";
+  return null;
 }
 
-function getEmbedPayload(status: EmbedStatus) {
-  if (status === "live") {
-    return {
-      is_embeddable: true,
-      embed_active: true,
-      embed_voting_enabled: true,
-    };
-  }
-
-  if (status === "closed") {
-    return {
-      is_embeddable: true,
-      embed_active: true,
-      embed_voting_enabled: false,
-    };
-  }
-
-  return {
-    is_embeddable: false,
-    embed_active: false,
-    embed_voting_enabled: false,
-  };
+function recordVoteClient(pollId: number) {
+  localStorage.setItem(`poll-last-click-${pollId}`, String(Date.now()));
 }
 
-function buildPollUrl(slug: string | null) {
-  return slug ? `${SITE_URL}/poll/${slug}` : "";
+function getPollVotedKey(pollId: number) {
+  return `poll-voted-${pollId}`;
 }
 
-function buildIframeCode(embedToken: string | null, embedStyle: "dark" | "light" | "custom" = "dark", customColor = "") {
-  if (!embedToken) return "";
-
-  let src = `${SITE_URL}/embed/${embedToken}`;
-
-  if (embedStyle === "light") {
-    src += "?theme=light";
-  }
-
-  if (embedStyle === "custom" && customColor.trim()) {
-    src += `?color=${encodeURIComponent(customColor.trim())}`;
-  }
-
-  return `<iframe src="${src}" width="100%" height="100%" style="border:0; display:block; overflow:hidden; background:transparent;" loading="lazy" scrolling="no"></iframe>`;
+function getPollSelectedOldKey(pollId: number) {
+  return `poll-selected-option-${pollId}`;
 }
 
-function buildPollShareText(question: string, pollUrl: string) {
-  return `${question}\n\nVote and see what others think:\n\n${pollUrl}`;
+function getPollSelectedNewKey(pollId: number) {
+  return `poll-selected-${pollId}`;
 }
 
-function badge(count: number, isActive: boolean) {
+function hasLocalVote(pollId: number): boolean {
+  if (typeof window === "undefined") return false;
   return (
-    <span
-      className={`inline-flex min-w-[22px] items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold ${
-        isActive ? "bg-black/10 text-black" : "bg-white/10 text-white"
-      }`}
-    >
-      {count}
-    </span>
+    localStorage.getItem(getPollVotedKey(pollId)) === "true" ||
+    localStorage.getItem(getPollSelectedOldKey(pollId)) !== null ||
+    localStorage.getItem(getPollSelectedNewKey(pollId)) !== null
   );
 }
 
-export default function AdminPollsPage() {
-  const [adminKeyInput, setAdminKeyInput] = useState("");
-  const [adminKey, setAdminKey] = useState("");
-const [searchInput, setSearchInput] = useState("");
-const [privacyFilter, setPrivacyFilter] = useState<"all" | "public" | "private">("all");
-const [categoryFilter, setCategoryFilter] = useState<"all" | CategoryOption>("all");
-  const [polls, setPolls] = useState<PollRow[]>([]);
-  const totalPollCount = polls.length;
-  const [pendingSubmissionsCount, setPendingSubmissionsCount] = useState(0);
+function getLocalSelectedOption(pollId: number): number | null {
+  if (typeof window === "undefined") return null;
+  const raw =
+    localStorage.getItem(getPollSelectedNewKey(pollId)) ||
+    localStorage.getItem(getPollSelectedOldKey(pollId));
+  if (!raw) return null;
+  const parsed = Number(raw);
+  return Number.isNaN(parsed) ? null : parsed;
+}
 
-  const [questionEdits, setQuestionEdits] = useState<Record<number, string>>({});
-  const [descriptionEdits, setDescriptionEdits] = useState<Record<number, string>>({});
-  const [categoryEdits, setCategoryEdits] = useState<Record<number, CategoryOption>>({});
-  const [privacyEdits, setPrivacyEdits] = useState<Record<number, boolean>>({});
-  const [featuredEdits, setFeaturedEdits] = useState<Record<number, boolean>>({});
-  const [embedStatusEdits, setEmbedStatusEdits] = useState<Record<number, EmbedStatus>>({});
-  const [optionEdits, setOptionEdits] = useState<Record<number, PollOptionRow[]>>({});
+function markPollVotedLocally(pollId: number, optionId: number | null) {
+  localStorage.setItem(getPollVotedKey(pollId), "true");
+  if (optionId !== null) {
+    localStorage.setItem(getPollSelectedNewKey(pollId), String(optionId));
+    localStorage.setItem(getPollSelectedOldKey(pollId), String(optionId));
+  }
+}
 
-  const [loading, setLoading] = useState(false);
-  const [savingKey, setSavingKey] = useState("");
+async function submitVote(pollId: number, optionId: number, embedToken: string) {
+  const response = await fetch("/api/vote", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pollId, optionId, embedToken }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Vote failed");
+  }
+}
+
+function ResultOptions({
+  options,
+  voteCounts,
+  selectedOptionId,
+  isLightTheme,
+}: {
+  options: PollOption[];
+  voteCounts: VoteCounts;
+  selectedOptionId: number | null;
+  isLightTheme: boolean;
+}) {
+  const total = Object.values(voteCounts).reduce((sum, count) => sum + count, 0);
+
+  return (
+    <div className="space-y-1.5">
+      {options.map((option, index) => {
+        const count = voteCounts[option.id] || 0;
+        const percent = total > 0 ? Math.round((count / total) * 100) : 0;
+        const animatedPercent = percent > 0 ? Math.max(12, percent) : 0;
+        const colour = OPTION_COLOURS[index] || OPTION_COLOURS[0];
+        const isSelected = selectedOptionId === option.id;
+
+        return (
+          <div
+            key={option.id}
+            className="rounded-xl transition-opacity duration-200 hover:opacity-95"
+            style={{
+              border: isSelected ? `2px solid ${colour}aa` : "2px solid transparent",
+              boxShadow: isSelected ? `0 0 8px ${colour}22` : "none",
+            }}
+          >
+            <div className="px-2.5 pt-1">
+              {option.image_url ? (
+                <div className={`${isLightTheme ? "bg-gray-100" : "bg-gray-900"} mb-3 overflow-hidden rounded-xl`}>
+                  <img
+                    src={option.image_url}
+                    alt={option.option_text}
+                    loading="lazy"
+                    width={1200}
+                    height={675}
+                    className="aspect-square h-auto w-full object-contain"
+                  />
+                </div>
+              ) : null}
+
+              <div className="grid grid-cols-[1fr_auto] items-start gap-x-3">
+                <div className="flex min-w-0 items-center gap-2">
+                  {isSelected ? (
+                    <span
+                      className="shrink-0 text-sm font-bold leading-5 sm:text-base"
+                      style={{ color: colour }}
+                    >
+                      ✓
+                    </span>
+                  ) : null}
+                  <span
+                    className={`min-w-0 break-words text-sm leading-5 sm:text-base ${
+                      isLightTheme ? "text-gray-900" : "text-white"
+                    }`}
+                  >
+                    {option.option_text}
+                  </span>
+                </div>
+                <span
+                  className={`shrink-0 whitespace-nowrap text-right text-sm font-semibold ${
+                    isLightTheme ? "text-gray-700" : "text-gray-300"
+                  }`}
+                >
+                  {percent}%
+                </span>
+              </div>
+            </div>
+
+            <div className="px-2.5 pb-1 pt-0.5">
+              <div
+                className={`h-5 w-full overflow-hidden rounded-full ${
+                  isLightTheme ? "bg-gray-200" : "bg-gray-700"
+                }`}
+              >
+                <div
+                  className="h-5 transition-[width] duration-300 ease-out"
+                  style={{ width: `${animatedPercent}%`, backgroundColor: colour, opacity: 0.96 }}
+                />
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function EmbedFooter({ isLightTheme }: { isLightTheme: boolean }) {
+  return (
+    <div
+      className={`mt-4 border-t pt-4 text-center ${
+        isLightTheme ? "border-gray-200" : "border-gray-700"
+      }`}
+    >
+      <Link
+        href="https://www.pollandsee.com"
+        target="_blank"
+        rel="noreferrer"
+        className={`inline-flex items-center justify-center gap-1 text-sm transition ${
+          isLightTheme ? "text-gray-500 hover:text-gray-900" : "text-gray-400 hover:text-white"
+        }`}
+      >
+        <img
+          src="/favicon.ico"
+          alt="Poll & See"
+          className="h-[14px] w-[14px] opacity-95"
+        />
+        <span>Powered by Poll &amp; See</span>
+      </Link>
+    </div>
+  );
+}
+
+export default function EmbedPollPage() {
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const token = String(params.token);
+  const isLightTheme = searchParams.get("theme") === "light";
+
+  const [poll, setPoll] = useState<Poll | null>(null);
+  const [options, setOptions] = useState<PollOption[]>([]);
+  const [counts, setCounts] = useState<VoteCounts>({});
+  const [selected, setSelected] = useState<number | null>(null);
+  const [voted, setVoted] = useState(false);
   const [error, setError] = useState("");
-  const [copiedKey, setCopiedKey] = useState("");
-const [showTopButton, setShowTopButton] = useState(false);
-const savingKeyRef = useRef("");
+  const [loading, setLoading] = useState(true);
+
+  const outerRef = useRef<HTMLDivElement | null>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+
+  const [availableWidth, setAvailableWidth] = useState(BASE_CARD_WIDTH);
+  const [cardHeight, setCardHeight] = useState(0);
+
+  const totalVotes = useMemo(
+    () => Object.values(counts).reduce((sum, count) => sum + count, 0),
+    [counts]
+  );
+
+  const resultsOnly = poll ? !poll.embed_voting_enabled : false;
+  const hasImageOptions = options.some((option) => Boolean(option.image_url));
+  const isCompactMode = availableWidth < COMPACT_BREAKPOINT;
+
+  const scale = useMemo(() => {
+    if (isCompactMode) return 1;
+    const next = availableWidth / BASE_CARD_WIDTH;
+    return Math.min(1, Math.max(0.42, next));
+  }, [availableWidth, isCompactMode]);
 
   useEffect(() => {
-  const saved = sessionStorage.getItem(ADMIN_KEY_STORAGE) || "";
-  if (saved) {
-    setAdminKey(saved);
-    setAdminKeyInput(saved);
-  }
-}, []);
+    document.body.style.margin = "0";
+    document.body.style.padding = "0";
+    document.body.style.background = "transparent";
+    document.body.style.overflow = "hidden";
+    document.body.style.minHeight = "0";
+    document.body.style.width = "100%";
 
-useEffect(() => {
-  const onScroll = () => {
-    setShowTopButton(window.scrollY > 500);
-  };
+    document.documentElement.style.margin = "0";
+    document.documentElement.style.padding = "0";
+    document.documentElement.style.background = "transparent";
+    document.documentElement.style.overflow = "hidden";
+    document.documentElement.style.minHeight = "0";
+    document.documentElement.style.width = "100%";
 
-  onScroll();
-  window.addEventListener("scroll", onScroll);
-  return () => window.removeEventListener("scroll", onScroll);
-}, []);
+    return () => {
+      document.body.style.margin = "";
+      document.body.style.padding = "";
+      document.body.style.background = "";
+      document.body.style.overflow = "";
+      document.body.style.minHeight = "";
+      document.body.style.width = "";
 
-useEffect(() => {
-  savingKeyRef.current = savingKey;
-}, [savingKey]);
+      document.documentElement.style.margin = "";
+      document.documentElement.style.padding = "";
+      document.documentElement.style.background = "";
+      document.documentElement.style.overflow = "";
+      document.documentElement.style.minHeight = "";
+      document.documentElement.style.width = "";
+    };
+  }, []);
 
-useEffect(() => {
-  if (!adminKey) return;
+  useEffect(() => {
+    const loadPoll = async () => {
+      setLoading(true);
 
-  let isCancelled = false;
+      const { data: pollData, error: pollError } = await supabase
+        .from("polls")
+        .select(
+          "id, question, description, category, slug, is_private, created_at, is_embeddable, embed_active, embed_voting_enabled, embed_token"
+        )
+        .eq("embed_token", token)
+        .eq("is_embeddable", true)
+        .maybeSingle();
 
-  const loadPolls = async (showSpinner = true) => {
-      if (showSpinner) {
-  setLoading(true);
-}
+      if (pollError || !pollData) {
+        setPoll(null);
+        setOptions([]);
+        setCounts({});
+        setLoading(false);
+        return;
+      }
+
+      const { data: optionRows, error: optionsError } = await supabase
+        .from("poll_options")
+        .select("id, poll_id, option_text, vote_count, image_url")
+        .eq("poll_id", pollData.id)
+        .order("id", { ascending: true });
+
+      if (optionsError) {
+        setPoll(null);
+        setOptions([]);
+        setCounts({});
+        setLoading(false);
+        return;
+      }
+
+      const nextCounts: VoteCounts = {};
+      (optionRows || []).forEach((option) => {
+        nextCounts[option.id] = option.vote_count || 0;
+      });
+
+      setPoll(pollData as Poll);
+      setOptions((optionRows || []) as PollOption[]);
+      setCounts(nextCounts);
+
+      const votedLocally = hasLocalVote(pollData.id);
+      const selectedLocally = getLocalSelectedOption(pollData.id);
+
+      setVoted(votedLocally);
+      setSelected(selectedLocally);
       setError("");
-
-      try {
-        const url = new URL("/api/admin/polls", window.location.origin);
-if (searchInput.trim()) {
-  url.searchParams.set("q", searchInput.trim());
-}
-
-        const response = await fetch(url.toString(), {
-          headers: {
-            "x-admin-key": adminKey,
-          },
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Could not load polls.");
-        }
-
-        const nextPolls = data.polls || [];
-        if (isCancelled) return;
-setPolls(nextPolls);
-        setPendingSubmissionsCount(data.pendingSubmissionsCount || 0);
-
-        if (!showSpinner) return;
-
-        setQuestionEdits(
-          Object.fromEntries(nextPolls.map((poll: PollRow) => [poll.id, poll.question || ""]))
-        );
-        setDescriptionEdits(
-          Object.fromEntries(nextPolls.map((poll: PollRow) => [poll.id, poll.description || ""]))
-        );
-        setCategoryEdits(
-          Object.fromEntries(
-            nextPolls.map((poll: PollRow) => [poll.id, (poll.category as CategoryOption) || "General"])
-          )
-        );
-        setPrivacyEdits(
-          Object.fromEntries(nextPolls.map((poll: PollRow) => [poll.id, Boolean(poll.is_private)]))
-        );
-        setFeaturedEdits(
-          Object.fromEntries(nextPolls.map((poll: PollRow) => [poll.id, Boolean(poll.featured)]))
-        );
-        setEmbedStatusEdits(
-          Object.fromEntries(nextPolls.map((poll: PollRow) => [poll.id, getEmbedStatus(poll)]))
-        );
-        setOptionEdits(
-          Object.fromEntries(nextPolls.map((poll: PollRow) => [poll.id, poll.options || []]))
-        );
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Could not load polls.");
-        setPolls([]);
-      } finally {
-  if (!isCancelled && showSpinner) {
-    setLoading(false);
-  }
-}
+      setLoading(false);
     };
 
-   void loadPolls(true);
+    void loadPoll();
+  }, [token]);
 
-const refreshInterval = window.setInterval(() => {
-  if (!savingKeyRef.current) {
-    void loadPolls(false);
-  }
-}, 8000);
+  useEffect(() => {
+    if (!poll) return;
 
-return () => {
-  isCancelled = true;
-  window.clearInterval(refreshInterval);
-};
-}, [adminKey, searchInput]);
-
-  const handleUnlock = () => {
-    const trimmed = adminKeyInput.trim();
-    if (!trimmed) return;
-    sessionStorage.setItem(ADMIN_KEY_STORAGE, trimmed);
-    setAdminKey(trimmed);
-    setError("");
-  };
-
-  const handleLogout = () => {
-    sessionStorage.removeItem(ADMIN_KEY_STORAGE);
-    setAdminKey("");
-    setAdminKeyInput("");
-    setPolls([]);
-    setPendingSubmissionsCount(0);
-    setQuestionEdits({});
-    setDescriptionEdits({});
-    setCategoryEdits({});
-    setPrivacyEdits({});
-    setFeaturedEdits({});
-    setEmbedStatusEdits({});
-    setOptionEdits({});
-    setError("");
-  };
-
-    const updatePoll = async (
-    pollId: number,
-    overrides: Partial<{
-      question: string;
-      description: string;
-      category: CategoryOption;
-      is_private: boolean;
-      featured: boolean;
-      embedStatus: EmbedStatus;
-      option_updates: PollOptionRow[];
-    }> = {}
-  ) => {
-    setSavingKey(`save:${pollId}`);
-    setError("");
-
-    try {
-      const response = await fetch(`/api/admin/polls/${pollId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-key": adminKey,
+    const optionsChannel = supabase
+      .channel(`embed-poll-options-${poll.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "poll_options",
+          filter: `poll_id=eq.${poll.id}`,
         },
-        body: JSON.stringify({
-          question: ((overrides.question ?? questionEdits[pollId]) || "").trim(),
-          description: ((overrides.description ?? descriptionEdits[pollId]) || "").trim(),
-          category: overrides.category ?? categoryEdits[pollId] ?? "General",
-          is_private: overrides.is_private ?? Boolean(privacyEdits[pollId]),
-          featured: overrides.featured ?? Boolean(featuredEdits[pollId]),
-          ...getEmbedPayload(overrides.embedStatus ?? embedStatusEdits[pollId] ?? "inactive"),
-          option_updates: (overrides.option_updates ?? optionEdits[pollId] ?? []).map((option) => ({
-            id: option.id || null,
-            option_text: option.option_text,
-            image_url: option.image_url || null,
-          })),
-        }),
-      });
+        async () => {
+          const { data } = await supabase
+            .from("poll_options")
+            .select("id, poll_id, option_text, vote_count, image_url")
+            .eq("poll_id", poll.id)
+            .order("id", { ascending: true });
 
-      const data = await response.json();
+          if (!data) return;
 
-      if (!response.ok) {
-        throw new Error(data.error || "Could not update poll.");
-      }
+          const nextCounts: VoteCounts = {};
+          data.forEach((option) => {
+            const serverCount = option.vote_count || 0;
+            const localCount = counts[option.id] || 0;
+            nextCounts[option.id] = hasLocalVote(poll.id)
+              ? Math.max(serverCount, localCount)
+              : serverCount;
+          });
 
-      setPolls((current) => {
-        let next = current.map((poll) =>
-          poll.id === pollId ? { ...poll, ...data.poll } : poll
-        );
+          setOptions(data as PollOption[]);
+          setCounts(nextCounts);
+        }
+      )
+      .subscribe();
 
-        if (data.poll?.featured) {
-          next = next.map((poll) =>
-            poll.id === pollId ? poll : { ...poll, featured: false }
+    const pollChannel = supabase
+      .channel(`embed-poll-status-${poll.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "polls",
+          filter: `id=eq.${poll.id}`,
+        },
+        (payload) => {
+          const nextPoll = payload.new as Poll;
+          setPoll((current) =>
+            current
+              ? {
+                  ...current,
+                  is_embeddable: nextPoll.is_embeddable,
+                  embed_active: nextPoll.embed_active,
+                  embed_voting_enabled: nextPoll.embed_voting_enabled,
+                }
+              : current
           );
         }
+      )
+      .subscribe();
 
-        return next;
-      });
+    return () => {
+      supabase.removeChannel(optionsChannel);
+      supabase.removeChannel(pollChannel);
+    };
+  }, [poll, counts]);
 
-      if (typeof data.poll?.question === "string") {
-        setQuestionEdits((current) => ({ ...current, [pollId]: data.poll.question }));
-      }
+  useEffect(() => {
+    if (!outerRef.current) return;
 
-      if (typeof data.poll?.description === "string" || data.poll?.description === null) {
-        setDescriptionEdits((current) => ({
-          ...current,
-          [pollId]: data.poll.description || "",
-        }));
-      }
+    const element = outerRef.current;
 
-      if (typeof data.poll?.category === "string") {
-        setCategoryEdits((current) => ({
-          ...current,
-          [pollId]: data.poll.category as CategoryOption,
-        }));
-      }
+    const updateWidth = () => {
+      const nextWidth = element.getBoundingClientRect().width || BASE_CARD_WIDTH;
+      setAvailableWidth(nextWidth);
+    };
 
-      if (typeof data.poll?.is_private === "boolean") {
-        setPrivacyEdits((current) => ({ ...current, [pollId]: data.poll.is_private }));
-      }
+    updateWidth();
 
-      if (typeof data.poll?.featured === "boolean") {
-        setFeaturedEdits((current) => {
-          const next = { ...current };
-          Object.keys(next).forEach((key) => {
-            next[Number(key)] = false;
-          });
-          next[pollId] = data.poll.featured;
-          return next;
-        });
-      }
+    const observer = new ResizeObserver(() => {
+      updateWidth();
+    });
 
-      if (Array.isArray(data.poll?.options)) {
-        setOptionEdits((current) => ({ ...current, [pollId]: data.poll.options }));
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not update poll.");
-    } finally {
-      setSavingKey("");
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!cardRef.current) return;
+
+    const element = cardRef.current;
+
+    const updateHeight = () => {
+      setCardHeight(element.scrollHeight);
+    };
+
+    updateHeight();
+
+    const observer = new ResizeObserver(() => {
+      updateHeight();
+    });
+
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, [loading, poll, options, counts, voted, error, resultsOnly, scale]);
+
+  useEffect(() => {
+    const renderedHeight = Math.ceil(cardHeight * (isCompactMode ? 1 : scale));
+
+    if (window.parent !== window) {
+      window.parent.postMessage(
+        {
+          type: "pollandsee:embed-height",
+          height: renderedHeight,
+        },
+        "*"
+      );
     }
-  };
+  }, [cardHeight, scale, isCompactMode]);
 
-  const handleCopy = async (key: string, value: string) => {
-    if (!value) return;
+  const handleVote = async (optionId: number) => {
+    if (!poll) return;
+    if (voted) return;
+    if (resultsOnly) return;
+
+    const cooldownError = canVoteNow(poll.id);
+    if (cooldownError) {
+      setError(cooldownError);
+      return;
+    }
+
+    setError("");
+
+    const previousCounts = counts;
+    const previousSelected = selected;
+    const previousVoted = voted;
+
+    setVoted(true);
+    setSelected(optionId);
+    setCounts((current) => ({
+      ...current,
+      [optionId]: (current[optionId] || 0) + 1,
+    }));
+
+    markPollVotedLocally(poll.id, optionId);
 
     try {
-      await navigator.clipboard.writeText(value);
-      setCopiedKey(key);
-      window.setTimeout(() => {
-        setCopiedKey((current) => (current === key ? "" : current));
-      }, 1400);
-    } catch {
-      setError("Could not copy to clipboard.");
+      await submitVote(poll.id, optionId, token);
+      recordVoteClient(poll.id);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not submit vote.";
+      const lower = message.toLowerCase();
+
+      if (lower.includes("already voted")) {
+        markPollVotedLocally(poll.id, optionId);
+        setError("");
+        setVoted(true);
+        setSelected(optionId);
+        return;
+      }
+
+      localStorage.removeItem(getPollVotedKey(poll.id));
+      localStorage.removeItem(getPollSelectedOldKey(poll.id));
+      localStorage.removeItem(getPollSelectedNewKey(poll.id));
+
+      setCounts(previousCounts);
+      setSelected(previousSelected);
+      setVoted(previousVoted);
+      setError(message);
     }
   };
 
-  const addOptionRow = (pollId: number) => {
-    setOptionEdits((current) => ({
-      ...current,
-      [pollId]: [
-        ...(current[pollId] || []),
-        {
-          id: 0,
-          poll_id: pollId,
-          option_text: "",
-          image_url: "",
-          vote_count: 0,
-        },
-      ],
-    }));
+  const compactWidth = Math.max(availableWidth, 220);
+  const renderedWidth = isCompactMode ? compactWidth : Math.ceil(BASE_CARD_WIDTH * scale);
+
+  const scaledWrapperStyle = {
+    width: `${renderedWidth}px`,
+    height: cardHeight ? `${Math.ceil(cardHeight * (isCompactMode ? 1 : scale))}px` : "0px",
   };
 
-const updateOptionText = (pollId: number, optionIndex: number, value: string) => {
-  const currentOptions = optionEdits[pollId] || [];
-  const next = [...currentOptions];
-  next[optionIndex] = { ...next[optionIndex], option_text: value };
+  const scaledCardStyle = isCompactMode
+    ? ({
+        width: `${compactWidth}px`,
+        transform: "none",
+        transformOrigin: "top left",
+      } as const)
+    : ({
+        width: `${BASE_CARD_WIDTH}px`,
+        transform: `scale(${scale})`,
+        transformOrigin: "bottom left",
+      } as const);
 
-  setOptionEdits((current) => ({ ...current, [pollId]: next }));
-
-  return next;
-};
-
-const updateOptionImageUrl = (pollId: number, optionIndex: number, value: string) => {
-  const currentOptions = optionEdits[pollId] || [];
-  const next = [...currentOptions];
-  next[optionIndex] = { ...next[optionIndex], image_url: value };
-
-  setOptionEdits((current) => ({ ...current, [pollId]: next }));
-
-  return next;
-};
-
-const saveOptionText = (pollId: number, optionIndex: number, value: string) => {
-  const next = [...(optionEdits[pollId] || [])];
-  next[optionIndex] = { ...next[optionIndex], option_text: value };
-
-  setOptionEdits((current) => ({ ...current, [pollId]: next }));
-  void updatePoll(pollId, { option_updates: next });
-};
-
-const saveOptionImageUrl = (pollId: number, optionIndex: number, value: string) => {
-  const next = [...(optionEdits[pollId] || [])];
-  next[optionIndex] = { ...next[optionIndex], image_url: value };
-
-  setOptionEdits((current) => ({ ...current, [pollId]: next }));
-  void updatePoll(pollId, { option_updates: next });
-};
-
-const sortedPolls = useMemo(() => {
-  return [...polls]
-    .filter((poll) => {
-      if (privacyFilter === "public" && poll.is_private) return false;
-      if (privacyFilter === "private" && !poll.is_private) return false;
-      if (categoryFilter !== "all" && poll.category !== categoryFilter) return false;
-      return true;
-    })
-    .sort((a, b) => {
-      const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
-      const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
-      return bTime - aTime;
-    });
-}, [polls, privacyFilter, categoryFilter]);
-
-  if (!adminKey) {
+  if (loading) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 px-6 py-10 text-white">
-        <section className="mx-auto max-w-xl rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-lg">
-          <div className="mb-5 flex items-center gap-3">
-            <Link href="/" aria-label="Go to homepage">
-              <img
-                src="/logo.png"
-                alt="Poll & See"
-                className="block h-12 w-auto object-contain"
-              />
-            </Link>
+      <main className="m-0 w-full overflow-hidden bg-transparent p-0 text-white">
+        <div ref={outerRef} className="w-full overflow-hidden bg-transparent">
+          <div className="mx-auto" style={scaledWrapperStyle}>
+            <div ref={cardRef} style={scaledCardStyle}>
+              <div
+                className={`w-full overflow-hidden rounded-2xl border ${
+                  isLightTheme ? "border-gray-200 bg-white" : "border-gray-800 bg-gray-900"
+                } ${isCompactMode ? "p-4" : "p-6"}`}
+              >
+                <p className={`text-sm ${isLightTheme ? "text-gray-600" : "text-gray-300"}`}>
+                  Loading poll...
+                </p>
+              </div>
+            </div>
           </div>
+        </div>
+      </main>
+    );
+  }
 
-          <h1 className="mb-2 text-2xl font-semibold">Admin</h1>
-          <p className="mb-5 text-sm text-gray-300">Enter your admin key to manage polls and submissions.</p>
-
-          <div className="space-y-3">
-            <input
-              type="password"
-              value={adminKeyInput}
-              onChange={(event) => setAdminKeyInput(event.target.value)}
-              placeholder="Admin key"
-              className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
-            />
-
-            <button
-              type="button"
-              onClick={handleUnlock}
-              className="rounded-xl bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-gray-200"
-            >
-              Unlock
-            </button>
-
-            {error ? <p className="text-sm text-red-300">{error}</p> : null}
+  if (!poll || !poll.is_embeddable || !poll.embed_active) {
+    return (
+      <main className="m-0 w-full overflow-hidden bg-transparent p-0 text-white">
+        <div ref={outerRef} className="w-full overflow-hidden bg-transparent">
+          <div className="mx-auto" style={scaledWrapperStyle}>
+            <div ref={cardRef} style={scaledCardStyle}>
+              <div
+                className={`w-full overflow-hidden rounded-2xl border text-center ${
+                  isLightTheme ? "border-gray-200 bg-white" : "border-gray-800 bg-gray-900"
+                } ${isCompactMode ? "p-4" : "p-6"}`}
+              >
+                <p
+                  className={`text-base font-medium ${
+                    isLightTheme ? "text-gray-950" : "text-white"
+                  }`}
+                >
+                  This poll is not currently active.
+                </p>
+                <EmbedFooter isLightTheme={isLightTheme} />
+              </div>
+            </div>
           </div>
-        </section>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 px-6 py-8 text-white">
-      <section className="mx-auto max-w-[1500px]">
-        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/" aria-label="Go to homepage">
-              <img
-                src="/logo.png"
-                alt="Poll & See"
-                className="block h-12 w-auto object-contain"
-              />
-            </Link>
+    <main className="m-0 w-full overflow-hidden bg-transparent p-0 text-white">
+      <div ref={outerRef} className="w-full overflow-hidden bg-transparent">
+        <div className="mx-auto" style={scaledWrapperStyle}>
+          <div ref={cardRef} style={scaledCardStyle}>
+            <div
+              className={`w-full overflow-hidden rounded-2xl border ${
+                isLightTheme ? "border-gray-200 bg-white" : "border-gray-700 bg-gray-800"
+              } ${isCompactMode ? "p-4" : "p-6"}`}
+            >
+              <div className={`flex flex-col ${voted || resultsOnly ? "" : "min-h-[400px]"}`}>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div></div>
+                  <span className={`text-sm ${isLightTheme ? "text-gray-500" : "text-gray-400"}`}>
+                    {totalVotes.toLocaleString()} {totalVotes === 1 ? "vote" : "votes"}
+                  </span>
+                </div>
 
-            <div>
-              <h1 className="text-3xl font-semibold">Admin</h1>
-              <p className="mt-1 text-sm text-gray-300">Review submissions and manage live polls.</p>
+                <h1
+                  className={`mb-2 break-words font-bold ${
+                    isLightTheme ? "text-gray-950" : "text-white"
+                  } ${isCompactMode ? "text-lg leading-7" : "text-2xl"}`}
+                >
+                  {poll.question}
+                </h1>
+
+                {poll.description ? (
+                  <p
+                    className={`mb-4 break-words ${
+                      isLightTheme ? "text-gray-700" : "text-gray-300"
+                    } ${isCompactMode ? "text-sm leading-6" : ""}`}
+                  >
+                    {poll.description}
+                  </p>
+                ) : null}
+
+                {!voted && !resultsOnly ? (
+                  <div className="flex flex-col gap-3">
+                    {hasImageOptions ? (
+                      <p
+                        className={`mb-[8px] mt-[6px] opacity-80 ${
+                          isLightTheme ? "text-gray-600" : "text-gray-300"
+                        } ${isCompactMode ? "text-xs" : "text-sm"}`}
+                      >
+                        Tap an image to vote
+                      </p>
+                    ) : null}
+
+                    {options.map((option) => (
+                      <button
+                        key={option.id}
+                        onClick={() => handleVote(option.id)}
+                        className={
+                          option.image_url
+                            ? `w-full cursor-pointer overflow-hidden rounded-xl text-left transition ${
+                                isLightTheme
+                                  ? "bg-gray-100 text-gray-900 hover:bg-gray-200"
+                                  : "bg-gray-700 text-white hover:bg-gray-600"
+                              }`
+                            : `w-full cursor-pointer overflow-hidden rounded-xl text-left transition ${
+                                isLightTheme
+                                  ? "bg-gray-100 text-gray-900 hover:bg-gray-200"
+                                  : "bg-gray-700 text-white hover:bg-gray-600"
+                              } ${isCompactMode ? "px-3 py-3 text-sm" : "px-4 py-3.5"}`
+                        }
+                      >
+                        {option.image_url ? (
+                          <>
+                            <div className={`overflow-hidden ${isLightTheme ? "bg-gray-100" : "bg-gray-900"}`}>
+                              <img
+                                src={option.image_url}
+                                alt={option.option_text}
+                                loading="lazy"
+                                width={1200}
+                                height={675}
+                                className="aspect-square h-auto w-full object-contain"
+                              />
+                            </div>
+                            <div
+                              className={`break-words ${
+                                isCompactMode ? "px-3 py-3 text-sm" : "px-4 py-3.5"
+                              }`}
+                            >
+                              {option.option_text}
+                            </div>
+                          </>
+                        ) : (
+                          <span className="break-words">{option.option_text}</span>
+                        )}
+                      </button>
+                    ))}
+
+                    {error ? (
+                      <p className={`text-sm ${isLightTheme ? "text-red-600" : "text-red-300"}`}>
+                        {error}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : (
+                  <>
+                    <ResultOptions
+                      options={options}
+                      voteCounts={counts}
+                      selectedOptionId={selected}
+                      isLightTheme={isLightTheme}
+                    />
+
+                    {resultsOnly ? (
+                      <div
+                        className={`mt-4 rounded-xl border text-center ${
+                          isLightTheme
+                            ? "border-gray-200 bg-gray-100 text-gray-700"
+                            : "border-gray-700 bg-gray-900/70 text-gray-300"
+                        } ${isCompactMode ? "px-3 py-2.5 text-xs" : "px-4 py-3 text-sm"}`}
+                      >
+                        Poll closed. Final results shown above.
+                      </div>
+                    ) : null}
+
+                    {error ? (
+                      <p className={`pt-3 text-sm ${isLightTheme ? "text-red-600" : "text-red-300"}`}>
+                        {error}
+                      </p>
+                    ) : null}
+                  </>
+                )}
+
+                <div className="mt-auto pt-2">
+                  <EmbedFooter isLightTheme={isLightTheme} />
+                </div>
+              </div>
             </div>
           </div>
-
- <div className="flex flex-wrap items-center gap-3">
-  <nav className="flex items-center gap-2">
-   <Link
-  href="/admin/polls"
-  className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-black"
->
-  <span>Live Polls</span>
-  {badge(polls.length, true)}
-</Link>
-    <Link
-      href="/admin/submissions"
-      className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
-    >
-      <span>Submissions</span>
-   {badge(pendingSubmissionsCount, false)}
-    </Link>
-  </nav>
-
-  <input
-    type="text"
-    value={searchInput}
-    onChange={(event) => setSearchInput(event.target.value)}
-    placeholder="Search live polls..."
-    className="h-11 w-full min-w-[260px] rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500 md:w-[320px]"
-  />
-
-  <select
-    value={privacyFilter}
-    onChange={(event) => setPrivacyFilter(event.target.value as "all" | "public" | "private")}
-    className="h-11 rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm text-white outline-none"
-  >
-    <option value="all">All</option>
-    <option value="public">Public</option>
-    <option value="private">Private</option>
-  </select>
-
-  <select
-    value={categoryFilter}
-    onChange={(event) => setCategoryFilter(event.target.value as "all" | CategoryOption)}
-    className="h-11 rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm text-white outline-none"
-  >
-    <option value="all">All categories</option>
-    {CATEGORY_OPTIONS.map((category) => (
-      <option key={category} value={category}>
-        {category}
-      </option>
-    ))}
-  </select>
-
-  <button
-    type="button"
-    onClick={handleLogout}
-    className="h-11 rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm font-medium text-white transition hover:bg-gray-800"
-  >
-    Lock
-  </button>
-</div>
         </div>
-
-        {error ? (
-          <div className="mb-4 rounded-xl border border-red-500/40 bg-red-950/50 px-4 py-3 text-sm text-red-200">
-            {error}
-          </div>
-        ) : null}
-
-        <div className="overflow-x-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg">
-  <table className="w-full text-sm">
-            <thead className="sticky top-0 z-10 bg-gray-900/95 text-left text-gray-300">
-              <tr>
-                <th className="px-4 py-3 font-medium">Poll</th>
-                <th className="px-4 py-3 font-medium">Options / Images</th>
-                <th className="px-4 py-3 font-medium">Settings</th>
-                <th className="px-4 py-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-gray-300">
-                    Loading polls...
-                  </td>
-                </tr>
-              ) : null}
-
-              {!loading && sortedPolls.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-gray-300">
-                    No polls found.
-                  </td>
-                </tr>
-              ) : null}
-
-              {!loading &&
-                sortedPolls.map((poll, index) => {
-                  const pollUrl = buildPollUrl(poll.slug);
-                  const iframeCode = buildIframeCode(poll.embed_token);
-
-                  return (
-                    <tr
-                      key={poll.id}
-                      className={`border-t border-gray-700 align-top ${
-                      index % 2 === 0 ? "bg-gray-800" : "bg-black/40"
-                      }`}
-                    >
-                      <td className="px-4 py-4 align-top">
-                      <div className="min-w-[380px] max-w-[460px] space-y-2">
-                          <input
-                            type="text"
-                            value={questionEdits[poll.id] ?? ""}
-                            onChange={(event) =>
-                              setQuestionEdits((current) => ({
-                                ...current,
-                                [poll.id]: event.target.value,
-                              }))
-                            }
-                            onBlur={() => void updatePoll(poll.id)}
-                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
-                          />
-                          <textarea
-                            value={descriptionEdits[poll.id] ?? ""}
-                            onChange={(event) =>
-                              setDescriptionEdits((current) => ({
-                                ...current,
-                                [poll.id]: event.target.value,
-                              }))
-                            }
-                            onBlur={() => void updatePoll(poll.id)}
-                           rows={2}
-className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
-                          />
-                          <p className="text-xs text-gray-400">
-                            Poll ID {poll.id}
-                            {poll.created_at
-                              ? ` • ${new Date(poll.created_at).toLocaleString()}`
-                              : ""}
-                            {poll.slug ? ` • /poll/${poll.slug}` : ""}
-                          </p>
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-4 align-top">
-                      <div className="min-w-[260px] max-w-[300px] space-y-2">
- {(optionEdits[poll.id] || []).map((option, optionIndex) => (
-<div
-  key={`${poll.id}-${option.id || `new-${optionIndex}`}`}
- className="grid grid-cols-[1.5fr_84px_auto] items-center gap-2"
->
-<input
-  type="text"
-  value={option.option_text}
-  onChange={(event) => {
-    updateOptionText(poll.id, optionIndex, event.target.value);
-  }}
-onBlur={(event) => {
-  saveOptionText(poll.id, optionIndex, event.target.value);
-}}
-  className="w-full min-w-0 rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
-  placeholder="Option text"
-/>
-
-<input
-  type="text"
-  value={option.image_url || ""}
- onChange={(event) => {
-  updateOptionImageUrl(poll.id, optionIndex, event.target.value);
-}}
-onBlur={(event) => {
-  saveOptionImageUrl(poll.id, optionIndex, event.target.value);
-}}
-  className="w-[84px] rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
-  placeholder="Image URL (optional)"
-/>
-
- <div className="flex h-full items-center justify-start gap-2 self-center whitespace-nowrap text-[11px] text-gray-400">
-  <span>{option.vote_count}</span>
-  {(optionEdits[poll.id] || []).length > 2 ? (
-    <button
-      type="button"
-      onClick={() => {
-        const next = [...(optionEdits[poll.id] || [])];
-        next.splice(optionIndex, 1);
-        setOptionEdits((current) => ({ ...current, [poll.id]: next }));
-      }}
-      className="cursor-pointer text-sm font-bold leading-none text-red-400 hover:text-red-300 align-middle"
-      aria-label="Remove option"
-      title="Remove option"
-    >
-      X
-    </button>
-  ) : null}
-</div>
-</div>
-))}
-
-                          <button
-                            type="button"
-                            onClick={() => addOptionRow(poll.id)}
-                         className="rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800"
-                          >
-                            Add option
-                          </button>
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-4 align-top">
-            <div className="min-w-[160px] grid grid-cols-2 gap-2 text-xs text-gray-300">
-                          <div className="space-y-1">
-                            <span className="text-gray-400">Category</span>
-                            <select
-                              value={categoryEdits[poll.id] || "General"}
-                                                            onChange={(event) => {
-                                const nextCategory = event.target.value as CategoryOption;
-                                setCategoryEdits((current) => ({
-                                  ...current,
-                                  [poll.id]: nextCategory,
-                                }));
-                                void updatePoll(poll.id, { category: nextCategory });
-                              }}
-                             className="w-full rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-xs text-white outline-none"
-                            >
-                              {CATEGORY_OPTIONS.map((category) => (
-                                <option key={category} value={category}>
-                                  {category}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          <div className="space-y-1">
-                            <span className="text-gray-400">Privacy</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const nextPrivate = !privacyEdits[poll.id];
-                                setPrivacyEdits((current) => ({
-                                  ...current,
-                                  [poll.id]: nextPrivate,
-                                }));
-                                void updatePoll(poll.id, { is_private: nextPrivate });
-                              }}
-                             className={`w-full rounded-lg px-2 py-1.5 text-left text-xs font-medium transition ${
-                                privacyEdits[poll.id]
-                                  ? "bg-white text-black hover:bg-gray-200"
-                                  : "border border-gray-700 bg-gray-900 text-white hover:bg-gray-800"
-                              }`}
-                            >
-                              {privacyEdits[poll.id] ? "Private" : "Public"}
-                            </button>
-                          </div>
-
-                          <div className="space-y-1">
-                            <span className="text-gray-400">Featured</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const nextFeatured = !featuredEdits[poll.id];
-                                setFeaturedEdits((current) => ({
-                                  ...current,
-                                  [poll.id]: nextFeatured,
-                                }));
-                                void updatePoll(poll.id, { featured: nextFeatured });
-                              }}
-                             className={`w-full rounded-lg px-2 py-1.5 text-left text-xs font-medium transition ${
-                                featuredEdits[poll.id]
-                                  ? "bg-white text-black hover:bg-gray-200"
-                                  : "border border-gray-700 bg-gray-900 text-white hover:bg-gray-800"
-                              }`}
-                            >
-                              {featuredEdits[poll.id] ? "Featured" : "Not featured"}
-                            </button>
-                          </div>
-
-                          <div className="space-y-1">
-                            <span className="text-gray-400">Embed</span>
-                            <select
-                              value={embedStatusEdits[poll.id] || "inactive"}
-                              onChange={(event) => {
-                                const nextEmbedStatus = event.target.value as EmbedStatus;
-                                setEmbedStatusEdits((current) => ({
-                                  ...current,
-                                  [poll.id]: nextEmbedStatus,
-                                }));
-                                void updatePoll(poll.id, { embedStatus: nextEmbedStatus });
-                              }}
-                              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-xs text-white outline-none"
-                            >
-                              <option value="live">Live</option>
-                              <option value="closed">Closed</option>
-                              <option value="inactive">Inactive</option>
-                            </select>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-4 align-top">
-                   <div className="flex min-w-[96px] flex-col gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              void handleCopy(
-                                `share:${poll.id}`,
-                                buildPollShareText(questionEdits[poll.id] || poll.question, pollUrl)
-                              )
-                            }
-                        className="rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800"
-                          >
-                            {copiedKey === `share:${poll.id}` ? "Copied share text" : "Copy poll share text"}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const styleChoice = window.prompt(
-                                "Embed style: type dark, light, or custom",
-                                "dark"
-                              );
-
-                              if (!styleChoice) return;
-
-                              const cleanedStyle = styleChoice.trim().toLowerCase();
-
-                              if (cleanedStyle === "light") {
-                                void handleCopy(`iframe:${poll.id}`, buildIframeCode(poll.embed_token, "light"));
-                                return;
-                              }
-
-                              if (cleanedStyle === "custom") {
-                                const customColor = window.prompt("Enter custom HEX colour, e.g. #061B52", "#061B52");
-                                if (!customColor) return;
-                                void handleCopy(`iframe:${poll.id}`, buildIframeCode(poll.embed_token, "custom", customColor));
-                                return;
-                              }
-
-                              void handleCopy(`iframe:${poll.id}`, buildIframeCode(poll.embed_token, "dark"));
-                            }}
-                         className="rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800"
-                          >
-                            {copiedKey === `iframe:${poll.id}` ? "Copied iframe" : "Copy iframe"}
-                          </button>
-
-                          <a
-                            href={pollUrl || "#"}
-                            target="_blank"
-                            rel="noreferrer"
-className={`rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800 ${
-  !pollUrl ? "pointer-events-none opacity-40" : ""
-}`}
-                          >
-                            Open poll
-                          </a>
-
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {showTopButton ? (
-        <button
-          type="button"
-          onClick={() =>
-            window.scrollTo({
-              top: 0,
-              behavior: "smooth",
-            })
-          }
-          className="fixed bottom-5 right-5 z-50 rounded-2xl border border-gray-700 bg-gray-800 px-4 py-3 text-sm font-medium text-white shadow-lg transition hover:bg-gray-700 md:bottom-6 md:right-8 md:px-5"
-        >
-          Back to top
-        </button>
-      ) : null}
+      </div>
     </main>
   );
 }
