@@ -76,18 +76,39 @@ export default function AddToWebsitePage() {
             See how it works on real websites
           </h2>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            <img
-              src="/embed-assets/plm-after.png"
-              alt="Poll & See embed example after voting"
-              className="w-full rounded-xl border border-gray-700 shadow-lg"
-            />
-            <img
-              src="/embed-assets/diamant-before.png"
-              alt="Poll & See embedded on another website"
-              className="w-full rounded-xl border border-gray-700 shadow-lg"
-            />
-          </div>
+<div className="grid gap-6 md:grid-cols-2">
+  <div className="flex flex-col items-center">
+    <img
+      src="/embed-assets/plm-after.png"
+      alt="Poll & See embed example after voting"
+      className="w-full rounded-xl border border-gray-700 shadow-lg"
+    />
+    <a
+      href="https://www.precisionlinemarking.co.uk/"
+      target="_blank"
+      rel="noreferrer"
+      className="mt-2 text-sm text-gray-400 hover:text-white underline"
+    >
+      View live site
+    </a>
+  </div>
+
+  <div className="flex flex-col items-center">
+    <img
+      src="/embed-assets/diamant-before.png"
+      alt="Poll & See embedded on another website"
+      className="w-full rounded-xl border border-gray-700 shadow-lg"
+    />
+    <a
+      href="https://www.diamantsolutions.co.uk/"
+      target="_blank"
+      rel="noreferrer"
+      className="mt-2 text-sm text-gray-400 hover:text-white underline"
+    >
+      View live site
+    </a>
+  </div>
+</div>
         </div>
 
         <div className="mb-8 rounded-2xl border border-gray-700 bg-gray-800 p-5 text-center shadow-lg">
