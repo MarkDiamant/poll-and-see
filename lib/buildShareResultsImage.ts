@@ -96,7 +96,16 @@ export async function buildShareResultsImageFile({
    ctx.fillStyle = "#000000";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-drawRoundedRect(ctx, 0, 0, canvas.width, canvas.height, 64);
+const insetX = 20;
+
+drawRoundedRect(
+  ctx,
+  insetX,
+  0,
+  canvas.width - insetX * 2,
+  canvas.height,
+  64
+);
 ctx.fillStyle = "#111827";
 ctx.fill();
 
@@ -124,7 +133,7 @@ ctx.stroke();
   ctx.textAlign = "right";
   ctx.font = "700 28px Arial";
   ctx.fillStyle = "rgba(255,255,255,0.88)";
-  ctx.fillText(`${totalVotes.toLocaleString()} votes`, 620, topMetaY);
+  ctx.fillText(`${totalVotes.toLocaleString()} votes`, 580, topMetaY);
 
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
@@ -149,7 +158,7 @@ ctx.stroke();
     const optionHeight = opt.image_url ? 290 : 136;
 
     ctx.fillStyle = "rgba(255,255,255,0.05)";
-    drawRoundedRect(ctx, 46, y, 588, optionHeight - 34, 22);
+    drawRoundedRect(ctx, 46, y, 548, optionHeight - 34, 22);
     ctx.fill();
 
     let contentY = y + 24;
@@ -200,7 +209,7 @@ ctx.stroke();
 
     ctx.textAlign = "right";
     ctx.font = "700 28px Arial";
-    ctx.fillText(`${pct}% • ${votes.toLocaleString()} ${votes === 1 ? "vote" : "votes"}`, 612, contentY + 24);
+    ctx.fillText(`${pct}% • ${votes.toLocaleString()} ${votes === 1 ? "vote" : "votes"}`, 580, contentY + 24);
 
     ctx.textAlign = "left";
     ctx.fillStyle = "rgba(255,255,255,0.12)";
