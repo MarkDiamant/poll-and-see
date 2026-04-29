@@ -146,6 +146,56 @@ async function generateUniqueSlug(supabaseAdmin: ReturnType<typeof getAdminClien
   throw new Error("Could not generate a unique short ID.");
 }
 
+async function sendNewPollNotificationEmail({
+  question,
+  description,
+  category,
+  options,
+  isPrivate,
+  pollUrl,
+}: {
+  question: string;
+  description: string;
+  category: string;
+  options: string[];
+  isPrivate: boolean;
+  pollUrl: string;
+}) {
+  const resendApiKey = process.env.RESEND_API_KEY;
+  const fromEmail = process.env.POLL_LINK_FROM_EMAIL;
+
+  if (!resendApiKey || !fromEmail) {
+    return false;
+  }
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${resendApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: fromEmail,
+      to: ["polls@pollandsee.com"],
+      subject: "New Poll & See submission",
+      html: `
+        <p>A new poll was submitted from the public submit poll page.</p>
+        <p><strong>Question:</strong> ${question}</p>
+        <p><strong>Description:</strong> ${description || "None"}</p>
+        <p><strong>Category:</strong> ${category}</p>
+        <p><strong>Privacy:</strong> ${isPrivate ? "Private" : "Public"}</p>
+        <p><strong>Options:</strong></p>
+        <ul>
+          ${options.map((option) => `<li>${option}</li>`).join("")}
+        </ul>
+        <p><a href="${pollUrl}">${pollUrl}</a></p>
+      `,
+    }),
+  });
+
+  return response.ok;
+}
+
 async function sendPollLinkEmail({
   to,
   question,
@@ -317,6 +367,19 @@ if ((emailMeLink || isPrivate) && !email) {
         { error: submissionInsertError.message || "Could not create moderation record." },
         { status: 500 }
       );
+    }
+
+       try {
+      await sendNewPollNotificationEmail({
+        question,
+        description,
+        category,
+        options,
+        isPrivate,
+        pollUrl,
+      });
+    } catch {
+      // Do not block poll creation if notification email fails.
     }
 
     let emailSent = false;
