@@ -134,8 +134,6 @@ ctx.stroke();
   const categoryWidth = ctx.measureText(categoryText).width + 38;
   const topMetaY = 54;
 
-    const categoryStyle = CATEGORY_COLOURS[categoryText] || CATEGORY_COLOURS["General"];
-
 const categoryStyle = CATEGORY_COLOURS[categoryText] || CATEGORY_COLOURS.General;
 
 drawRoundedRect(ctx, 60, topMetaY - 20, categoryWidth, 40, 20);
