@@ -933,14 +933,14 @@ if (preferredCategory === "All" || availableCategories.includes(preferredCategor
 
   let hideTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  const initialTimeout = setTimeout(() => {
-    setShowActivityIndicator(true);
-    localStorage.setItem(ACTIVITY_INDICATOR_LAST_SHOWN_KEY, String(Date.now()));
+const initialTimeout = setTimeout(() => {
+  setShowActivityIndicator(true);
+  sessionStorage.setItem("activity_indicator_shown", "1");
 
-    hideTimeout = setTimeout(() => {
-      setShowActivityIndicator(false);
-    }, 5000);
+  hideTimeout = setTimeout(() => {
+    setShowActivityIndicator(false);
   }, 5000);
+}, 3000);
 
   return () => {
     clearTimeout(initialTimeout);
