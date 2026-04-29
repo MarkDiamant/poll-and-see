@@ -10,9 +10,12 @@ type Row = {
   category: string | null;
   options: string[] | null;
   created_at: string | null;
+  slug: string | null;
+  embed_token: string | null;
 };
 
 const ADMIN_KEY_STORAGE = "pollandsee-admin-key";
+const SITE_URL = "https://www.pollandsee.com";
 
 function badge(count: number, isActive: boolean) {
   return (
@@ -26,11 +29,31 @@ function badge(count: number, isActive: boolean) {
   );
 }
 
+function buildPollUrl(slug: string | null) {
+  return slug ? `${SITE_URL}/poll/${slug}` : "";
+}
+
+function buildIframeCode(embedToken: string | null, embedStyle: "dark" | "light" = "dark") {
+  if (!embedToken) return "";
+
+  const src =
+    embedStyle === "light"
+      ? `${SITE_URL}/embed/${embedToken}?theme=light`
+      : `${SITE_URL}/embed/${embedToken}`;
+
+  return `<iframe src="${src}" width="100%" height="100%" style="border:0; display:block; overflow:hidden; background:transparent;" loading="lazy" scrolling="no"></iframe>`;
+}
+
+function buildPollShareText(question: string, pollUrl: string) {
+  return `${question}\n\nVote and see what others think:\n\n${pollUrl}`;
+}
+
 export default function HiddenPage() {
   const [items, setItems] = useState<Row[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<number | null>(null);
+  const [copiedKey, setCopiedKey] = useState("");
 
   const [questionEdits, setQuestionEdits] = useState<Record<number, string>>({});
   const [descriptionEdits, setDescriptionEdits] = useState<Record<number, string>>({});
@@ -105,6 +128,17 @@ export default function HiddenPage() {
     setSaving(null);
   };
 
+  const handleCopy = async (key: string, value: string) => {
+    if (!value) return;
+
+    await navigator.clipboard.writeText(value);
+    setCopiedKey(key);
+
+    window.setTimeout(() => {
+      setCopiedKey((current) => (current === key ? "" : current));
+    }, 1400);
+  };
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 px-6 py-8 text-white">
       <section className="mx-auto max-w-[1500px]">
@@ -117,24 +151,15 @@ export default function HiddenPage() {
           </div>
 
           <nav className="flex items-center gap-2">
-            <Link
-              href="/admin/polls"
-              className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
-            >
+            <Link href="/admin/polls" className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800">
               Live Polls
             </Link>
 
-            <Link
-              href="/admin/submissions"
-              className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
-            >
+            <Link href="/admin/submissions" className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800">
               Submissions
             </Link>
 
-            <Link
-              href="/admin/hidden"
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-black"
-            >
+            <Link href="/admin/hidden" className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-black">
               <span>Hidden</span>
               {badge(items.length, true)}
             </Link>
@@ -177,80 +202,140 @@ export default function HiddenPage() {
               ) : null}
 
               {!loading &&
-                filtered.map((item, index) => (
-                  <tr
-                    key={item.id}
-                    className={`border-t border-gray-700 align-top ${
-                      index % 2 === 0 ? "bg-gray-800" : "bg-black/40"
-                    }`}
-                  >
-                    <td className="px-4 py-4">
-                      <div className="min-w-[380px] max-w-[520px] space-y-2">
-                        <input
-                          value={questionEdits[item.id] ?? ""}
-                          onChange={(event) =>
-                            setQuestionEdits((current) => ({
-                              ...current,
-                              [item.id]: event.target.value,
-                            }))
-                          }
-                          onBlur={() => void save(item.id)}
-                          className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm font-medium text-white outline-none transition focus:border-gray-500"
-                        />
+                filtered.map((item, index) => {
+                  const pollUrl = buildPollUrl(item.slug);
 
-                        <textarea
-                          value={descriptionEdits[item.id] ?? ""}
-                          onChange={(event) =>
-                            setDescriptionEdits((current) => ({
-                              ...current,
-                              [item.id]: event.target.value,
-                            }))
-                          }
-                          onBlur={() => void save(item.id)}
-                          rows={2}
-                          className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
-                        />
-                      </div>
-                    </td>
+                  return (
+                    <tr
+                      key={item.id}
+                      className={`border-t border-gray-700 align-top ${
+                        index % 2 === 0 ? "bg-gray-800" : "bg-black/40"
+                      }`}
+                    >
+                      <td className="px-4 py-4">
+                        <div className="min-w-[380px] max-w-[520px] space-y-2">
+                          <input
+                            value={questionEdits[item.id] ?? ""}
+                            onChange={(event) =>
+                              setQuestionEdits((current) => ({
+                                ...current,
+                                [item.id]: event.target.value,
+                              }))
+                            }
+                            onBlur={() => void save(item.id)}
+                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm font-medium text-white outline-none transition focus:border-gray-500"
+                          />
 
-                    <td className="px-4 py-4">
-                      <div className="min-w-[240px] max-w-[320px]">
-                        <textarea
-                          value={optionsEdits[item.id] ?? ""}
-                          onChange={(event) =>
-                            setOptionsEdits((current) => ({
-                              ...current,
-                              [item.id]: event.target.value,
-                            }))
-                          }
-                          onBlur={() => void save(item.id)}
-                          rows={4}
-                          className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none transition focus:border-gray-500"
-                        />
-                      </div>
-                    </td>
+                          <textarea
+                            value={descriptionEdits[item.id] ?? ""}
+                            onChange={(event) =>
+                              setDescriptionEdits((current) => ({
+                                ...current,
+                                [item.id]: event.target.value,
+                              }))
+                            }
+                            onBlur={() => void save(item.id)}
+                            rows={2}
+                            className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                          />
+                        </div>
+                      </td>
 
-                    <td className="px-4 py-4">
-                      <div className="min-w-[170px] space-y-2 text-xs text-gray-400">
-                        <p>Submission ID {item.id}</p>
-                        <p>{item.category || "General"}</p>
-                        <p>{item.created_at ? new Date(item.created_at).toLocaleString() : ""}</p>
-                        {saving === item.id ? <p className="text-yellow-300">Saving...</p> : null}
-                      </div>
-                    </td>
+                      <td className="px-4 py-4">
+                        <div className="min-w-[240px] max-w-[320px]">
+                          <textarea
+                            value={optionsEdits[item.id] ?? ""}
+                            onChange={(event) =>
+                              setOptionsEdits((current) => ({
+                                ...current,
+                                [item.id]: event.target.value,
+                              }))
+                            }
+                            onBlur={() => void save(item.id)}
+                            rows={4}
+                            className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none transition focus:border-gray-500"
+                          />
+                        </div>
+                      </td>
 
-                    <td className="px-4 py-4">
-                      <button
-                        type="button"
-                        onClick={() => void makePublic(item.id)}
-                        disabled={saving === item.id}
-                        className="cursor-pointer rounded-lg bg-white px-3 py-2 text-left text-xs font-medium text-black transition hover:bg-gray-200 disabled:opacity-40"
-                      >
-                        Make Public
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                      <td className="px-4 py-4">
+                        <div className="min-w-[170px] space-y-2 text-xs text-gray-400">
+                          <p>Submission ID {item.id}</p>
+                          <p>{item.category || "General"}</p>
+                          <p>{item.created_at ? new Date(item.created_at).toLocaleString() : ""}</p>
+                          {item.slug ? <p>/poll/{item.slug}</p> : null}
+                          {saving === item.id ? <p className="text-yellow-300">Saving...</p> : null}
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-4">
+                        <div className="flex min-w-[120px] flex-col gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void handleCopy(
+                                `share:${item.id}`,
+                                buildPollShareText(questionEdits[item.id] || item.question, pollUrl)
+                              )
+                            }
+                            disabled={!pollUrl}
+                            className="cursor-pointer rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800 disabled:cursor-default disabled:opacity-40"
+                          >
+                            {copiedKey === `share:${item.id}` ? "Copied share text" : "Copy poll share text"}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void handleCopy(
+                                `iframe-dark:${item.id}`,
+                                buildIframeCode(item.embed_token, "dark")
+                              )
+                            }
+                            disabled={!item.embed_token}
+                            className="cursor-pointer rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800 disabled:cursor-default disabled:opacity-40"
+                          >
+                            {copiedKey === `iframe-dark:${item.id}` ? "Copied dark iframe" : "Copy dark iframe"}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void handleCopy(
+                                `iframe-light:${item.id}`,
+                                buildIframeCode(item.embed_token, "light")
+                              )
+                            }
+                            disabled={!item.embed_token}
+                            className="cursor-pointer rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800 disabled:cursor-default disabled:opacity-40"
+                          >
+                            {copiedKey === `iframe-light:${item.id}` ? "Copied light iframe" : "Copy light iframe"}
+                          </button>
+
+                          <a
+                            href={pollUrl || "#"}
+                            target="_blank"
+                            rel="noreferrer"
+                            className={`rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800 ${
+                              !pollUrl ? "pointer-events-none opacity-40" : ""
+                            }`}
+                          >
+                            Open poll
+                          </a>
+
+                          <button
+                            type="button"
+                            onClick={() => void makePublic(item.id)}
+                            disabled={saving === item.id}
+                            className="cursor-pointer rounded-lg bg-white px-2.5 py-1.5 text-left text-xs font-medium text-black transition hover:bg-gray-200 disabled:cursor-default disabled:opacity-40"
+                          >
+                            Make Public
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
         </div>
