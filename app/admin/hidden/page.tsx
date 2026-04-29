@@ -99,7 +99,12 @@ export default function HiddenPage() {
           <nav className="flex gap-2">
             <Link href="/admin/polls" className="px-4 py-2 border rounded-xl">Live</Link>
             <Link href="/admin/submissions" className="px-4 py-2 border rounded-xl">Submissions</Link>
-            <Link href="/admin/hidden" className="px-4 py-2 bg-white text-black rounded-xl">Hidden</Link>
+           <Link href="/admin/hidden" className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-black">
+  <span>Hidden</span>
+  <span className="inline-flex min-w-[22px] items-center justify-center rounded-full bg-black/10 px-1.5 py-0.5 text-[11px] font-semibold text-black">
+    {items.length}
+  </span>
+</Link>
           </nav>
         </div>
 

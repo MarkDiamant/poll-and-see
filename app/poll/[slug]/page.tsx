@@ -1295,11 +1295,8 @@ export default function PollPage() {
       const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString();
       const twentyFourHoursAgoMs = now.getTime() - 24 * 60 * 60 * 1000;
 
-      const [recentVotesResult, optionTotalsResult] = await Promise.all([
-        supabase
-          .from("votes")
-          .select("poll_id, created_at")
-          .gte("created_at", fortyEightHoursAgo),
+const [recentVotesResult, optionTotalsResult] = await Promise.all([
+        supabase.rpc("get_recent_poll_votes"),
         supabase
           .from("poll_options")
           .select("poll_id, vote_count"),
@@ -1316,14 +1313,11 @@ export default function PollPage() {
       const recentCounts: Record<number, number> = {};
       let last24Total = 0;
 
-      (recentVotesResult.data || []).forEach((vote) => {
-        const pollId = Number(vote.poll_id);
-        recentCounts[pollId] = (recentCounts[pollId] || 0) + 1;
+(recentVotesResult.data || []).forEach((row: { poll_id: number | string; recent_votes_48h: number | string | null; recent_votes_24h: number | string | null }) => {
+        const pollId = Number(row.poll_id);
 
-        const createdAtTime = new Date(vote.created_at).getTime();
-        if (!Number.isNaN(createdAtTime) && createdAtTime >= twentyFourHoursAgoMs) {
-          last24Total += 1;
-        }
+        recentCounts[pollId] = Number(row.recent_votes_48h || 0);
+        last24Total += Number(row.recent_votes_24h || 0);
       });
 
       const totalVoteCounts: Record<number, number> = {};
@@ -1530,7 +1524,7 @@ export default function PollPage() {
     hideTimeout = setTimeout(() => {
       setShowActivityIndicator(false);
     }, 5000);
-  }, 5000);
+  }, 3000);
 
   return () => {
     clearTimeout(initialTimeout);

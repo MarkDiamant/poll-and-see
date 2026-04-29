@@ -968,7 +968,7 @@ const hideSubmission = async (submissionId: number) => {
                           type="button"
                           onClick={() => void approveSubmission(submission.id)}
                           disabled={savingKey === `approve:${submission.id}`}
-                          className="rounded-lg bg-white px-2 py-1.5 text-left text-xs font-medium text-black transition hover:bg-gray-200 disabled:opacity-40"
+                          className="cursor-pointer rounded-lg bg-white px-2 py-1.5 text-left text-xs font-medium text-black transition hover:bg-gray-200 disabled:opacity-40"
                         >
                           Approve
                         </button>
@@ -977,7 +977,7 @@ const hideSubmission = async (submissionId: number) => {
   type="button"
   onClick={() => void hideSubmission(submission.id)}
   disabled={savingKey === `hide:${submission.id}`}
-  className="rounded-lg border border-yellow-600 bg-yellow-900 px-2 py-1.5 text-left text-xs font-medium text-yellow-100 transition hover:bg-yellow-800 disabled:opacity-60"
+  className="cursor-pointer rounded-lg border border-yellow-600 bg-yellow-900 px-2 py-1.5 text-left text-xs font-medium text-yellow-100 transition hover:bg-yellow-800 disabled:opacity-60"
 >
   Hide
 </button>
@@ -985,7 +985,7 @@ const hideSubmission = async (submissionId: number) => {
   type="button"
   onClick={() => void deleteSubmission(submission.id)}
                           disabled={savingKey === `delete:${submission.id}`}
-                          className="rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800 disabled:opacity-60"
+                          className="cursor-pointer rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800 disabled:opacity-60"
                         >
                           Delete
                         </button>
