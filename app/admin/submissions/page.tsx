@@ -209,8 +209,6 @@ useEffect(() => {
 setSubmissions(nextSubmissions);
         setLivePollCount(data.livePollCount || 0);
 
-        if (!showSpinner) return;
-
         setQuestionEdits(
           Object.fromEntries(nextSubmissions.map((row: PollSubmissionRow) => [row.id, row.question]))
         );
