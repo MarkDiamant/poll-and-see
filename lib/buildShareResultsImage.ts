@@ -74,7 +74,7 @@ export async function buildShareResultsImageFile({
   voteCounts: VoteCounts;
 }) {
   const canvas = document.createElement("canvas");
-  canvas.width = 680;
+  canvas.width = 640;
 
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
@@ -96,18 +96,18 @@ export async function buildShareResultsImageFile({
    ctx.fillStyle = "#000000";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    drawRoundedRect(ctx, 0, 0, canvas.width, canvas.height, 68);
-  ctx.fillStyle = "#111827";
-  ctx.fill();
+drawRoundedRect(ctx, 0, 0, canvas.width, canvas.height, 64);
+ctx.fillStyle = "#111827";
+ctx.fill();
 
-  ctx.strokeStyle = "rgba(255,255,255,0.16)";
-  ctx.lineWidth = 2;
-  ctx.stroke();
+ctx.strokeStyle = "rgba(255,255,255,0.28)";
+ctx.lineWidth = 2;
+ctx.stroke();
 
   const categoryText = poll.category || "General";
   ctx.font = "600 20px Arial";
   const categoryWidth = ctx.measureText(categoryText).width + 38;
-  const topMetaY = 42;
+  const topMetaY = 54;
 
   drawRoundedRect(ctx, 60, topMetaY - 20, categoryWidth, 40, 20);
   ctx.fillStyle = "rgba(6, 182, 212, 0.12)";
@@ -232,13 +232,13 @@ export async function buildShareResultsImageFile({
   ctx.textAlign = "center";
   ctx.font = "400 24px Arial";
   ctx.fillStyle = "rgba(255,255,255,0.75)";
-  ctx.fillText("Vote and see what others think:", 340, y);
+  ctx.fillText("Vote and see what others think:", 320, y);
 
   y += 34;
 
   ctx.font = "600 26px Arial";
   ctx.fillStyle = "rgba(255,255,255,0.6)";
-  ctx.fillText("pollandsee.com", 340, y);
+  ctx.fillText("pollandsee.com", 320, y);
 
   const blob = await new Promise<Blob | null>((resolve) => {
     canvas.toBlob((b) => resolve(b), "image/png");
