@@ -935,7 +935,7 @@ if (preferredCategory === "All" || availableCategories.includes(preferredCategor
 
 const initialTimeout = setTimeout(() => {
   setShowActivityIndicator(true);
-  sessionStorage.setItem("activity_indicator_shown", "1");
+  localStorage.setItem(ACTIVITY_INDICATOR_LAST_SHOWN_KEY, String(Date.now()));
 
   hideTimeout = setTimeout(() => {
     setShowActivityIndicator(false);
