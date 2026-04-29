@@ -11,7 +11,7 @@ type SubmissionRow = {
   options: string[] | null;
   option_image_urls: string[] | null;
   is_private: boolean | null;
-  status: "pending" | "ready";
+  status: "pending" | "ready" | "hidden";
   created_at: string | null;
 };
 
@@ -73,6 +73,108 @@ async function generateUniqueSlug(supabaseAdmin: ReturnType<typeof getAdminClien
   }
 
   throw new Error("Could not generate a unique short ID.");
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function buildPollApprovedEmail(params: { pollUrl: string; appBaseUrl: string }) {
+  const logoUrl = `${params.appBaseUrl}/logo.png`;
+
+  const html = `
+    <!doctype html>
+    <html>
+      <body style="margin:0;padding:0;background:#020617;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#020617;">
+          <tr>
+            <td align="center" style="padding:28px 14px 36px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;">
+                <tr>
+                  <td align="center" style="padding-bottom:24px;">
+                    <img src="${logoUrl}" alt="Poll & See" width="180" style="display:block;width:180px;max-width:100%;height:auto;border:0;" />
+                  </td>
+                </tr>
+                <tr>
+                  <td style="background:#111827;border:1px solid #1f2937;border-radius:24px;padding:28px 22px;font-family:Arial,sans-serif;color:#ffffff;">
+                    <p style="margin:0 0 18px;font-size:16px;line-height:24px;color:#e5e7eb;">Hi,</p>
+                    <p style="margin:0 0 16px;font-size:16px;line-height:24px;color:#e5e7eb;">Your poll is now live:</p>
+                    <p style="margin:0 0 22px;">
+                      <a href="${escapeHtml(params.pollUrl)}" style="color:#67e8f9;font-size:16px;line-height:24px;">${escapeHtml(params.pollUrl)}</a>
+                    </p>
+                    <p style="margin:0 0 18px;font-size:16px;line-height:24px;color:#d1d5db;">
+                      To get votes quickly, post it on your WhatsApp status and share it with a few groups or friends. That’s where most polls pick up fast.
+                    </p>
+                    <p style="margin:0 0 22px;font-size:16px;line-height:24px;color:#d1d5db;">
+                      Got more questions in mind? Put them out there:<br />
+                      <a href="${params.appBaseUrl}/submit-poll" style="color:#67e8f9;">${params.appBaseUrl}/submit-poll</a>
+                    </p>
+                    <p style="margin:0;font-size:16px;line-height:24px;color:#e5e7eb;">
+                      Best,<br />Poll & See<br />
+                      <span style="color:#9ca3af;">See what people really think</span>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+    </html>
+  `;
+
+  const text = `Hi,
+
+Your poll is now live:
+${params.pollUrl}
+
+To get votes quickly, post it on your WhatsApp status and share it with a few groups or friends. That’s where most polls pick up fast.
+
+Got more questions in mind? Put them out there:
+${params.appBaseUrl}/submit-poll
+
+Best,
+Poll & See
+See what people really think`;
+
+  return { html, text };
+}
+
+async function sendApprovedEmail(params: { to: string; pollUrl: string }) {
+  const resendApiKey = process.env.RESEND_API_KEY;
+  const emailFrom = process.env.EMAIL_FROM;
+  const appBaseUrl = process.env.APP_BASE_URL || "https://www.pollandsee.com";
+
+  if (!resendApiKey || !emailFrom) return;
+
+  const emailContent = buildPollApprovedEmail({
+    pollUrl: params.pollUrl,
+    appBaseUrl,
+  });
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${resendApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: emailFrom,
+      to: params.to,
+      subject: "Your Poll & See poll is live",
+      html: emailContent.html,
+      text: emailContent.text,
+    }),
+  });
+
+  if (!response.ok) {
+    console.error("Approved poll email failed:", await response.text());
+  }
 }
 
 export async function POST(
@@ -186,10 +288,17 @@ created_at: new Date().toISOString(),
         }
       }
 
-      const { error: deleteSubmissionError } = await supabaseAdmin
-        .from("poll_submissions")
-        .delete()
-        .eq("id", submissionId);
+if (typedSubmission.email && updatedPoll.slug) {
+  await sendApprovedEmail({
+    to: typedSubmission.email,
+    pollUrl: `https://www.pollandsee.com/poll/${updatedPoll.slug}`,
+  });
+}
+
+const { error: deleteSubmissionError } = await supabaseAdmin
+  .from("poll_submissions")
+  .delete()
+  .eq("id", submissionId);
 
       if (deleteSubmissionError) {
         return NextResponse.json(
@@ -253,10 +362,17 @@ created_at: new Date().toISOString(),
   );
 }
 
-    const { error: deleteSubmissionError } = await supabaseAdmin
-      .from("poll_submissions")
-      .delete()
-      .eq("id", submissionId);
+if (typedSubmission.email && insertedPoll.slug) {
+  await sendApprovedEmail({
+    to: typedSubmission.email,
+    pollUrl: `https://www.pollandsee.com/poll/${insertedPoll.slug}`,
+  });
+}
+
+const { error: deleteSubmissionError } = await supabaseAdmin
+  .from("poll_submissions")
+  .delete()
+  .eq("id", submissionId);
 
     if (deleteSubmissionError) {
       return NextResponse.json(
