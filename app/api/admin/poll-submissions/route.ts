@@ -83,10 +83,11 @@ export async function GET(request: NextRequest) {
     const supabaseAdmin = getAdminClient();
     const search = request.nextUrl.searchParams.get("q")?.trim() || "";
 
-    let query = supabaseAdmin
-      .from("poll_submissions")
-      .select("id, poll_id, email, question, description, category, options, option_image_urls, is_private, status, created_at")
-      .order("created_at", { ascending: false });
+let query = supabaseAdmin
+  .from("poll_submissions")
+  .select("id, poll_id, email, question, description, category, options, option_image_urls, is_private, status, created_at")
+  .neq("status", "hidden")
+  .order("created_at", { ascending: false });
 
     if (search) {
       const safeSearch = search.replace(/[%(),]/g, " ");

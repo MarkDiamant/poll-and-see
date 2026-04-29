@@ -451,7 +451,37 @@ const createSubmission = async () => {
       setCreatingSubmission(false);
     }
   };
+const hideSubmission = async (submissionId: number) => {
+  setSavingKey(`hide:${submissionId}`);
+  setError("");
 
+  try {
+    const response = await fetch(`/api/admin/poll-submissions/${submissionId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-key": adminKey,
+      },
+      body: JSON.stringify({
+        status: "hidden",
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Could not hide submission.");
+    }
+
+    setSubmissions((current) =>
+      current.filter((submission) => submission.id !== submissionId)
+    );
+  } catch (err) {
+    setError(err instanceof Error ? err.message : "Could not hide submission.");
+  } finally {
+    setSavingKey("");
+  }
+};
   const deleteSubmission = async (submissionId: number) => {
     setSavingKey(`delete:${submissionId}`);
     setError("");
@@ -569,6 +599,12 @@ const createSubmission = async () => {
                 <span>Submissions</span>
                 {badge(sortedSubmissions.length, true)}
               </Link>
+              <Link
+  href="/admin/hidden"
+  className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+>
+  Hidden
+</Link>
             </nav>
 
             <input
@@ -924,9 +960,17 @@ const createSubmission = async () => {
                           Approve
                         </button>
 
-                        <button
-                          type="button"
-                          onClick={() => void deleteSubmission(submission.id)}
+<button
+  type="button"
+  onClick={() => void hideSubmission(submission.id)}
+  disabled={savingKey === `hide:${submission.id}`}
+  className="rounded-lg border border-yellow-600 bg-yellow-900 px-2 py-1.5 text-left text-xs font-medium text-yellow-100 transition hover:bg-yellow-800 disabled:opacity-60"
+>
+  Hide
+</button>
+<button
+  type="button"
+  onClick={() => void deleteSubmission(submission.id)}
                           disabled={savingKey === `delete:${submission.id}`}
                           className="rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800 disabled:opacity-60"
                         >

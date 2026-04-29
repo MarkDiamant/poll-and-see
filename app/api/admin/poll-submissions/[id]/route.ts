@@ -139,7 +139,11 @@ export async function PATCH(
     }
 
     if ("status" in body) {
-      if (body.status !== "pending" && body.status !== "ready") {
+      if (
+  body.status !== "pending" &&
+  body.status !== "ready" &&
+  body.status !== "hidden"
+) {
         return NextResponse.json({ error: "Invalid status." }, { status: 400 });
       }
       updates.status = body.status;
