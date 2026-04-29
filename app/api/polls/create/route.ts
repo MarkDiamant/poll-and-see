@@ -162,9 +162,10 @@ async function sendNewPollNotificationEmail({
   pollUrl: string;
 }) {
   const resendApiKey = process.env.RESEND_API_KEY;
-  const fromEmail = process.env.POLL_LINK_FROM_EMAIL;
+  const fromEmail = process.env.POLL_LINK_FROM_EMAIL || process.env.EMAIL_FROM;
 
   if (!resendApiKey || !fromEmail) {
+    console.error("New poll notification email is not configured.");
     return false;
   }
 
@@ -193,7 +194,13 @@ async function sendNewPollNotificationEmail({
     }),
   });
 
-  return response.ok;
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("New poll notification email failed:", errorText);
+    return false;
+  }
+
+  return true;
 }
 
 async function sendPollLinkEmail({
