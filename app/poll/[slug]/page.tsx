@@ -496,19 +496,8 @@ async function buildShareCardFile({
 
   canvas.height = cardHeight;
 
-  ctx.fillStyle = "#050816";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
   ctx.fillStyle = "#111827";
-  drawRoundedRect(
-    ctx,
-    24,
-    24,
-    632,
-    cardHeight - 48,
-    28
-  );
-  ctx.fill();
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   drawRoundedRect(ctx, 60, 60, 150, 40, 18);
 

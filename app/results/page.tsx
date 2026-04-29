@@ -233,29 +233,8 @@ async function buildResultsShareFile(bundle: PollBundle) {
 
   canvas.height = cardHeight;
 
-  const gradient = ctx.createLinearGradient(
-    0,
-    0,
-    0,
-    canvas.height
-  );
-
-  gradient.addColorStop(0, "#050816");
-  gradient.addColorStop(1, "#111827");
-
-  ctx.fillStyle = gradient;
+   ctx.fillStyle = "#111827";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  ctx.fillStyle = "rgba(255,255,255,0.05)";
-  drawRoundedRect(
-    ctx,
-    24,
-    24,
-    632,
-    cardHeight - 48,
-    28
-  );
-  ctx.fill();
 
   drawRoundedRect(ctx, 60, 60, 150, 40, 18);
 
@@ -278,7 +257,7 @@ async function buildResultsShareFile(bundle: PollBundle) {
 
   ctx.textAlign = "right";
 
-  ctx.font = "600 20px Arial";
+  ctx.font = "700 26px Arial";
   ctx.fillStyle =
     "rgba(255,255,255,0.75)";
 
@@ -449,23 +428,27 @@ async function buildResultsShareFile(bundle: PollBundle) {
   if (logo) {
     ctx.globalAlpha = 0.9;
 
+    const logoWidth = 210;
+    const logoHeight = logoWidth * (logo.height / logo.width);
+    const logoX = (canvas.width - logoWidth) / 2;
+
     ctx.drawImage(
       logo,
-      205,
+      logoX,
       y,
-      210,
-      55
+      logoWidth,
+      logoHeight
     );
 
     ctx.globalAlpha = 1;
   }
 
-  y += 90;
+  y += 95;
 
   ctx.textAlign = "center";
 
   ctx.font =
-    "400 22px Arial";
+    "400 24px Arial";
 
   ctx.fillStyle =
     "rgba(255,255,255,0.75)";
