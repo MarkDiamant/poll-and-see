@@ -56,11 +56,6 @@ function isNewSubmission(createdAt: string | null) {
   return Date.now() - new Date(createdAt).getTime() <= 24 * 60 * 60 * 1000;
 }
 
-function categorySortIndex(category: string | null) {
-  const index = CATEGORY_OPTIONS.indexOf((category || "General") as CategoryOption);
-  return index === -1 ? CATEGORY_OPTIONS.indexOf("General") : index;
-}
-
 function suggestCategory(question: string): CategoryOption {
   const q = question.toLowerCase().trim();
 
@@ -494,9 +489,6 @@ const createSubmission = async () => {
         return true;
       })
       .sort((a, b) => {
-        const categoryDiff = categorySortIndex(a.category) - categorySortIndex(b.category);
-        if (categoryDiff !== 0) return categoryDiff;
-
         const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
         const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
         return bTime - aTime;
