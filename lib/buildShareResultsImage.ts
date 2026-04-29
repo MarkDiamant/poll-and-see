@@ -96,15 +96,20 @@ export async function buildShareResultsImageFile({
    ctx.fillStyle = "#000000";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  drawRoundedRect(ctx, 0, 0, canvas.width, canvas.height, 56);
+    drawRoundedRect(ctx, 0, 0, canvas.width, canvas.height, 68);
   ctx.fillStyle = "#111827";
   ctx.fill();
+
+  ctx.strokeStyle = "rgba(255,255,255,0.16)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
 
   const categoryText = poll.category || "General";
   ctx.font = "600 20px Arial";
   const categoryWidth = ctx.measureText(categoryText).width + 38;
+  const topMetaY = 42;
 
-  drawRoundedRect(ctx, 60, 48, categoryWidth, 40, 20);
+  drawRoundedRect(ctx, 60, topMetaY - 20, categoryWidth, 40, 20);
   ctx.fillStyle = "rgba(6, 182, 212, 0.12)";
   ctx.fill();
   ctx.strokeStyle = "rgba(6, 182, 212, 0.55)";
@@ -114,12 +119,12 @@ export async function buildShareResultsImageFile({
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#67e8f9";
-  ctx.fillText(categoryText, 60 + categoryWidth / 2, 68);
+    ctx.fillText(categoryText, 60 + categoryWidth / 2, topMetaY);
 
   ctx.textAlign = "right";
   ctx.font = "700 28px Arial";
   ctx.fillStyle = "rgba(255,255,255,0.88)";
-  ctx.fillText(`${totalVotes.toLocaleString()} votes`, 620, 68);
+  ctx.fillText(`${totalVotes.toLocaleString()} votes`, 620, topMetaY);
 
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
