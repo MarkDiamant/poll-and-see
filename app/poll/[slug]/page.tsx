@@ -663,7 +663,7 @@ async function buildShareCardFile({
       "700 28px Arial";
 
     ctx.fillText(
-      `${pct}%`,
+      `${pct}% • ${votes.toLocaleString()} ${votes === 1 ? "vote" : "votes"}`,
       612,
       contentY + 24
     );
@@ -737,7 +737,7 @@ async function buildShareCardFile({
     "rgba(255,255,255,0.75)";
 
   ctx.fillText(
-    "See what people really think",
+    "Vote and see what others think:",
     340,
     y
   );

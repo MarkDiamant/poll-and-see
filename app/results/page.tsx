@@ -187,6 +187,16 @@ function wrapCanvasText(ctx: CanvasRenderingContext2D, text: string, maxWidth: n
   return lines;
 }
 
+async function loadLogoImage() {
+  return await new Promise<HTMLImageElement | null>((resolve) => {
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.onload = () => resolve(image);
+    image.onerror = () => resolve(null);
+    image.src = `${window.location.origin}/logo.png`;
+  });
+}
+
 async function buildResultsShareFile(bundle: PollBundle) {
   const canvas = document.createElement("canvas");
   canvas.width = 680;
@@ -194,15 +204,42 @@ async function buildResultsShareFile(bundle: PollBundle) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
 
-  const totalVotes = Object.values(bundle.voteCounts).reduce((sum, count) => sum + count, 0);
+  const totalVotes = Object.values(bundle.voteCounts).reduce(
+    (sum, count) => sum + count,
+    0
+  );
+
+  const logo = await loadLogoImage();
+  const colours = getCategoryColours(bundle.poll.category);
 
   ctx.font = "700 42px Arial";
-  const questionLines = wrapCanvasText(ctx, bundle.poll.question, 560, 5);
+  const questionLines = wrapCanvasText(
+    ctx,
+    bundle.poll.question,
+    470,
+    6
+  );
 
-  const cardHeight = 230 + questionLines.length * 54 + bundle.options.length * 120 + 150;
+  const questionHeight = questionLines.length * 56;
+  const getShareOptionHeight = (option: PollOption) => option.image_url ? 290 : 136;
+  const optionsHeight = bundle.options.reduce((sum, option) => sum + getShareOptionHeight(option), 0);
+  const footerHeight = 240;
+
+  const cardHeight =
+    180 +
+    questionHeight +
+    optionsHeight +
+    footerHeight;
+
   canvas.height = cardHeight;
 
-  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  const gradient = ctx.createLinearGradient(
+    0,
+    0,
+    0,
+    canvas.height
+  );
+
   gradient.addColorStop(0, "#050816");
   gradient.addColorStop(1, "#111827");
 
@@ -210,75 +247,266 @@ async function buildResultsShareFile(bundle: PollBundle) {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   ctx.fillStyle = "rgba(255,255,255,0.05)";
-  drawRoundedRect(ctx, 24, 24, 632, cardHeight - 48, 28);
+  drawRoundedRect(
+    ctx,
+    24,
+    24,
+    632,
+    cardHeight - 48,
+    28
+  );
   ctx.fill();
 
+  drawRoundedRect(ctx, 60, 60, 150, 40, 18);
+
+  ctx.fillStyle = colours.bg;
+  ctx.fill();
+
+  ctx.strokeStyle = colours.border;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
   ctx.font = "600 20px Arial";
-  ctx.fillStyle = "rgba(255,255,255,0.75)";
-  ctx.fillText(bundle.poll.category, 60, 82);
+  ctx.fillStyle = colours.text;
+  ctx.textBaseline = "middle";
+
+  ctx.fillText(
+    bundle.poll.category,
+    82,
+    80
+  );
 
   ctx.textAlign = "right";
-  ctx.fillText(`${totalVotes.toLocaleString()} votes`, 620, 82);
+
+  ctx.font = "600 20px Arial";
+  ctx.fillStyle =
+    "rgba(255,255,255,0.75)";
+
+  ctx.fillText(
+    `${totalVotes.toLocaleString()} votes`,
+    600,
+    80
+  );
+
   ctx.textAlign = "left";
 
   ctx.font = "700 42px Arial";
   ctx.fillStyle = "#ffffff";
 
-  let y = 145;
+  let y = 140;
 
-  questionLines.forEach((line) => {
-    ctx.fillText(line, 60, y);
-    y += 54;
+  questionLines.forEach(line => {
+    ctx.fillText(
+      line,
+      60,
+      y
+    );
+
+    y += 56;
   });
 
-  y += 30;
+  y += 24;
 
-  for (const [index, option] of bundle.options.entries()) {
-    const votes = bundle.voteCounts[option.id] || 0;
-    const percent = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
-    const colour = OPTION_COLOURS[index] || OPTION_COLOURS[0];
+  const barWidth = 430;
 
-    ctx.fillStyle = "rgba(255,255,255,0.06)";
-    drawRoundedRect(ctx, 46, y, 588, 92, 18);
+  for (const [i, opt] of bundle.options.entries()) {
+    const votes =
+      bundle.voteCounts[opt.id] || 0;
+
+    const pct =
+      totalVotes > 0
+        ? Math.round(
+            (votes / totalVotes) * 100
+          )
+        : 0;
+
+    const colour =
+      OPTION_COLOURS[i] ||
+      OPTION_COLOURS[0];
+
+    const optionHeight = opt.image_url ? 290 : 136;
+
+    ctx.fillStyle =
+      "rgba(255,255,255,0.05)";
+
+    drawRoundedRect(
+      ctx,
+      46,
+      y,
+      588,
+      optionHeight - 34,
+      20
+    );
+
     ctx.fill();
 
-    ctx.font = "600 25px Arial";
-    ctx.fillStyle = "#ffffff";
-    ctx.fillText(option.option_text, 64, y + 34);
+    let contentY = y + 24;
+
+    if (opt.image_url) {
+      const image = await new Promise<HTMLImageElement | null>((resolve) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = opt.image_url as string;
+      });
+
+      if (image) {
+        const imageX = 64;
+        const imageY = y + 18;
+        const imageSize = 120;
+
+        ctx.save();
+        drawRoundedRect(ctx, imageX, imageY, imageSize, imageSize, 16);
+        ctx.clip();
+
+        const imageRatio = image.width / image.height;
+        let drawWidth = imageSize;
+        let drawHeight = imageSize;
+        let drawX = imageX;
+        let drawY = imageY;
+
+        if (imageRatio > 1) {
+          drawWidth = imageSize * imageRatio;
+          drawX = imageX - (drawWidth - imageSize) / 2;
+        } else {
+          drawHeight = imageSize / imageRatio;
+          drawY = imageY - (drawHeight - imageSize) / 2;
+        }
+
+        ctx.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+        ctx.restore();
+      }
+
+      contentY = y + 160;
+    }
+
+    ctx.font =
+      "600 26px Arial";
+
+    ctx.fillStyle =
+      "#ffffff";
+
+    ctx.fillText(
+      opt.option_text,
+      64,
+      contentY + 18
+    );
 
     ctx.textAlign = "right";
-    ctx.font = "700 26px Arial";
-    ctx.fillText(`${percent}%`, 612, y + 34);
+
+    ctx.font =
+      "700 28px Arial";
+
+    ctx.fillText(
+      `${pct}% • ${votes.toLocaleString()} ${votes === 1 ? "vote" : "votes"}`,
+      612,
+      contentY + 24
+    );
+
     ctx.textAlign = "left";
 
-    ctx.fillStyle = "rgba(255,255,255,0.12)";
-    drawRoundedRect(ctx, 64, y + 58, 430, 14, 8);
+    ctx.fillStyle =
+      "rgba(255,255,255,0.12)";
+
+    drawRoundedRect(
+      ctx,
+      64,
+      contentY + 48,
+      barWidth,
+      14,
+      8
+    );
+
     ctx.fill();
 
-    const fill = percent > 0 ? Math.max((430 * percent) / 100, 10) : 0;
+    const fill =
+      pct > 0
+        ? Math.max(
+            (barWidth * pct) / 100,
+            10
+          )
+        : 0;
+
     ctx.fillStyle = colour;
-    drawRoundedRect(ctx, 64, y + 58, fill, 14, 8);
+
+    drawRoundedRect(
+      ctx,
+      64,
+      contentY + 48,
+      fill,
+      14,
+      8
+    );
+
     ctx.fill();
 
-    y += 120;
+    y += optionHeight;
   }
 
-  y += 28;
+  y += 50;
+
+  if (logo) {
+    ctx.globalAlpha = 0.9;
+
+    ctx.drawImage(
+      logo,
+      205,
+      y,
+      210,
+      55
+    );
+
+    ctx.globalAlpha = 1;
+  }
+
+  y += 90;
 
   ctx.textAlign = "center";
-  ctx.font = "600 26px Arial";
-  ctx.fillStyle = "rgba(255,255,255,0.85)";
-  ctx.fillText("pollandsee.com", 340, y);
 
-  const blob = await new Promise<Blob | null>((resolve) => {
-    canvas.toBlob((b) => resolve(b), "image/png");
-  });
+  ctx.font =
+    "400 22px Arial";
+
+  ctx.fillStyle =
+    "rgba(255,255,255,0.75)";
+
+  ctx.fillText(
+    "Vote and see what others think:",
+    340,
+    y
+  );
+
+  y += 34;
+
+  ctx.font =
+    "600 26px Arial";
+
+  ctx.fillStyle =
+    "rgba(255,255,255,0.6)";
+
+  ctx.fillText(
+    "pollandsee.com",
+    340,
+    y
+  );
+
+  const blob =
+    await new Promise<Blob | null>(
+      resolve => {
+        canvas.toBlob(
+          b => resolve(b),
+          "image/png"
+        );
+      }
+    );
 
   if (!blob) return null;
 
-  return new File([blob], `pollandsee-results-${bundle.poll.slug}.png`, {
-    type: "image/png",
-  });
+  return new File(
+    [blob],
+    `pollandsee-results-${bundle.poll.slug}.png`,
+    { type: "image/png" }
+  );
 }
 
 async function shareImageFile(file: File, text: string) {
