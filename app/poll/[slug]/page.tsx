@@ -496,20 +496,10 @@ async function buildShareCardFile({
 
   canvas.height = cardHeight;
 
-  const gradient = ctx.createLinearGradient(
-    0,
-    0,
-    0,
-    canvas.height
-  );
-
-  gradient.addColorStop(0, "#050816");
-  gradient.addColorStop(1, "#111827");
-
-  ctx.fillStyle = gradient;
+  ctx.fillStyle = "#050816";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.fillStyle = "rgba(255,255,255,0.05)";
+  ctx.fillStyle = "#111827";
   drawRoundedRect(
     ctx,
     24,
@@ -714,24 +704,28 @@ async function buildShareCardFile({
 
     ctx.globalAlpha = 0.9;
 
+    const logoWidth = 210;
+    const logoHeight = logoWidth * (logo.height / logo.width);
+    const logoX = (canvas.width - logoWidth) / 2;
+
     ctx.drawImage(
       logo,
-      205,
+      logoX,
       y,
-      210,
-      55
+      logoWidth,
+      logoHeight
     );
 
     ctx.globalAlpha = 1;
 
   }
 
-  y += 90;
+  y += 95;
 
   ctx.textAlign = "center";
 
   ctx.font =
-    "400 22px Arial";
+    "400 24px Arial";
 
   ctx.fillStyle =
     "rgba(255,255,255,0.75)";
