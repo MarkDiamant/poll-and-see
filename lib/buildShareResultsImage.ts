@@ -16,14 +16,20 @@ type VoteCounts = Record<number, number>;
 
 const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899", "#8b5cf6", "#14b8a6", "#f97316", "#ef4444"];
 
-const CATEGORY_COLOURS: Record<string, { fill: string; border: string; text: string }> = {
-  General: { fill: "rgba(148,163,184,0.12)", border: "rgba(148,163,184,0.55)", text: "#cbd5f5" },
-  Lifestyle: { fill: "rgba(236,72,153,0.12)", border: "rgba(236,72,153,0.55)", text: "#f9a8d4" },
-  Community: { fill: "rgba(6,182,212,0.12)", border: "rgba(6,182,212,0.55)", text: "#67e8f9" },
-  Finance: { fill: "rgba(34,197,94,0.12)", border: "rgba(34,197,94,0.55)", text: "#86efac" },
-  Business: { fill: "rgba(249,115,22,0.12)", border: "rgba(249,115,22,0.55)", text: "#fdba74" },
-  Education: { fill: "rgba(139,92,246,0.12)", border: "rgba(139,92,246,0.55)", text: "#c4b5fd" },
-  Fun: { fill: "rgba(234,179,8,0.12)", border: "rgba(234,179,8,0.55)", text: "#fde047" },
+const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: string; solid: string }> = {
+  All: { text: "#e5e7eb", bg: "rgba(31, 41, 55, 0.9)", border: "rgba(75, 85, 99, 1)", solid: "#374151" },
+  Business: { text: "#93c5fd", bg: "rgba(37, 99, 235, 0.12)", border: "rgba(37, 99, 235, 0.55)", solid: "#2563eb" },
+  Community: { text: "#fca5a5", bg: "rgba(239, 68, 68, 0.12)", border: "rgba(239, 68, 68, 0.55)", solid: "#ef4444" },
+  Education: { text: "#fde68a", bg: "rgba(245, 158, 11, 0.12)", border: "rgba(245, 158, 11, 0.55)", solid: "#f59e0b" },
+  Finance: { text: "#86efac", bg: "rgba(34, 197, 94, 0.12)", border: "rgba(34, 197, 94, 0.55)", solid: "#22c55e" },
+  Fun: { text: "#f9a8d4", bg: "rgba(236, 72, 153, 0.12)", border: "rgba(236, 72, 153, 0.55)", solid: "#ec4899" },
+  General: { text: "#67e8f9", bg: "rgba(6, 182, 212, 0.12)", border: "rgba(6, 182, 212, 0.55)", solid: "#06b6d4" },
+  Lifestyle: { text: "#d8b4fe", bg: "rgba(168, 85, 247, 0.12)", border: "rgba(168, 85, 247, 0.55)", solid: "#a855f7" },
+  Health: { text: "#fdba74", bg: "rgba(249, 115, 22, 0.12)", border: "rgba(249, 115, 22, 0.55)", solid: "#f97316" },
+  Politics: { text: "#fcd34d", bg: "rgba(234, 179, 8, 0.12)", border: "rgba(234, 179, 8, 0.55)", solid: "#eab308" },
+  Sport: { text: "#c4b5fd", bg: "rgba(139, 92, 246, 0.12)", border: "rgba(139, 92, 246, 0.55)", solid: "#8b5cf6" },
+  Sports: { text: "#c4b5fd", bg: "rgba(139, 92, 246, 0.12)", border: "rgba(139, 92, 246, 0.55)", solid: "#8b5cf6" },
+  Tech: { text: "#f9a8d4", bg: "rgba(217, 70, 239, 0.12)", border: "rgba(217, 70, 239, 0.55)", solid: "#d946ef" },
 };
 
 function drawRoundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
@@ -130,17 +136,19 @@ ctx.stroke();
 
     const categoryStyle = CATEGORY_COLOURS[categoryText] || CATEGORY_COLOURS["General"];
 
-  drawRoundedRect(ctx, 60, topMetaY - 20, categoryWidth, 40, 20);
-  ctx.fillStyle = categoryStyle.fill;
-  ctx.fill();
-  ctx.strokeStyle = categoryStyle.border;
-  ctx.lineWidth = 2;
-  ctx.stroke();
+const categoryStyle = CATEGORY_COLOURS[categoryText] || CATEGORY_COLOURS.General;
 
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillStyle = categoryStyle.text;
-  ctx.fillText(categoryText, 60 + categoryWidth / 2, topMetaY);
+drawRoundedRect(ctx, 60, topMetaY - 20, categoryWidth, 40, 20);
+ctx.fillStyle = categoryStyle.bg;
+ctx.fill();
+ctx.strokeStyle = categoryStyle.border;
+ctx.lineWidth = 2;
+ctx.stroke();
+
+ctx.textAlign = "center";
+ctx.textBaseline = "middle";
+ctx.fillStyle = categoryStyle.text;
+ctx.fillText(categoryText, 60 + categoryWidth / 2, topMetaY);
 
   ctx.textAlign = "right";
   ctx.font = "700 28px Arial";
