@@ -14,6 +14,18 @@ type Row = {
 
 const ADMIN_KEY_STORAGE = "pollandsee-admin-key";
 
+function badge(count: number, isActive: boolean) {
+  return (
+    <span
+      className={`inline-flex min-w-[22px] items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold ${
+        isActive ? "bg-black/10 text-black" : "bg-white/10 text-white"
+      }`}
+    >
+      {count}
+    </span>
+  );
+}
+
 export default function HiddenPage() {
   const [items, setItems] = useState<Row[]>([]);
   const [search, setSearch] = useState("");
@@ -36,15 +48,9 @@ export default function HiddenPage() {
       const rows = data.items || [];
 
       setItems(rows);
-
       setQuestionEdits(Object.fromEntries(rows.map((r: Row) => [r.id, r.question])));
       setDescriptionEdits(Object.fromEntries(rows.map((r: Row) => [r.id, r.description || ""])));
-      setOptionsEdits(
-        Object.fromEntries(
-          rows.map((r: Row) => [r.id, (r.options || []).join("\n")])
-        )
-      );
-
+      setOptionsEdits(Object.fromEntries(rows.map((r: Row) => [r.id, (r.options || []).join("\n")])));
       setLoading(false);
     };
 
@@ -52,8 +58,14 @@ export default function HiddenPage() {
   }, []);
 
   const filtered = useMemo(() => {
-    return items.filter((i) =>
-      i.question.toLowerCase().includes(search.toLowerCase())
+    const term = search.trim().toLowerCase();
+    if (!term) return items;
+
+    return items.filter((item) =>
+      [item.question, item.description || "", item.category || "", ...(item.options || [])]
+        .join(" ")
+        .toLowerCase()
+        .includes(term)
     );
   }, [items, search]);
 
@@ -71,7 +83,7 @@ export default function HiddenPage() {
         description: descriptionEdits[id],
         options: (optionsEdits[id] || "")
           .split("\n")
-          .map((o) => o.trim())
+          .map((option) => option.trim())
           .filter(Boolean),
       }),
     });
@@ -80,6 +92,8 @@ export default function HiddenPage() {
   };
 
   const makePublic = async (id: number) => {
+    setSaving(id);
+
     await fetch(`/api/admin/poll-submissions/${id}/approve`, {
       method: "POST",
       headers: {
@@ -87,82 +101,158 @@ export default function HiddenPage() {
       },
     });
 
-    setItems((current) => current.filter((i) => i.id !== id));
+    setItems((current) => current.filter((item) => item.id !== id));
+    setSaving(null);
   };
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 px-6 py-8 text-white">
-      <section className="mx-auto max-w-[1200px]">
-        <div className="mb-5 flex items-center justify-between">
-          <h1 className="text-3xl font-semibold">Hidden polls</h1>
+      <section className="mx-auto max-w-[1500px]">
+        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h1 className="text-3xl font-semibold">Hidden polls</h1>
+            <p className="mt-1 text-sm text-gray-300">
+              Polls hidden from the homepage and submissions queue.
+            </p>
+          </div>
 
-          <nav className="flex gap-2">
-            <Link href="/admin/polls" className="px-4 py-2 border rounded-xl">Live</Link>
-            <Link href="/admin/submissions" className="px-4 py-2 border rounded-xl">Submissions</Link>
-           <Link href="/admin/hidden" className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-black">
-  <span>Hidden</span>
-  <span className="inline-flex min-w-[22px] items-center justify-center rounded-full bg-black/10 px-1.5 py-0.5 text-[11px] font-semibold text-black">
-    {items.length}
-  </span>
-</Link>
+          <nav className="flex items-center gap-2">
+            <Link
+              href="/admin/polls"
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+            >
+              Live Polls
+            </Link>
+
+            <Link
+              href="/admin/submissions"
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+            >
+              Submissions
+            </Link>
+
+            <Link
+              href="/admin/hidden"
+              className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-black"
+            >
+              <span>Hidden</span>
+              {badge(items.length, true)}
+            </Link>
           </nav>
         </div>
 
         <input
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(event) => setSearch(event.target.value)}
           placeholder="Search hidden polls..."
-          className="mb-4 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm"
+          className="mb-4 h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
         />
 
-        <div className="space-y-4">
-          {loading && <p>Loading...</p>}
+        <div className="overflow-x-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 z-10 bg-gray-900/95 text-left text-gray-300">
+              <tr>
+                <th className="px-4 py-3 font-medium">Poll</th>
+                <th className="px-4 py-3 font-medium">Options</th>
+                <th className="px-4 py-3 font-medium">Details</th>
+                <th className="px-4 py-3 font-medium">Actions</th>
+              </tr>
+            </thead>
 
-          {!loading &&
-            filtered.map((item) => (
-              <div key={item.id} className="rounded-2xl border border-gray-700 bg-gray-800 p-4">
-                <input
-                  value={questionEdits[item.id]}
-                  onChange={(e) =>
-                    setQuestionEdits((c) => ({ ...c, [item.id]: e.target.value }))
-                  }
-                  onBlur={() => save(item.id)}
-                  className="w-full mb-2 bg-gray-900 p-2 rounded"
-                />
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={4} className="px-4 py-6 text-center text-gray-300">
+                    Loading hidden polls...
+                  </td>
+                </tr>
+              ) : null}
 
-                <textarea
-                  value={descriptionEdits[item.id]}
-                  onChange={(e) =>
-                    setDescriptionEdits((c) => ({ ...c, [item.id]: e.target.value }))
-                  }
-                  onBlur={() => save(item.id)}
-                  className="w-full mb-2 bg-gray-900 p-2 rounded"
-                />
+              {!loading && filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-4 py-6 text-center text-gray-300">
+                    No hidden polls found.
+                  </td>
+                </tr>
+              ) : null}
 
-                <textarea
-                  value={optionsEdits[item.id]}
-                  onChange={(e) =>
-                    setOptionsEdits((c) => ({ ...c, [item.id]: e.target.value }))
-                  }
-                  onBlur={() => save(item.id)}
-                  className="w-full mb-3 bg-gray-900 p-2 rounded"
-                />
-
-                <div className="flex justify-between">
-                  <span className="text-xs text-gray-400">
-                    {item.created_at &&
-                      new Date(item.created_at).toLocaleString()}
-                  </span>
-
-                  <button
-                    onClick={() => makePublic(item.id)}
-                    className="bg-white text-black px-4 py-2 rounded"
+              {!loading &&
+                filtered.map((item, index) => (
+                  <tr
+                    key={item.id}
+                    className={`border-t border-gray-700 align-top ${
+                      index % 2 === 0 ? "bg-gray-800" : "bg-black/40"
+                    }`}
                   >
-                    Make Public
-                  </button>
-                </div>
-              </div>
-            ))}
+                    <td className="px-4 py-4">
+                      <div className="min-w-[380px] max-w-[520px] space-y-2">
+                        <input
+                          value={questionEdits[item.id] ?? ""}
+                          onChange={(event) =>
+                            setQuestionEdits((current) => ({
+                              ...current,
+                              [item.id]: event.target.value,
+                            }))
+                          }
+                          onBlur={() => void save(item.id)}
+                          className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm font-medium text-white outline-none transition focus:border-gray-500"
+                        />
+
+                        <textarea
+                          value={descriptionEdits[item.id] ?? ""}
+                          onChange={(event) =>
+                            setDescriptionEdits((current) => ({
+                              ...current,
+                              [item.id]: event.target.value,
+                            }))
+                          }
+                          onBlur={() => void save(item.id)}
+                          rows={2}
+                          className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                        />
+                      </div>
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <div className="min-w-[240px] max-w-[320px]">
+                        <textarea
+                          value={optionsEdits[item.id] ?? ""}
+                          onChange={(event) =>
+                            setOptionsEdits((current) => ({
+                              ...current,
+                              [item.id]: event.target.value,
+                            }))
+                          }
+                          onBlur={() => void save(item.id)}
+                          rows={4}
+                          className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none transition focus:border-gray-500"
+                        />
+                      </div>
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <div className="min-w-[170px] space-y-2 text-xs text-gray-400">
+                        <p>Submission ID {item.id}</p>
+                        <p>{item.category || "General"}</p>
+                        <p>{item.created_at ? new Date(item.created_at).toLocaleString() : ""}</p>
+                        {saving === item.id ? <p className="text-yellow-300">Saving...</p> : null}
+                      </div>
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <button
+                        type="button"
+                        onClick={() => void makePublic(item.id)}
+                        disabled={saving === item.id}
+                        className="cursor-pointer rounded-lg bg-white px-3 py-2 text-left text-xs font-medium text-black transition hover:bg-gray-200 disabled:opacity-40"
+                      >
+                        Make Public
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
         </div>
       </section>
     </main>
