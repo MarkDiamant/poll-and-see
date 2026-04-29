@@ -917,13 +917,9 @@ if (preferredCategory === "All" || availableCategories.includes(preferredCategor
     };
   }, [featuredPoll?.id, polls, syncFeaturedVoteCounts, syncTotalVoteCount, syncVoteDerivedData]);
 
-  useEffect(() => {
+ useEffect(() => {
   if (votesLast24 < 100) {
     setShowActivityIndicator(false);
-    return;
-  }
-
-  if (sessionStorage.getItem("activity_indicator_shown") === "1") {
     return;
   }
 
@@ -931,7 +927,6 @@ if (preferredCategory === "All" || availableCategories.includes(preferredCategor
 
   const initialTimeout = setTimeout(() => {
     setShowActivityIndicator(true);
-    sessionStorage.setItem("activity_indicator_shown", "1");
 
     hideTimeout = setTimeout(() => {
       setShowActivityIndicator(false);
@@ -942,7 +937,7 @@ if (preferredCategory === "All" || availableCategories.includes(preferredCategor
     clearTimeout(initialTimeout);
     if (hideTimeout) clearTimeout(hideTimeout);
   };
-}, [votesLast24 >= 100]);
+}, [votesLast24]);
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
 

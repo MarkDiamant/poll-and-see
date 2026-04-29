@@ -1507,32 +1507,27 @@ export default function PollPage() {
     };
   }, [syncVoteDerivedData]);
 
-  useEffect(() => {
-    if (votesLast24 < 100) {
+ useEffect(() => {
+  if (votesLast24 < 100) {
+    setShowActivityIndicator(false);
+    return;
+  }
+
+  let hideTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  const initialTimeout = setTimeout(() => {
+    setShowActivityIndicator(true);
+
+    hideTimeout = setTimeout(() => {
       setShowActivityIndicator(false);
-      return;
-    }
-
-    if (sessionStorage.getItem("activity_indicator_shown") === "1") {
-      return;
-    }
-
-    let hideTimeout: ReturnType<typeof setTimeout> | null = null;
-
-    const initialTimeout = setTimeout(() => {
-      setShowActivityIndicator(true);
-      sessionStorage.setItem("activity_indicator_shown", "1");
-
-      hideTimeout = setTimeout(() => {
-        setShowActivityIndicator(false);
-      }, 5000);
     }, 5000);
+  }, 5000);
 
-    return () => {
-      clearTimeout(initialTimeout);
-      if (hideTimeout) clearTimeout(hideTimeout);
-    };
-  }, [votesLast24 >= 100]);
+  return () => {
+    clearTimeout(initialTimeout);
+    if (hideTimeout) clearTimeout(hideTimeout);
+  };
+}, [votesLast24]);
 
   const handleBack = () => {
     sessionStorage.setItem("restoreHomeScroll", "true");
