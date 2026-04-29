@@ -233,8 +233,9 @@ async function buildResultsShareFile(bundle: PollBundle) {
 
   canvas.height = cardHeight;
 
-   ctx.fillStyle = "#111827";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  drawRoundedRect(ctx, 0, 0, canvas.width, canvas.height, 28);
+  ctx.fillStyle = "#111827";
+  ctx.fill();
 
   drawRoundedRect(ctx, 60, 60, 150, 40, 18);
 
@@ -257,9 +258,9 @@ async function buildResultsShareFile(bundle: PollBundle) {
 
   ctx.textAlign = "right";
 
-  ctx.font = "700 26px Arial";
+  ctx.font = "700 28px Arial";
   ctx.fillStyle =
-    "rgba(255,255,255,0.75)";
+    "rgba(255,255,255,0.88)";
 
   ctx.fillText(
     `${totalVotes.toLocaleString()} votes`,

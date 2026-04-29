@@ -496,8 +496,9 @@ async function buildShareCardFile({
 
   canvas.height = cardHeight;
 
+  drawRoundedRect(ctx, 0, 0, canvas.width, canvas.height, 28);
   ctx.fillStyle = "#111827";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fill();
 
   drawRoundedRect(ctx, 60, 60, 150, 40, 18);
 
@@ -520,9 +521,9 @@ async function buildShareCardFile({
 
   ctx.textAlign = "right";
 
-  ctx.font = "600 20px Arial";
+  ctx.font = "700 28px Arial";
   ctx.fillStyle =
-    "rgba(255,255,255,0.75)";
+    "rgba(255,255,255,0.88)";
 
   ctx.fillText(
     `${totalVotes.toLocaleString()} votes`,
@@ -1274,10 +1275,7 @@ export default function PollPage() {
 
   const syncVoteDerivedData = useCallback(async () => {
     try {
-      const now = new Date();
-      const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString();
-      const twentyFourHoursAgoMs = now.getTime() - 24 * 60 * 60 * 1000;
-
+     
 const [recentVotesResult, optionTotalsResult] = await Promise.all([
         supabase.rpc("get_recent_poll_votes"),
         supabase
