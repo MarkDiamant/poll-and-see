@@ -231,13 +231,26 @@ async function buildResultsShareFile(bundle: PollBundle) {
     optionsHeight +
     footerHeight;
 
-  canvas.height = cardHeight;
+    canvas.height = cardHeight;
 
-  drawRoundedRect(ctx, 0, 0, canvas.width, canvas.height, 28);
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  drawRoundedRect(ctx, 0, 0, canvas.width, canvas.height, 42);
   ctx.fillStyle = "#111827";
   ctx.fill();
 
-  drawRoundedRect(ctx, 60, 60, 150, 40, 18);
+  ctx.font = "600 20px Arial";
+  ctx.textBaseline = "middle";
+
+  const categoryText = bundle.poll.category;
+  const categoryPaddingX = 22;
+  const categoryHeight = 40;
+  const categoryWidth = Math.ceil(ctx.measureText(categoryText).width) + categoryPaddingX * 2;
+  const categoryX = 60;
+  const categoryY = 60;
+
+  drawRoundedRect(ctx, categoryX, categoryY, categoryWidth, categoryHeight, 20);
 
   ctx.fillStyle = colours.bg;
   ctx.fill();
@@ -246,17 +259,17 @@ async function buildResultsShareFile(bundle: PollBundle) {
   ctx.lineWidth = 2;
   ctx.stroke();
 
-  ctx.font = "600 20px Arial";
   ctx.fillStyle = colours.text;
-  ctx.textBaseline = "middle";
+  ctx.textAlign = "center";
 
   ctx.fillText(
-    bundle.poll.category,
-    82,
-    80
+    categoryText,
+    categoryX + categoryWidth / 2,
+    categoryY + categoryHeight / 2
   );
 
   ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
 
   ctx.font = "700 28px Arial";
   ctx.fillStyle =
@@ -265,7 +278,7 @@ async function buildResultsShareFile(bundle: PollBundle) {
   ctx.fillText(
     `${totalVotes.toLocaleString()} votes`,
     600,
-    80
+    categoryY + categoryHeight / 2
   );
 
   ctx.textAlign = "left";
