@@ -166,7 +166,7 @@ async function sendApprovedEmail(params: { to: string; pollUrl: string }) {
     body: JSON.stringify({
       from: emailFrom,
       to: params.to,
-      subject: "Your Poll & See poll is live",
+      subject: "Your Poll & See poll is live 🚀",
       html: emailContent.html,
       text: emailContent.text,
     }),
