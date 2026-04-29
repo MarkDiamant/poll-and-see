@@ -43,6 +43,8 @@ const INLINE_SUBSCRIBE_VOTE_COUNT_KEY = "poll-flow-vote-count";
 const INLINE_SUBSCRIBE_SHOWN_KEY = "poll-flow-inline-subscribe-shown";
 const POLL_FLOW_COUNTED_VOTE_PREFIX = "poll-flow-counted-vote-";
 const POLL_EMAIL_SUBSCRIBED_KEY = "poll-email-subscribed";
+const ACTIVITY_INDICATOR_COOLDOWN_MS = 30 * 60 * 1000;
+const ACTIVITY_INDICATOR_LAST_SHOWN_KEY = "activity_indicator_last_shown";
 
 const CREATE_POLL_PROMPTS = [
   "Got a better question?",
@@ -1513,10 +1515,17 @@ export default function PollPage() {
     return;
   }
 
+  const lastShownAt = Number(localStorage.getItem(ACTIVITY_INDICATOR_LAST_SHOWN_KEY) || 0);
+
+  if (Date.now() - lastShownAt < ACTIVITY_INDICATOR_COOLDOWN_MS) {
+    return;
+  }
+
   let hideTimeout: ReturnType<typeof setTimeout> | null = null;
 
   const initialTimeout = setTimeout(() => {
     setShowActivityIndicator(true);
+    localStorage.setItem(ACTIVITY_INDICATOR_LAST_SHOWN_KEY, String(Date.now()));
 
     hideTimeout = setTimeout(() => {
       setShowActivityIndicator(false);

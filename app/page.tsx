@@ -50,6 +50,8 @@ type IdleWindow = Window &
 
 const POLL_BUNDLE_CACHE_PREFIX = "poll-bundle-cache:";
 const POLL_EMAIL_SUBSCRIBED_KEY = "poll-email-subscribed";
+const ACTIVITY_INDICATOR_COOLDOWN_MS = 30 * 60 * 1000;
+const ACTIVITY_INDICATOR_LAST_SHOWN_KEY = "activity_indicator_last_shown";
 const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899", "#8b5cf6", "#14b8a6", "#f97316", "#ef4444"];
 const SIGNUP_CATEGORIES = [
   "Business",
@@ -923,10 +925,17 @@ if (preferredCategory === "All" || availableCategories.includes(preferredCategor
     return;
   }
 
+  const lastShownAt = Number(localStorage.getItem(ACTIVITY_INDICATOR_LAST_SHOWN_KEY) || 0);
+
+  if (Date.now() - lastShownAt < ACTIVITY_INDICATOR_COOLDOWN_MS) {
+    return;
+  }
+
   let hideTimeout: ReturnType<typeof setTimeout> | null = null;
 
   const initialTimeout = setTimeout(() => {
     setShowActivityIndicator(true);
+    localStorage.setItem(ACTIVITY_INDICATOR_LAST_SHOWN_KEY, String(Date.now()));
 
     hideTimeout = setTimeout(() => {
       setShowActivityIndicator(false);
@@ -938,6 +947,7 @@ if (preferredCategory === "All" || availableCategories.includes(preferredCategor
     if (hideTimeout) clearTimeout(hideTimeout);
   };
 }, [votesLast24]);
+
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
 
