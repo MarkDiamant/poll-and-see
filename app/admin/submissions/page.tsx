@@ -132,6 +132,7 @@ export default function AdminSubmissionsPage() {
   const [categoryFilter, setCategoryFilter] = useState<"all" | CategoryOption>("all");
   const [submissions, setSubmissions] = useState<PollSubmissionRow[]>([]);
   const [livePollCount, setLivePollCount] = useState(0);
+const [hiddenPollCount, setHiddenPollCount] = useState(0);
   const [questionEdits, setQuestionEdits] = useState<Record<number, string>>({});
   const [descriptionEdits, setDescriptionEdits] = useState<Record<number, string>>({});
   const [optionsEdits, setOptionsEdits] = useState<Record<number, string>>({});
@@ -208,6 +209,17 @@ useEffect(() => {
         if (isCancelled) return;
 setSubmissions(nextSubmissions);
         setLivePollCount(data.livePollCount || 0);
+
+        const hiddenResponse = await fetch("/api/admin/hidden", {
+          headers: {
+            "x-admin-key": adminKey,
+          },
+        });
+
+        if (hiddenResponse.ok) {
+          const hiddenData = await hiddenResponse.json();
+          setHiddenPollCount((hiddenData.items || []).length);
+        }
 
         setQuestionEdits(
           Object.fromEntries(nextSubmissions.map((row: PollSubmissionRow) => [row.id, row.question]))
@@ -599,11 +611,12 @@ const hideSubmission = async (submissionId: number) => {
                 <span>Submissions</span>
                 {badge(sortedSubmissions.length, true)}
               </Link>
-              <Link
+<Link
   href="/admin/hidden"
   className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
 >
-  Hidden
+  <span>Hidden</span>
+  {badge(hiddenPollCount, false)}
 </Link>
             </nav>
 

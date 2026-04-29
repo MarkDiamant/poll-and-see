@@ -122,6 +122,7 @@ const [categoryFilter, setCategoryFilter] = useState<"all" | CategoryOption>("al
   const [polls, setPolls] = useState<PollRow[]>([]);
   const totalPollCount = polls.length;
   const [pendingSubmissionsCount, setPendingSubmissionsCount] = useState(0);
+const [hiddenPollCount, setHiddenPollCount] = useState(0);
 
   const [questionEdits, setQuestionEdits] = useState<Record<number, string>>({});
   const [descriptionEdits, setDescriptionEdits] = useState<Record<number, string>>({});
@@ -193,6 +194,17 @@ if (searchInput.trim()) {
         if (isCancelled) return;
 setPolls(nextPolls);
         setPendingSubmissionsCount(data.pendingSubmissionsCount || 0);
+
+        const hiddenResponse = await fetch("/api/admin/hidden", {
+          headers: {
+            "x-admin-key": adminKey,
+          },
+        });
+
+        if (hiddenResponse.ok) {
+          const hiddenData = await hiddenResponse.json();
+          setHiddenPollCount((hiddenData.items || []).length);
+        }
 
         if (!showSpinner) return;
 
@@ -522,7 +534,15 @@ const sortedPolls = useMemo(() => {
       className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
     >
       <span>Submissions</span>
-   {badge(pendingSubmissionsCount, false)}
+      {badge(pendingSubmissionsCount, false)}
+    </Link>
+
+    <Link
+      href="/admin/hidden"
+      className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+    >
+      <span>Hidden</span>
+      {badge(hiddenPollCount, false)}
     </Link>
   </nav>
 
