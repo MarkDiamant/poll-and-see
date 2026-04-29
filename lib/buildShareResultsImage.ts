@@ -16,6 +16,16 @@ type VoteCounts = Record<number, number>;
 
 const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899", "#8b5cf6", "#14b8a6", "#f97316", "#ef4444"];
 
+const CATEGORY_COLOURS: Record<string, { fill: string; border: string; text: string }> = {
+  General: { fill: "rgba(148,163,184,0.12)", border: "rgba(148,163,184,0.55)", text: "#cbd5f5" },
+  Lifestyle: { fill: "rgba(236,72,153,0.12)", border: "rgba(236,72,153,0.55)", text: "#f9a8d4" },
+  Community: { fill: "rgba(6,182,212,0.12)", border: "rgba(6,182,212,0.55)", text: "#67e8f9" },
+  Finance: { fill: "rgba(34,197,94,0.12)", border: "rgba(34,197,94,0.55)", text: "#86efac" },
+  Business: { fill: "rgba(249,115,22,0.12)", border: "rgba(249,115,22,0.55)", text: "#fdba74" },
+  Education: { fill: "rgba(139,92,246,0.12)", border: "rgba(139,92,246,0.55)", text: "#c4b5fd" },
+  Fun: { fill: "rgba(234,179,8,0.12)", border: "rgba(234,179,8,0.55)", text: "#fde047" },
+};
+
 function drawRoundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
   ctx.beginPath();
   ctx.moveTo(x + radius, y);
@@ -118,17 +128,19 @@ ctx.stroke();
   const categoryWidth = ctx.measureText(categoryText).width + 38;
   const topMetaY = 54;
 
+    const categoryStyle = CATEGORY_COLOURS[categoryText] || CATEGORY_COLOURS["General"];
+
   drawRoundedRect(ctx, 60, topMetaY - 20, categoryWidth, 40, 20);
-  ctx.fillStyle = "rgba(6, 182, 212, 0.12)";
+  ctx.fillStyle = categoryStyle.fill;
   ctx.fill();
-  ctx.strokeStyle = "rgba(6, 182, 212, 0.55)";
+  ctx.strokeStyle = categoryStyle.border;
   ctx.lineWidth = 2;
   ctx.stroke();
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillStyle = "#67e8f9";
-    ctx.fillText(categoryText, 60 + categoryWidth / 2, topMetaY);
+  ctx.fillStyle = categoryStyle.text;
+  ctx.fillText(categoryText, 60 + categoryWidth / 2, topMetaY);
 
   ctx.textAlign = "right";
   ctx.font = "700 28px Arial";
