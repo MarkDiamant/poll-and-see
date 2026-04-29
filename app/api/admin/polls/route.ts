@@ -62,8 +62,8 @@ export async function GET(request: NextRequest) {
       { data: slugRows, error: slugError },
       { data: optionRows, error: optionError },
       { data: submissionRows, error: submissionRowsError },
-      submissionsCountResult,
-    ] = await Promise.all([
+pendingSubmissionsCountResult,
+] = await Promise.all([
       query,
       supabaseAdmin.from("polls").select("id, slug").not("slug", "is", null),
       supabaseAdmin
@@ -72,7 +72,10 @@ export async function GET(request: NextRequest) {
         .order("poll_id", { ascending: true })
         .order("id", { ascending: true }),
       supabaseAdmin.from("poll_submissions").select("poll_id").not("poll_id", "is", null),
-      supabaseAdmin.from("poll_submissions").select("id", { count: "exact", head: true }),
+      supabaseAdmin
+  .from("poll_submissions")
+  .select("id", { count: "exact", head: true })
+  .eq("status", "pending"),
     ]);
 
     if (pollsError || slugError || optionError || submissionRowsError) {
@@ -114,7 +117,7 @@ export async function GET(request: NextRequest) {
       allSlugs: (slugRows || [])
         .filter((row) => row.slug)
         .map((row) => ({ id: row.id, slug: row.slug as string })),
-      pendingSubmissionsCount: submissionsCountResult.count || 0,
+      pendingSubmissionsCount: pendingSubmissionsCountResult.count || 0,
     });
   } catch {
     return NextResponse.json({ error: "Could not load polls." }, { status: 500 });
