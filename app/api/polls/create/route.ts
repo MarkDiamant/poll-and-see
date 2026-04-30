@@ -307,11 +307,15 @@ if ((emailMeLink || isPrivate) && !email) {
       );
     }
 
-    const slug = await generateUniqueSlug(supabaseAdmin);
-    const baseUrl = getBaseUrl(request);
-    const pollUrl = `${baseUrl}/poll/${slug}`;
+const slug = await generateUniqueSlug(supabaseAdmin);
+const baseUrl = getBaseUrl(request);
+const pollUrl = `${baseUrl}/poll/${slug}`;
 
-    const { data: insertedPoll, error: pollInsertError } = await supabaseAdmin
+void fetch(`${baseUrl}/api/og/${slug}.png`).catch(() => {
+  // Do not block poll creation if OG cache warm fails.
+});
+
+const { data: insertedPoll, error: pollInsertError } = await supabaseAdmin
       .from("polls")
       .insert({
         question,
@@ -402,6 +406,10 @@ if ((emailMeLink || isPrivate) && !email) {
         emailSent = false;
       }
     }
+
+    void fetch(`${baseUrl}/api/og/${slug}.png`).catch(() => {
+      // Do not block poll creation if OG cache warm fails.
+    });
 
     return NextResponse.json({
       pollUrl,
