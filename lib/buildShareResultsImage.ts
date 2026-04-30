@@ -102,7 +102,7 @@ export async function buildShareResultsImageFile({
   const questionLines = wrapCanvasText(ctx, poll.question, 470, 6);
 
   const questionHeight = questionLines.length * 56;
-  const getShareOptionHeight = (option: PollOption) => (option.image_url ? 290 : 136);
+  const getShareOptionHeight = (option: PollOption) => (option.image_url ? 320 : 180);
   const optionsHeight = options.reduce((sum, option) => sum + getShareOptionHeight(option), 0);
   const footerHeight = 240;
   const cardHeight = 180 + questionHeight + optionsHeight + footerHeight;
@@ -224,7 +224,7 @@ ctx.font = "600 26px Arial";
 ctx.fillStyle = "#ffffff";
 ctx.textAlign = "left";
 
-const optionLines = wrapCanvasText(ctx, opt.option_text, 360, 3);
+const optionLines = wrapCanvasText(ctx, opt.option_text, 500, 4);
 
 let lineY = contentY + 18;
 optionLines.forEach(line => {
@@ -234,23 +234,25 @@ optionLines.forEach(line => {
 
 ctx.textAlign = "right";
 ctx.font = "700 28px Arial";
+const textHeight = optionLines.length * 30;
+
 ctx.fillText(
   `${pct}% • ${votes.toLocaleString()} ${votes === 1 ? "vote" : "votes"}`,
   580,
-  contentY + 18
+  contentY + textHeight + 6
 );
 
     ctx.textAlign = "left";
     ctx.fillStyle = "rgba(255,255,255,0.12)";
     const textHeight = optionLines.length * 30;
 
-drawRoundedRect(ctx, 64, contentY + textHeight + 24, barWidth, 14, 8);
+drawRoundedRect(ctx, 64, contentY + textHeight + 40, barWidth, 14, 8);
     ctx.fill();
 
     const fill = pct > 0 ? Math.max((barWidth * pct) / 100, 10) : 0;
 
     ctx.fillStyle = colour;
-    drawRoundedRect(ctx, 64, contentY + textHeight + 24, fill, 14, 8);
+    drawRoundedRect(ctx, 64, contentY + textHeight + 40, fill, 14, 8);
     ctx.fill();
 
     y += optionHeight;
