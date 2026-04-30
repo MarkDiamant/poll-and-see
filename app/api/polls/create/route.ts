@@ -405,10 +405,10 @@ const { data: insertedPoll, error: pollInsertError } = await supabaseAdmin
 
 await Promise.race([
   fetch(`${baseUrl}/api/og/${slug}.png`),
-  new Promise((resolve) => setTimeout(resolve, 2500)),
-]).catch(() => {
-  // Do not block poll creation if OG cache warm fails.
-});
+  new Promise((resolve) => setTimeout(resolve, 1500)),
+]).catch(() => {});
+
+fetch(`${baseUrl}/api/og/${slug}.png`).catch(() => {});
 
     return NextResponse.json({
       pollUrl,
