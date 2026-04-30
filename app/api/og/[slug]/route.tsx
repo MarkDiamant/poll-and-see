@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "edge";
-export const dynamic = "force-dynamic";
+export const revalidate = 2592000; // 30 days
 
 const SITE_URL = "https://www.pollandsee.com";
 
@@ -207,6 +207,10 @@ textShadow: "0 3px 10px rgba(0,0,0,0.45)",
 {
   width: 1200,
   height: 630,
+  headers: {
+    "Cache-Control": "public, max-age=2592000, s-maxage=2592000, stale-while-revalidate=604800",
+    "X-Robots-Tag": "noindex",
+  },
 }
   );
 }
