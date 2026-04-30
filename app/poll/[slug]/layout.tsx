@@ -33,14 +33,21 @@ const slug = rawSlug.replace(/^\/+/, "");
     .eq("slug", cleanSlug)
     .maybeSingle();
 
-  const title = data?.question || "Poll & See";
-  const description = "Vote and see what others think";
-const imageUrl = `${SITE_URL}/api/og/${encodeURIComponent(cleanSlug)}`;
+const title = data?.question
+  ? `${data.question} | Poll & See`
+  : "Poll & See";
+
+const description = "Vote on this poll and see what others think. Anonymous and instant results.";
+
+const imageUrl = `${SITE_URL}/api/og/${encodeURIComponent(cleanSlug)}.png`;
 
 return {
   metadataBase: new URL(SITE_URL),
   title,
   description,
+  alternates: {
+    canonical: `${SITE_URL}/poll/${cleanSlug}`,
+  },
     openGraph: {
       title,
       description,
