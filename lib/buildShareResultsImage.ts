@@ -220,24 +220,37 @@ ctx.fillText(categoryText, 60 + categoryWidth / 2, topMetaY);
       contentY = y + 160;
     }
 
-    ctx.font = "600 26px Arial";
-    ctx.fillStyle = "#ffffff";
-    ctx.textAlign = "left";
-    ctx.fillText(opt.option_text, 64, contentY + 18);
+ctx.font = "600 26px Arial";
+ctx.fillStyle = "#ffffff";
+ctx.textAlign = "left";
 
-    ctx.textAlign = "right";
-    ctx.font = "700 28px Arial";
-    ctx.fillText(`${pct}% • ${votes.toLocaleString()} ${votes === 1 ? "vote" : "votes"}`, 580, contentY + 24);
+const optionLines = wrapCanvasText(ctx, opt.option_text, 360, 3);
+
+let lineY = contentY + 18;
+optionLines.forEach(line => {
+  ctx.fillText(line, 64, lineY);
+  lineY += 30;
+});
+
+ctx.textAlign = "right";
+ctx.font = "700 28px Arial";
+ctx.fillText(
+  `${pct}% • ${votes.toLocaleString()} ${votes === 1 ? "vote" : "votes"}`,
+  580,
+  contentY + 18
+);
 
     ctx.textAlign = "left";
     ctx.fillStyle = "rgba(255,255,255,0.12)";
-    drawRoundedRect(ctx, 64, contentY + 48, barWidth, 14, 8);
+    const textHeight = optionLines.length * 30;
+
+drawRoundedRect(ctx, 64, contentY + textHeight + 24, barWidth, 14, 8);
     ctx.fill();
 
     const fill = pct > 0 ? Math.max((barWidth * pct) / 100, 10) : 0;
 
     ctx.fillStyle = colour;
-    drawRoundedRect(ctx, 64, contentY + 48, fill, 14, 8);
+    drawRoundedRect(ctx, 64, contentY + textHeight + 24, fill, 14, 8);
     ctx.fill();
 
     y += optionHeight;
