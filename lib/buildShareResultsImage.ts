@@ -232,9 +232,10 @@ optionLines.forEach(line => {
   lineY += 30;
 });
 
+const textHeight = optionLines.length * 30;
+
 ctx.textAlign = "right";
 ctx.font = "700 28px Arial";
-const textHeight = optionLines.length * 30;
 
 ctx.fillText(
   `${pct}% • ${votes.toLocaleString()} ${votes === 1 ? "vote" : "votes"}`,
@@ -244,7 +245,6 @@ ctx.fillText(
 
     ctx.textAlign = "left";
     ctx.fillStyle = "rgba(255,255,255,0.12)";
-    const textHeight = optionLines.length * 30;
 
 drawRoundedRect(ctx, 64, contentY + textHeight + 40, barWidth, 14, 8);
     ctx.fill();
