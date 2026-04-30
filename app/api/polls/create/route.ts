@@ -311,10 +311,6 @@ const slug = await generateUniqueSlug(supabaseAdmin);
 const baseUrl = getBaseUrl(request);
 const pollUrl = `${baseUrl}/poll/${slug}`;
 
-void fetch(`${baseUrl}/api/og/${slug}.png`).catch(() => {
-  // Do not block poll creation if OG cache warm fails.
-});
-
 const { data: insertedPoll, error: pollInsertError } = await supabaseAdmin
       .from("polls")
       .insert({
@@ -407,9 +403,12 @@ const { data: insertedPoll, error: pollInsertError } = await supabaseAdmin
       }
     }
 
-    void fetch(`${baseUrl}/api/og/${slug}.png`).catch(() => {
-      // Do not block poll creation if OG cache warm fails.
-    });
+await Promise.race([
+  fetch(`${baseUrl}/api/og/${slug}.png`),
+  new Promise((resolve) => setTimeout(resolve, 2500)),
+]).catch(() => {
+  // Do not block poll creation if OG cache warm fails.
+});
 
     return NextResponse.json({
       pollUrl,
