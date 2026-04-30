@@ -408,7 +408,7 @@ export default function SubmitPollPage() {
                     value={question}
                     onChange={(e) => handleQuestionChange(e.target.value)}
                     className={inputClasses}
-                    placeholder="e.g. A job you love with low pay, or a job you hate with high pay?"
+                    placeholder="e.g. Do you check your phone when you're with other people?"
                   />
                   <p className="mt-1 text-sm text-gray-400 md:text-base">{question.length}/150</p>
                 </div>
@@ -564,7 +564,7 @@ export default function SubmitPollPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="mt-1 rounded-xl bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-500 disabled:opacity-60"
+                  className="mx-auto mt-1 block rounded-xl bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-500 disabled:opacity-60 sm:mx-0 sm:inline-block"
                 >
                   {submitting ? "Creating..." : "Create poll & get my link"}
                 </button>
