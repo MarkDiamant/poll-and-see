@@ -287,7 +287,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-if ((emailMeLink || isPrivate) && !email) {
+if (emailMeLink && !email) {
   return NextResponse.json({ error: "Email is required." }, { status: 400 });
 }
 
