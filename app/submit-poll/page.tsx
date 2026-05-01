@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Footer from "@/components/Footer";
 import SiteHeader from "@/components/SiteHeader";
+import ActivityIndicator from "@/components/ActivityIndicator";
+import { supabase } from "@/lib/supabase";
 
 const CATEGORY_OPTIONS = [
   "General",
@@ -111,6 +113,7 @@ export default function SubmitPollPage() {
   const [messageType, setMessageType] = useState<"success" | "error" | "">("");
   const [successData, setSuccessData] = useState<PollCreateResponse | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+const [votesLast24, setVotesLast24] = useState(0);
 
   const canAddOption = useMemo(() => options.length < 6, [options.length]);
   const canRemoveOption = useMemo(() => options.length > 2, [options.length]);
@@ -167,8 +170,39 @@ export default function SubmitPollPage() {
     setCategory(value.trim() ? suggestCategory(value) : "");
   };
 
-  const shouldShowEmailField = emailMeLink || isPrivate;
+const shouldShowEmailField = emailMeLink || isPrivate;
 
+useEffect(() => {
+  const loadRecentVotes = async () => {
+    try {
+      const { data, error } = await supabase.rpc("get_recent_poll_votes");
+
+      if (error) return;
+
+      const total = (data || []).reduce(
+        (
+          sum: number,
+          row: { recent_votes_24h: number | string | null }
+        ) => sum + Number(row.recent_votes_24h || 0),
+        0
+      );
+
+      setVotesLast24(total);
+    } catch {
+      // ignore recent vote load failures
+    }
+  };
+
+  void loadRecentVotes();
+
+  const interval = window.setInterval(() => {
+    void loadRecentVotes();
+  }, 25000);
+
+  return () => {
+    window.clearInterval(interval);
+  };
+}, []);
   const handleCopy = async () => {
     if (!successData) return;
 
@@ -584,7 +618,9 @@ export default function SubmitPollPage() {
         </div>
       </section>
 
-      <Footer />
+            <Footer />
+
+      <ActivityIndicator votesLast24={votesLast24} />
     </main>
   );
 }

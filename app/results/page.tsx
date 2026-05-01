@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import Footer from "@/components/Footer";
 import SiteHeader from "@/components/SiteHeader";
 import LiveVoteCounter from "@/components/LiveVoteCounter";
+import ActivityIndicator from "@/components/ActivityIndicator";
 import { buildShareResultsImageFile } from "@/lib/buildShareResultsImage";
 
 type Poll = {
@@ -477,6 +478,7 @@ export default function ResultsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showTopButton, setShowTopButton] = useState(false);
   const [totalVoteCount, setTotalVoteCount] = useState<number | null>(null);
+const [votesLast24, setVotesLast24] = useState(0);
   const [browserId, setBrowserId] = useState("");
 const [reactionCountsByPoll, setReactionCountsByPoll] = useState<Record<number, ReactionCounts>>({});
 const [selectedReactionsByPoll, setSelectedReactionsByPoll] = useState<Record<number, ReactionType | null>>({});
@@ -602,6 +604,38 @@ const lastReactionRefreshRef = useRef(0);
    const visiblePollIds = useMemo(() => {
     return votedPolls.map((bundle) => bundle.poll.id);
   }, [votedPolls]);
+
+useEffect(() => {
+  const loadRecentVotes = async () => {
+    try {
+      const { data, error } = await supabase.rpc("get_recent_poll_votes");
+
+      if (error) return;
+
+      const total = (data || []).reduce(
+        (
+          sum: number,
+          row: { recent_votes_24h: number | string | null }
+        ) => sum + Number(row.recent_votes_24h || 0),
+        0
+      );
+
+      setVotesLast24(total);
+    } catch {
+      // ignore recent vote load failures
+    }
+  };
+
+  void loadRecentVotes();
+
+  const interval = window.setInterval(() => {
+    void loadRecentVotes();
+  }, 25000);
+
+  return () => {
+    window.clearInterval(interval);
+  };
+}, []);
 
   const visiblePollIdsKey = useMemo(() => visiblePollIds.join(","), [visiblePollIds]);
 
@@ -969,7 +1003,9 @@ const refreshVisibleResults = () => {
           )}
         </section>
 
-        <Footer />
+                <Footer />
+
+        <ActivityIndicator votesLast24={votesLast24} />
 
         {showTopButton ? (
           <button
