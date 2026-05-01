@@ -97,7 +97,9 @@ function buildPollApprovedEmail(params: { pollUrl: string; appBaseUrl: string })
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;">
                 <tr>
                   <td align="center" style="padding-bottom:24px;">
-                    <img src="${logoUrl}" alt="Poll & See" width="180" style="display:block;width:180px;max-width:100%;height:auto;border:0;" />
+                    <a href="${params.appBaseUrl}" target="_blank" style="display:inline-block;">
+  <img src="${logoUrl}" alt="Poll & See" width="180" style="display:block;width:180px;max-width:100%;height:auto;border:0;" />
+</a>
                   </td>
                 </tr>
                 <tr>
@@ -115,7 +117,7 @@ function buildPollApprovedEmail(params: { pollUrl: string; appBaseUrl: string })
                       <a href="${params.appBaseUrl}/submit-poll" style="color:#67e8f9;">${params.appBaseUrl}/submit-poll</a>
                     </p>
                     <p style="margin:0;font-size:16px;line-height:24px;color:#e5e7eb;">
-                      Best,<br />Poll & See<br />
+                      Best,<br /><a href="${params.appBaseUrl}" target="_blank" style="color:#e5e7eb;text-decoration:none;">Poll & See</a><br />
                       <span style="color:#9ca3af;">See what people really think</span>
                     </p>
                   </td>
