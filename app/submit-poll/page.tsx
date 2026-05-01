@@ -170,7 +170,7 @@ const [votesLast24, setVotesLast24] = useState(0);
     setCategory(value.trim() ? suggestCategory(value) : "");
   };
 
-const shouldShowEmailField = emailMeLink || isPrivate;
+const shouldShowEmailField = emailMeLink;
 
 useEffect(() => {
   const loadRecentVotes = async () => {
