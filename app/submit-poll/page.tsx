@@ -547,12 +547,16 @@ useEffect(() => {
 
                 <div className="space-y-2">
                   <label className={checkboxLabelClasses}>
-                    <input
-                      type="checkbox"
-                      checked={isPrivate}
-                      onChange={(e) => setIsPrivate(e.target.checked)}
-                      className={checkboxClasses}
-                    />
+<input
+  type="checkbox"
+  checked={isPrivate}
+  onChange={(e) => {
+    const checked = e.target.checked;
+    setIsPrivate(checked);
+    if (checked) setEmailMeLink(false);
+  }}
+  className={checkboxClasses}
+/>
                     <span>Make this poll private</span>
                   </label>
 
