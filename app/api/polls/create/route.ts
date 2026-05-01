@@ -354,18 +354,18 @@ const { data: insertedPoll, error: pollInsertError } = await supabaseAdmin
 
     const { error: submissionInsertError } = await supabaseAdmin
       .from("poll_submissions")
-      .insert({
-        poll_id: insertedPoll.id,
-        name: null,
-        email: email || null,
-        question,
-        description: description || null,
-        category,
-        options,
-        option_image_urls: cleanedImageUrls.length > 0 ? cleanedImageUrls : null,
-        is_private: isPrivate,
-        status: "pending",
-      });
+.insert({
+  poll_id: insertedPoll.id,
+  name: null,
+  email: emailMeLink ? email : null,
+  question,
+  description: description || null,
+  category,
+  options,
+  option_image_urls: cleanedImageUrls.length > 0 ? cleanedImageUrls : null,
+  is_private: isPrivate,
+  status: "pending",
+});
 
     if (submissionInsertError) {
       await supabaseAdmin.from("poll_options").delete().eq("poll_id", insertedPoll.id);

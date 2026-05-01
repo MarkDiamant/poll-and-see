@@ -550,11 +550,7 @@ emailMeLink,
 <input
   type="checkbox"
   checked={isPrivate}
-  onChange={(e) => {
-    const checked = e.target.checked;
-    setIsPrivate(checked);
-    if (checked) setEmailMeLink(false);
-  }}
+  onChange={(e) => setIsPrivate(e.target.checked)}
   className={checkboxClasses}
 />
                     <span>Make this poll private</span>
