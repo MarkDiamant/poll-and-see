@@ -317,16 +317,16 @@ if (emailMeLink && !email.trim()) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          email: email.trim() || null,
-          emailMeLink,
-          question: question.trim(),
-          description: description.trim() || null,
-          category: resolvedCategory,
-          options: cleanedOptions.map((option) => option.text),
-          optionImageUrls: usesImages ? cleanedOptions.map((option) => option.imageUrl) : [],
-          isPrivate,
-        }),
+body: JSON.stringify({
+  email: email.trim() || null,
+  emailMeLink: isPrivate ? false : emailMeLink,
+  question: question.trim(),
+  description: description.trim() || null,
+  category: resolvedCategory,
+  options: cleanedOptions.map((option) => option.text),
+  optionImageUrls: usesImages ? cleanedOptions.map((option) => option.imageUrl) : [],
+  isPrivate,
+}),
       });
 
       const rawText = await response.text();
