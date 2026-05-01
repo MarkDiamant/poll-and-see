@@ -255,11 +255,11 @@ useEffect(() => {
       return;
     }
 
-    if (shouldShowEmailField && !email.trim()) {
-      setMessageType("error");
-      setMessage("Email is required.");
-      return;
-    }
+if (emailMeLink && !email.trim()) {
+  setMessageType("error");
+  setMessage("Email is required.");
+  return;
+}
 
     if (question.trim().length > 150) {
       setMessageType("error");
