@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 const ACTIVITY_INDICATOR_THRESHOLD = 500;
-const ACTIVITY_INDICATOR_COOLDOWN_MS = 30 * 60 * 1000;
+const ACTIVITY_INDICATOR_COOLDOWN_MS = 10 * 60 * 1000;
 const ACTIVITY_INDICATOR_LAST_SHOWN_KEY = "activity_indicator_last_shown";
 
 export default function ActivityIndicator({
