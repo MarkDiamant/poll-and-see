@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: `${SITE_URL}/og-submit.png?v=1`,
+        url: `${SITE_URL}/og-submit.jpg?v=1`,
         width: 1200,
         height: 630,
         alt: "Create a poll in seconds",
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Create a poll in seconds",
     description: "Share instantly. Anonymous and instant results.",
-    images: [`${SITE_URL}/og-submit.png?v=1`],
+    images: [`${SITE_URL}/og-submit.jpg?v=1`],
   },
 };
 
