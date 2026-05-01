@@ -1234,9 +1234,9 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
                             </span>
                           </div>
 
-                          <span className="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-gray-300">
-                            {percent}%
-                          </span>
+<span className="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-gray-300">
+  {percent}% <span className="font-normal text-gray-400">• {count} votes</span>
+</span>
                         </div>
                       </div>
 
