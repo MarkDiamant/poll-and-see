@@ -5,6 +5,7 @@ import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } fro
 import { supabase } from "@/lib/supabase";
 import Footer from "@/components/Footer";
 import SiteHeader from "@/components/SiteHeader";
+import ActivityIndicator from "@/components/ActivityIndicator";
 
 type Poll = {
   id: number;
@@ -50,8 +51,6 @@ type IdleWindow = Window &
 
 const POLL_BUNDLE_CACHE_PREFIX = "poll-bundle-cache:";
 const POLL_EMAIL_SUBSCRIBED_KEY = "poll-email-subscribed";
-const ACTIVITY_INDICATOR_COOLDOWN_MS = 30 * 60 * 1000;
-const ACTIVITY_INDICATOR_LAST_SHOWN_KEY = "activity_indicator_last_shown";
 const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899", "#8b5cf6", "#14b8a6", "#f97316", "#ef4444"];
 const SIGNUP_CATEGORIES = [
   "Business",
@@ -484,7 +483,6 @@ const [selectedSortFilter, setSelectedSortFilter] = useState<SortFilter>("Newest
   const [subscribeError, setSubscribeError] = useState("");
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
   const [showTopButton, setShowTopButton] = useState(false);
-  const [showActivityIndicator, setShowActivityIndicator] = useState(false);
   const [votedPollIds, setVotedPollIds] = useState<number[]>([]);
 
   const categoryMenuRef = useRef<HTMLDivElement | null>(null);
@@ -919,36 +917,7 @@ if (preferredCategory === "All" || availableCategories.includes(preferredCategor
     };
   }, [featuredPoll?.id, polls, syncFeaturedVoteCounts, syncTotalVoteCount, syncVoteDerivedData]);
 
- useEffect(() => {
-  if (votesLast24 < 100) {
-    setShowActivityIndicator(false);
-    return;
-  }
-
-  const lastShownAt = Number(localStorage.getItem(ACTIVITY_INDICATOR_LAST_SHOWN_KEY) || 0);
-
-  if (Date.now() - lastShownAt < ACTIVITY_INDICATOR_COOLDOWN_MS) {
-    return;
-  }
-
-  let hideTimeout: ReturnType<typeof setTimeout> | null = null;
-
-const initialTimeout = setTimeout(() => {
-  setShowActivityIndicator(true);
-  localStorage.setItem(ACTIVITY_INDICATOR_LAST_SHOWN_KEY, String(Date.now()));
-
-  hideTimeout = setTimeout(() => {
-    setShowActivityIndicator(false);
-  }, 5000);
-}, 3000);
-
-  return () => {
-    clearTimeout(initialTimeout);
-    if (hideTimeout) clearTimeout(hideTimeout);
-  };
-}, [votesLast24]);
-
-  const handleCategoryChange = (category: string) => {
+   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
 
     const params = new URLSearchParams(window.location.search);
@@ -1542,19 +1511,7 @@ className={`h-8 cursor-pointer rounded-lg border px-3 text-xs font-medium transi
 
       <Footer />
 
-      {votesLast24 >= 100 ? (
-        <div
-          className={`pointer-events-none fixed right-5 top-20 z-40 transition-opacity duration-700 md:left-1/2 md:right-auto md:top-24 md:-translate-x-[-360px] ${
-            showActivityIndicator ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          <div className="rounded-xl border border-blue-400/50 bg-blue-950/80 px-4 py-3 shadow-[0_0_24px_rgba(59,130,246,0.18)] backdrop-blur md:rounded-2xl md:px-5 md:py-4">
-            <p className="text-sm font-medium text-blue-50 md:text-base">
-              {votesLast24.toLocaleString()} votes in the last 24 hours
-            </p>
-          </div>
-        </div>
-      ) : null}
+      <ActivityIndicator votesLast24={votesLast24} />
 
       {showTopButton && (
         <button

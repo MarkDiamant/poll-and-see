@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import Footer from "@/components/Footer";
 import SiteHeader from "@/components/SiteHeader";
 import { buildShareResultsImageFile } from "@/lib/buildShareResultsImage";
+import ActivityIndicator from "@/components/ActivityIndicator";
 
 type Poll = {
   id: number;
@@ -44,8 +45,6 @@ const INLINE_SUBSCRIBE_VOTE_COUNT_KEY = "poll-flow-vote-count";
 const INLINE_SUBSCRIBE_SHOWN_KEY = "poll-flow-inline-subscribe-shown";
 const POLL_FLOW_COUNTED_VOTE_PREFIX = "poll-flow-counted-vote-";
 const POLL_EMAIL_SUBSCRIBED_KEY = "poll-email-subscribed";
-const ACTIVITY_INDICATOR_COOLDOWN_MS = 30 * 60 * 1000;
-const ACTIVITY_INDICATOR_LAST_SHOWN_KEY = "activity_indicator_last_shown";
 
 const CREATE_POLL_PROMPTS = [
   "Got a better question?",
@@ -923,7 +922,6 @@ export default function PollPage() {
   const [trendingPollIds, setTrendingPollIds] = useState<number[]>([]);
   const [popularPollIds, setPopularPollIds] = useState<number[]>([]);
   const [votesLast24, setVotesLast24] = useState(0);
-  const [showActivityIndicator, setShowActivityIndicator] = useState(false);
   const [showEndOfFeed, setShowEndOfFeed] = useState(false);
 
   const pollRefs = useRef<Record<number, HTMLDivElement | null>>({});
@@ -1175,35 +1173,6 @@ const [recentVotesResult, optionTotalsResult] = await Promise.all([
       window.removeEventListener("pageshow", handlePageShow);
     };
   }, [syncVoteDerivedData]);
-
- useEffect(() => {
-  if (votesLast24 < 100) {
-    setShowActivityIndicator(false);
-    return;
-  }
-
-  const lastShownAt = Number(localStorage.getItem(ACTIVITY_INDICATOR_LAST_SHOWN_KEY) || 0);
-
-  if (Date.now() - lastShownAt < ACTIVITY_INDICATOR_COOLDOWN_MS) {
-    return;
-  }
-
-  let hideTimeout: ReturnType<typeof setTimeout> | null = null;
-
-  const initialTimeout = setTimeout(() => {
-    setShowActivityIndicator(true);
-    localStorage.setItem(ACTIVITY_INDICATOR_LAST_SHOWN_KEY, String(Date.now()));
-
-    hideTimeout = setTimeout(() => {
-      setShowActivityIndicator(false);
-    }, 5000);
-  }, 3000);
-
-  return () => {
-    clearTimeout(initialTimeout);
-    if (hideTimeout) clearTimeout(hideTimeout);
-  };
-}, [votesLast24]);
 
   const handleBack = () => {
     sessionStorage.setItem("restoreHomeScroll", "true");
@@ -1803,19 +1772,7 @@ className="mx-auto block w-[68%] md:w-[55%] cursor-pointer rounded-lg bg-gray-10
         <Footer />
       </div>
 
-      {votesLast24 >= 100 ? (
-        <div
-          className={`pointer-events-none fixed right-5 top-20 z-40 transition-opacity duration-700 md:left-1/2 md:right-auto md:top-24 md:-translate-x-[-360px] ${
-            showActivityIndicator ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          <div className="rounded-xl border border-blue-400/50 bg-blue-950/80 px-4 py-3 shadow-[0_0_24px_rgba(59,130,246,0.18)] backdrop-blur md:rounded-2xl md:px-5 md:py-4">
-            <p className="text-sm font-medium text-blue-50 md:text-base">
-              {votesLast24.toLocaleString()} votes in the last 24 hours
-            </p>
-          </div>
-        </div>
-      ) : null}
+           <ActivityIndicator votesLast24={votesLast24} />
     </main>
   );
 }
