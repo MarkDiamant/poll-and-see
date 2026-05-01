@@ -318,8 +318,8 @@ if (emailMeLink && !email.trim()) {
           "Content-Type": "application/json",
         },
 body: JSON.stringify({
-  email: email.trim() || null,
-  emailMeLink: isPrivate ? false : emailMeLink,
+email: emailMeLink ? email.trim() : null,
+emailMeLink,
   question: question.trim(),
   description: description.trim() || null,
   category: resolvedCategory,
