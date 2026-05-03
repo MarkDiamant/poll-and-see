@@ -22,10 +22,11 @@ function getSupabaseServerClient() {
 
 function getFontSize(question: string) {
   const length = question.length;
-  if (length <= 40) return 86;
-  if (length <= 80) return 66;
-  if (length <= 120) return 52;
-  return 46;
+  if (length <= 30) return 110;
+  if (length <= 50) return 92;
+  if (length <= 80) return 72;
+  if (length <= 120) return 58;
+  return 48;
 }
 
 function getLineLimit(question: string) {
@@ -147,7 +148,7 @@ const question = error
   lineHeight: 1.04,
     fontWeight: 900, // 👈 thicker (max weight)
     fontSize: fontSize,
-    letterSpacing: "-4.5px",
+    letterSpacing: "-3px",
     color: "#ffffff",
 textShadow: "0 3px 10px rgba(0,0,0,0.45)",
   }}
