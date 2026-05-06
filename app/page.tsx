@@ -1157,9 +1157,9 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
               FEATURED POLL
             </span>
 
-            {featuredPoll ? (
-              <span className="text-sm text-gray-400">{totalFeaturedVotes} votes</span>
-            ) : null}
+            {featuredPoll && totalFeaturedVotes >= 50 ? (
+  <span className="text-sm text-gray-400">{totalFeaturedVotes} votes</span>
+) : null}
           </div>
 
           {featuredPoll ? (
@@ -1302,9 +1302,11 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
                         {poll.category}
                       </span>
 
-                      <span className="shrink-0 text-sm text-gray-400">
-                        {recentVoteCounts[poll.id] || 0} recent votes
-                      </span>
+                      {(recentVoteCounts[poll.id] || 0) >= 50 ? (
+  <span className="shrink-0 text-sm text-gray-400">
+    {recentVoteCounts[poll.id]} recent votes
+  </span>
+) : null}
                     </div>
 
 <div className="flex-1 py-2">

@@ -41,8 +41,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  const pollPages: MetadataRoute.Sitemap = (polls || []).map((poll) => ({
-    url: `${SITE_URL}/poll/${poll.slug}`,
+  const pollPages: MetadataRoute.Sitemap = (polls || [])
+  .filter((poll) => /^[a-z0-9-]+$/i.test(poll.slug || ""))
+  .map((poll) => ({
+    url: `${SITE_URL}/poll/${encodeURIComponent(poll.slug)}`,
     lastModified: poll.created_at ? new Date(poll.created_at) : new Date(),
     changeFrequency: "weekly",
     priority: 0.7,

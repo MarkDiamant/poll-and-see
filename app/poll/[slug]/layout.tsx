@@ -39,19 +39,20 @@ const title = data?.question
 
 const description = "Vote on this poll and see what others think. Anonymous and instant results.";
 
-const imageUrl = `${SITE_URL}/api/og/${encodeURIComponent(cleanSlug)}.png`;
+const encodedSlug = encodeURIComponent(cleanSlug);
+const imageUrl = `${SITE_URL}/api/og/${encodedSlug}.png`;
 
 return {
   metadataBase: new URL(SITE_URL),
   title,
   description,
   alternates: {
-    canonical: `${SITE_URL}/poll/${cleanSlug}`,
+    canonical: `${SITE_URL}/poll/${encodedSlug}`,
   },
     openGraph: {
       title,
       description,
-      url: `${SITE_URL}/poll/${cleanSlug}`,
+      url: `${SITE_URL}/poll/${encodedSlug}`,
       siteName: "Poll & See",
       type: "website",
 images: [
