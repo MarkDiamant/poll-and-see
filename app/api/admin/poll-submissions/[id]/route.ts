@@ -253,6 +253,12 @@ const nextImageUrls = (data.option_image_urls || [])
                 image_url: nextImageUrl,
                 vote_count: 0,
               });
+          } else if (existingOption && !nextText) {
+            await supabaseAdmin
+              .from("poll_options")
+              .delete()
+              .eq("id", existingOption.id)
+              .eq("poll_id", typedSubmission.poll_id);
           }
         }
       }

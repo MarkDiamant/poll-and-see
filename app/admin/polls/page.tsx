@@ -704,30 +704,29 @@ onBlur={(event) => {
 
  <div className="flex h-full items-center justify-start gap-2 self-center whitespace-nowrap text-[11px] text-gray-400">
   <span>{option.vote_count}</span>
-  {(optionEdits[poll.id] || []).length > 2 ? (
-    <button
-      type="button"
-      onClick={() => {
-onClick={() => {
-  const next = [...(optionEdits[poll.id] || [])];
-  next.splice(optionIndex, 1);
+{(optionEdits[poll.id] || []).length > 2 ? (
+  <button
+    type="button"
+    onClick={() => {
+      const next = [...(optionEdits[poll.id] || [])];
+      next.splice(optionIndex, 1);
 
-  setOptionEdits((current) => ({
-    ...current,
-    [poll.id]: next,
-  }));
+      setOptionEdits((current) => ({
+        ...current,
+        [poll.id]: next,
+      }));
 
-  void updatePoll(poll.id, {
-    option_updates: next,
-  });
-}}
-      className="cursor-pointer text-sm font-bold leading-none text-red-400 hover:text-red-300 align-middle"
-      aria-label="Remove option"
-      title="Remove option"
-    >
-      X
-    </button>
-  ) : null}
+      void updatePoll(poll.id, {
+        option_updates: next,
+      });
+    }}
+    className="cursor-pointer text-sm font-bold leading-none text-red-400 hover:text-red-300 align-middle"
+    aria-label="Remove option"
+    title="Remove option"
+  >
+    X
+  </button>
+) : null}
 </div>
 </div>
 ))}
