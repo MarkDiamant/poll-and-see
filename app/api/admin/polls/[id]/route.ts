@@ -165,6 +165,21 @@ export async function PATCH(
         .eq("poll_id", pollId);
 
       const existingIds = new Set((existingOptions || []).map((item) => item.id));
+      const submittedExistingIds = new Set(
+        validOptions
+          .map((item) => item.id)
+          .filter((item): item is number => typeof item === "number" && item > 0)
+      );
+
+      const idsToDelete = [...existingIds].filter((id) => !submittedExistingIds.has(id));
+
+      if (idsToDelete.length > 0) {
+        await supabaseAdmin
+          .from("poll_options")
+          .delete()
+          .eq("poll_id", pollId)
+          .in("id", idsToDelete);
+      }
 
       for (const option of validOptions) {
         if (option.id && existingIds.has(option.id)) {
