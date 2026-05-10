@@ -708,10 +708,19 @@ onBlur={(event) => {
     <button
       type="button"
       onClick={() => {
-        const next = [...(optionEdits[poll.id] || [])];
-        next.splice(optionIndex, 1);
-        setOptionEdits((current) => ({ ...current, [poll.id]: next }));
-      }}
+onClick={() => {
+  const next = [...(optionEdits[poll.id] || [])];
+  next.splice(optionIndex, 1);
+
+  setOptionEdits((current) => ({
+    ...current,
+    [poll.id]: next,
+  }));
+
+  void updatePoll(poll.id, {
+    option_updates: next,
+  });
+}}
       className="cursor-pointer text-sm font-bold leading-none text-red-400 hover:text-red-300 align-middle"
       aria-label="Remove option"
       title="Remove option"
