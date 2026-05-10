@@ -850,19 +850,44 @@ const hideSubmission = async (submissionId: number) => {
                     <td className="px-4 py-4">
                       <div className="min-w-[220px] max-w-[260px] space-y-2">
                         <div>
-                          <p className="mb-1 text-xs text-gray-400">Options (one per line)</p>
-                          <textarea
-                            value={optionsEdits[submission.id] ?? ""}
-                            onChange={(event) =>
-                              setOptionsEdits((current) => ({
-                                ...current,
-                                [submission.id]: event.target.value,
-                              }))
-                            }
-                            onBlur={() => void saveSubmission(submission.id)}
-                            rows={3}
-                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
-                          />
+<p className="mb-1 text-xs text-gray-400">Options (one per line)</p>
+<textarea
+  value={optionsEdits[submission.id] ?? ""}
+  onChange={(event) =>
+    setOptionsEdits((current) => ({
+      ...current,
+      [submission.id]: event.target.value,
+    }))
+  }
+  onBlur={(event) => {
+    const nextOptions = event.target.value
+      .split("\n")
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    const nextImageUrls = (imageUrlEdits[submission.id] || "")
+      .split("\n")
+      .map((item) => item.trim())
+      .slice(0, nextOptions.length);
+
+    setOptionsEdits((current) => ({
+      ...current,
+      [submission.id]: nextOptions.join("\n"),
+    }));
+
+    setImageUrlEdits((current) => ({
+      ...current,
+      [submission.id]: nextImageUrls.join("\n"),
+    }));
+
+    void saveSubmission(submission.id, {
+      options: nextOptions,
+      option_image_urls: nextImageUrls,
+    });
+  }}
+  rows={3}
+  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
+/>
                         </div>
 
                         <div>
