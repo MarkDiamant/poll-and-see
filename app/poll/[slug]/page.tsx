@@ -1251,7 +1251,33 @@ const [recentVotesResult, optionTotalsResult] = await Promise.all([
       setSubscribeLoading(false);
     }
   };
+  const loadBundleBySlug = async (pollSlug: string): Promise<PollBundle> => {
+    const response = await fetch(`/api/polls/${encodeURIComponent(pollSlug)}`, {
+      cache: "no-store",
+    });
 
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Poll not found");
+    }
+
+    const options = (data.options || []) as PollOption[];
+    const counts: VoteCounts = {};
+
+    options.forEach((option) => {
+      counts[option.id] = option.vote_count || 0;
+    });
+
+    const bundle = {
+      poll: data.poll as Poll,
+      options,
+      voteCounts: counts,
+    };
+
+    setCachedPollBundle(bundle);
+    return bundle;
+  };
   const loadBundle = async (pollId: number): Promise<PollBundle> => {
     const [pollResult, optionsResult] = await Promise.all([
       supabase
@@ -1413,25 +1439,13 @@ const [recentVotesResult, optionTotalsResult] = await Promise.all([
       }
 
       try {
-        const { data, error } = await supabase
-          .from("polls")
-          .select("id, question, description, category, slug, is_private, created_at")
-          .eq("slug", slug)
-          .single();
-
-      if (error || !data) {
-        console.error("Poll page initial poll query failed", error);
-        setPolls([]);
-        return;
-      }
+        const firstBundle = await loadBundleBySlug(slug);
 
         const storedAnchorCategory = sessionStorage.getItem(getPollFlowAnchorCategoryKey(slug));
-        const resolvedAnchorCategory = storedAnchorCategory || data.category;
+        const resolvedAnchorCategory = storedAnchorCategory || firstBundle.poll.category;
 
         setAnchorCategory(resolvedAnchorCategory);
         sessionStorage.setItem(getPollFlowAnchorCategoryKey(slug), resolvedAnchorCategory);
-
-        const firstBundle = await loadBundle(data.id);
         const firstPollAlreadyVoted = hasLocalVote(firstBundle.poll.id);
 
         setPolls([firstBundle]);
