@@ -140,10 +140,10 @@ const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: strin
     solid: "#ea580c",
   },
   Sports: {
-    text: "#bef264",
-    bg: "rgba(101, 163, 13, 0.12)",
-    border: "rgba(101, 163, 13, 0.55)",
-    solid: "#65a30d",
+    text: "#f87171",
+    bg: "rgba(185, 28, 28, 0.14)",
+    border: "rgba(185, 28, 28, 0.65)",
+    solid: "#b91c1c",
   },
   Tech: {
     text: "#f9a8d4",
@@ -203,10 +203,10 @@ const FALLBACK_CATEGORY_COLOURS = [
     solid: "#ea580c",
   },
   {
-    text: "#bef264",
-    bg: "rgba(101, 163, 13, 0.12)",
-    border: "rgba(101, 163, 13, 0.55)",
-    solid: "#65a30d",
+    text: "#f87171",
+    bg: "rgba(185, 28, 28, 0.14)",
+    border: "rgba(185, 28, 28, 0.65)",
+    solid: "#b91c1c",
   },
   {
     text: "#f9a8d4",
