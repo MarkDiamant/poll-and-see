@@ -79,7 +79,7 @@ const RELATED_CATEGORY_ORDER: Record<string, string[]> = {
   Finance: ["Business", "Lifestyle", "General", "Community", "Politics", "Education", "Fun", "Sports"],
   Business: ["Finance", "Community", "General", "Politics", "Lifestyle", "Education", "Fun", "Sports"],
   Education: ["Community", "Lifestyle", "General", "Fun", "Politics", "Finance", "Business", "Sports"],
-  Sports: ["Fun", "Lifestyle", "General", "Community", "Education", "Business", "Finance", "Politics"],
+  Sports: ["Community", "Fun", "General", "Lifestyle", "Education", "Business", "Finance", "Politics"],
   Politics: ["Community", "General", "Business", "Finance", "Education", "Lifestyle", "Fun", "Sports"],
 };
 
