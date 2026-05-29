@@ -9,6 +9,8 @@ const ALLOWED_CATEGORIES = [
   "Fun",
   "General",
   "Lifestyle",
+  "Politics",
+  "Sports",
 ];
 
 function isValidEmail(email: string) {

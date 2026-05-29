@@ -60,6 +60,8 @@ const SIGNUP_CATEGORIES = [
   "Fun",
   "General",
   "Lifestyle",
+  "Politics",
+  "Sports",
 ];
 
 const LIVE_POLL_CATEGORIES = [
@@ -70,6 +72,8 @@ const LIVE_POLL_CATEGORIES = [
   "Fun",
   "General",
   "Lifestyle",
+  "Politics",
+  "Sports",
 ];
 
 const SORT_FILTERS: SortFilter[] = ["Newest", "Trending", "Popular"];

@@ -25,7 +25,9 @@ type CategoryOption =
   | "Finance"
   | "Business"
   | "Education"
-  | "Fun";
+  | "Fun"
+  | "Politics"
+  | "Sports";
 
 const CATEGORY_OPTIONS: CategoryOption[] = [
   "General",
@@ -35,6 +37,8 @@ const CATEGORY_OPTIONS: CategoryOption[] = [
   "Business",
   "Education",
   "Fun",
+  "Politics",
+  "Sports",
 ];
 
 const ADMIN_KEY_STORAGE = "pollandsee-admin-key";
@@ -71,6 +75,8 @@ function suggestCategory(question: string): CategoryOption {
     Business: 0,
     Education: 0,
     Fun: 0,
+    Politics: 0,
+    Sports: 0,
   };
 
   if (hasAny(["child", "children", "kid", "kids", "parent", "parents", "parenting", "school", "teacher", "teachers", "nursery", "playgroup", "homework", "discipline", "chinuch", "learning", "student", "students", "classroom", "school communication", "privileges"])) {
@@ -97,6 +103,14 @@ function suggestCategory(question: string): CategoryOption {
     scores.Fun += 4;
   }
 
+  if (hasAny(["politics", "political", "government", "prime minister", "president", "election", "vote", "voting", "labour", "conservative", "democrat", "republican", "trump", "biden", "starmer", "sunak", "farage", "israel", "gaza", "ukraine", "russia", "war", "immigration", "tax policy"])) {
+    scores.Politics += 4;
+  }
+
+  if (hasAny(["sport", "sports", "football", "soccer", "tennis", "cricket", "rugby", "basketball", "baseball", "golf", "boxing", "ufc", "formula 1", "f1", "olympics", "world cup", "super bowl", "premier league", "champions league", "nba", "nfl"])) {
+    scores.Sports += 4;
+  }
+
   if (hasAny(["salary", "pay rise", "underpaid", "hiring", "workplace", "manager", "employee", "boss", "customers", "pricing"])) {
     scores.Business += 2;
   }
@@ -115,6 +129,14 @@ function suggestCategory(question: string): CategoryOption {
 
   if (scores.Fun > 0 && hasAny(["would you rather", "silly", "absurd", "dance", "sing", "cold showers", "air conditioning"])) {
     return "Fun";
+  }
+
+  if (scores.Politics > 0 && hasAny(["politics", "political", "government", "prime minister", "president", "election", "labour", "conservative", "democrat", "republican", "trump", "biden", "starmer", "sunak", "farage", "israel", "gaza", "ukraine", "russia", "immigration"])) {
+    return "Politics";
+  }
+
+  if (scores.Sports > 0 && hasAny(["sport", "sports", "football", "soccer", "tennis", "cricket", "rugby", "basketball", "baseball", "golf", "boxing", "ufc", "formula 1", "f1", "olympics", "world cup", "super bowl", "premier league", "champions league", "nba", "nfl"])) {
+    return "Sports";
   }
 
   const ranked = CATEGORY_OPTIONS.filter((category) => category !== "General").sort(

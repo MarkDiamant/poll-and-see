@@ -67,21 +67,20 @@ const SIGNUP_CATEGORIES = [
   "Fun",
   "General",
   "Lifestyle",
+  "Politics",
+  "Sports",
 ];
 
 const RELATED_CATEGORY_ORDER: Record<string, string[]> = {
-  Business: ["Finance", "General", "Community"],
-  Finance: ["Business", "General", "Community"],
-  Community: ["General", "Lifestyle", "Business"],
-  General: ["Community", "Lifestyle", "Business"],
-  Lifestyle: ["Fun", "General", "Community"],
-  Fun: ["Lifestyle", "General", "Community"],
-  Education: ["General", "Community", "Lifestyle"],
-  Health: ["Lifestyle", "General", "Community"],
-  Politics: ["General", "Community", "Business"],
-  Sport: ["Fun", "Lifestyle", "General"],
-  Sports: ["Fun", "Lifestyle", "General"],
-  Tech: ["Business", "Finance", "General"],
+  Community: ["Lifestyle", "General", "Education", "Fun", "Politics", "Finance", "Business", "Sports"],
+  Lifestyle: ["Community", "General", "Fun", "Finance", "Sports", "Education", "Business", "Politics"],
+  General: ["Community", "Lifestyle", "Fun", "Education", "Politics", "Finance", "Business", "Sports"],
+  Fun: ["General", "Lifestyle", "Community", "Sports", "Education", "Finance", "Business", "Politics"],
+  Finance: ["Business", "Lifestyle", "General", "Community", "Politics", "Education", "Fun", "Sports"],
+  Business: ["Finance", "Community", "General", "Politics", "Lifestyle", "Education", "Fun", "Sports"],
+  Education: ["Community", "Lifestyle", "General", "Fun", "Politics", "Finance", "Business", "Sports"],
+  Sports: ["Fun", "Lifestyle", "General", "Community", "Education", "Business", "Finance", "Politics"],
+  Politics: ["Community", "General", "Business", "Finance", "Education", "Lifestyle", "Fun", "Sports"],
 };
 
 const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: string; solid: string }> = {

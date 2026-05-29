@@ -35,7 +35,9 @@ type CategoryOption =
   | "Finance"
   | "Business"
   | "Education"
-  | "Fun";
+  | "Fun"
+  | "Politics"
+  | "Sports";
 
 type EmbedStatus = "live" | "closed" | "inactive";
 
@@ -47,6 +49,8 @@ const CATEGORY_OPTIONS: CategoryOption[] = [
   "Business",
   "Education",
   "Fun",
+  "Politics",
+  "Sports",
 ];
 
 const ADMIN_KEY_STORAGE = "pollandsee-admin-key";
