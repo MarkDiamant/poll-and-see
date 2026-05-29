@@ -1386,7 +1386,7 @@ className="mx-auto block w-[68%] md:w-[55%] cursor-pointer rounded-xl bg-gray-10
           </div>
 
 <p className="mt-4 mb-2 text-xs text-gray-400 uppercase tracking-wide text-center">Categories</p>
-<div className="grid grid-cols-3 gap-2 lg:grid-cols-9">
+<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-10">
             {categories.map((category, index) => {
               const isActive = selectedCategory === category;
 
