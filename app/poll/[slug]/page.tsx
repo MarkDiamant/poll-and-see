@@ -93,9 +93,8 @@ const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: strin
   General: { text: "#67e8f9", bg: "rgba(6, 182, 212, 0.12)", border: "rgba(6, 182, 212, 0.55)", solid: "#06b6d4" },
   Lifestyle: { text: "#d8b4fe", bg: "rgba(168, 85, 247, 0.12)", border: "rgba(168, 85, 247, 0.55)", solid: "#a855f7" },
   Health: { text: "#fdba74", bg: "rgba(249, 115, 22, 0.12)", border: "rgba(249, 115, 22, 0.55)", solid: "#f97316" },
-  Politics: { text: "#fcd34d", bg: "rgba(234, 179, 8, 0.12)", border: "rgba(234, 179, 8, 0.55)", solid: "#eab308" },
-  Sport: { text: "#c4b5fd", bg: "rgba(139, 92, 246, 0.12)", border: "rgba(139, 92, 246, 0.55)", solid: "#8b5cf6" },
-  Sports: { text: "#c4b5fd", bg: "rgba(139, 92, 246, 0.12)", border: "rgba(139, 92, 246, 0.55)", solid: "#8b5cf6" },
+  Politics: { text: "#f0abfc", bg: "rgba(192, 38, 211, 0.12)", border: "rgba(192, 38, 211, 0.55)", solid: "#c026d3" },
+  Sports: { text: "#5eead4", bg: "rgba(13, 148, 136, 0.12)", border: "rgba(13, 148, 136, 0.55)", solid: "#0d9488" },
   Tech: { text: "#f9a8d4", bg: "rgba(217, 70, 239, 0.12)", border: "rgba(217, 70, 239, 0.55)", solid: "#d946ef" },
 };
 
@@ -107,8 +106,8 @@ const FALLBACK_CATEGORY_COLOURS = [
   { text: "#67e8f9", bg: "rgba(6, 182, 212, 0.12)", border: "rgba(6, 182, 212, 0.55)", solid: "#06b6d4" },
   { text: "#d8b4fe", bg: "rgba(168, 85, 247, 0.12)", border: "rgba(168, 85, 247, 0.55)", solid: "#a855f7" },
   { text: "#fdba74", bg: "rgba(249, 115, 22, 0.12)", border: "rgba(249, 115, 22, 0.55)", solid: "#f97316" },
-  { text: "#fcd34d", bg: "rgba(234, 179, 8, 0.12)", border: "rgba(234, 179, 8, 0.55)", solid: "#eab308" },
-  { text: "#c4b5fd", bg: "rgba(139, 92, 246, 0.12)", border: "rgba(139, 92, 246, 0.55)", solid: "#8b5cf6" },
+  { text: "#f0abfc", bg: "rgba(192, 38, 211, 0.12)", border: "rgba(192, 38, 211, 0.55)", solid: "#c026d3" },
+  { text: "#5eead4", bg: "rgba(13, 148, 136, 0.12)", border: "rgba(13, 148, 136, 0.55)", solid: "#0d9488" },
   { text: "#f9a8d4", bg: "rgba(217, 70, 239, 0.12)", border: "rgba(217, 70, 239, 0.55)", solid: "#d946ef" },
 ];
 

@@ -86,19 +86,14 @@ const CATEGORY_COLOURS: Record<
     border: "#f97316",
   },
   Politics: {
-    text: "#fcd34d",
-    bg: "#422006",
-    border: "#eab308",
-  },
-  Sport: {
-    text: "#c4b5fd",
-    bg: "#2e1065",
-    border: "#8b5cf6",
+    text: "#f0abfc",
+    bg: "#3b0764",
+    border: "#c026d3",
   },
   Sports: {
-    text: "#c4b5fd",
-    bg: "#2e1065",
-    border: "#8b5cf6",
+    text: "#5eead4",
+    bg: "#042f2e",
+    border: "#0d9488",
   },
   Tech: {
     text: "#f9a8d4",
@@ -115,8 +110,8 @@ const FALLBACK_CATEGORY_COLOURS = [
   { text: "#67e8f9", bg: "#083344", border: "#06b6d4" },
   { text: "#d8b4fe", bg: "#2e1065", border: "#a855f7" },
   { text: "#fdba74", bg: "#431407", border: "#f97316" },
-  { text: "#fcd34d", bg: "#422006", border: "#eab308" },
-  { text: "#c4b5fd", bg: "#2e1065", border: "#8b5cf6" },
+  { text: "#f0abfc", bg: "#3b0764", border: "#c026d3" },
+  { text: "#5eead4", bg: "#042f2e", border: "#0d9488" },
   { text: "#f9a8d4", bg: "#3b0764", border: "#d946ef" },
 ];
 

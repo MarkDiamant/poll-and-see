@@ -134,22 +134,16 @@ const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: strin
     solid: "#f97316",
   },
   Politics: {
-    text: "#fcd34d",
-    bg: "rgba(234, 179, 8, 0.12)",
-    border: "rgba(234, 179, 8, 0.55)",
-    solid: "#eab308",
-  },
-  Sport: {
-    text: "#c4b5fd",
-    bg: "rgba(139, 92, 246, 0.12)",
-    border: "rgba(139, 92, 246, 0.55)",
-    solid: "#8b5cf6",
+    text: "#f0abfc",
+    bg: "rgba(192, 38, 211, 0.12)",
+    border: "rgba(192, 38, 211, 0.55)",
+    solid: "#c026d3",
   },
   Sports: {
-    text: "#c4b5fd",
-    bg: "rgba(139, 92, 246, 0.12)",
-    border: "rgba(139, 92, 246, 0.55)",
-    solid: "#8b5cf6",
+    text: "#5eead4",
+    bg: "rgba(13, 148, 136, 0.12)",
+    border: "rgba(13, 148, 136, 0.55)",
+    solid: "#0d9488",
   },
   Tech: {
     text: "#f9a8d4",
@@ -203,16 +197,16 @@ const FALLBACK_CATEGORY_COLOURS = [
     solid: "#f97316",
   },
   {
-    text: "#fcd34d",
-    bg: "rgba(234, 179, 8, 0.12)",
-    border: "rgba(234, 179, 8, 0.55)",
-    solid: "#eab308",
+    text: "#f0abfc",
+    bg: "rgba(192, 38, 211, 0.12)",
+    border: "rgba(192, 38, 211, 0.55)",
+    solid: "#c026d3",
   },
   {
-    text: "#c4b5fd",
-    bg: "rgba(139, 92, 246, 0.12)",
-    border: "rgba(139, 92, 246, 0.55)",
-    solid: "#8b5cf6",
+    text: "#5eead4",
+    bg: "rgba(13, 148, 136, 0.12)",
+    border: "rgba(13, 148, 136, 0.55)",
+    solid: "#0d9488",
   },
   {
     text: "#f9a8d4",
@@ -1392,7 +1386,7 @@ className="mx-auto block w-[68%] md:w-[55%] cursor-pointer rounded-xl bg-gray-10
           </div>
 
 <p className="mt-4 mb-2 text-xs text-gray-400 uppercase tracking-wide text-center">Categories</p>
-<div className="flex flex-wrap justify-center gap-2 lg:flex-nowrap">
+<div className="grid grid-cols-3 gap-2 lg:grid-cols-9">
             {categories.map((category, index) => {
               const isActive = selectedCategory === category;
 
@@ -1403,7 +1397,7 @@ className="mx-auto block w-[68%] md:w-[55%] cursor-pointer rounded-xl bg-gray-10
                   key={category}
                   type="button"
                   onClick={() => handleCategoryChange(category)}
-className="h-10 w-[calc((100%-16px)/3)] cursor-pointer rounded-xl px-2 text-sm font-medium transition lg:min-w-0 lg:flex-1"
+className="h-10 w-full cursor-pointer rounded-xl px-2 text-sm font-medium transition"
                   style={
                     isActive
                       ? {
