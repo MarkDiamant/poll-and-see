@@ -91,9 +91,9 @@ const CATEGORY_COLOURS: Record<
     border: "#ea580c",
   },
   Sports: {
-    text: "#bef264",
-    bg: "#1a2e05",
-    border: "#65a30d",
+    text: "#f87171",
+    bg: "#450a0a",
+    border: "#b91c1c",
   },
   Tech: {
     text: "#f9a8d4",
@@ -111,7 +111,7 @@ const FALLBACK_CATEGORY_COLOURS = [
   { text: "#d8b4fe", bg: "#2e1065", border: "#a855f7" },
   { text: "#fdba74", bg: "#431407", border: "#f97316" },
   { text: "#fdba74", bg: "#431407", border: "#ea580c" },
-  { text: "#bef264", bg: "#1a2e05", border: "#65a30d" },
+  { text: "#f87171", bg: "#450a0a", border: "#b91c1c" },
   { text: "#f9a8d4", bg: "#3b0764", border: "#d946ef" },
 ];
 
