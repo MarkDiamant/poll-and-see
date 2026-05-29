@@ -1386,7 +1386,7 @@ className="mx-auto block w-[68%] md:w-[55%] cursor-pointer rounded-xl bg-gray-10
           </div>
 
 <p className="mt-4 mb-2 text-xs text-gray-400 uppercase tracking-wide text-center">Categories</p>
-<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-10">
+<div className="flex flex-wrap justify-center gap-2 lg:grid lg:grid-cols-10">
             {categories.map((category, index) => {
               const isActive = selectedCategory === category;
 
@@ -1397,7 +1397,7 @@ className="mx-auto block w-[68%] md:w-[55%] cursor-pointer rounded-xl bg-gray-10
                   key={category}
                   type="button"
                   onClick={() => handleCategoryChange(category)}
-className="h-10 w-full cursor-pointer rounded-xl px-2 text-sm font-medium transition"
+className="h-10 min-w-[88px] cursor-pointer rounded-xl px-3 text-sm font-medium transition lg:min-w-0 lg:w-full"
                   style={
                     isActive
                       ? {
