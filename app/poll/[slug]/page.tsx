@@ -1855,8 +1855,24 @@ onVoteComplete={(pollId, category) => {
   const flowAnchorCategory =
     anchorCategory || pollsRef.current[0]?.poll.category || "";
 
-  void preloadQueue([...currentShownIds, pollId], flowAnchorCategory);
-  setShowEndOfFeed(true);
+  void preloadQueue([...currentShownIds, pollId], flowAnchorCategory).then(() => {
+    while (preloadedQueueRef.current.length > 0) {
+      const next = preloadedQueueRef.current.shift();
+      if (!next) break;
+      if (currentShownIds.includes(next.poll.id)) continue;
+      if (skippedPollIdsRef.current.has(next.poll.id)) continue;
+      if (hasLocalVote(next.poll.id)) continue;
+
+      setShowEndOfFeed(false);
+      setPolls((current) => {
+        if (current.some((item) => item.poll.id === next.poll.id)) return current;
+        return [...current, next];
+      });
+      return;
+    }
+
+    setShowEndOfFeed(true);
+  });
 }}
                 onSkipPoll={(pollId) => {
                   void handleSkipPoll(pollId);
