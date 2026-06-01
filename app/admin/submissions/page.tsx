@@ -243,38 +243,96 @@ setSubmissions(nextSubmissions);
           setHiddenPollCount((hiddenData.items || []).length);
         }
 
-        setQuestionEdits(
-          Object.fromEntries(nextSubmissions.map((row: PollSubmissionRow) => [row.id, row.question]))
-        );
-        setDescriptionEdits(
-          Object.fromEntries(nextSubmissions.map((row: PollSubmissionRow) => [row.id, row.description || ""]))
-        );
-        setOptionsEdits(
-          Object.fromEntries(
-            nextSubmissions.map((row: PollSubmissionRow) => [row.id, (row.options || []).join("\n")])
-          )
-        );
-        setImageUrlEdits(
-          Object.fromEntries(
-            nextSubmissions.map((row: PollSubmissionRow) => [row.id, (row.option_image_urls || []).join("\n")])
-          )
-        );
-        setEmailEdits(
-          Object.fromEntries(nextSubmissions.map((row: PollSubmissionRow) => [row.id, row.email || ""]))
-        );
-        setCategoryEdits(
-          Object.fromEntries(
-            nextSubmissions.map((row: PollSubmissionRow) => [
-              row.id,
-              (row.category as CategoryOption) || "General",
-            ])
-          )
-        );
-        setPrivacyEdits(
-          Object.fromEntries(
-            nextSubmissions.map((row: PollSubmissionRow) => [row.id, Boolean(row.is_private)])
-          )
-        );
+        if (showSpinner) {
+          setQuestionEdits(
+            Object.fromEntries(nextSubmissions.map((row: PollSubmissionRow) => [row.id, row.question]))
+          );
+          setDescriptionEdits(
+            Object.fromEntries(nextSubmissions.map((row: PollSubmissionRow) => [row.id, row.description || ""]))
+          );
+          setOptionsEdits(
+            Object.fromEntries(
+              nextSubmissions.map((row: PollSubmissionRow) => [row.id, (row.options || []).join("\n")])
+            )
+          );
+          setImageUrlEdits(
+            Object.fromEntries(
+              nextSubmissions.map((row: PollSubmissionRow) => [row.id, (row.option_image_urls || []).join("\n")])
+            )
+          );
+          setEmailEdits(
+            Object.fromEntries(nextSubmissions.map((row: PollSubmissionRow) => [row.id, row.email || ""]))
+          );
+          setCategoryEdits(
+            Object.fromEntries(
+              nextSubmissions.map((row: PollSubmissionRow) => [
+                row.id,
+                (row.category as CategoryOption) || "General",
+              ])
+            )
+          );
+          setPrivacyEdits(
+            Object.fromEntries(
+              nextSubmissions.map((row: PollSubmissionRow) => [row.id, Boolean(row.is_private)])
+            )
+          );
+        } else {
+          setQuestionEdits((current) => {
+            const next = { ...current };
+            nextSubmissions.forEach((row: PollSubmissionRow) => {
+              if (next[row.id] === undefined) next[row.id] = row.question;
+            });
+            return next;
+          });
+
+          setDescriptionEdits((current) => {
+            const next = { ...current };
+            nextSubmissions.forEach((row: PollSubmissionRow) => {
+              if (next[row.id] === undefined) next[row.id] = row.description || "";
+            });
+            return next;
+          });
+
+          setOptionsEdits((current) => {
+            const next = { ...current };
+            nextSubmissions.forEach((row: PollSubmissionRow) => {
+              if (next[row.id] === undefined) next[row.id] = (row.options || []).join("\n");
+            });
+            return next;
+          });
+
+          setImageUrlEdits((current) => {
+            const next = { ...current };
+            nextSubmissions.forEach((row: PollSubmissionRow) => {
+              if (next[row.id] === undefined) next[row.id] = (row.option_image_urls || []).join("\n");
+            });
+            return next;
+          });
+
+          setEmailEdits((current) => {
+            const next = { ...current };
+            nextSubmissions.forEach((row: PollSubmissionRow) => {
+              if (next[row.id] === undefined) next[row.id] = row.email || "";
+            });
+            return next;
+          });
+
+          setCategoryEdits((current) => {
+            const next = { ...current };
+            nextSubmissions.forEach((row: PollSubmissionRow) => {
+              if (next[row.id] === undefined) next[row.id] = (row.category as CategoryOption) || "General";
+            });
+            return next;
+          });
+
+          setPrivacyEdits((current) => {
+            const next = { ...current };
+            nextSubmissions.forEach((row: PollSubmissionRow) => {
+              if (next[row.id] === undefined) next[row.id] = Boolean(row.is_private);
+            });
+            return next;
+          });
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Could not load submissions.");
         setSubmissions([]);
