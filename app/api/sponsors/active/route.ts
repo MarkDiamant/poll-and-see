@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from("sponsors")
-    .select("id, business_name, headline, logo_url, image_url, cta_text, destination_url")
+    .select("id, business_name, headline, logo_url, cta_text, destination_url, theme")
     .eq("category", category)
     .eq("is_active", true)
     .lte("start_at", now)
@@ -35,9 +35,12 @@ export async function GET(request: NextRequest) {
     .limit(1)
     .maybeSingle();
 
-  if (error || !data) {
-    return NextResponse.json({ sponsor: null });
+  if (error) {
+    return NextResponse.json(
+      { error: error.message, sponsor: null },
+      { status: 500 }
+    );
   }
 
-  return NextResponse.json({ sponsor: data });
+  return NextResponse.json({ sponsor: data || null });
 }
