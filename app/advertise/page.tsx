@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import Footer from "@/components/Footer";
@@ -37,7 +37,7 @@ function getDiscount(days: number) {
 }
 
 export default function AdvertisePage() {
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(["Community"]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [days, setDays] = useState(1);
   const [activeForm, setActiveForm] = useState<"booking" | "question">("booking");
   const [formData, setFormData] = useState({
@@ -53,22 +53,40 @@ export default function AdvertisePage() {
     message: "",
   });
   const [sending, setSending] = useState(false);
+  const [logoUploading, setLogoUploading] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [error, setError] = useState("");
 
   const pricing = useMemo(() => {
-    const categoryCount = Math.max(selectedCategories.length, 1);
+    const categoryCount = selectedCategories.length;
     const cleanDays = Math.max(days || 1, 1);
+
+    if (categoryCount === 0) {
+      return {
+        categoryCount,
+        dailyPrice: 0,
+        days: cleanDays,
+        categorySaving: 0,
+        discount: 0,
+        dayDiscountAmount: 0,
+        total: 0,
+      };
+    }
+
     const dailyPrice = DAILY_PRICES[Math.min(categoryCount, 9)] || 150;
+    const categorySaving = categoryCount * DAILY_PRICES[1] - dailyPrice;
     const discount = getDiscount(cleanDays);
     const subtotal = dailyPrice * cleanDays;
+    const dayDiscountAmount = Math.round(subtotal * discount);
     const total = Math.round(subtotal * (1 - discount));
 
     return {
       categoryCount,
       dailyPrice,
       days: cleanDays,
+      categorySaving,
       discount,
+      dayDiscountAmount,
       total,
     };
   }, [selectedCategories, days]);
@@ -76,8 +94,7 @@ export default function AdvertisePage() {
   const toggleCategory = (category: string) => {
     setSelectedCategories((current) => {
       if (current.includes(category)) {
-        const next = current.filter((item) => item !== category);
-        return next.length > 0 ? next : current;
+        return current.filter((item) => item !== category);
       }
 
       return [...current, category];
@@ -86,6 +103,37 @@ export default function AdvertisePage() {
 
   const updateField = (key: keyof typeof formData, value: string) => {
     setFormData((current) => ({ ...current, [key]: value }));
+  };
+
+  const handleLogoUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setLogoUploading(true);
+    setError("");
+
+    try {
+      const uploadData = new FormData();
+      uploadData.append("file", file);
+
+      const response = await fetch("/api/advertise-logo-upload", {
+        method: "POST",
+        body: uploadData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Could not upload logo.");
+      }
+
+      updateField("logoUrl", data.url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not upload logo.");
+    } finally {
+      setLogoUploading(false);
+      event.target.value = "";
+    }
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -132,6 +180,8 @@ export default function AdvertisePage() {
         logoUrl: "",
         message: "",
       });
+      setSelectedCategories([]);
+      setDays(1);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not send enquiry.");
     } finally {
@@ -175,6 +225,23 @@ export default function AdvertisePage() {
             <section className="rounded-2xl border border-gray-700 bg-gray-800 p-5">
               <h2 className="mb-4 text-2xl font-semibold">Pricing calculator</h2>
 
+              <div className="mb-5 grid gap-3 rounded-2xl border border-gray-700 bg-gray-900 p-4 text-sm text-gray-300 md:grid-cols-2">
+                <div>
+                  <p className="mb-2 font-medium text-white">Category pricing guide</p>
+                  <p>1 category: £25/day</p>
+                  <p>2 categories: £45/day</p>
+                  <p>3 categories: £65/day</p>
+                  <p>4+ categories: better rate per extra category</p>
+                </div>
+
+                <div>
+                  <p className="mb-2 font-medium text-white">Duration discount</p>
+                  <p>3+ days: 10% off</p>
+                  <p>7+ days: 15% off</p>
+                  <p>30+ days: 20% off</p>
+                </div>
+              </div>
+
               <p className="mb-2 text-sm font-medium text-gray-300">Categories interested in</p>
               <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {CATEGORIES.map((category) => {
@@ -209,24 +276,38 @@ export default function AdvertisePage() {
               />
 
               <div className="rounded-2xl border border-gray-700 bg-gray-900 p-4">
-                <div className="grid gap-2 text-sm text-gray-300">
-                  <div className="flex justify-between gap-4">
-                    <span>Selected categories</span>
-                    <span className="font-medium text-white">{pricing.categoryCount}</span>
+                {pricing.categoryCount === 0 ? (
+                  <p className="text-sm text-gray-300">Choose at least one category to see pricing.</p>
+                ) : (
+                  <div className="grid gap-2 text-sm text-gray-300">
+                    <div className="flex justify-between gap-4">
+                      <span>Selected categories</span>
+                      <span className="font-medium text-white">{pricing.categoryCount}</span>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <span>Multi-category price</span>
+                      <span className="font-medium text-white">£{pricing.dailyPrice}/day</span>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <span>Multi-category saving</span>
+                      <span className="font-medium text-white">£{pricing.categorySaving}/day</span>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <span>Days</span>
+                      <span className="font-medium text-white">{pricing.days}</span>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <span>Duration discount</span>
+                      <span className="font-medium text-white">
+                        {Math.round(pricing.discount * 100)}%
+                      </span>
+                    </div>
+                    <div className="mt-3 flex justify-between border-t border-gray-700 pt-3 text-base">
+                      <span>Total price</span>
+                      <span className="font-semibold text-white">£{pricing.total.toLocaleString()}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between gap-4">
-                    <span>Days</span>
-                    <span className="font-medium text-white">{pricing.days}</span>
-                  </div>
-                  <div className="flex justify-between gap-4">
-                    <span>Discount applied</span>
-                    <span className="font-medium text-white">{Math.round(pricing.discount * 100)}%</span>
-                  </div>
-                  <div className="mt-3 flex justify-between border-t border-gray-700 pt-3 text-base">
-                    <span>Total price</span>
-                    <span className="font-semibold text-white">£{pricing.total.toLocaleString()}</span>
-                  </div>
-                </div>
+                )}
               </div>
             </section>
           </div>
@@ -302,7 +383,7 @@ export default function AdvertisePage() {
                   <input
                     value={formData.destination}
                     onChange={(event) => updateField("destination", event.target.value)}
-                    placeholder="Website or WhatsApp destination link"
+                    placeholder="Website, WhatsApp, Instagram or Facebook link"
                     className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
                   />
 
@@ -337,14 +418,30 @@ export default function AdvertisePage() {
                   />
 
                   <div>
-                    <input
-                      value={formData.logoUrl}
-                      onChange={(event) => updateField("logoUrl", event.target.value)}
-                      placeholder="Logo URL"
-                      className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
-                    />
+                    <label className="flex h-11 cursor-pointer items-center justify-center rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm font-medium text-white transition hover:bg-gray-800">
+                      {logoUploading ? "Uploading logo..." : formData.logoUrl ? "Logo uploaded" : "Upload logo"}
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                        onChange={handleLogoUpload}
+                        disabled={logoUploading}
+                        className="hidden"
+                      />
+                    </label>
+
+                    {formData.logoUrl ? (
+                      <a
+                        href={formData.logoUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-1 block text-xs text-blue-300 hover:text-blue-200"
+                      >
+                        View uploaded logo
+                      </a>
+                    ) : null}
+
                     <p className="mt-1 text-xs text-gray-500">
-                      Upload your logo somewhere public and paste the link here, or mention in the message that you will email it. PNG or SVG with transparent background works best.
+                      PNG or SVG with a transparent background works best. JPG and WEBP are also accepted.
                     </p>
                   </div>
                 </>
@@ -360,7 +457,7 @@ export default function AdvertisePage() {
 
               <button
                 type="submit"
-                disabled={sending}
+                disabled={sending || logoUploading}
                 className="h-11 w-full cursor-pointer rounded-xl bg-white px-4 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-60"
               >
                 {sending ? "Sending..." : activeForm === "booking" ? "Send sponsorship request" : "Send question"}
