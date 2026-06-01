@@ -54,7 +54,7 @@ const INLINE_SUBSCRIBE_VOTE_COUNT_KEY = "poll-flow-vote-count";
 const INLINE_SUBSCRIBE_SHOWN_KEY = "poll-flow-inline-subscribe-shown";
 const POLL_FLOW_COUNTED_VOTE_PREFIX = "poll-flow-counted-vote-";
 const POLL_EMAIL_SUBSCRIBED_KEY = "poll-email-subscribed";
-const SPONSOR_FREQUENCY = 3;
+const SPONSOR_FREQUENCY = 1;
 
 const CREATE_POLL_PROMPTS = [
   "Got a better question?",
