@@ -666,6 +666,48 @@ function getSponsorTheme(theme: string | null) {
       label: "text-purple-300/70",
       accent: "from-purple-300/40 via-purple-500/20 to-transparent",
     },
+    light: {
+      card: "border-gray-300 bg-gray-100",
+      cta: "border-gray-300 bg-gray-900 text-white hover:bg-gray-800",
+      label: "text-gray-500",
+      accent: "from-gray-500/50 via-gray-400/30 to-transparent",
+    },
+    softblue: {
+      card: "border-sky-200 bg-sky-50",
+      cta: "border-sky-300 bg-sky-900 text-white hover:bg-sky-800",
+      label: "text-sky-700",
+      accent: "from-sky-500/50 via-sky-300/30 to-transparent",
+    },
+    softgreen: {
+      card: "border-emerald-200 bg-emerald-50",
+      cta: "border-emerald-300 bg-emerald-900 text-white hover:bg-emerald-800",
+      label: "text-emerald-700",
+      accent: "from-emerald-500/50 via-emerald-300/30 to-transparent",
+    },
+    sand: {
+      card: "border-stone-300 bg-stone-100",
+      cta: "border-stone-300 bg-stone-900 text-white hover:bg-stone-800",
+      label: "text-stone-600",
+      accent: "from-stone-500/50 via-stone-300/30 to-transparent",
+    },
+    silver: {
+      card: "border-slate-300 bg-slate-100",
+      cta: "border-slate-300 bg-slate-900 text-white hover:bg-slate-800",
+      label: "text-slate-600",
+      accent: "from-slate-500/50 via-slate-300/30 to-transparent",
+    },
+    lavender: {
+      card: "border-purple-200 bg-purple-50",
+      cta: "border-purple-300 bg-purple-900 text-white hover:bg-purple-800",
+      label: "text-purple-700",
+      accent: "from-purple-500/50 via-purple-300/30 to-transparent",
+    },
+    sky: {
+      card: "border-blue-200 bg-blue-50",
+      cta: "border-blue-300 bg-blue-900 text-white hover:bg-blue-800",
+      label: "text-blue-700",
+      accent: "from-blue-500/50 via-blue-300/30 to-transparent",
+    },
   };
 
   const key = theme?.trim().toLowerCase() || "default";
@@ -693,11 +735,23 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
             Sponsored
           </p>
 
-          <p className="text-base font-semibold text-white leading-snug break-words">
+          <p className={`text-base font-semibold leading-snug break-words ${
+            ["light", "softblue", "softgreen", "sand", "silver", "lavender", "sky"].includes(
+              sponsor.theme?.trim().toLowerCase() || ""
+            )
+              ? "text-gray-950"
+              : "text-white"
+          }`}>
             {sponsor.business_name}
           </p>
 
-          <p className="mt-1 text-[15px] text-gray-300 leading-relaxed break-words">
+          <p className={`mt-1 text-[15px] leading-relaxed break-words ${
+            ["light", "softblue", "softgreen", "sand", "silver", "lavender", "sky"].includes(
+              sponsor.theme?.trim().toLowerCase() || ""
+            )
+              ? "text-gray-700"
+              : "text-gray-300"
+          }`}>
             {sponsor.headline}
           </p>
         </div>
