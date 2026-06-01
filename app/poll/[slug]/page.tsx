@@ -646,7 +646,6 @@ function getSponsorTheme(theme: string | null) {
 }
 
 function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
-  const theme = getSponsorTheme(sponsor.theme);
   const imageUrl = sponsor.logo_url?.trim() || null;
 
   return (
@@ -654,13 +653,13 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
       href={sponsor.destination_url}
       target="_blank"
       rel="noreferrer sponsored"
-      className={`mb-4 block rounded-2xl border p-5 transition hover:opacity-95 ${theme.card}`}
+      className="mb-4 block rounded-xl border border-orange-500/30 bg-orange-950/40 p-4 transition hover:opacity-95"
     >
-      <div className="flex items-start justify-between gap-5">
-        
-        {/* LEFT: TEXT (more space, bigger hierarchy) */}
-        <div className="flex-1 min-w-0 pr-2">
-          <p className={`mb-2 text-[11px] uppercase tracking-wider ${theme.label}`}>
+      <div className="flex items-start justify-between gap-3">
+
+        {/* LEFT TEXT */}
+        <div className="flex-1 min-w-0 pr-3">
+          <p className="mb-1 text-[10px] uppercase tracking-wide text-orange-200">
             Sponsored
           </p>
 
@@ -668,34 +667,32 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
             {sponsor.business_name}
           </p>
 
-          <p className="mt-2 text-[15px] text-gray-200 leading-relaxed break-words">
+          <p className="mt-1 text-[15px] text-orange-100/80 leading-relaxed break-words">
             {sponsor.headline}
           </p>
         </div>
 
-        {/* RIGHT: LOGO + CTA STACK */}
-        <div className="flex w-[110px] flex-shrink-0 flex-col items-end gap-3">
-          
-          {/* BIGGER LOGO, NOT SQUARE FEEL */}
+        {/* RIGHT: LOGO + CTA */}
+        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+
           {imageUrl ? (
-            <div className="w-full flex justify-end">
-              <img
-                src={imageUrl}
-                alt={sponsor.business_name}
-                className="h-20 w-auto max-w-[110px] object-contain rounded-lg bg-white/5 p-1"
-                loading="lazy"
-              />
-            </div>
+            <img
+              src={imageUrl}
+              alt={sponsor.business_name}
+              className="h-28 w-auto object-contain"
+              loading="lazy"
+            />
           ) : null}
 
-          {/* CTA UNDER LOGO */}
           <button
             type="button"
-            className={`w-full rounded-lg px-3 py-2 text-xs font-medium ${theme.cta}`}
+            className="rounded-lg bg-orange-500 px-3 py-2 text-xs font-medium text-white hover:bg-orange-400"
           >
             {sponsor.cta_text}
           </button>
+
         </div>
+
       </div>
     </a>
   );
