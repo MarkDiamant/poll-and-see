@@ -41,7 +41,6 @@ type Sponsor = {
   business_name: string;
   headline: string;
   logo_url: string | null;
-  image_url: string | null;
   cta_text: string;
   destination_url: string;
 };
@@ -577,7 +576,7 @@ boxShadow: isSelected ? `0 0 8px ${colour}22` : "none",
 }
 
 function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
-  const imageUrl = sponsor.logo_url || sponsor.image_url;
+  const imageUrl = sponsor.logo_url;
 
   return (
     <a
