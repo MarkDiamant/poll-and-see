@@ -716,7 +716,7 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
 
           <button
             type="button"
-            className={`rounded-lg border px-3 py-2 text-xs font-medium transition ${theme.cta}`}
+            className={`rounded-lg border px-4 py-2.5 text-sm font-medium transition ${theme.cta}`}
           >
             {sponsor.cta_text}
           </button>
@@ -1119,6 +1119,7 @@ export default function PollPage() {
   const sponsorRef = useRef<HTMLDivElement | null>(null);
 const sponsorByPollContainerRef = useRef<Record<number, HTMLDivElement | null>>({});
   const suppressNextPollAutoScrollRef = useRef(false);
+  const sponsorEligibleVoteCountRef = useRef(0);
   const previousPollCountRef = useRef(0);
   const previousShowInlineSubscribeRef = useRef(false);
   const preloadedQueueRef = useRef<PollBundle[]>([]);
@@ -1650,6 +1651,7 @@ return safeBundle;
   };
 
   useEffect(() => {
+     sponsorEligibleVoteCountRef.current = 0;
      const init = async () => {
       setShowEndOfFeed(false);
 
@@ -1855,14 +1857,18 @@ if (polls.length > previousPollCountRef.current && polls.length > 1) {
                 showGoToAllPolls={true}
 onVoteComplete={(pollId, category) => {
   void loadActiveSponsor(category).then((sponsor) => {
-    let shouldPauseForSponsor = false;
+    const currentShownIds = pollsRef.current.map((item) => item.poll.id);
+    const flowAnchorCategory =
+      anchorCategory || pollsRef.current[0]?.poll.category || "";
+
+    let shouldShowSponsor = false;
 
     if (sponsor) {
-      const sponsorVoteCount = incrementSponsorVoteCount();
-      const shouldShowSponsor = sponsorVoteCount % SPONSOR_FREQUENCY === 1;
+      sponsorEligibleVoteCountRef.current += 1;
+      shouldShowSponsor = sponsorEligibleVoteCountRef.current % SPONSOR_FREQUENCY === 1;
 
       if (shouldShowSponsor) {
-        shouldPauseForSponsor = true;
+        suppressNextPollAutoScrollRef.current = true;
 
         setSponsorByPollId((current) => ({
           ...current,
@@ -1872,46 +1878,39 @@ onVoteComplete={(pollId, category) => {
         if (sponsor.theme) {
           setPageTheme(sponsor.theme);
         }
-
-        suppressNextPollAutoScrollRef.current = true;
-
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            const sponsorEl = sponsorByPollContainerRef.current[pollId];
-            if (sponsorEl) {
-              smoothScrollToElement(sponsorEl, 650, 8);
-            }
-          });
-        });
       }
     }
 
-    const currentShownIds = pollsRef.current.map((item) => item.poll.id);
-    const flowAnchorCategory =
-      anchorCategory || pollsRef.current[0]?.poll.category || "";
+    void preloadQueue([...currentShownIds, pollId], flowAnchorCategory).then(() => {
+      while (preloadedQueueRef.current.length > 0) {
+        const next = preloadedQueueRef.current.shift();
+        if (!next) break;
+        if (currentShownIds.includes(next.poll.id)) continue;
+        if (skippedPollIdsRef.current.has(next.poll.id)) continue;
+        if (hasLocalVote(next.poll.id)) continue;
 
-    const loadNextPoll = () => {
-      void preloadQueue([...currentShownIds, pollId], flowAnchorCategory).then(() => {
-        while (preloadedQueueRef.current.length > 0) {
-          const next = preloadedQueueRef.current.shift();
-          if (!next) break;
-          if (currentShownIds.includes(next.poll.id)) continue;
-          if (skippedPollIdsRef.current.has(next.poll.id)) continue;
-          if (hasLocalVote(next.poll.id)) continue;
+        setShowEndOfFeed(false);
+        setPolls((current) => {
+          if (current.some((item) => item.poll.id === next.poll.id)) return current;
+          return [...current, next];
+        });
 
-          setShowEndOfFeed(false);
-          setPolls((current) => {
-            if (current.some((item) => item.poll.id === next.poll.id)) return current;
-            return [...current, next];
+        if (shouldShowSponsor) {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              const sponsorEl = sponsorByPollContainerRef.current[pollId];
+              if (sponsorEl) {
+                smoothScrollToElement(sponsorEl, 650, 8);
+              }
+            });
           });
-          return;
         }
 
-        setShowEndOfFeed(true);
-      });
-    };
+        return;
+      }
 
-    loadNextPoll();
+      setShowEndOfFeed(true);
+    });
   });
 
   const voteCount = getInlineSubscribeVoteCount();
