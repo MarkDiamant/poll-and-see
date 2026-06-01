@@ -1700,7 +1700,7 @@ if (polls.length > previousPollCountRef.current && polls.length > 1) {
 
     previousShowInlineSubscribeRef.current = showInlineSubscribe;
     previousPollCountRef.current = polls.length;
-    }, [polls, showInlineSubscribe, showEndOfFeed, sponsorByPollId]);
+    }, [polls, showInlineSubscribe, showEndOfFeed]);
 
   const handleSkipPoll = async (pollId: number) => {
     skippedPollIdsRef.current.add(pollId);
