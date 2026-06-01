@@ -1673,49 +1673,30 @@ smoothScrollToElement(endOfFeedRef.current, 650, window.innerHeight * 0.62);
   return;
 }
 
-    if (polls.length > previousPollCountRef.current && polls.length > 1) {
-      const lastPollId = polls[polls.length - 1]?.poll.id;
-      if (lastPollId && pollRefs.current[lastPollId]) {
-        const sponsorEl = sponsorByPollContainerRef.current[lastPollId];
+if (polls.length > previousPollCountRef.current && polls.length > 1) {
+  const lastPollId = polls[polls.length - 1]?.poll.id;
 
-const target =
-  sponsorEl ||
-  pollRefs.current[lastPollId];
+  if (!lastPollId) return;
 
-if (target) {
-  smoothScrollToElement(target as HTMLElement, 650, 8);
+  const sponsorEl = sponsorByPollContainerRef.current[lastPollId];
+  const pollEl = pollRefs.current[lastPollId];
+
+  const target = sponsorEl || pollEl;
+
+  if (target) {
+    smoothScrollToElement(target as HTMLElement, 650, 8);
+  }
 }
-      }
-    }
 
     previousShowInlineSubscribeRef.current = showInlineSubscribe;
     previousPollCountRef.current = polls.length;
     }, [polls, showInlineSubscribe, showEndOfFeed]);
 
   const handleVoteComplete = async (pollId: number, category: string) => {
-    const countedVotes = recordInlineSubscribeVote(pollId);
-
-    const firstVoteTriggered = countedVotes === 1;
+const countedVotes = recordInlineSubscribeVote(pollId);
 
 const hasShownFirstSponsor =
-  sessionStorage.getItem(FIRST_VOTE_SPONSOR_SHOWN_KEY) === "true";
 
-const shouldShowSponsor =
-  (!hasShownFirstSponsor && firstVoteTriggered) ||
-  (hasShownFirstSponsor && (countedVotes % SPONSOR_FREQUENCY === 0));
-
-if (shouldShowSponsor) {
-  sessionStorage.setItem(FIRST_VOTE_SPONSOR_SHOWN_KEY, "true");
-
-  const sponsor = await loadActiveSponsor(category);
-
-  if (sponsor) {
-    setSponsorByPollId((current) => ({
-      ...current,
-      [pollId]: sponsor,
-    }));
-  }
-}
 
     if (
       countedVotes >= INLINE_SUBSCRIBE_VOTE_THRESHOLD &&
