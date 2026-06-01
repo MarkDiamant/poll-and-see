@@ -1,6 +1,7 @@
-import "./globals.css";
-import { Analytics } from "@vercel/analytics/react";
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/react";
+
+import "./globals.css";
 
 const SITE_URL = "https://www.pollandsee.com";
 
