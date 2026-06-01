@@ -731,13 +731,7 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
 
         {/* LEFT TEXT */}
         <div className="min-w-0 flex-1 sm:pr-3">
-          <p className={`mb-1 text-[10px] uppercase tracking-wide ${
-            ["light", "softblue", "softgreen", "sand", "silver", "lavender", "sky"].includes(
-              sponsor.theme?.trim().toLowerCase() || ""
-            )
-              ? "text-white/75"
-              : theme.label
-          }`}>
+          <p className={`mb-1 text-[10px] uppercase tracking-wide ${theme.label}`}>
             Sponsored
           </p>
 
@@ -776,7 +770,13 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
 
           <button
             type="button"
-            className={`rounded-lg border px-4 py-2.5 text-sm font-medium transition ${theme.cta}`}
+            className={`rounded-lg border px-4 py-2.5 text-sm font-medium transition ${
+              ["light", "softblue", "softgreen", "sand", "silver", "lavender", "sky"].includes(
+                sponsor.theme?.trim().toLowerCase() || ""
+              )
+                ? "border-white/20 bg-white/10 text-white hover:bg-white/15"
+                : theme.cta
+            }`}
           >
             {sponsor.cta_text}
           </button>
