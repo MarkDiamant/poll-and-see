@@ -1696,6 +1696,24 @@ if (polls.length > previousPollCountRef.current && polls.length > 1) {
 const countedVotes = recordInlineSubscribeVote(pollId);
 
 const hasShownFirstSponsor =
+  sessionStorage.getItem(FIRST_VOTE_SPONSOR_SHOWN_KEY) === "true";
+
+const shouldShowSponsor =
+  !hasShownFirstSponsor ||
+  countedVotes % SPONSOR_FREQUENCY === 0;
+
+if (shouldShowSponsor) {
+  sessionStorage.setItem(FIRST_VOTE_SPONSOR_SHOWN_KEY, "true");
+
+  const sponsor = await loadActiveSponsor(category);
+
+  if (sponsor) {
+    setSponsorByPollId((current) => ({
+      ...current,
+      [pollId]: sponsor,
+    }));
+  }
+}
 
 
     if (
