@@ -619,34 +619,34 @@ function getSponsorTheme(theme: string | null) {
       accent: "from-amber-300/40 via-amber-400/20 to-transparent",
     },
     slate: {
-      card: "border-slate-600/60 bg-slate-900/95",
-      cta: "border-slate-400/20 bg-slate-800 text-slate-100 hover:bg-slate-700",
-      label: "text-slate-400",
-      accent: "from-slate-300/40 via-slate-400/20 to-transparent",
+      card: "border-slate-500/80 bg-slate-800",
+      cta: "border-slate-400/25 bg-slate-700 text-slate-100 hover:bg-slate-600",
+      label: "text-slate-300/70",
+      accent: "from-slate-300/45 via-slate-400/25 to-transparent",
     },
     navy: {
-      card: "border-blue-900/70 bg-[#071526]",
-      cta: "border-blue-300/20 bg-[#10233a] text-blue-100 hover:bg-[#163453]",
+      card: "border-blue-700/80 bg-[#0b1f38]",
+      cta: "border-blue-300/25 bg-[#16304d] text-blue-100 hover:bg-[#1d3d61]",
       label: "text-blue-300/70",
-      accent: "from-blue-300/40 via-blue-500/20 to-transparent",
+      accent: "from-blue-300/45 via-blue-500/25 to-transparent",
     },
     charcoal: {
-      card: "border-zinc-700/70 bg-zinc-900/95",
-      cta: "border-zinc-400/20 bg-zinc-800 text-zinc-100 hover:bg-zinc-700",
-      label: "text-zinc-400",
-      accent: "from-zinc-300/40 via-zinc-500/20 to-transparent",
+      card: "border-zinc-500/80 bg-zinc-800",
+      cta: "border-zinc-400/25 bg-zinc-700 text-zinc-100 hover:bg-zinc-600",
+      label: "text-zinc-300/70",
+      accent: "from-zinc-300/45 via-zinc-500/25 to-transparent",
     },
     green: {
-      card: "border-emerald-900/60 bg-[#071b16]",
-      cta: "border-emerald-300/20 bg-[#102820] text-emerald-100 hover:bg-[#16382d]",
+      card: "border-emerald-700/80 bg-[#0c241d]",
+      cta: "border-emerald-300/25 bg-[#16382f] text-emerald-100 hover:bg-[#1f4a3f]",
       label: "text-emerald-300/70",
-      accent: "from-emerald-300/40 via-emerald-500/20 to-transparent",
+      accent: "from-emerald-300/45 via-emerald-500/25 to-transparent",
     },
     blue: {
-      card: "border-sky-900/60 bg-[#071827]",
-      cta: "border-sky-300/20 bg-[#102538] text-sky-100 hover:bg-[#163552]",
+      card: "border-sky-700/80 bg-[#0a2438]",
+      cta: "border-sky-300/25 bg-[#16384d] text-sky-100 hover:bg-[#1e4a66]",
       label: "text-sky-300/70",
-      accent: "from-sky-300/40 via-sky-500/20 to-transparent",
+      accent: "from-sky-300/45 via-sky-500/25 to-transparent",
     },
     cream: {
       card: "border-stone-600/60 bg-[#191714]",
@@ -1945,9 +1945,7 @@ onVoteComplete={(pollId, category) => {
           [pollId]: sponsor,
         }));
 
-        if (sponsor.theme) {
-          setPageTheme(sponsor.theme);
-        }
+        // sponsor card only
       }
     }
 
