@@ -59,6 +59,20 @@ const POLL_EMAIL_SUBSCRIBED_KEY = "poll-email-subscribed";
 const SPONSOR_FREQUENCY = 2;
 const FIRST_VOTE_SPONSOR_SHOWN_KEY = "first-vote-sponsor-shown";
 
+function getSponsorVoteCount() {
+  if (typeof window === "undefined") return 0;
+
+  const raw = sessionStorage.getItem("sponsor-vote-count");
+  const val = Number(raw || 0);
+  return Number.isNaN(val) ? 0 : val;
+}
+
+function incrementSponsorVoteCount() {
+  const next = getSponsorVoteCount() + 1;
+  sessionStorage.setItem("sponsor-vote-count", String(next));
+  return next;
+}
+
 const CREATE_POLL_PROMPTS = [
   "Got a better question?",
   "What would your friends say?",
@@ -596,7 +610,7 @@ boxShadow: isSelected ? `0 0 8px ${colour}22` : "none",
 function getSponsorTheme(theme: string | null) {
   const themes: Record<string, { card: string; cta: string; label: string }> = {
     default: {
-      card: "border-gray-500/40 bg-[#0b1220]/95",
+  card: "border-amber-500/20 bg-[#0e0c08]",
       cta: "border-gray-600 bg-gray-800 text-gray-100",
       label: "text-gray-500",
     },
@@ -653,7 +667,7 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
       href={sponsor.destination_url}
       target="_blank"
       rel="noreferrer sponsored"
-      className="relative mb-4 block overflow-hidden rounded-xl border border-gray-600/40 bg-gray-800/40 p-4 transition hover:opacity-95"
+      className="relative mb-4 block overflow-hidden rounded-lg border border-amber-500/20 bg-[#0e0c08] px-5 py-3 transition hover:opacity-95"
     >
       {/* LEFT ACCENT BAR */}
       <div className="absolute left-0 top-0 h-full w-[3px] bg-gradient-to-b from-amber-400/70 via-amber-500/40 to-transparent" />
@@ -661,7 +675,7 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
 
         {/* LEFT TEXT */}
         <div className="flex-1 min-w-0 pr-3">
-          <p className="mb-1 text-[10px] uppercase tracking-wide text-gray-400">
+          <p className="mb-1 text-[10px] uppercase tracking-wide text-amber-300/70">
             Sponsored
           </p>
 
@@ -675,13 +689,13 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
         </div>
 
         {/* RIGHT: LOGO + CTA */}
-        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+        <div className="flex flex-col items-center justify-center gap-2 flex-shrink-0">
 
           {imageUrl ? (
             <img
               src={imageUrl}
               alt={sponsor.business_name}
-              className="h-20 w-auto object-contain"
+              className="h-14 w-auto object-contain"
               loading="lazy"
             />
           ) : null}
@@ -1704,11 +1718,23 @@ recordInlineSubscribeVote(pollId);
 const hasShownFirstSponsor =
   sessionStorage.getItem(FIRST_VOTE_SPONSOR_SHOWN_KEY) === "true";
 
-const adjustedVoteCount = countedVotes + 1;
+const sponsorVoteCount = incrementSponsorVoteCount();
 
 const shouldShowSponsor =
-  adjustedVoteCount >= 1 &&
-  adjustedVoteCount % SPONSOR_FREQUENCY === 1;
+  sponsorVoteCount === 1 || sponsorVoteCount % 2 === 1;
+
+if (shouldShowSponsor) {
+  sessionStorage.setItem(FIRST_VOTE_SPONSOR_SHOWN_KEY, "true");
+
+  const sponsor = await loadActiveSponsor(category);
+
+  if (sponsor) {
+    setSponsorByPollId((current) => ({
+      ...current,
+      [pollId]: sponsor,
+    }));
+  }
+}
 
 if (shouldShowSponsor) {
   sessionStorage.setItem(FIRST_VOTE_SPONSOR_SHOWN_KEY, "true");
