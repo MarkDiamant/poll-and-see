@@ -653,13 +653,13 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
       href={sponsor.destination_url}
       target="_blank"
       rel="noreferrer sponsored"
-      className="mb-4 block rounded-xl border border-orange-500/30 bg-orange-950/40 p-4 transition hover:opacity-95"
+      className="mb-4 block rounded-xl border border-gray-600/40 bg-gray-800/40 p-4 transition hover:opacity-95"
     >
       <div className="flex items-start justify-between gap-3">
 
         {/* LEFT TEXT */}
         <div className="flex-1 min-w-0 pr-3">
-          <p className="mb-1 text-[10px] uppercase tracking-wide text-orange-200">
+          <p className="mb-1 text-[10px] uppercase tracking-wide text-gray-400">
             Sponsored
           </p>
 
@@ -667,7 +667,7 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
             {sponsor.business_name}
           </p>
 
-          <p className="mt-1 text-[15px] text-orange-100/80 leading-relaxed break-words">
+          <p className="mt-1 text-[15px] text-gray-300 leading-relaxed break-words">
             {sponsor.headline}
           </p>
         </div>
@@ -679,14 +679,14 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
             <img
               src={imageUrl}
               alt={sponsor.business_name}
-              className="h-28 w-auto object-contain"
+              className="h-20 w-auto object-contain"
               loading="lazy"
             />
           ) : null}
 
           <button
             type="button"
-            className="rounded-lg bg-orange-500 px-3 py-2 text-xs font-medium text-white hover:bg-orange-400"
+            className="rounded-lg bg-gray-700 px-3 py-2 text-xs font-medium text-white hover:bg-gray-600"
           >
             {sponsor.cta_text}
           </button>
@@ -1701,9 +1701,11 @@ const countedVotes = recordInlineSubscribeVote(pollId);
 const hasShownFirstSponsor =
   sessionStorage.getItem(FIRST_VOTE_SPONSOR_SHOWN_KEY) === "true";
 
+const adjustedVoteCount = countedVotes + 1;
+
 const shouldShowSponsor =
-  !hasShownFirstSponsor ||
-  countedVotes % SPONSOR_FREQUENCY === 0;
+  adjustedVoteCount === 1 ||
+  (adjustedVoteCount % SPONSOR_FREQUENCY === 1);
 
 if (shouldShowSponsor) {
   sessionStorage.setItem(FIRST_VOTE_SPONSOR_SHOWN_KEY, "true");
