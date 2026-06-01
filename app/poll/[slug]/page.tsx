@@ -1698,7 +1698,8 @@ if (polls.length > previousPollCountRef.current && polls.length > 1) {
     }, [polls, showInlineSubscribe, showEndOfFeed]);
 
   const handleVoteComplete = async (pollId: number, category: string) => {
-const countedVotes = recordInlineSubscribeVote(pollId);
+const countedVotes = getInlineSubscribeVoteCount() + 1;
+recordInlineSubscribeVote(pollId);
 
 const hasShownFirstSponsor =
   sessionStorage.getItem(FIRST_VOTE_SPONSOR_SHOWN_KEY) === "true";
