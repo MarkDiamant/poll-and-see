@@ -649,15 +649,15 @@ function getSponsorTheme(theme: string | null) {
       accent: "from-sky-300/45 via-sky-500/25 to-transparent",
     },
     cream: {
-      card: "border-amber-300/30 bg-amber-100/18 backdrop-blur-sm",
-      cta: "border-amber-700/45 bg-amber-700/20 text-amber-50 hover:bg-amber-700/25",
-      label: "text-amber-300/70",
-      accent: "from-amber-300/45 via-amber-500/20 to-transparent",
+      card: "border-amber-200/35 bg-amber-50/22 backdrop-blur-sm",
+      cta: "border-amber-500/40 bg-amber-400/14 text-amber-50 hover:bg-amber-400/20",
+      label: "text-amber-200/80",
+      accent: "from-amber-200/45 via-amber-400/20 to-transparent",
     },
     warm: {
-      card: "border-orange-300/30 bg-orange-100/18 backdrop-blur-sm",
-      cta: "border-orange-700/45 bg-orange-700/20 text-orange-50 hover:bg-orange-700/25",
-      label: "text-orange-300/70",
+      card: "border-orange-300/30 bg-orange-300/14 backdrop-blur-sm",
+      cta: "border-orange-400/45 bg-orange-400/12 text-orange-50 hover:bg-orange-400/18",
+      label: "text-orange-200/80",
       accent: "from-orange-300/45 via-orange-500/20 to-transparent",
     },
     purple: {
@@ -667,10 +667,10 @@ function getSponsorTheme(theme: string | null) {
       accent: "from-purple-300/40 via-purple-500/20 to-transparent",
     },
     light: {
-      card: "border-white/20 bg-white/12 backdrop-blur-sm",
-      cta: "border-white/30 bg-white/12 text-white hover:bg-white/16",
-      label: "text-white/70",
-      accent: "from-white/45 via-white/20 to-transparent",
+      card: "border-white/45 bg-white/32 backdrop-blur-sm",
+      cta: "border-white/50 bg-white/18 text-white hover:bg-white/24",
+      label: "text-white/80",
+      accent: "from-white/55 via-white/25 to-transparent",
     },
     softblue: {
       card: "border-sky-300/30 bg-sky-400/14 backdrop-blur-sm",
