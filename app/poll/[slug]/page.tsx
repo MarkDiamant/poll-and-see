@@ -36,6 +36,16 @@ type PollBundle = {
   voteCounts: VoteCounts;
 };
 
+type Sponsor = {
+  id: number;
+  business_name: string;
+  headline: string;
+  logo_url: string | null;
+  image_url: string | null;
+  cta_text: string;
+  destination_url: string;
+};
+
 const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899", "#8b5cf6", "#14b8a6", "#f97316", "#ef4444"];
 const SAME_POLL_CLICK_GUARD_MS = 400;
 const POLL_BUNDLE_CACHE_PREFIX = "poll-bundle-cache:";
@@ -45,6 +55,7 @@ const INLINE_SUBSCRIBE_VOTE_COUNT_KEY = "poll-flow-vote-count";
 const INLINE_SUBSCRIBE_SHOWN_KEY = "poll-flow-inline-subscribe-shown";
 const POLL_FLOW_COUNTED_VOTE_PREFIX = "poll-flow-counted-vote-";
 const POLL_EMAIL_SUBSCRIBED_KEY = "poll-email-subscribed";
+const SPONSOR_FREQUENCY = 3;
 
 const CREATE_POLL_PROMPTS = [
   "Got a better question?",
@@ -373,6 +384,19 @@ async function submitVote(pollId: number, optionId: number) {
   }
 }
 
+async function loadActiveSponsor(category: string): Promise<Sponsor | null> {
+  const response = await fetch(`/api/sponsors/active?category=${encodeURIComponent(category)}`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = await response.json();
+  return data.sponsor || null;
+}
+
 function wrapCanvasText(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -549,6 +573,50 @@ boxShadow: isSelected ? `0 0 8px ${colour}22` : "none",
         );
       })}
     </div>
+  );
+}
+
+function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
+  const imageUrl = sponsor.logo_url || sponsor.image_url;
+
+  return (
+    <a
+      href={sponsor.destination_url}
+      target="_blank"
+      rel="noreferrer sponsored"
+      className="mb-5 mt-1 block rounded-2xl border border-gray-700 bg-gray-800/90 p-3 shadow-lg transition hover:border-gray-600"
+    >
+      <div className="flex min-h-[92px] items-center gap-3">
+        {imageUrl ? (
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-gray-700 bg-gray-900">
+            <img
+              src={imageUrl}
+              alt={sponsor.business_name}
+              loading="lazy"
+              width={96}
+              height={96}
+              className="h-full w-full object-cover"
+            />
+          </div>
+        ) : null}
+
+        <div className="min-w-0 flex-1">
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">
+            Sponsored
+          </p>
+          <p className="truncate text-sm font-semibold text-white">
+            {sponsor.business_name}
+          </p>
+          <p className="mt-0.5 line-clamp-2 text-sm leading-5 text-gray-300">
+            {sponsor.headline}
+          </p>
+        </div>
+
+        <span className="shrink-0 rounded-xl bg-white px-3 py-2 text-xs font-medium text-black">
+          {sponsor.cta_text}
+        </span>
+      </div>
+    </a>
   );
 }
 
@@ -921,6 +989,7 @@ export default function PollPage() {
   const [popularPollIds, setPopularPollIds] = useState<number[]>([]);
   const [votesLast24, setVotesLast24] = useState(0);
   const [showEndOfFeed, setShowEndOfFeed] = useState(false);
+  const [sponsorByPollId, setSponsorByPollId] = useState<Record<number, Sponsor>>({});
 
   const pollRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const inlineSubscribeBoxRef = useRef<HTMLDivElement | null>(null);
@@ -1503,8 +1572,19 @@ smoothScrollToElement(endOfFeedRef.current, 650, window.innerHeight * 0.62);
     previousPollCountRef.current = polls.length;
     }, [polls, showInlineSubscribe, showEndOfFeed]);
 
-  const handleVoteComplete = async (pollId: number) => {
+  const handleVoteComplete = async (pollId: number, category: string) => {
     const countedVotes = recordInlineSubscribeVote(pollId);
+
+    if (countedVotes > 0 && countedVotes % SPONSOR_FREQUENCY === 0) {
+      const sponsor = await loadActiveSponsor(category);
+
+      if (sponsor) {
+        setSponsorByPollId((current) => ({
+          ...current,
+          [pollId]: sponsor,
+        }));
+      }
+    }
 
     if (
       countedVotes >= INLINE_SUBSCRIBE_VOTE_THRESHOLD &&
@@ -1676,8 +1756,8 @@ setShowEndOfFeed(true);
                 bundle={bundle}
                 badgeLabel={badgeLabel}
                 showGoToAllPolls={true}
-                onVoteComplete={(pollId) => {
-                  void handleVoteComplete(pollId);
+                onVoteComplete={(pollId, category) => {
+                  void handleVoteComplete(pollId, category);
                 }}
                 onSkipPoll={(pollId) => {
                   void handleSkipPoll(pollId);
@@ -1685,6 +1765,10 @@ setShowEndOfFeed(true);
                 isFollowOnPoll={index > 0}
                 totalVoteCount={totalVoteCount}
               />
+
+              {sponsorByPollId[bundle.poll.id] ? (
+                <SponsorCard sponsor={sponsorByPollId[bundle.poll.id]} />
+              ) : null}
 
               {showInlineSubscribe &&
               (index === inlineSubscribeInsertAfterIndex ||
