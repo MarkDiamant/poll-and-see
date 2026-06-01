@@ -197,6 +197,19 @@ if (searchInput.trim()) {
         const nextPolls = data.polls || [];
         if (isCancelled) return;
 setPolls(nextPolls);
+
+setOptionEdits((current) => {
+  const next = { ...current };
+
+  nextPolls.forEach((poll: PollRow) => {
+    if (!next[poll.id]) {
+      next[poll.id] = poll.options || [];
+    }
+  });
+
+  return next;
+});
+
         setPendingSubmissionsCount(data.pendingSubmissionsCount || 0);
 
         const hiddenResponse = await fetch("/api/admin/hidden", {
