@@ -1118,6 +1118,7 @@ export default function PollPage() {
   const endOfFeedRef = useRef<HTMLElement | null>(null);
   const sponsorRef = useRef<HTMLDivElement | null>(null);
 const sponsorByPollContainerRef = useRef<Record<number, HTMLDivElement | null>>({});
+  const suppressNextPollAutoScrollRef = useRef(false);
   const previousPollCountRef = useRef(0);
   const previousShowInlineSubscribeRef = useRef(false);
   const preloadedQueueRef = useRef<PollBundle[]>([]);
@@ -1714,17 +1715,21 @@ smoothScrollToElement(endOfFeedRef.current, 650, window.innerHeight * 0.62);
 }
 
 if (polls.length > previousPollCountRef.current && polls.length > 1) {
+  if (suppressNextPollAutoScrollRef.current) {
+    suppressNextPollAutoScrollRef.current = false;
+    previousShowInlineSubscribeRef.current = showInlineSubscribe;
+    previousPollCountRef.current = polls.length;
+    return;
+  }
+
   const lastPollId = polls[polls.length - 1]?.poll.id;
 
   if (!lastPollId) return;
 
-  const sponsorEl = sponsorByPollContainerRef.current[lastPollId];
   const pollEl = pollRefs.current[lastPollId];
 
-  const target = sponsorEl || pollEl;
-
-  if (target) {
-    smoothScrollToElement(target as HTMLElement, 650, 8);
+  if (pollEl) {
+    smoothScrollToElement(pollEl as HTMLElement, 650, 8);
   }
 }
 
@@ -1868,6 +1873,8 @@ onVoteComplete={(pollId, category) => {
           setPageTheme(sponsor.theme);
         }
 
+        suppressNextPollAutoScrollRef.current = true;
+
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             const sponsorEl = sponsorByPollContainerRef.current[pollId];
@@ -1904,11 +1911,7 @@ onVoteComplete={(pollId, category) => {
       });
     };
 
-    if (shouldPauseForSponsor) {
-      setTimeout(loadNextPoll, 900);
-    } else {
-      loadNextPoll();
-    }
+    loadNextPoll();
   });
 
   const voteCount = getInlineSubscribeVoteCount();
