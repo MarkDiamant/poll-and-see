@@ -26,14 +26,11 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from("sponsors")
-    .select("id, business_name, headline, logo_url, cta_text, destination_url, theme")
-    .or(`category.eq.${category},category.ilike.%,${category},%,category.ilike.${category},%,category.ilike.%,${category}`)
+    .select("id, business_name, headline, logo_url, cta_text, destination_url, theme, category")
     .eq("is_active", true)
     .lte("start_at", now)
     .gt("end_at", now)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+    .order("created_at", { ascending: true });
 
   if (error) {
     return NextResponse.json(
@@ -42,5 +39,15 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  return NextResponse.json({ sponsor: data || null });
+  const sponsor =
+    data?.find((item) => {
+      const categories = String(item.category || "")
+        .split(",")
+        .map((value) => value.trim().toLowerCase())
+        .filter(Boolean);
+
+      return categories.includes(category.toLowerCase());
+    }) || null;
+
+  return NextResponse.json({ sponsor });
 }
