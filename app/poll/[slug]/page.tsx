@@ -1092,7 +1092,7 @@ export default function PollPage() {
   const [votesLast24, setVotesLast24] = useState(0);
   const [showEndOfFeed, setShowEndOfFeed] = useState(false);
   const [sponsorByPollId, setSponsorByPollId] = useState<Record<number, Sponsor>>({});
-
+  const [pageTheme, setPageTheme] = useState<string | null>(null);
   const pollRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const inlineSubscribeBoxRef = useRef<HTMLDivElement | null>(null);
   const endOfFeedRef = useRef<HTMLElement | null>(null);
@@ -1712,102 +1712,6 @@ if (polls.length > previousPollCountRef.current && polls.length > 1) {
     previousPollCountRef.current = polls.length;
     }, [polls, showInlineSubscribe, showEndOfFeed]);
 
-  const handleVoteComplete = async (pollId: number, category: string) => {
-recordInlineSubscribeVote(pollId);
-
-// single source of truth for sponsor flow
-const sponsorVoteCount = incrementSponsorVoteCount();
-
-// show on: 1st vote, then every 2nd vote after that
-const shouldShowSponsor =
-  sponsorVoteCount === 1 || (sponsorVoteCount - 1) % 2 === 0;
-
-if (shouldShowSponsor) {
-  sessionStorage.setItem(FIRST_VOTE_SPONSOR_SHOWN_KEY, "true");
-
-  const sponsor = await loadActiveSponsor(category);
-
-  if (sponsor) {
-    setSponsorByPollId((current) => ({
-      ...current,
-      [pollId]: sponsor,
-    }));
-  }
-}
-
-if (shouldShowSponsor) {
-  sessionStorage.setItem(FIRST_VOTE_SPONSOR_SHOWN_KEY, "true");
-
-  const sponsor = await loadActiveSponsor(category);
-
-  if (sponsor) {
-    setSponsorByPollId((current) => ({
-      ...current,
-      [pollId]: sponsor,
-    }));
-  }
-}
-
-
-    if (
-      countedVotes >= INLINE_SUBSCRIBE_VOTE_THRESHOLD &&
-      !hasEmailSubscribedLocally() &&
-      !hasShownInlineSubscribeThisSession()
-    ) {
-      markInlineSubscribeShownThisSession();
-      setInlineSubscribeAfterPollId(pollId);
-      setShowInlineSubscribe(true);
-    }
-
-    const currentShownIds = pollsRef.current.map((item) => item.poll.id);
-    const flowAnchorCategory = anchorCategory || pollsRef.current[0]?.poll.category || "";
-
-    while (preloadedQueueRef.current.length > 0) {
-      const next = preloadedQueueRef.current.shift();
-      if (!next) break;
-      if (currentShownIds.includes(next.poll.id)) continue;
-      if (hasLocalVote(next.poll.id)) continue;
-
-      setShowEndOfFeed(false);
-
-setPolls((current) => {
-  // 🔒 prevent stale preload overriding fresh visible poll state
-  const exists = current.some((item) => item.poll.id === next.poll.id);
-  if (exists) return current;
-
-  return [
-    ...current,
-    {
-      ...next,
-      voteCounts: { ...next.voteCounts }, // isolate snapshot
-    },
-  ];
-});
-
-      return;
-    }
-
-await preloadQueue([...currentShownIds, pollId], flowAnchorCategory);
-
-while (preloadedQueueRef.current.length > 0) {
-  const next = preloadedQueueRef.current.shift();
-  if (!next) break;
-  if (currentShownIds.includes(next.poll.id)) continue;
-  if (hasLocalVote(next.poll.id)) continue;
-
-  setShowEndOfFeed(false);
-
-  setPolls((current) => {
-    if (current.some((item) => item.poll.id === next.poll.id)) return current;
-    return [...current, next];
-  });
-
-  return;
-}
-
-setShowEndOfFeed(true);
-};
-
   const handleSkipPoll = async (pollId: number) => {
     skippedPollIdsRef.current.add(pollId);
 
@@ -1883,7 +1787,21 @@ setShowEndOfFeed(true);
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
+    <main
+  className="min-h-screen text-white"
+  style={{
+    background:
+      pageTheme === "navy"
+        ? "linear-gradient(to bottom, #050b18, #0b1b2e)"
+        : pageTheme === "green"
+        ? "linear-gradient(to bottom, #04130f, #0b2a22)"
+        : pageTheme === "purple"
+        ? "linear-gradient(to bottom, #0b0613, #1a0d2a)"
+        : pageTheme === "blue"
+        ? "linear-gradient(to bottom, #050d18, #0b1f33)"
+        : "linear-gradient(to bottom, #000000, #111827)",
+  }}
+>
       <SiteHeader />
 
       <section className="mx-auto max-w-3xl px-6 pt-2 pb-8">
