@@ -46,8 +46,9 @@ type Sponsor = {
   theme: string | null;
 };
 
-const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899", "#8b5cf6", "#14b8a6", "#f97316", "#ef4444"];
+const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#f97316", "#8b5cf6", "#14b8a6", "#ef4444", "#06b6d4"];
 const SAME_POLL_CLICK_GUARD_MS = 400;
+const MAX_LOCAL_VOTES_PER_POLL = 4;
 const POLL_BUNDLE_CACHE_PREFIX = "poll-bundle-cache:";
 const PRELOAD_QUEUE_LIMIT = 30;
 const INLINE_SUBSCRIBE_VOTE_THRESHOLD = 3;
@@ -56,6 +57,7 @@ const INLINE_SUBSCRIBE_SHOWN_KEY = "poll-flow-inline-subscribe-shown";
 const POLL_FLOW_COUNTED_VOTE_PREFIX = "poll-flow-counted-vote-";
 const POLL_EMAIL_SUBSCRIBED_KEY = "poll-email-subscribed";
 const SPONSOR_FREQUENCY = 2;
+const FIRST_VOTE_SPONSOR_SHOWN_KEY = "first-vote-sponsor-shown";
 
 const CREATE_POLL_PROMPTS = [
   "Got a better question?",
@@ -197,6 +199,10 @@ function getPollVotedAtKey(pollId: number) {
   return `poll-voted-at-${pollId}`;
 }
 
+function getPollLocalVoteCountKey(pollId: number) {
+  return `poll-local-vote-count-${pollId}`;
+}
+
 function getPollFlowAnchorCategoryKey(slug: string) {
   return `poll-flow-anchor-category-${slug}`;
 }
@@ -207,7 +213,11 @@ function getPollFlowCountedVoteKey(pollId: number) {
 
 function hasLocalVote(pollId: number): boolean {
   if (typeof window === "undefined") return false;
+
+  const count = Number(localStorage.getItem(getPollLocalVoteCountKey(pollId)) || 0);
+
   return (
+    count >= MAX_LOCAL_VOTES_PER_POLL ||
     localStorage.getItem(getPollVotedKey(pollId)) === "true" ||
     localStorage.getItem(getPollSelectedOldKey(pollId)) !== null ||
     localStorage.getItem(getPollSelectedNewKey(pollId)) !== null
@@ -225,7 +235,14 @@ function getLocalSelectedOption(pollId: number): number | null {
 }
 
 function markPollVotedLocally(pollId: number, optionId: number | null) {
-  localStorage.setItem(getPollVotedKey(pollId), "true");
+  const voteKey = getPollVotedKey(pollId);
+
+  // 🔒 prevent double-application of local vote
+  if (localStorage.getItem(voteKey) === "true") {
+    return;
+  }
+
+  localStorage.setItem(voteKey, "true");
   localStorage.setItem(getPollVotedAtKey(pollId), String(Date.now()));
 
   if (optionId !== null) {
@@ -629,44 +646,50 @@ function getSponsorTheme(theme: string | null) {
 }
 
 function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
-  const imageUrl = sponsor.logo_url;
   const theme = getSponsorTheme(sponsor.theme);
+  const imageUrl = sponsor.logo_url?.trim() || null;
 
   return (
     <a
       href={sponsor.destination_url}
       target="_blank"
       rel="noreferrer sponsored"
-      className={`mb-5 mt-1 block rounded-2xl border p-3 shadow-lg transition hover:border-gray-500 ${theme.card}`}
+      className={`mb-4 block rounded-xl border p-4 transition hover:opacity-95 ${theme.card}`}
     >
-      <p className={`mb-1 text-[10px] font-medium uppercase tracking-[0.08em] ${theme.label}`}>
-        Sponsored
-      </p>
+      <div className="flex items-start justify-between gap-3">
+        {/* TEXT BLOCK */}
+        <div className="flex-1 min-w-0 pr-2">
+          <p className={`mb-1 text-[10px] uppercase tracking-wide ${theme.label}`}>
+            Sponsored
+          </p>
 
-      <div className="flex min-h-[82px] items-center gap-3">
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={sponsor.business_name}
-            loading="lazy"
-            width={150}
-            height={84}
-            className="h-16 w-24 shrink-0 rounded-lg object-contain"
-          />
-        ) : null}
-
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-white">
+          <p className="text-sm font-semibold text-white leading-tight break-words">
             {sponsor.business_name}
           </p>
-          <p className="mt-1 line-clamp-3 text-sm leading-5 text-gray-300">
+
+          <p className="mt-1 text-sm text-gray-300 leading-snug break-words">
             {sponsor.headline}
           </p>
+
+          <button
+            type="button"
+            className={`mt-3 inline-flex items-center rounded-lg px-3 py-1.5 text-xs ${theme.cta}`}
+          >
+            {sponsor.cta_text}
+          </button>
         </div>
 
-        <span className={`shrink-0 rounded-xl border px-3 py-2 text-xs font-medium ${theme.cta}`}>
-          {sponsor.cta_text}
-        </span>
+        {/* LOGO RIGHT */}
+        {imageUrl ? (
+          <div className="flex-shrink-0">
+            <img
+              src={imageUrl}
+              alt={sponsor.business_name}
+              className="h-16 w-16 rounded-lg object-contain bg-white/5"
+              loading="lazy"
+            />
+          </div>
+        ) : null}
       </div>
     </a>
   );
@@ -710,23 +733,10 @@ function PollCard({
     setVoted(votedLocally);
     setSelected(selectedLocally);
 
-    setCounts((current) => {
-      if (!votedLocally || selectedLocally === null) {
-        return bundle.voteCounts;
-      }
-
-      const mergedCounts: VoteCounts = { ...bundle.voteCounts };
-
-      Object.keys(current).forEach((key) => {
-        const optionId = Number(key);
-        mergedCounts[optionId] = Math.max(
-          bundle.voteCounts[optionId] || 0,
-          current[optionId] || 0
-        );
-      });
-
-      return mergedCounts;
-    });
+    setCounts(() => {
+  // 🔒 always trust server snapshot first to avoid stacking duplicates
+  return bundle.voteCounts;
+});
 
     setError("");
     setShareButtonText("Share");
@@ -829,60 +839,80 @@ const file = await buildShareResultsImageFile({
     }
   };
 
-  const handleVote = async (optionId: number) => {
-    if (voted) return;
+const handleVote = async (optionId: number) => {
+  const cooldownError = canVoteNow(bundle.poll.id);
+  if (cooldownError) {
+    setError(cooldownError);
+    return;
+  }
 
-    const cooldownError = canVoteNow(bundle.poll.id);
-    if (cooldownError) {
-      setError(cooldownError);
+  if (voted) {
+    setSelected(optionId);
+    return;
+  }
+
+  setError("");
+
+  const previousCounts = counts;
+  const previousSelected = selected;
+  const previousVoted = voted;
+
+  setVoted(true);
+  setSelected(optionId);
+
+  // 🔒 FIX: prevent vote inflation (single controlled increment only)
+  setCounts(() => {
+    const base = { ...bundle.voteCounts };
+    base[optionId] = (base[optionId] || 0) + 1;
+    return base;
+  });
+
+  markPollVotedLocally(bundle.poll.id, optionId);
+
+  try {
+    await submitVote(bundle.poll.id, optionId);
+    recordVoteClient(bundle.poll.id);
+    onVoteComplete(bundle.poll.id, bundle.poll.category);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Could not submit vote.";
+    const lower = message.toLowerCase();
+
+    if (lower.includes("already voted")) {
+      markPollVotedLocally(bundle.poll.id, optionId);
+      setError("");
+      setVoted(true);
+      setSelected(optionId);
+      onVoteComplete(bundle.poll.id, bundle.poll.category);
       return;
     }
 
-    setError("");
+    localStorage.removeItem(getPollVotedKey(bundle.poll.id));
+    localStorage.removeItem(getPollSelectedOldKey(bundle.poll.id));
+    localStorage.removeItem(getPollSelectedNewKey(bundle.poll.id));
 
-    const previousCounts = counts;
-    const previousSelected = selected;
-    const previousVoted = voted;
+    setCounts(previousCounts);
+    setSelected(previousSelected);
+    setVoted(previousVoted);
 
-    setVoted(true);
-    setSelected(optionId);
-    setCounts((current) => ({
-      ...current,
-      [optionId]: (current[optionId] || 0) + 1,
-    }));
+    const hiddenErrors = [
+      "too many votes from this network",
+      "too many votes from this network on this poll",
+      "too many votes",
+      "network limit",
+    ];
 
-    markPollVotedLocally(bundle.poll.id, optionId);
+    const shouldHide = hiddenErrors.some((e) =>
+      message.toLowerCase().includes(e)
+    );
 
-    try {
-      await submitVote(bundle.poll.id, optionId);
-      recordVoteClient(bundle.poll.id);
-      onVoteComplete(bundle.poll.id, bundle.poll.category);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Could not submit vote.";
-      const lower = message.toLowerCase();
+    if (!shouldHide) return;
 
-      if (lower.includes("already voted")) {
-        markPollVotedLocally(bundle.poll.id, optionId);
-        setError("");
-        setVoted(true);
-        setSelected(optionId);
-        onVoteComplete(bundle.poll.id, bundle.poll.category);
-        return;
-      }
-
-      localStorage.removeItem(getPollVotedKey(bundle.poll.id));
-      localStorage.removeItem(getPollSelectedOldKey(bundle.poll.id));
-      localStorage.removeItem(getPollSelectedNewKey(bundle.poll.id));
-
-      setCounts(previousCounts);
-      setSelected(previousSelected);
-      setVoted(previousVoted);
-      setError(message);
-    }
-  };
+    setError(message);
+  }
+};
 
   return (
-   <div className="relative mb-4 overflow-visible rounded-2xl border border-gray-700 bg-gray-800 p-6">
+   <div className="relative mb-4 overflow-visible rounded-2xl border border-gray-700 bg-gray-900/80 p-6">
       <div className="mb-3 flex items-center gap-3">
         <span
           className="rounded-full px-3 py-1 text-xs"
@@ -1046,6 +1076,8 @@ export default function PollPage() {
   const pollRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const inlineSubscribeBoxRef = useRef<HTMLDivElement | null>(null);
   const endOfFeedRef = useRef<HTMLElement | null>(null);
+  const sponsorRef = useRef<HTMLDivElement | null>(null);
+const sponsorByPollContainerRef = useRef<Record<number, HTMLDivElement | null>>({});
   const previousPollCountRef = useRef(0);
   const previousShowInlineSubscribeRef = useRef(false);
   const preloadedQueueRef = useRef<PollBundle[]>([]);
@@ -1394,8 +1426,14 @@ const [recentVotesResult, optionTotalsResult] = await Promise.all([
       voteCounts: counts,
     };
 
-    setCachedPollBundle(bundle);
-    return bundle;
+const safeBundle = {
+  ...bundle,
+  voteCounts: { ...bundle.voteCounts },
+};
+
+// 🔒 ensure no external mutation leaks into cache/state
+setCachedPollBundle(safeBundle);
+return safeBundle;
   };
   const loadBundle = async (pollId: number): Promise<PollBundle> => {
     const [pollResult, optionsResult] = await Promise.all([
@@ -1450,7 +1488,29 @@ const [recentVotesResult, optionTotalsResult] = await Promise.all([
       })
     );
 
-    setPolls(refreshed);
+    setPolls((current) => {
+  const map = new Map<number, PollBundle>();
+
+  // preserve newest UI state first (optimistic wins)
+  for (const item of current) {
+    map.set(item.poll.id, item);
+  }
+
+  for (const refreshedItem of refreshed) {
+    const existing = map.get(refreshedItem.poll.id);
+
+    map.set(refreshedItem.poll.id, {
+      ...refreshedItem,
+      voteCounts: {
+        ...refreshedItem.voteCounts,
+        // 🔒 never overwrite higher optimistic UI values
+        ...existing?.voteCounts,
+      },
+    });
+  }
+
+  return Array.from(map.values());
+});
   }, []);
 
   useEffect(() => {
@@ -1616,7 +1676,15 @@ smoothScrollToElement(endOfFeedRef.current, 650, window.innerHeight * 0.62);
     if (polls.length > previousPollCountRef.current && polls.length > 1) {
       const lastPollId = polls[polls.length - 1]?.poll.id;
       if (lastPollId && pollRefs.current[lastPollId]) {
-        smoothScrollToElement(pollRefs.current[lastPollId] as HTMLElement, 650, 8);
+        const sponsorEl = sponsorByPollContainerRef.current[lastPollId];
+
+const target =
+  sponsorEl ||
+  pollRefs.current[lastPollId];
+
+if (target) {
+  smoothScrollToElement(target as HTMLElement, 650, 8);
+}
       }
     }
 
@@ -1627,16 +1695,27 @@ smoothScrollToElement(endOfFeedRef.current, 650, window.innerHeight * 0.62);
   const handleVoteComplete = async (pollId: number, category: string) => {
     const countedVotes = recordInlineSubscribeVote(pollId);
 
-    if (countedVotes > 0 && countedVotes % SPONSOR_FREQUENCY === 0) {
-      const sponsor = await loadActiveSponsor(category);
+    const firstVoteTriggered = countedVotes === 1;
 
-      if (sponsor) {
-        setSponsorByPollId((current) => ({
-          ...current,
-          [pollId]: sponsor,
-        }));
-      }
-    }
+const hasShownFirstSponsor =
+  sessionStorage.getItem(FIRST_VOTE_SPONSOR_SHOWN_KEY) === "true";
+
+const shouldShowSponsor =
+  (!hasShownFirstSponsor && firstVoteTriggered) ||
+  (hasShownFirstSponsor && (countedVotes % SPONSOR_FREQUENCY === 0));
+
+if (shouldShowSponsor) {
+  sessionStorage.setItem(FIRST_VOTE_SPONSOR_SHOWN_KEY, "true");
+
+  const sponsor = await loadActiveSponsor(category);
+
+  if (sponsor) {
+    setSponsorByPollId((current) => ({
+      ...current,
+      [pollId]: sponsor,
+    }));
+  }
+}
 
     if (
       countedVotes >= INLINE_SUBSCRIBE_VOTE_THRESHOLD &&
@@ -1659,31 +1738,22 @@ smoothScrollToElement(endOfFeedRef.current, 650, window.innerHeight * 0.62);
 
       setShowEndOfFeed(false);
 
-      setPolls((current) => {
-        if (current.some((item) => item.poll.id === next.poll.id)) return current;
-        return [...current, next];
-      });
+setPolls((current) => {
+  // 🔒 prevent stale preload overriding fresh visible poll state
+  const exists = current.some((item) => item.poll.id === next.poll.id);
+  if (exists) return current;
+
+  return [
+    ...current,
+    {
+      ...next,
+      voteCounts: { ...next.voteCounts }, // isolate snapshot
+    },
+  ];
+});
 
       return;
     }
-
-await preloadQueue([...currentShownIds, pollId], flowAnchorCategory);
-
-while (preloadedQueueRef.current.length > 0) {
-  const next = preloadedQueueRef.current.shift();
-  if (!next) break;
-  if (currentShownIds.includes(next.poll.id)) continue;
-  if (hasLocalVote(next.poll.id)) continue;
-
-  setShowEndOfFeed(false);
-
-  setPolls((current) => {
-    if (current.some((item) => item.poll.id === next.poll.id)) return current;
-    return [...current, next];
-  });
-
-  return;
-}
 
 await preloadQueue([...currentShownIds, pollId], flowAnchorCategory);
 
