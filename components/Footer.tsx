@@ -6,26 +6,39 @@ export default function Footer() {
       <div className="mx-auto max-w-6xl px-6">
         <p className="mb-3">
           Create polls in seconds, share them, and see real opinions instantly. No sign-up required.
-           </p>
+        </p>
 
-                <div className="mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+        <div className="mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
           <Link href="/about" className="hover:text-gray-300">
             About
           </Link>
+
           <Link href="/results" className="hover:text-gray-300">
             Results
           </Link>
+
           <Link href="/guidelines" className="hover:text-gray-300">
             Guidelines
           </Link>
+
           <Link href="/privacy" className="hover:text-gray-300">
             Privacy
           </Link>
+
           <Link href="/terms" className="hover:text-gray-300">
             Terms
           </Link>
+
           <Link href="/contact" className="hover:text-gray-300">
             Contact
+          </Link>
+
+          <Link href="/advertise" className="hover:text-gray-300">
+            Advertise
+          </Link>
+
+          <Link href="/add-to-website" className="hover:text-gray-300">
+            Add polls to your website
           </Link>
         </div>
 

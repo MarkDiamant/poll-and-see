@@ -43,6 +43,7 @@ type Sponsor = {
   logo_url: string | null;
   cta_text: string;
   destination_url: string;
+  theme: string | null;
 };
 
 const OPTION_COLOURS = ["#2563eb", "#22c55e", "#fbbf24", "#ec4899", "#8b5cf6", "#14b8a6", "#f97316", "#ef4444"];
@@ -54,7 +55,7 @@ const INLINE_SUBSCRIBE_VOTE_COUNT_KEY = "poll-flow-vote-count";
 const INLINE_SUBSCRIBE_SHOWN_KEY = "poll-flow-inline-subscribe-shown";
 const POLL_FLOW_COUNTED_VOTE_PREFIX = "poll-flow-counted-vote-";
 const POLL_EMAIL_SUBSCRIBED_KEY = "poll-email-subscribed";
-const SPONSOR_FREQUENCY = 1;
+const SPONSOR_FREQUENCY = 2;
 
 const CREATE_POLL_PROMPTS = [
   "Got a better question?",
@@ -575,43 +576,95 @@ boxShadow: isSelected ? `0 0 8px ${colour}22` : "none",
   );
 }
 
+function getSponsorTheme(theme: string | null) {
+  const themes: Record<string, { card: string; cta: string; label: string }> = {
+    default: {
+      card: "border-gray-700 bg-slate-950/95",
+      cta: "border-gray-600 bg-gray-800 text-gray-100",
+      label: "text-gray-500",
+    },
+    slate: {
+      card: "border-slate-600/60 bg-slate-900/95",
+      cta: "border-slate-500/70 bg-slate-800 text-slate-100",
+      label: "text-slate-400",
+    },
+    navy: {
+      card: "border-blue-900/70 bg-[#071526]",
+      cta: "border-blue-800/80 bg-[#10233a] text-blue-100",
+      label: "text-blue-300/70",
+    },
+    charcoal: {
+      card: "border-zinc-700/70 bg-zinc-900/95",
+      cta: "border-zinc-600 bg-zinc-800 text-zinc-100",
+      label: "text-zinc-400",
+    },
+    green: {
+      card: "border-emerald-900/60 bg-[#071b16]",
+      cta: "border-emerald-800/70 bg-[#102820] text-emerald-100",
+      label: "text-emerald-300/70",
+    },
+    blue: {
+      card: "border-sky-900/60 bg-[#071827]",
+      cta: "border-sky-800/70 bg-[#102538] text-sky-100",
+      label: "text-sky-300/70",
+    },
+    cream: {
+      card: "border-stone-600/60 bg-[#191714]",
+      cta: "border-stone-500/70 bg-[#2a251f] text-stone-100",
+      label: "text-stone-300/70",
+    },
+    warm: {
+      card: "border-stone-600/60 bg-[#191714]",
+      cta: "border-stone-500/70 bg-[#2a251f] text-stone-100",
+      label: "text-stone-300/70",
+    },
+    purple: {
+      card: "border-purple-900/60 bg-[#160d24]",
+      cta: "border-purple-800/70 bg-[#241633] text-purple-100",
+      label: "text-purple-300/70",
+    },
+  };
+
+  return themes[theme || "default"] || themes.default;
+}
+
 function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
   const imageUrl = sponsor.logo_url;
+  const theme = getSponsorTheme(sponsor.theme);
 
   return (
     <a
       href={sponsor.destination_url}
       target="_blank"
       rel="noreferrer sponsored"
-      className="mb-5 mt-1 block rounded-2xl border border-gray-700 bg-gray-800/90 p-3 shadow-lg transition hover:border-gray-600"
+      className={`mb-5 mt-1 block rounded-2xl border p-3 shadow-lg transition hover:border-gray-500 ${theme.card}`}
     >
-      <div className="flex min-h-[92px] items-center gap-3">
+      <p className={`mb-1 text-[10px] font-medium uppercase tracking-[0.08em] ${theme.label}`}>
+        Sponsored
+      </p>
+
+      <div className="flex min-h-[82px] items-center gap-3">
         {imageUrl ? (
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-gray-700 bg-gray-900">
-            <img
-              src={imageUrl}
-              alt={sponsor.business_name}
-              loading="lazy"
-              width={96}
-              height={96}
-              className="h-full w-full object-cover"
-            />
-          </div>
+          <img
+            src={imageUrl}
+            alt={sponsor.business_name}
+            loading="lazy"
+            width={150}
+            height={84}
+            className="h-16 w-24 shrink-0 rounded-lg object-contain"
+          />
         ) : null}
 
         <div className="min-w-0 flex-1">
-          <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">
-            Sponsored
-          </p>
           <p className="truncate text-sm font-semibold text-white">
             {sponsor.business_name}
           </p>
-          <p className="mt-0.5 line-clamp-2 text-sm leading-5 text-gray-300">
+          <p className="mt-1 line-clamp-3 text-sm leading-5 text-gray-300">
             {sponsor.headline}
           </p>
         </div>
 
-        <span className="shrink-0 rounded-xl bg-white px-3 py-2 text-xs font-medium text-black">
+        <span className={`shrink-0 rounded-xl border px-3 py-2 text-xs font-medium ${theme.cta}`}>
           {sponsor.cta_text}
         </span>
       </div>
@@ -1574,7 +1627,7 @@ smoothScrollToElement(endOfFeedRef.current, 650, window.innerHeight * 0.62);
   const handleVoteComplete = async (pollId: number, category: string) => {
     const countedVotes = recordInlineSubscribeVote(pollId);
 
-    if (countedVotes > 0 && countedVotes % SPONSOR_FREQUENCY === 0) {
+    if (countedVotes > 0 && countedVotes % SPONSOR_FREQUENCY === 1) {
       const sponsor = await loadActiveSponsor(category);
 
       if (sponsor) {
