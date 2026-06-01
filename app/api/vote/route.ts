@@ -2,7 +2,7 @@ import { createHash } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const POLL_COOLDOWN_HOURS = 24 * 365;
+const MAX_VOTES_PER_IP_PER_POLL = 4;
 const BURST_WINDOW_SECONDS = 120;
 const MAX_BURST_VOTES = 50;
 
@@ -100,23 +100,17 @@ export async function POST(request: NextRequest) {
     const ipHash = hashIp(ipAddress);
 
     const now = new Date();
-    const pollCooldownCutoff = new Date(
-      now.getTime() - POLL_COOLDOWN_HOURS * 60 * 60 * 1000
-    ).toISOString();
 
     const burstCutoff = new Date(
       now.getTime() - BURST_WINDOW_SECONDS * 1000
     ).toISOString();
 
-    const [samePollRecentVote, burstVotes] = await Promise.all([
+    const [samePollIpVotes, burstVotes] = await Promise.all([
       supabaseAdmin
         .from("votes")
-        .select("id")
+        .select("id", { count: "exact", head: true })
         .eq("poll_id", pollId)
-        .eq("ip_hash", ipHash)
-        .gte("created_at", pollCooldownCutoff)
-        .limit(1)
-        .maybeSingle(),
+        .eq("ip_hash", ipHash),
 
       supabaseAdmin
         .from("votes")
@@ -125,9 +119,9 @@ export async function POST(request: NextRequest) {
         .gte("created_at", burstCutoff),
     ]);
 
-    if (samePollRecentVote.data) {
+    if ((samePollIpVotes.count || 0) >= MAX_VOTES_PER_IP_PER_POLL) {
       return NextResponse.json(
-        { error: "You’ve already voted on this poll." },
+        { error: "Too many votes from this network on this poll." },
         { status: 429 }
       );
     }
