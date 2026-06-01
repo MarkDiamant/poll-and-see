@@ -611,55 +611,65 @@ boxShadow: isSelected ? `0 0 8px ${colour}22` : "none",
 }
 
 function getSponsorTheme(theme: string | null) {
-  const themes: Record<string, { card: string; cta: string; label: string }> = {
+  const themes: Record<string, { card: string; cta: string; label: string; accent: string }> = {
     default: {
-  card: "border-amber-500/20 bg-[#0e0c08]",
-      cta: "border-gray-600 bg-gray-800 text-gray-100",
-      label: "text-gray-500",
+      card: "border-amber-500/20 bg-[#0e0c08]",
+      cta: "border-amber-300/20 bg-white/10 text-white hover:bg-white/15",
+      label: "text-amber-300/70",
+      accent: "from-amber-300/40 via-amber-400/20 to-transparent",
     },
     slate: {
       card: "border-slate-600/60 bg-slate-900/95",
-      cta: "border-slate-500/70 bg-slate-800 text-slate-100",
+      cta: "border-slate-400/20 bg-slate-800 text-slate-100 hover:bg-slate-700",
       label: "text-slate-400",
+      accent: "from-slate-300/40 via-slate-400/20 to-transparent",
     },
     navy: {
       card: "border-blue-900/70 bg-[#071526]",
-      cta: "border-blue-800/80 bg-[#10233a] text-blue-100",
+      cta: "border-blue-300/20 bg-[#10233a] text-blue-100 hover:bg-[#163453]",
       label: "text-blue-300/70",
+      accent: "from-blue-300/40 via-blue-500/20 to-transparent",
     },
     charcoal: {
       card: "border-zinc-700/70 bg-zinc-900/95",
-      cta: "border-zinc-600 bg-zinc-800 text-zinc-100",
+      cta: "border-zinc-400/20 bg-zinc-800 text-zinc-100 hover:bg-zinc-700",
       label: "text-zinc-400",
+      accent: "from-zinc-300/40 via-zinc-500/20 to-transparent",
     },
     green: {
       card: "border-emerald-900/60 bg-[#071b16]",
-      cta: "border-emerald-800/70 bg-[#102820] text-emerald-100",
+      cta: "border-emerald-300/20 bg-[#102820] text-emerald-100 hover:bg-[#16382d]",
       label: "text-emerald-300/70",
+      accent: "from-emerald-300/40 via-emerald-500/20 to-transparent",
     },
     blue: {
       card: "border-sky-900/60 bg-[#071827]",
-      cta: "border-sky-800/70 bg-[#102538] text-sky-100",
+      cta: "border-sky-300/20 bg-[#102538] text-sky-100 hover:bg-[#163552]",
       label: "text-sky-300/70",
+      accent: "from-sky-300/40 via-sky-500/20 to-transparent",
     },
     cream: {
       card: "border-stone-600/60 bg-[#191714]",
-      cta: "border-stone-500/70 bg-[#2a251f] text-stone-100",
+      cta: "border-stone-300/20 bg-[#2a251f] text-stone-100 hover:bg-[#342d25]",
       label: "text-stone-300/70",
+      accent: "from-stone-300/40 via-stone-500/20 to-transparent",
     },
     warm: {
       card: "border-stone-600/60 bg-[#191714]",
-      cta: "border-stone-500/70 bg-[#2a251f] text-stone-100",
+      cta: "border-stone-300/20 bg-[#2a251f] text-stone-100 hover:bg-[#342d25]",
       label: "text-stone-300/70",
+      accent: "from-stone-300/40 via-stone-500/20 to-transparent",
     },
     purple: {
       card: "border-purple-900/60 bg-[#160d24]",
-      cta: "border-purple-800/70 bg-[#241633] text-purple-100",
+      cta: "border-purple-300/20 bg-[#241633] text-purple-100 hover:bg-[#321f49]",
       label: "text-purple-300/70",
+      accent: "from-purple-300/40 via-purple-500/20 to-transparent",
     },
   };
 
-  return themes[theme || "default"] || themes.default;
+  const key = theme?.trim().toLowerCase() || "default";
+  return themes[key] || themes.default;
 }
 
 function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
@@ -674,12 +684,12 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
       className={`relative mb-4 block overflow-hidden rounded-xl border p-4 transition hover:opacity-95 ${theme.card}`}
     >
       {/* LEFT ACCENT BAR */}
-      <div className="absolute left-0 top-0 h-full w-[2px] bg-gradient-to-b from-amber-300/40 via-amber-400/20 to-transparent" />
-      <div className="relative flex items-start justify-between gap-3 pl-2">
+      <div className={`absolute left-0 top-0 h-full w-[2px] bg-gradient-to-b ${theme.accent}`} />
+      <div className="relative flex flex-col gap-3 pl-2 sm:flex-row sm:items-start sm:justify-between">
 
         {/* LEFT TEXT */}
-        <div className="flex-1 min-w-0 pr-3">
-          <p className="mb-1 text-[10px] uppercase tracking-wide text-amber-300/70">
+        <div className="min-w-0 flex-1 sm:pr-3">
+          <p className={`mb-1 text-[10px] uppercase tracking-wide ${theme.label}`}>
             Sponsored
           </p>
 
@@ -693,20 +703,20 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
         </div>
 
         {/* RIGHT: LOGO + CTA */}
-        <div className="flex flex-col items-center justify-center gap-2 flex-shrink-0">
+        <div className="flex flex-row items-center justify-between gap-3 sm:flex-col sm:justify-center sm:gap-2 sm:flex-shrink-0">
 
           {imageUrl ? (
             <img
               src={imageUrl}
               alt={sponsor.business_name}
-              className="h-14 w-auto object-contain"
+              className="h-12 max-w-[170px] object-contain sm:h-14 sm:max-w-none"
               loading="lazy"
             />
           ) : null}
 
           <button
             type="button"
-            className="rounded-lg bg-white/10 px-3 py-2 text-xs font-medium text-white border border-white/10 hover:bg-white/15 transition"
+            className={`rounded-lg border px-3 py-2 text-xs font-medium transition ${theme.cta}`}
           >
             {sponsor.cta_text}
           </button>
@@ -901,6 +911,26 @@ const handleVote = async (optionId: number) => {
     const lower = message.toLowerCase();
 
     if (lower.includes("already voted")) {
+      markPollVotedLocally(bundle.poll.id, optionId);
+      setError("");
+      setVoted(true);
+      setSelected(optionId);
+      onVoteComplete(bundle.poll.id, bundle.poll.category);
+      return;
+    }
+
+    const hiddenErrors = [
+      "too many votes from this network",
+      "too many votes from this network on this poll",
+      "too many votes",
+      "network limit",
+    ];
+
+    const shouldHide = hiddenErrors.some((e) =>
+      lower.includes(e)
+    );
+
+    if (shouldHide) {
       markPollVotedLocally(bundle.poll.id, optionId);
       setError("");
       setVoted(true);
@@ -1819,14 +1849,16 @@ if (polls.length > previousPollCountRef.current && polls.length > 1) {
                 badgeLabel={badgeLabel}
                 showGoToAllPolls={true}
 onVoteComplete={(pollId, category) => {
-  const sponsorVoteCount = incrementSponsorVoteCount();
+  void loadActiveSponsor(category).then((sponsor) => {
+    let shouldPauseForSponsor = false;
 
-  const shouldShowSponsor =
-    sponsorVoteCount === 1 || sponsorVoteCount % SPONSOR_FREQUENCY === 0;
+    if (sponsor) {
+      const sponsorVoteCount = incrementSponsorVoteCount();
+      const shouldShowSponsor = sponsorVoteCount % SPONSOR_FREQUENCY === 1;
 
-  if (shouldShowSponsor) {
-    void loadActiveSponsor(category).then((sponsor) => {
-      if (sponsor) {
+      if (shouldShowSponsor) {
+        shouldPauseForSponsor = true;
+
         setSponsorByPollId((current) => ({
           ...current,
           [pollId]: sponsor,
@@ -1835,9 +1867,49 @@ onVoteComplete={(pollId, category) => {
         if (sponsor.theme) {
           setPageTheme(sponsor.theme);
         }
+
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const sponsorEl = sponsorByPollContainerRef.current[pollId];
+            if (sponsorEl) {
+              smoothScrollToElement(sponsorEl, 650, 8);
+            }
+          });
+        });
       }
-    });
-  }
+    }
+
+    const currentShownIds = pollsRef.current.map((item) => item.poll.id);
+    const flowAnchorCategory =
+      anchorCategory || pollsRef.current[0]?.poll.category || "";
+
+    const loadNextPoll = () => {
+      void preloadQueue([...currentShownIds, pollId], flowAnchorCategory).then(() => {
+        while (preloadedQueueRef.current.length > 0) {
+          const next = preloadedQueueRef.current.shift();
+          if (!next) break;
+          if (currentShownIds.includes(next.poll.id)) continue;
+          if (skippedPollIdsRef.current.has(next.poll.id)) continue;
+          if (hasLocalVote(next.poll.id)) continue;
+
+          setShowEndOfFeed(false);
+          setPolls((current) => {
+            if (current.some((item) => item.poll.id === next.poll.id)) return current;
+            return [...current, next];
+          });
+          return;
+        }
+
+        setShowEndOfFeed(true);
+      });
+    };
+
+    if (shouldPauseForSponsor) {
+      setTimeout(loadNextPoll, 900);
+    } else {
+      loadNextPoll();
+    }
+  });
 
   const voteCount = getInlineSubscribeVoteCount();
 
@@ -1851,28 +1923,6 @@ onVoteComplete={(pollId, category) => {
     setShowInlineSubscribe(true);
   }
 
-  const currentShownIds = pollsRef.current.map((item) => item.poll.id);
-  const flowAnchorCategory =
-    anchorCategory || pollsRef.current[0]?.poll.category || "";
-
-  void preloadQueue([...currentShownIds, pollId], flowAnchorCategory).then(() => {
-    while (preloadedQueueRef.current.length > 0) {
-      const next = preloadedQueueRef.current.shift();
-      if (!next) break;
-      if (currentShownIds.includes(next.poll.id)) continue;
-      if (skippedPollIdsRef.current.has(next.poll.id)) continue;
-      if (hasLocalVote(next.poll.id)) continue;
-
-      setShowEndOfFeed(false);
-      setPolls((current) => {
-        if (current.some((item) => item.poll.id === next.poll.id)) return current;
-        return [...current, next];
-      });
-      return;
-    }
-
-    setShowEndOfFeed(true);
-  });
 }}
                 onSkipPoll={(pollId) => {
                   void handleSkipPoll(pollId);
@@ -1882,7 +1932,13 @@ onVoteComplete={(pollId, category) => {
               />
 
               {sponsorByPollId[bundle.poll.id] ? (
-                <SponsorCard sponsor={sponsorByPollId[bundle.poll.id]} />
+                <div
+                  ref={(el) => {
+                    sponsorByPollContainerRef.current[bundle.poll.id] = el;
+                  }}
+                >
+                  <SponsorCard sponsor={sponsorByPollId[bundle.poll.id]} />
+                </div>
               ) : null}
 
               {showInlineSubscribe &&

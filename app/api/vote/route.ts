@@ -120,17 +120,11 @@ export async function POST(request: NextRequest) {
     ]);
 
     if ((samePollIpVotes.count || 0) >= MAX_VOTES_PER_IP_PER_POLL) {
-      return NextResponse.json(
-        { error: "Too many votes from this network on this poll." },
-        { status: 429 }
-      );
+      return NextResponse.json({ ok: true, counted: false });
     }
 
     if ((burstVotes.count || 0) >= MAX_BURST_VOTES) {
-      return NextResponse.json(
-        { error: "Too many votes too quickly. Please try again shortly." },
-        { status: 429 }
-      );
+      return NextResponse.json({ ok: true, counted: false });
     }
 
     const { error: insertError } = await supabaseAdmin
