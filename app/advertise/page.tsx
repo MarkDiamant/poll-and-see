@@ -296,6 +296,15 @@ export default function AdvertisePage() {
                 className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
               />
 
+              <input
+                type="number"
+                min={1}
+                value={days}
+                onChange={(event) => setDays(Number(event.target.value))}
+                placeholder="Number of days"
+                className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
+              />
+
               <textarea
                 value={formData.message}
                 onChange={(event) => updateField("message", event.target.value)}

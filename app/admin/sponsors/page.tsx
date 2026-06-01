@@ -60,6 +60,7 @@ const DEFAULT_FORM = {
   destination_url: "",
   categories: ["Community"],
   start_at: "",
+  days: 1,
   end_at: "",
   is_active: true,
   theme: "default",
@@ -176,6 +177,26 @@ function formatDateTimeLocal(value: string) {
   return date.toISOString().slice(0, 16);
 }
 
+function calculateEndAt(startAt: string, days: number) {
+  if (!startAt) return "";
+  const date = new Date(startAt);
+  if (Number.isNaN(date.getTime())) return "";
+  date.setDate(date.getDate() + Math.max(days || 1, 1));
+  return date.toISOString();
+}
+
+function getSponsorStatus(sponsor: SponsorRow) {
+  if (!sponsor.is_active) return "Inactive";
+
+  const now = Date.now();
+  const start = new Date(sponsor.start_at).getTime();
+  const end = new Date(sponsor.end_at).getTime();
+
+  if (!Number.isNaN(end) && now >= end) return "Ended";
+  if (!Number.isNaN(start) && now < start) return "Scheduled";
+  return "Live now";
+}
+
 export default function AdminSponsorsPage() {
   const [adminKeyInput, setAdminKeyInput] = useState("");
   const [adminKey, setAdminKey] = useState("");
@@ -255,6 +276,13 @@ export default function AdminSponsorsPage() {
         .map((item) => item.trim())
         .filter(Boolean),
       start_at: formatDateTimeLocal(sponsor.start_at),
+      days: Math.max(
+        1,
+        Math.ceil(
+          (new Date(sponsor.end_at).getTime() - new Date(sponsor.start_at).getTime()) /
+            (24 * 60 * 60 * 1000)
+        ) || 1
+      ),
       end_at: formatDateTimeLocal(sponsor.end_at),
       is_active: Boolean(sponsor.is_active),
       theme: sponsor.theme || "default",
@@ -277,6 +305,7 @@ export default function AdminSponsorsPage() {
         },
         body: JSON.stringify({
           ...form,
+          end_at: form.end_at || calculateEndAt(form.start_at, form.days),
           category: selectedCategoryText,
           categories: form.categories,
         }),
@@ -350,8 +379,8 @@ export default function AdminSponsorsPage() {
             </Link>
 
             <div>
-              <h1 className="text-3xl font-semibold">Sponsors</h1>
-              <p className="mt-1 text-sm text-gray-300">Create and manage sponsored cards.</p>
+              <h1 className="text-3xl font-semibold">Advertisers</h1>
+              <p className="mt-1 text-sm text-gray-300">Create and manage sponsored advertiser cards.</p>
             </div>
           </div>
 
@@ -366,7 +395,7 @@ export default function AdminSponsorsPage() {
               Hidden
             </Link>
             <Link href="/admin/sponsors" className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-black">
-              Sponsors
+              Advertisers
             </Link>
           </nav>
         </div>
@@ -396,8 +425,48 @@ export default function AdminSponsorsPage() {
                 ))}
               </select>
 
-              <input type="datetime-local" className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none" value={form.start_at} onChange={(e) => setForm({ ...form, start_at: e.target.value })} />
-              <input type="datetime-local" className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none" value={form.end_at} onChange={(e) => setForm({ ...form, end_at: e.target.value })} />
+              <input
+                type="datetime-local"
+                className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none"
+                value={form.start_at}
+                onChange={(e) => {
+                  const nextStartAt = e.target.value;
+                  setForm({
+                    ...form,
+                    start_at: nextStartAt,
+                    end_at: calculateEndAt(nextStartAt, form.days),
+                  });
+                }}
+              />
+
+              <input
+                type="number"
+                min={1}
+                className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none"
+                value={form.days}
+                onChange={(e) => {
+                  const nextDays = Number(e.target.value);
+                  setForm({
+                    ...form,
+                    days: nextDays,
+                    end_at: calculateEndAt(form.start_at, nextDays),
+                  });
+                }}
+                placeholder="Number of days"
+              />
+            </div>
+
+            <div className="mt-3">
+              <p className="mb-1 text-sm text-gray-300">End date/time</p>
+              <input
+                type="datetime-local"
+                className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none"
+                value={form.end_at}
+                onChange={(e) => setForm({ ...form, end_at: e.target.value })}
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                This auto-fills from start date + days, but you can override it manually.
+              </p>
             </div>
 
             <div className="mt-4">
@@ -493,7 +562,7 @@ export default function AdminSponsorsPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-300">{sponsor.category}</td>
                   <td className="px-4 py-3 text-gray-300">{sponsor.theme || "default"}</td>
-                  <td className="px-4 py-3 text-gray-300">{sponsor.is_active ? "Active" : "Inactive"}</td>
+                  <td className="px-4 py-3 text-gray-300">{getSponsorStatus(sponsor)}</td>
                   <td className="px-4 py-3">
                     <button type="button" onClick={() => editSponsor(sponsor)} className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800">
                       Edit
