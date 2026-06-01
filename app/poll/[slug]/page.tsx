@@ -731,7 +731,7 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
 
         {/* LEFT TEXT */}
         <div className="min-w-0 flex-1 sm:pr-3">
-          <p className={`mb-1 text-[10px] uppercase tracking-wide ${theme.label}`}>
+          <p className="mb-1 text-[10px] uppercase tracking-wide text-amber-300/70">
             Sponsored
           </p>
 
@@ -771,10 +771,20 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
           <button
             type="button"
             className={`rounded-lg border px-4 py-2.5 text-sm font-medium transition ${
-              ["light", "softblue", "softgreen", "sand", "silver", "lavender", "sky"].includes(
-                sponsor.theme?.trim().toLowerCase() || ""
-              )
-                ? "border-white/20 bg-white/10 text-white hover:bg-white/15"
+              sponsor.theme?.trim().toLowerCase() === "softblue"
+                ? "border-sky-400/40 bg-sky-400/15 text-sky-100 hover:bg-sky-400/20"
+                : sponsor.theme?.trim().toLowerCase() === "softgreen"
+                ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-100 hover:bg-emerald-400/20"
+                : sponsor.theme?.trim().toLowerCase() === "sand"
+                ? "border-stone-400/40 bg-stone-400/15 text-stone-100 hover:bg-stone-400/20"
+                : sponsor.theme?.trim().toLowerCase() === "silver"
+                ? "border-slate-400/40 bg-slate-400/15 text-slate-100 hover:bg-slate-400/20"
+                : sponsor.theme?.trim().toLowerCase() === "lavender"
+                ? "border-purple-400/40 bg-purple-400/15 text-purple-100 hover:bg-purple-400/20"
+                : sponsor.theme?.trim().toLowerCase() === "sky"
+                ? "border-blue-400/40 bg-blue-400/15 text-blue-100 hover:bg-blue-400/20"
+                : sponsor.theme?.trim().toLowerCase() === "light"
+                ? "border-gray-400/40 bg-gray-400/15 text-white hover:bg-gray-400/20"
                 : theme.cta
             }`}
           >
