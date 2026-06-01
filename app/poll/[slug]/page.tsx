@@ -661,16 +661,17 @@ function getSponsorTheme(theme: string | null) {
 
 function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
   const imageUrl = sponsor.logo_url?.trim() || null;
+  const theme = getSponsorTheme(sponsor.theme);
 
   return (
     <a
       href={sponsor.destination_url}
       target="_blank"
       rel="noreferrer sponsored"
-      className="relative mb-4 block overflow-hidden rounded-lg border border-amber-500/20 bg-[#0e0c08] px-5 py-3 transition hover:opacity-95"
+      className={`relative mb-4 block overflow-hidden rounded-xl border p-4 transition hover:opacity-95 ${theme.card}`}
     >
       {/* LEFT ACCENT BAR */}
-      <div className="absolute left-0 top-0 h-full w-[3px] bg-gradient-to-b from-amber-400/70 via-amber-500/40 to-transparent" />
+      <div className="absolute left-0 top-0 h-full w-[2px] bg-gradient-to-b from-amber-300/40 via-amber-400/20 to-transparent" />
       <div className="relative flex items-start justify-between gap-3 pl-2">
 
         {/* LEFT TEXT */}
@@ -702,7 +703,7 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
 
           <button
             type="button"
-            className="rounded-lg bg-gray-700 px-3 py-2 text-xs font-medium text-white hover:bg-gray-600"
+            className="rounded-lg bg-white/10 px-3 py-2 text-xs font-medium text-white border border-white/10 hover:bg-white/15 transition"
           >
             {sponsor.cta_text}
           </button>
@@ -1712,16 +1713,14 @@ if (polls.length > previousPollCountRef.current && polls.length > 1) {
     }, [polls, showInlineSubscribe, showEndOfFeed]);
 
   const handleVoteComplete = async (pollId: number, category: string) => {
-const countedVotes = getInlineSubscribeVoteCount() + 1;
 recordInlineSubscribeVote(pollId);
 
-const hasShownFirstSponsor =
-  sessionStorage.getItem(FIRST_VOTE_SPONSOR_SHOWN_KEY) === "true";
-
+// single source of truth for sponsor flow
 const sponsorVoteCount = incrementSponsorVoteCount();
 
+// show on: 1st vote, then every 2nd vote after that
 const shouldShowSponsor =
-  sponsorVoteCount === 1 || sponsorVoteCount % 2 === 1;
+  sponsorVoteCount === 1 || (sponsorVoteCount - 1) % 2 === 0;
 
 if (shouldShowSponsor) {
   sessionStorage.setItem(FIRST_VOTE_SPONSOR_SHOWN_KEY, "true");
