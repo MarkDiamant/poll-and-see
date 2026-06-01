@@ -1828,9 +1828,46 @@ if (polls.length > previousPollCountRef.current && polls.length > 1) {
                 bundle={bundle}
                 badgeLabel={badgeLabel}
                 showGoToAllPolls={true}
-                onVoteComplete={(pollId, category) => {
-                  void handleVoteComplete(pollId, category);
-                }}
+onVoteComplete={(pollId, category) => {
+  const sponsorVoteCount = incrementSponsorVoteCount();
+
+  const shouldShowSponsor =
+    sponsorVoteCount === 1 || sponsorVoteCount % SPONSOR_FREQUENCY === 0;
+
+  if (shouldShowSponsor) {
+    void loadActiveSponsor(category + "&t=" + Date.now()).then((sponsor) => {
+      if (sponsor) {
+        setSponsorByPollId((current) => ({
+          ...current,
+          [pollId]: sponsor,
+        }));
+
+        if (sponsor.theme) {
+          setPageTheme(sponsor.theme);
+        }
+      }
+    });
+  }
+
+  const voteCount = getInlineSubscribeVoteCount();
+
+  if (
+    voteCount >= INLINE_SUBSCRIBE_VOTE_THRESHOLD &&
+    !hasEmailSubscribedLocally() &&
+    !hasShownInlineSubscribeThisSession()
+  ) {
+    markInlineSubscribeShownThisSession();
+    setInlineSubscribeAfterPollId(pollId);
+    setShowInlineSubscribe(true);
+  }
+
+  const currentShownIds = pollsRef.current.map((item) => item.poll.id);
+  const flowAnchorCategory =
+    anchorCategory || pollsRef.current[0]?.poll.category || "";
+
+  void preloadQueue([...currentShownIds, pollId], flowAnchorCategory);
+  setShowEndOfFeed(true);
+}}
                 onSkipPoll={(pollId) => {
                   void handleSkipPoll(pollId);
                 }}
