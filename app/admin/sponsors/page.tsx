@@ -397,6 +397,9 @@ export default function AdminSponsorsPage() {
             <Link href="/admin/sponsors" className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-black">
               Advertisers
             </Link>
+            <Link href="/admin/advertiser-enquiries" className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800">
+              Enquiries
+            </Link>
           </nav>
         </div>
 

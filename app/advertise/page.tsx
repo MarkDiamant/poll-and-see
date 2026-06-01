@@ -39,6 +39,7 @@ function getDiscount(days: number) {
 export default function AdvertisePage() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>(["Community"]);
   const [days, setDays] = useState(1);
+  const [activeForm, setActiveForm] = useState<"booking" | "question">("booking");
   const [formData, setFormData] = useState({
     name: "",
     businessName: "",
@@ -46,6 +47,9 @@ export default function AdvertisePage() {
     phone: "",
     destination: "",
     preferredStartDate: "",
+    headline: "",
+    ctaText: "Learn more",
+    logoUrl: "",
     message: "",
   });
   const [sending, setSending] = useState(false);
@@ -98,8 +102,9 @@ export default function AdvertisePage() {
         },
         body: JSON.stringify({
           ...formData,
-          categories: selectedCategories,
-          days,
+          enquiryType: activeForm,
+          categories: activeForm === "booking" ? selectedCategories : [],
+          days: activeForm === "booking" ? days : null,
         }),
       });
 
@@ -109,7 +114,12 @@ export default function AdvertisePage() {
         throw new Error(data.error || "Could not send enquiry.");
       }
 
-      setStatusMessage("Thanks. Your enquiry has been sent.");
+      setStatusMessage(
+        activeForm === "booking"
+          ? "Thanks. Your sponsorship request has been sent."
+          : "Thanks. Your question has been sent."
+      );
+
       setFormData({
         name: "",
         businessName: "",
@@ -117,6 +127,9 @@ export default function AdvertisePage() {
         phone: "",
         destination: "",
         preferredStartDate: "",
+        headline: "",
+        ctaText: "Learn more",
+        logoUrl: "",
         message: "",
       });
     } catch (err) {
@@ -153,9 +166,9 @@ export default function AdvertisePage() {
               <h2 className="mb-3 text-2xl font-semibold">How sponsorship works</h2>
               <div className="space-y-3 text-sm leading-6 text-gray-300">
                 <p>Sponsors appear on poll voting/result pages after a user has voted and results are shown.</p>
-                <p>Sponsorship is category-based, with one sponsor per category at a time.</p>
-                <p>All sponsors are manually approved, payment is required before going live, and cards are static only.</p>
-                <p>Sponsors can also create and share their own polls for extra engagement, while Poll & See chooses independently which polls to promote.</p>
+                <p>Sponsorship is category-based and manually approved before going live.</p>
+                <p>After you submit the request, we check the advert, confirm availability, and send an invoice.</p>
+                <p>Once paid, your sponsor card can be activated for the chosen dates and categories.</p>
               </div>
             </section>
 
@@ -216,38 +229,38 @@ export default function AdvertisePage() {
                 </div>
               </div>
             </section>
-
-            <section className="rounded-2xl border border-gray-700 bg-gray-800 p-5">
-              <h2 className="mb-4 text-2xl font-semibold">Sponsor preview</h2>
-
-              <div className="rounded-2xl border border-gray-700 bg-gray-800/90 p-3">
-                <div className="flex min-h-[92px] items-center gap-3">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-gray-700 bg-gray-900 text-lg font-bold text-white">
-                    P&S
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">
-                      Sponsored
-                    </p>
-                    <p className="truncate text-sm font-semibold text-white">
-                      Your Business
-                    </p>
-                    <p className="mt-0.5 line-clamp-2 text-sm leading-5 text-gray-300">
-                      A short, clean headline for active Poll & See voters.
-                    </p>
-                  </div>
-
-                  <span className="shrink-0 rounded-xl bg-white px-3 py-2 text-xs font-medium text-black">
-                    Learn more
-                  </span>
-                </div>
-              </div>
-            </section>
           </div>
 
           <section className="rounded-2xl border border-gray-700 bg-gray-800 p-5 lg:sticky lg:top-6 lg:self-start">
-            <h2 className="mb-4 text-2xl font-semibold">Enquire</h2>
+            <div className="mb-4 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveForm("booking")}
+                className={`h-10 rounded-xl text-sm font-medium transition ${
+                  activeForm === "booking"
+                    ? "bg-white text-black"
+                    : "border border-gray-700 bg-gray-900 text-white hover:bg-gray-800"
+                }`}
+              >
+                Book sponsorship
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveForm("question")}
+                className={`h-10 rounded-xl text-sm font-medium transition ${
+                  activeForm === "question"
+                    ? "bg-white text-black"
+                    : "border border-gray-700 bg-gray-900 text-white hover:bg-gray-800"
+                }`}
+              >
+                Ask a question
+              </button>
+            </div>
+
+            <h2 className="mb-4 text-2xl font-semibold">
+              {activeForm === "booking" ? "Book sponsorship" : "Ask a question"}
+            </h2>
 
             <form onSubmit={handleSubmit} className="space-y-3">
               <input
@@ -258,13 +271,15 @@ export default function AdvertisePage() {
                 className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
               />
 
-              <input
-                value={formData.businessName}
-                onChange={(event) => updateField("businessName", event.target.value)}
-                placeholder="Business name"
-                required
-                className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
-              />
+              {activeForm === "booking" ? (
+                <input
+                  value={formData.businessName}
+                  onChange={(event) => updateField("businessName", event.target.value)}
+                  placeholder="Business name"
+                  required
+                  className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
+                />
+              ) : null}
 
               <input
                 type="email"
@@ -282,33 +297,63 @@ export default function AdvertisePage() {
                 className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
               />
 
-              <input
-                value={formData.destination}
-                onChange={(event) => updateField("destination", event.target.value)}
-                placeholder="Website or WhatsApp destination link"
-                className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
-              />
+              {activeForm === "booking" ? (
+                <>
+                  <input
+                    value={formData.destination}
+                    onChange={(event) => updateField("destination", event.target.value)}
+                    placeholder="Website or WhatsApp destination link"
+                    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
+                  />
 
-              <input
-                type="date"
-                value={formData.preferredStartDate}
-                onChange={(event) => updateField("preferredStartDate", event.target.value)}
-                className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
-              />
+                  <input
+                    type="date"
+                    value={formData.preferredStartDate}
+                    onChange={(event) => updateField("preferredStartDate", event.target.value)}
+                    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
+                  />
 
-              <input
-                type="number"
-                min={1}
-                value={days}
-                onChange={(event) => setDays(Number(event.target.value))}
-                placeholder="Number of days"
-                className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
-              />
+                  <input
+                    type="number"
+                    min={1}
+                    value={days}
+                    onChange={(event) => setDays(Number(event.target.value))}
+                    placeholder="Number of days"
+                    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
+                  />
+
+                  <input
+                    value={formData.headline}
+                    onChange={(event) => updateField("headline", event.target.value)}
+                    placeholder="Advert headline"
+                    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
+                  />
+
+                  <input
+                    value={formData.ctaText}
+                    onChange={(event) => updateField("ctaText", event.target.value)}
+                    placeholder="Button text"
+                    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
+                  />
+
+                  <div>
+                    <input
+                      value={formData.logoUrl}
+                      onChange={(event) => updateField("logoUrl", event.target.value)}
+                      placeholder="Logo URL"
+                      className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Upload your logo somewhere public and paste the link here, or mention in the message that you will email it. PNG or SVG with transparent background works best.
+                    </p>
+                  </div>
+                </>
+              ) : null}
 
               <textarea
                 value={formData.message}
                 onChange={(event) => updateField("message", event.target.value)}
-                placeholder="Message"
+                placeholder={activeForm === "booking" ? "Anything else we should know?" : "Your question"}
                 rows={4}
                 className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none focus:border-gray-500"
               />
@@ -318,7 +363,7 @@ export default function AdvertisePage() {
                 disabled={sending}
                 className="h-11 w-full cursor-pointer rounded-xl bg-white px-4 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-60"
               >
-                {sending ? "Sending..." : "Send enquiry"}
+                {sending ? "Sending..." : activeForm === "booking" ? "Send sponsorship request" : "Send question"}
               </button>
             </form>
 
