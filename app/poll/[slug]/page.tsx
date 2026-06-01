@@ -416,9 +416,12 @@ async function submitVote(pollId: number, optionId: number) {
 }
 
 async function loadActiveSponsor(category: string): Promise<Sponsor | null> {
-  const response = await fetch(`/api/sponsors/active?category=${encodeURIComponent(category)}`, {
-    cache: "no-store",
-  });
+  const response = await fetch(
+    `/api/sponsors/active?category=${encodeURIComponent(category)}&t=${Date.now()}`,
+    {
+      cache: "no-store",
+    }
+  );
 
   if (!response.ok) {
     return null;
@@ -913,19 +916,6 @@ const handleVote = async (optionId: number) => {
     setCounts(previousCounts);
     setSelected(previousSelected);
     setVoted(previousVoted);
-
-    const hiddenErrors = [
-      "too many votes from this network",
-      "too many votes from this network on this poll",
-      "too many votes",
-      "network limit",
-    ];
-
-    const shouldHide = hiddenErrors.some((e) =>
-      message.toLowerCase().includes(e)
-    );
-
-    if (!shouldHide) return;
 
     setError(message);
   }
@@ -1710,7 +1700,7 @@ if (polls.length > previousPollCountRef.current && polls.length > 1) {
 
     previousShowInlineSubscribeRef.current = showInlineSubscribe;
     previousPollCountRef.current = polls.length;
-    }, [polls, showInlineSubscribe, showEndOfFeed]);
+    }, [polls, showInlineSubscribe, showEndOfFeed, sponsorByPollId]);
 
   const handleSkipPoll = async (pollId: number) => {
     skippedPollIdsRef.current.add(pollId);
@@ -1835,7 +1825,7 @@ onVoteComplete={(pollId, category) => {
     sponsorVoteCount === 1 || sponsorVoteCount % SPONSOR_FREQUENCY === 0;
 
   if (shouldShowSponsor) {
-    void loadActiveSponsor(category + "&t=" + Date.now()).then((sponsor) => {
+    void loadActiveSponsor(category).then((sponsor) => {
       if (sponsor) {
         setSponsorByPollId((current) => ({
           ...current,

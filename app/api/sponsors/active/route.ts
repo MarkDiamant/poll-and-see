@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabaseAdmin
     .from("sponsors")
     .select("id, business_name, headline, logo_url, cta_text, destination_url, theme")
-    .eq("category", category)
+    .or(`category.eq.${category},category.ilike.%,${category},%,category.ilike.${category},%,category.ilike.%,${category}`)
     .eq("is_active", true)
     .lte("start_at", now)
     .gt("end_at", now)
