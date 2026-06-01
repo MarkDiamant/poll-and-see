@@ -653,9 +653,11 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
       href={sponsor.destination_url}
       target="_blank"
       rel="noreferrer sponsored"
-      className="mb-4 block rounded-xl border border-gray-600/40 bg-gray-800/40 p-4 transition hover:opacity-95"
+      className="relative mb-4 block overflow-hidden rounded-xl border border-gray-600/40 bg-gray-800/40 p-4 transition hover:opacity-95"
     >
-      <div className="flex items-start justify-between gap-3">
+      {/* LEFT ACCENT BAR */}
+      <div className="absolute left-0 top-0 h-full w-[3px] bg-gradient-to-b from-amber-400/70 via-amber-500/40 to-transparent" />
+      <div className="relative flex items-start justify-between gap-3 pl-2">
 
         {/* LEFT TEXT */}
         <div className="flex-1 min-w-0 pr-3">
@@ -1704,8 +1706,8 @@ const hasShownFirstSponsor =
 const adjustedVoteCount = countedVotes + 1;
 
 const shouldShowSponsor =
-  adjustedVoteCount === 1 ||
-  (adjustedVoteCount % SPONSOR_FREQUENCY === 1);
+  adjustedVoteCount >= 1 &&
+  adjustedVoteCount % SPONSOR_FREQUENCY === 1;
 
 if (shouldShowSponsor) {
   sessionStorage.setItem(FIRST_VOTE_SPONSOR_SHOWN_KEY, "true");
