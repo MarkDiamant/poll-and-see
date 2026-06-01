@@ -1627,7 +1627,7 @@ smoothScrollToElement(endOfFeedRef.current, 650, window.innerHeight * 0.62);
   const handleVoteComplete = async (pollId: number, category: string) => {
     const countedVotes = recordInlineSubscribeVote(pollId);
 
-    if (countedVotes > 0 && countedVotes % SPONSOR_FREQUENCY === 1) {
+    if (countedVotes > 0 && countedVotes % SPONSOR_FREQUENCY === 0) {
       const sponsor = await loadActiveSponsor(category);
 
       if (sponsor) {
