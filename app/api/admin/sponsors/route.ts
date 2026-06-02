@@ -39,7 +39,7 @@ function normaliseExternalUrl(value: string) {
   return `https://${trimmed}`;
 }
 
-function cleanSponsorPayload(body: Record<string, unknown>) {ody: Record<string, unknown>) {
+function cleanSponsorPayload(body: Record<string, unknown>) {
   const categories = Array.isArray(body.categories)
     ? body.categories.map(String).map((item) => item.trim()).filter(Boolean)
     : String(body.category || "")
