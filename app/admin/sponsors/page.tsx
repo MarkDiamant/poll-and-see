@@ -170,10 +170,19 @@ function formatDateTimeLocal(value: string) {
 
 function calculateEndAt(startAt: string, days: number) {
   if (!startAt) return "";
+
   const date = new Date(startAt);
   if (Number.isNaN(date.getTime())) return "";
+
   date.setDate(date.getDate() + Math.max(days || 1, 1));
-  return date.toISOString();
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
 function getSponsorStatus(sponsor: SponsorRow) {
