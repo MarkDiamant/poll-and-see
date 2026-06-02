@@ -65,6 +65,7 @@ export default function AdminAdvertiserEnquiriesPage() {
   const [enquiries, setEnquiries] = useState<AdvertiserEnquiry[]>([]);
   const [error, setError] = useState("");
   const [savingKey, setSavingKey] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
     const saved = sessionStorage.getItem(ADMIN_KEY_STORAGE) || "";
@@ -97,6 +98,10 @@ export default function AdminAdvertiserEnquiriesPage() {
     const interval = window.setInterval(loadEnquiries, 8000);
     return () => window.clearInterval(interval);
   }, [adminKey]);
+
+  const filteredEnquiries = enquiries.filter((enquiry) =>
+    statusFilter === "all" ? true : enquiry.status === statusFilter
+  );
 
   const handleUnlock = () => {
     const trimmed = adminKeyInput.trim();
@@ -253,6 +258,21 @@ export default function AdminAdvertiserEnquiriesPage() {
           </div>
         ) : null}
 
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            className="h-11 rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm text-white outline-none"
+          >
+            <option value="all">All enquiry statuses</option>
+            {STATUS_OPTIONS.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div className="overflow-x-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg">
           <table className="w-full text-sm">
             <thead className="bg-gray-900 text-left text-gray-300">
@@ -265,7 +285,7 @@ export default function AdminAdvertiserEnquiriesPage() {
             </thead>
 
             <tbody>
-              {enquiries.length === 0 ? (
+              {filteredEnquiries.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-4 py-6 text-center text-gray-300">
                     No advertiser enquiries yet.
@@ -273,7 +293,7 @@ export default function AdminAdvertiserEnquiriesPage() {
                 </tr>
               ) : null}
 
-              {enquiries.map((enquiry) => (
+              {filteredEnquiries.map((enquiry) => (
                 <tr key={enquiry.id} className="border-t border-gray-700 align-top">
                   <td className="min-w-[260px] px-4 py-4">
                     <p className="font-semibold text-white">

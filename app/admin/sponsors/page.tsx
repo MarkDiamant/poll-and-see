@@ -195,6 +195,7 @@ export default function AdminSponsorsPage() {
   const [form, setForm] = useState(DEFAULT_FORM);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const theme = getSponsorTheme(form.theme);
 
@@ -231,6 +232,10 @@ export default function AdminSponsorsPage() {
   }, [adminKey]);
 
   const selectedCategoryText = useMemo(() => form.categories.join(","), [form.categories]);
+
+  const filteredSponsors = sponsors.filter((sponsor) =>
+    statusFilter === "all" ? true : getSponsorStatus(sponsor) === statusFilter
+  );
 
   const handleUnlock = () => {
     const trimmed = adminKeyInput.trim();
@@ -419,19 +424,21 @@ export default function AdminSponsorsPage() {
                 ))}
               </select>
 
-              <input
-                type="datetime-local"
-                className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none"
-                value={form.start_at}
-                onChange={(e) => {
-                  const nextStartAt = e.target.value;
-                  setForm({
-                    ...form,
-                    start_at: nextStartAt,
-                    end_at: calculateEndAt(nextStartAt, form.days),
-                  });
-                }}
-              />
+<input
+  type="datetime-local"
+  className="w-full cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none [color-scheme:dark] focus:border-gray-500"
+  value={form.start_at}
+  onClick={(e) => e.currentTarget.showPicker?.()}
+  onFocus={(e) => e.currentTarget.showPicker?.()}
+  onChange={(e) => {
+    const nextStartAt = e.target.value;
+    setForm({
+      ...form,
+      start_at: nextStartAt,
+      end_at: calculateEndAt(nextStartAt, form.days),
+    });
+  }}
+/>
 
               <input
                 type="number"
@@ -452,12 +459,14 @@ export default function AdminSponsorsPage() {
 
             <div className="mt-3">
               <p className="mb-1 text-sm text-gray-300">End date/time</p>
-              <input
-                type="datetime-local"
-                className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none"
-                value={form.end_at}
-                onChange={(e) => setForm({ ...form, end_at: e.target.value })}
-              />
+<input
+  type="datetime-local"
+  className="w-full cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none [color-scheme:dark] focus:border-gray-500"
+  value={form.end_at}
+  onClick={(e) => e.currentTarget.showPicker?.()}
+  onFocus={(e) => e.currentTarget.showPicker?.()}
+  onChange={(e) => setForm({ ...form, end_at: e.target.value })}
+/>
               <p className="mt-1 text-xs text-gray-500">
                 This auto-fills from start date + days, but you can override it manually.
               </p>
@@ -536,6 +545,20 @@ export default function AdminSponsorsPage() {
           </section>
         </div>
 
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            className="h-11 rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm text-white outline-none"
+          >
+            <option value="all">All advertiser statuses</option>
+            <option value="Live now">Live now</option>
+            <option value="Scheduled">Scheduled</option>
+            <option value="Ended">Ended</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+
         <section className="overflow-hidden rounded-2xl border border-gray-700 bg-gray-800">
           <table className="w-full text-sm">
             <thead className="bg-gray-900 text-left text-gray-300">
@@ -547,7 +570,7 @@ export default function AdminSponsorsPage() {
               </tr>
             </thead>
             <tbody>
-              {sponsors.map((sponsor) => (
+              {filteredSponsors.map((sponsor) => (
                 <tr
   key={sponsor.id}
   onClick={() => editSponsor(sponsor)}
