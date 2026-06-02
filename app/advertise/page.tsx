@@ -231,6 +231,18 @@ export default function AdvertisePage() {
     setFormData((current) => ({ ...current, [key]: value }));
   };
 
+  const increaseDays = () => {
+    setDaysInput((current) => String(Math.max(Number(current) || 1, 1) + 1));
+  };
+
+  const decreaseDays = () => {
+    setDaysInput((current) => String(Math.max((Number(current) || 1) - 1, 1)));
+  };
+
+  const openDatePicker = (input: HTMLInputElement) => {
+    input.showPicker?.();
+  };
+
   const handleLogoUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -436,13 +448,34 @@ className="h-10 cursor-pointer rounded-xl border px-3 text-sm font-medium transi
               </div>
 
               <label className="mb-2 block text-sm font-medium text-gray-300">Number of days</label>
-              <input
-                type="number"
-                min={1}
-                value={daysInput}
-                onChange={(event) => setDaysInput(event.target.value)}
-                className="mb-5 h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
-              />
+              <div className="relative mb-5">
+                <input
+                  type="number"
+                  min={1}
+                  inputMode="numeric"
+                  value={daysInput}
+                  onChange={(event) => setDaysInput(event.target.value)}
+                  className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 pr-12 text-sm text-white outline-none [appearance:textfield] [color-scheme:dark] focus:border-gray-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                />
+
+                <div className="absolute right-2 top-1/2 flex -translate-y-1/2 flex-col overflow-hidden rounded-md border border-gray-600 bg-gray-800">
+                  <button
+                    type="button"
+                    onClick={increaseDays}
+                    className="flex h-4.5 w-6 items-center justify-center text-[10px] leading-none text-gray-200 transition hover:bg-gray-700"
+                  >
+                    +
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={decreaseDays}
+                    className="flex h-4.5 w-6 items-center justify-center border-t border-gray-600 text-[10px] leading-none text-gray-200 transition hover:bg-gray-700"
+                  >
+                    −
+                  </button>
+                </div>
+              </div>
 
               {pricing.categoryCount > 0 ? (
   <div className="rounded-2xl border border-gray-700 bg-gray-900 p-4">
@@ -629,47 +662,63 @@ maxLength={20}
 
 <div>
   <p className="mb-1 text-xs text-gray-400">Ad start date</p>
-<input
-  type="date"
-  value={formData.preferredStartDate}
-  onChange={(event) => updateField("preferredStartDate", event.target.value)}
-  onClick={(event) => event.currentTarget.showPicker?.()}
-  required
-  className="h-11 w-full cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none [color-scheme:dark] focus:border-gray-500"
-/>
+  <div className="relative">
+    <input
+      type="date"
+      value={formData.preferredStartDate}
+      onChange={(event) => updateField("preferredStartDate", event.target.value)}
+      onClick={(event) => openDatePicker(event.currentTarget)}
+      required
+      className="h-11 w-full cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-4 pr-12 text-sm text-white outline-none opacity-0"
+    />
+
+    <button
+      type="button"
+      onClick={(event) => {
+        const input = event.currentTarget.previousElementSibling as HTMLInputElement | null;
+        if (input) openDatePicker(input);
+      }}
+      className="absolute inset-0 flex h-11 w-full cursor-pointer items-center justify-between rounded-xl border border-gray-700 bg-gray-900 px-4 text-left text-sm text-white outline-none [color-scheme:dark] focus:border-gray-500"
+    >
+      <span className={formData.preferredStartDate ? "text-white" : "text-gray-500"}>
+        {formData.preferredStartDate || "dd/mm/yyyy"}
+      </span>
+      <span className="text-base text-white">📅</span>
+    </button>
+  </div>
 </div>
 
 <div>
   <p className="mb-1 text-xs text-gray-400">Number of days the ad should run</p>
-<div className="relative">
-  <input
-    type="number"
-    min={1}
-    inputMode="numeric"
-    value={daysInput}
-    onChange={(event) => setDaysInput(event.target.value)}
-    required
-    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 pr-14 text-sm text-white outline-none [color-scheme:dark] focus:border-gray-500"
-  />
+  <div className="relative">
+    <input
+      type="number"
+      min={1}
+      inputMode="numeric"
+      value={daysInput}
+      onChange={(event) => setDaysInput(event.target.value)}
+      required
+      className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 pr-12 text-sm text-white outline-none [appearance:textfield] [color-scheme:dark] focus:border-gray-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+    />
 
-  <div className="absolute right-2 top-1/2 flex -translate-y-1/2 flex-col overflow-hidden rounded-lg border border-gray-600 bg-gray-800">
-    <button
-      type="button"
-      onClick={() => setDaysInput((current) => String(Math.max(Number(current) || 1, 1) + 1))}
-      className="flex h-5 w-7 items-center justify-center text-xs text-gray-200 transition hover:bg-gray-700"
-    >
-      +
-    </button>
+    <div className="absolute right-2 top-1/2 flex -translate-y-1/2 flex-col overflow-hidden rounded-md border border-gray-600 bg-gray-800">
+      <button
+        type="button"
+        onClick={increaseDays}
+        className="flex h-4.5 w-6 items-center justify-center text-[10px] leading-none text-gray-200 transition hover:bg-gray-700"
+      >
+        +
+      </button>
 
-    <button
-      type="button"
-      onClick={() => setDaysInput((current) => String(Math.max((Number(current) || 1) - 1, 1)))}
-      className="flex h-5 w-7 items-center justify-center border-t border-gray-600 text-xs text-gray-200 transition hover:bg-gray-700"
-    >
-      −
-    </button>
+      <button
+        type="button"
+        onClick={decreaseDays}
+        className="flex h-4.5 w-6 items-center justify-center border-t border-gray-600 text-[10px] leading-none text-gray-200 transition hover:bg-gray-700"
+      >
+        −
+      </button>
+    </div>
   </div>
-</div>
 </div>
 
                   <textarea
