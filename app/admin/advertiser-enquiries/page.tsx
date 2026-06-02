@@ -39,6 +39,26 @@ function badge(count: number, isActive: boolean) {
   );
 }
 
+function normaliseExternalUrl(value: string | null) {
+  const trimmed = value?.trim();
+  if (!trimmed) return "";
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
+function buildSponsorDates(startDate: string | null, days: number | null) {
+  if (!startDate) return { startAt: "", endAt: "" };
+
+  const startAt = `${startDate}T00:00:00.000Z`;
+  const end = new Date(startAt);
+  end.setUTCDate(end.getUTCDate() + Math.max(days || 1, 1));
+
+  return {
+    startAt,
+    endAt: end.toISOString(),
+  };
+}
+
 export default function AdminAdvertiserEnquiriesPage() {
   const [adminKeyInput, setAdminKeyInput] = useState("");
   const [adminKey, setAdminKey] = useState("");
@@ -84,6 +104,47 @@ export default function AdminAdvertiserEnquiriesPage() {
     sessionStorage.setItem(ADMIN_KEY_STORAGE, trimmed);
     setAdminKey(trimmed);
     setError("");
+  };
+
+  const createAdvertiserFromEnquiry = async (enquiry: AdvertiserEnquiry) => {
+    setSavingKey(`create:${enquiry.id}`);
+    setError("");
+
+    try {
+      const dates = buildSponsorDates(enquiry.preferred_start_date, enquiry.days);
+
+      const response = await fetch("/api/admin/sponsors", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": adminKey,
+        },
+        body: JSON.stringify({
+          business_name: enquiry.business_name || "",
+          headline: enquiry.headline || "",
+          logo_url: enquiry.logo_url || "",
+          cta_text: enquiry.cta_text || "Learn more",
+          destination_url: normaliseExternalUrl(enquiry.destination),
+          category: enquiry.categories || "",
+          start_at: dates.startAt,
+          end_at: dates.endAt,
+          is_active: false,
+          theme: enquiry.theme || "default",
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Could not create advertiser.");
+      }
+
+      await updateStatus(enquiry.id, "paid");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not create advertiser.");
+    } finally {
+      setSavingKey("");
+    }
   };
 
   const updateStatus = async (id: number, status: string) => {
@@ -235,7 +296,7 @@ export default function AdminAdvertiserEnquiriesPage() {
                     <p><span className="text-gray-500">CTA:</span> {enquiry.cta_text || "Not provided"}</p>
 <p><span className="text-gray-500">Theme:</span> {enquiry.theme || "Not provided"}</p>
                     {enquiry.destination ? (
-                      <a href={enquiry.destination} target="_blank" rel="noreferrer" className="mt-2 block text-blue-300 hover:text-blue-200">
+                      <a href={normaliseExternalUrl(enquiry.destination)} target="_blank" rel="noreferrer" className="mt-2 block text-blue-300 hover:text-blue-200">
                         Open destination
                       </a>
                     ) : null}
@@ -263,6 +324,17 @@ export default function AdminAdvertiserEnquiriesPage() {
                         </option>
                       ))}
                     </select>
+
+                    {enquiry.enquiry_type === "booking" ? (
+                      <button
+                        type="button"
+                        onClick={() => void createAdvertiserFromEnquiry(enquiry)}
+                        disabled={savingKey === `create:${enquiry.id}`}
+                        className="mt-2 w-full rounded-lg bg-white px-3 py-2 text-left text-xs font-medium text-black transition hover:bg-gray-200 disabled:opacity-60"
+                      >
+                        {savingKey === `create:${enquiry.id}` ? "Creating..." : "Create advertiser"}
+                      </button>
+                    ) : null}
                   </td>
                 </tr>
               ))}

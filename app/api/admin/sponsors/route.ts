@@ -32,7 +32,14 @@ function isAuthorized(request: NextRequest) {
   return { ok: true };
 }
 
-function cleanSponsorPayload(body: Record<string, unknown>) {
+function normaliseExternalUrl(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
+function cleanSponsorPayload(body: Record<string, unknown>) {ody: Record<string, unknown>) {
   const categories = Array.isArray(body.categories)
     ? body.categories.map(String).map((item) => item.trim()).filter(Boolean)
     : String(body.category || "")
@@ -45,7 +52,7 @@ function cleanSponsorPayload(body: Record<string, unknown>) {
     headline: String(body.headline || "").trim(),
     logo_url: String(body.logo_url || "").trim() || null,
     cta_text: String(body.cta_text || "").trim(),
-    destination_url: String(body.destination_url || "").trim(),
+    destination_url: normaliseExternalUrl(String(body.destination_url || "")),
     category: categories.join(","),
     start_at: String(body.start_at || "").trim(),
     end_at: String(body.end_at || "").trim(),
