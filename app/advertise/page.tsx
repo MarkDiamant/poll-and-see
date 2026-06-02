@@ -58,6 +58,12 @@ function getDiscount(days: number) {
   return 0;
 }
 
+function getThemeLabel(theme: string) {
+  if (theme === "softblue") return "Soft blue";
+  if (theme === "softgreen") return "Soft green";
+  return theme.charAt(0).toUpperCase() + theme.slice(1);
+}
+
 function getAdvertTheme(theme: string) {
   const themes: Record<string, { card: string; cta: string; accent: string }> = {
     default: {
@@ -161,7 +167,7 @@ export default function AdvertisePage() {
     adMessage: "",
     ctaText: "",
     logoUrl: "",
-    theme: "blue",
+    theme: "default",
     message: "",
   });
   const [sending, setSending] = useState(false);
@@ -271,6 +277,30 @@ export default function AdvertisePage() {
     setError("");
     setStatusMessage("");
 
+    if (activeForm === "booking") {
+      if (selectedCategories.length === 0) {
+        setError("Choose at least one advertising category.");
+        setSending(false);
+        return;
+      }
+
+      if (
+        !formData.businessName.trim() ||
+        !formData.destination.trim() ||
+        !formData.adMessage.trim() ||
+        !formData.ctaText.trim() ||
+        !formData.logoUrl.trim() ||
+        !formData.preferredStartDate.trim() ||
+        !formData.name.trim() ||
+        !formData.email.trim() ||
+        !formData.phone.trim()
+      ) {
+        setError("Please complete the ad and contact details before submitting.");
+        setSending(false);
+        return;
+      }
+    }
+
     try {
       const response = await fetch("/api/advertise-enquiry", {
         method: "POST",
@@ -304,7 +334,7 @@ export default function AdvertisePage() {
         adMessage: "",
         ctaText: "",
         logoUrl: "",
-        theme: "blue",
+        theme: "default",
         message: "",
       });
       setSelectedCategories([]);
@@ -339,7 +369,7 @@ export default function AdvertisePage() {
               <h2 className="mb-3 text-2xl font-semibold">How it works</h2>
               <div className="space-y-3 text-sm leading-6 text-gray-300">
                 <p>
-                  Choose the categories and number of days you want below, then fill in the advertising request with your logo, ad message, button text and the link you want the ad to open.
+                  Choose the categories and number of days you want below, then create your ad with your business name, message, button text, logo and link.
                 </p>
                 <p>
                   We confirm availability, ask for any clarifications, and send an invoice. Once paid, your ad can go live.
@@ -369,8 +399,9 @@ export default function AdvertisePage() {
               </div>
 
               <p className="mb-2 text-sm font-medium text-gray-300">
-                Choose advertising categories and number of days to see the price below.
+                Choose advertising categories and number of days to see the price.
               </p>
+
               <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
                 <button
                   type="button"
@@ -414,9 +445,7 @@ export default function AdvertisePage() {
               />
 
               <div className="rounded-2xl border border-gray-700 bg-gray-900 p-4">
-                {pricing.categoryCount === 0 ? (
-                  <p className="text-sm text-gray-300">Select categories above to calculate the price.</p>
-                ) : (
+                {pricing.categoryCount > 0 ? (
                   <div className="grid gap-2 text-sm text-gray-300">
                     <div className="flex justify-between gap-4">
                       <span>Selected categories</span>
@@ -443,7 +472,7 @@ export default function AdvertisePage() {
                       <span className="font-semibold text-white">£{pricing.total.toLocaleString()}</span>
                     </div>
                   </div>
-                )}
+                ) : null}
               </div>
             </section>
           </div>
@@ -459,7 +488,7 @@ export default function AdvertisePage() {
                     : "border border-gray-700 bg-gray-900 text-white hover:bg-gray-800"
                 }`}
               >
-                Request advertising
+                Create your ad
               </button>
 
               <button
@@ -476,7 +505,7 @@ export default function AdvertisePage() {
             </div>
 
             <h2 className="mb-2 text-2xl font-semibold">
-              {activeForm === "booking" ? "Request advertising" : "Ask a question"}
+              {activeForm === "booking" ? "Create your ad" : "Ask a question"}
             </h2>
 
             {activeForm === "booking" ? (
@@ -510,7 +539,7 @@ export default function AdvertisePage() {
                     )}
 
                     <span className={`rounded-lg border px-4 py-2.5 text-sm font-medium ${theme.cta}`}>
-                      {formData.ctaText || "My website"}
+                      {formData.ctaText || "Learn more"}
                     </span>
                   </div>
                 </div>
@@ -518,32 +547,51 @@ export default function AdvertisePage() {
             ) : null}
 
             <form onSubmit={handleSubmit} className="space-y-3">
-              <input value={formData.name} onChange={(event) => updateField("name", event.target.value)} placeholder="Name" required className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500" />
-
-              {activeForm === "booking" ? (
-                <input value={formData.businessName} onChange={(event) => updateField("businessName", event.target.value)} placeholder="Business name shown as the ad heading" required className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500" />
-              ) : null}
-
-              <input type="email" value={formData.email} onChange={(event) => updateField("email", event.target.value)} placeholder="Email" required className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500" />
-
-              <input value={formData.phone} onChange={(event) => updateField("phone", event.target.value)} placeholder="Phone / WhatsApp" className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500" />
-
               {activeForm === "booking" ? (
                 <>
-                  <input value={formData.destination} onChange={(event) => updateField("destination", event.target.value)} placeholder="Where should the ad link to? e.g. website, WhatsApp or Instagram" className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500" />
+                  <input
+                    value={formData.businessName}
+                    onChange={(event) => updateField("businessName", event.target.value)}
+                    placeholder="Business name shown as the ad heading"
+                    required
+                    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
+                  />
 
-                  <input type="date" value={formData.preferredStartDate} onChange={(event) => updateField("preferredStartDate", event.target.value)} className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500" />
+                  <input
+                    value={formData.adMessage}
+                    onChange={(event) => updateField("adMessage", event.target.value)}
+                    placeholder="Ad message shown under your business name"
+                    required
+                    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
+                  />
 
-                  <input type="number" min={1} value={daysInput} onChange={(event) => setDaysInput(event.target.value)} placeholder="Number of days" className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500" />
+                  <input
+                    value={formData.ctaText}
+                    onChange={(event) => updateField("ctaText", event.target.value)}
+                    placeholder="Button text, e.g. Learn more"
+                    required
+                    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
+                  />
 
-                  <input value={formData.adMessage} onChange={(event) => updateField("adMessage", event.target.value)} placeholder="Ad message shown under your business name" className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500" />
-
-                  <input value={formData.ctaText} onChange={(event) => updateField("ctaText", event.target.value)} placeholder="Button text, e.g. Learn more" className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500" />
+                  <input
+                    value={formData.destination}
+                    onChange={(event) => updateField("destination", event.target.value)}
+                    placeholder="Button link, e.g. website or socials"
+                    required
+                    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
+                  />
 
                   <div>
                     <label className="flex h-11 cursor-pointer items-center justify-center rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm font-medium text-white transition hover:bg-gray-800">
                       {logoUploading ? "Uploading logo..." : formData.logoUrl ? "Logo uploaded" : "Upload logo"}
-                      <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={handleLogoUpload} disabled={logoUploading} className="hidden" />
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                        onChange={handleLogoUpload}
+                        disabled={logoUploading}
+                        required={!formData.logoUrl}
+                        className="hidden"
+                      />
                     </label>
 
                     {formData.logoUrl ? (
@@ -555,21 +603,115 @@ export default function AdvertisePage() {
                     <p className="mt-1 text-xs text-gray-500">PNG or SVG with a transparent background works best.</p>
                   </div>
 
-                  <select value={formData.theme} onChange={(event) => updateField("theme", event.target.value)} className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500">
+                  <select
+                    value={formData.theme}
+                    onChange={(event) => updateField("theme", event.target.value)}
+                    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 pr-10 text-sm text-white outline-none focus:border-gray-500"
+                  >
                     <option value="default">Choose colour theme: Default</option>
                     {[...THEME_OPTIONS]
                       .filter((themeOption) => themeOption !== "default")
-                      .sort((a, b) => a.localeCompare(b))
+                      .sort((a, b) => getThemeLabel(a).localeCompare(getThemeLabel(b)))
                       .map((themeOption) => (
                         <option key={themeOption} value={themeOption}>
-                          {themeOption.charAt(0).toUpperCase() + themeOption.slice(1)}
+                          {getThemeLabel(themeOption)}
                         </option>
                       ))}
                   </select>
-                </>
-              ) : null}
 
-              <textarea value={formData.message} onChange={(event) => updateField("message", event.target.value)} placeholder={activeForm === "booking" ? "Anything else we should know?" : "Your question"} rows={4} className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none focus:border-gray-500" />
+                  <input
+                    type="date"
+                    value={formData.preferredStartDate}
+                    onChange={(event) => updateField("preferredStartDate", event.target.value)}
+                    required
+                    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
+                  />
+
+                  <input
+                    type="number"
+                    min={1}
+                    value={daysInput}
+                    onChange={(event) => setDaysInput(event.target.value)}
+                    placeholder="Number of days ad should run"
+                    required
+                    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
+                  />
+
+                  <textarea
+                    value={formData.message}
+                    onChange={(event) => updateField("message", event.target.value)}
+                    placeholder="Anything else we should know?"
+                    rows={3}
+                    className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none focus:border-gray-500"
+                  />
+
+                  <div className="border-t border-gray-700 pt-4">
+                    <p className="mb-3 text-sm font-semibold text-white">Your details</p>
+
+                    <div className="space-y-3">
+                      <input
+                        value={formData.name}
+                        onChange={(event) => updateField("name", event.target.value)}
+                        placeholder="Name"
+                        required
+                        className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
+                      />
+
+                      <input
+                        type="email"
+                        value={formData.email}
+                        onChange={(event) => updateField("email", event.target.value)}
+                        placeholder="Email"
+                        required
+                        className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
+                      />
+
+                      <input
+                        value={formData.phone}
+                        onChange={(event) => updateField("phone", event.target.value)}
+                        placeholder="Phone / WhatsApp"
+                        required
+                        className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <input
+                    value={formData.name}
+                    onChange={(event) => updateField("name", event.target.value)}
+                    placeholder="Name"
+                    required
+                    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
+                  />
+
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(event) => updateField("email", event.target.value)}
+                    placeholder="Email"
+                    required
+                    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
+                  />
+
+                  <input
+                    value={formData.phone}
+                    onChange={(event) => updateField("phone", event.target.value)}
+                    placeholder="Phone / WhatsApp"
+                    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
+                  />
+
+                  <textarea
+                    value={formData.message}
+                    onChange={(event) => updateField("message", event.target.value)}
+                    placeholder="Your question"
+                    rows={4}
+                    required
+                    className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none focus:border-gray-500"
+                  />
+                </>
+              )}
 
               <button type="submit" disabled={sending || logoUploading} className="h-11 w-full cursor-pointer rounded-xl bg-white px-4 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-60">
                 {sending ? "Sending..." : activeForm === "booking" ? "Send advertising request" : "Send question"}
