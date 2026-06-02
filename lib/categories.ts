@@ -89,3 +89,60 @@ export function getPriorityCategories(anchorCategory: string) {
   const related = RELATED_CATEGORY_ORDER[anchorCategory] || [];
   return [anchorCategory, ...related];
 }
+export function suggestCategoryFromQuestion(question: string): CategoryOption {
+  const q = question.toLowerCase().trim();
+
+  if (!q) return "General";
+
+  const hasAny = (terms: string[]) => terms.some((term) => q.includes(term));
+
+  const scores: Record<CategoryOption, number> = {
+    General: 0,
+    Lifestyle: 0,
+    Community: 0,
+    Finance: 0,
+    Business: 0,
+    Education: 0,
+    Fun: 0,
+    Politics: 0,
+    Sports: 0,
+  };
+
+  if (hasAny(["child", "children", "kid", "kids", "parent", "parents", "parenting", "school", "teacher", "teachers", "nursery", "playgroup", "homework", "discipline", "chinuch", "learning", "student", "students", "classroom", "school communication", "privileges"])) {
+    scores.Education += 4;
+  }
+
+  if (hasAny(["money", "debt", "income", "spending", "afford", "affordability", "salary", "earn", "value", "bills", "saving", "savings", "prices", "price", "cost", "costs", "rent", "mortgage", "tax", "financial", "finance", "split a bill", "splitting a bill", "charity giving"])) {
+    scores.Finance += 4;
+  }
+
+  if (hasAny(["business", "work", "job", "hiring", "customers", "customer", "pricing", "productivity", "management", "manager", "employee", "employees", "boss", "pay rise", "underpaid", "workplace", "branding", "career", "office"])) {
+    scores.Business += 4;
+  }
+
+  if (hasAny(["rude", "reply", "message", "cancel", "last minute", "interrupt", "awkward", "manners", "etiquette", "pressure", "social norms", "friend", "friends", "guest", "guests", "invite", "invited", "community", "communal", "neighbour", "neighbor"])) {
+    scores.Community += 4;
+  }
+
+  if (hasAny(["gym", "sleep", "food", "travel", "airport", "shabbos", "routine", "habit", "habits", "phone", "phones", "screen time", "daily", "morning", "evening", "weekend", "holiday", "eat", "coffee", "exercise", "fitness"])) {
+    scores.Lifestyle += 4;
+  }
+
+  if (hasAny(["would you rather", "dance", "sing", "cold showers", "air conditioning", "silly", "fun", "absurd", "playful", "movie", "game", "games", "favourite", "favorite"])) {
+    scores.Fun += 4;
+  }
+
+  if (hasAny(["politics", "political", "government", "prime minister", "president", "election", "vote", "voting", "labour", "conservative", "democrat", "republican", "trump", "biden", "starmer", "sunak", "farage", "israel", "gaza", "ukraine", "russia", "war", "immigration", "tax policy"])) {
+    scores.Politics += 4;
+  }
+
+  if (hasAny(["sport", "sports", "football", "soccer", "tennis", "cricket", "rugby", "basketball", "baseball", "golf", "boxing", "ufc", "formula 1", "f1", "olympics", "world cup", "super bowl", "premier league", "champions league", "nba", "nfl"])) {
+    scores.Sports += 4;
+  }
+
+  const ranked = CATEGORY_OPTIONS
+    .filter((category) => category !== "General")
+    .sort((a, b) => scores[b] - scores[a]);
+
+  return scores[ranked[0]] > 0 ? ranked[0] : "General";
+}
