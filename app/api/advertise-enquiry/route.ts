@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
     const headline = String(body.headline || "").trim();
     const ctaText = String(body.ctaText || "").trim();
     const logoUrl = String(body.logoUrl || "").trim();
+    const theme = String(body.theme || "").trim();
     const message = String(body.message || "").trim();
 
     if (!name || !email) {
@@ -73,6 +74,7 @@ export async function POST(request: NextRequest) {
         headline: headline || null,
         cta_text: ctaText || null,
         logo_url: logoUrl || null,
+        theme: theme || null,
         message: message || null,
       });
 
@@ -102,6 +104,7 @@ export async function POST(request: NextRequest) {
         <p><strong>Headline:</strong> ${escapeHtml(headline || "Not provided")}</p>
         <p><strong>CTA text:</strong> ${escapeHtml(ctaText || "Not provided")}</p>
         <p><strong>Logo URL:</strong> ${escapeHtml(logoUrl || "Not provided")}</p>
+        <p><strong>Theme:</strong> ${escapeHtml(theme || "Not provided")}</p>
         <p><strong>Message:</strong></p>
         <p>${escapeHtml(message || "None").replaceAll("\n", "<br />")}</p>
       `;

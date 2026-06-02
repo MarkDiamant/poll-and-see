@@ -1,9 +1,12 @@
 "use client";
 
-import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import Footer from "@/components/Footer";
+import LiveVoteCounter from "@/components/LiveVoteCounter";
+import ActivityIndicator from "@/components/ActivityIndicator";
+import { supabase } from "@/lib/supabase";
 
 const CATEGORIES = [
   "Business",
@@ -15,6 +18,25 @@ const CATEGORIES = [
   "Lifestyle",
   "Politics",
   "Sports",
+];
+
+const THEME_OPTIONS = [
+  "default",
+  "slate",
+  "navy",
+  "charcoal",
+  "green",
+  "blue",
+  "cream",
+  "warm",
+  "purple",
+  "light",
+  "softblue",
+  "softgreen",
+  "sand",
+  "silver",
+  "lavender",
+  "sky",
 ];
 
 const DAILY_PRICES: Record<number, number> = {
@@ -36,10 +58,99 @@ function getDiscount(days: number) {
   return 0;
 }
 
+function getAdvertTheme(theme: string) {
+  const themes: Record<string, { card: string; cta: string; accent: string }> = {
+    default: {
+      card: "border-amber-500/20 bg-[#0e0c08]",
+      cta: "border-amber-300/20 bg-white/10 text-white",
+      accent: "from-amber-300/40 via-amber-400/20 to-transparent",
+    },
+    slate: {
+      card: "border-slate-500/80 bg-slate-800",
+      cta: "border-slate-400/25 bg-slate-700 text-slate-100",
+      accent: "from-slate-300/45 via-slate-400/25 to-transparent",
+    },
+    navy: {
+      card: "border-blue-700/80 bg-[#0b1f38]",
+      cta: "border-blue-300/25 bg-[#16304d] text-blue-100",
+      accent: "from-blue-300/45 via-blue-500/25 to-transparent",
+    },
+    charcoal: {
+      card: "border-zinc-500/80 bg-zinc-800",
+      cta: "border-zinc-400/25 bg-zinc-700 text-zinc-100",
+      accent: "from-zinc-300/45 via-zinc-500/25 to-transparent",
+    },
+    green: {
+      card: "border-emerald-700/80 bg-[#0c241d]",
+      cta: "border-emerald-300/25 bg-[#16382f] text-emerald-100",
+      accent: "from-emerald-300/45 via-emerald-500/25 to-transparent",
+    },
+    blue: {
+      card: "border-sky-700/80 bg-[#0a2438]",
+      cta: "border-sky-300/25 bg-[#16384d] text-sky-100",
+      accent: "from-sky-300/45 via-sky-500/25 to-transparent",
+    },
+    cream: {
+      card: "border-amber-200/35 bg-amber-50/22 backdrop-blur-sm",
+      cta: "border-amber-500/40 bg-amber-400/14 text-amber-50",
+      accent: "from-amber-200/45 via-amber-400/20 to-transparent",
+    },
+    warm: {
+      card: "border-orange-300/30 bg-orange-300/14 backdrop-blur-sm",
+      cta: "border-orange-400/45 bg-orange-400/12 text-orange-50",
+      accent: "from-orange-300/45 via-orange-500/20 to-transparent",
+    },
+    purple: {
+      card: "border-purple-900/60 bg-[#160d24]",
+      cta: "border-purple-300/20 bg-[#241633] text-purple-100",
+      accent: "from-purple-300/40 via-purple-500/20 to-transparent",
+    },
+    light: {
+      card: "border-white/45 bg-white/32 backdrop-blur-sm",
+      cta: "border-white/50 bg-white/18 text-white",
+      accent: "from-white/55 via-white/25 to-transparent",
+    },
+    softblue: {
+      card: "border-sky-300/30 bg-sky-400/14 backdrop-blur-sm",
+      cta: "border-sky-300/45 bg-sky-400/12 text-sky-50",
+      accent: "from-sky-300/45 via-sky-500/20 to-transparent",
+    },
+    softgreen: {
+      card: "border-emerald-300/30 bg-emerald-400/14 backdrop-blur-sm",
+      cta: "border-emerald-300/45 bg-emerald-400/12 text-emerald-50",
+      accent: "from-emerald-300/45 via-emerald-500/20 to-transparent",
+    },
+    sand: {
+      card: "border-stone-300/30 bg-stone-300/14 backdrop-blur-sm",
+      cta: "border-stone-300/45 bg-stone-300/12 text-stone-50",
+      accent: "from-stone-300/45 via-stone-500/20 to-transparent",
+    },
+    silver: {
+      card: "border-cyan-200/30 bg-cyan-300/12 backdrop-blur-sm",
+      cta: "border-cyan-200/45 bg-cyan-300/10 text-cyan-50",
+      accent: "from-cyan-200/45 via-cyan-400/20 to-transparent",
+    },
+    lavender: {
+      card: "border-fuchsia-300/30 bg-fuchsia-400/14 backdrop-blur-sm",
+      cta: "border-fuchsia-300/45 bg-fuchsia-400/12 text-fuchsia-50",
+      accent: "from-fuchsia-300/45 via-fuchsia-500/20 to-transparent",
+    },
+    sky: {
+      card: "border-blue-300/30 bg-blue-400/14 backdrop-blur-sm",
+      cta: "border-blue-300/45 bg-blue-400/12 text-blue-50",
+      accent: "from-blue-300/45 via-blue-500/20 to-transparent",
+    },
+  };
+
+  return themes[theme] || themes.default;
+}
+
 export default function AdvertisePage() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [daysInput, setDaysInput] = useState("1");
   const [activeForm, setActiveForm] = useState<"booking" | "question">("booking");
+  const [totalVoteCount, setTotalVoteCount] = useState<number | null>(null);
+  const [votesLast24, setVotesLast24] = useState(0);
   const [formData, setFormData] = useState({
     name: "",
     businessName: "",
@@ -47,9 +158,10 @@ export default function AdvertisePage() {
     phone: "",
     destination: "",
     preferredStartDate: "",
-    headline: "",
-    ctaText: "Learn more",
+    adMessage: "",
+    ctaText: "My website",
     logoUrl: "",
+    theme: "blue",
     message: "",
   });
   const [sending, setSending] = useState(false);
@@ -58,20 +170,14 @@ export default function AdvertisePage() {
   const [error, setError] = useState("");
 
   const days = Math.max(Number(daysInput) || 1, 1);
+  const theme = getAdvertTheme(formData.theme);
 
   const pricing = useMemo(() => {
     const categoryCount = selectedCategories.length;
     const cleanDays = Math.max(Number(daysInput) || 1, 1);
 
     if (categoryCount === 0) {
-      return {
-        categoryCount,
-        dailyPrice: 0,
-        days: cleanDays,
-        categorySaving: 0,
-        discount: 0,
-        total: 0,
-      };
+      return { categoryCount, dailyPrice: 0, days: cleanDays, categorySaving: 0, discount: 0, total: 0 };
     }
 
     const dailyPrice = DAILY_PRICES[Math.min(categoryCount, 9)] || 150;
@@ -80,24 +186,44 @@ export default function AdvertisePage() {
     const subtotal = dailyPrice * cleanDays;
     const total = Math.round(subtotal * (1 - discount));
 
-    return {
-      categoryCount,
-      dailyPrice,
-      days: cleanDays,
-      categorySaving,
-      discount,
-      total,
-    };
+    return { categoryCount, dailyPrice, days: cleanDays, categorySaving, discount, total };
   }, [selectedCategories, daysInput]);
 
-  const toggleCategory = (category: string) => {
-    setSelectedCategories((current) => {
-      if (current.includes(category)) {
-        return current.filter((item) => item !== category);
-      }
+  useEffect(() => {
+    const loadVoteStats = async () => {
+      try {
+        const [{ data: statsRow }, { data: recentVotes }] = await Promise.all([
+          supabase.from("site_stats").select("total_votes").eq("key", "global").single(),
+          supabase.rpc("get_recent_poll_votes"),
+        ]);
 
-      return [...current, category];
-    });
+        setTotalVoteCount(statsRow?.total_votes ?? 0);
+
+        const recentTotal = (recentVotes || []).reduce(
+          (sum: number, row: { recent_votes_24h: number | string | null }) =>
+            sum + Number(row.recent_votes_24h || 0),
+          0
+        );
+
+        setVotesLast24(recentTotal);
+      } catch {
+        // ignore
+      }
+    };
+
+    void loadVoteStats();
+
+    const interval = window.setInterval(() => {
+      void loadVoteStats();
+    }, 25000);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const toggleCategory = (category: string) => {
+    setSelectedCategories((current) =>
+      current.includes(category) ? current.filter((item) => item !== category) : [...current, category]
+    );
   };
 
   const toggleAllCategories = () => {
@@ -128,9 +254,7 @@ export default function AdvertisePage() {
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || "Could not upload logo.");
-      }
+      if (!response.ok) throw new Error(data.error || "Could not upload logo.");
 
       updateField("logoUrl", data.url);
     } catch (err) {
@@ -150,11 +274,10 @@ export default function AdvertisePage() {
     try {
       const response = await fetch("/api/advertise-enquiry", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
+          headline: formData.adMessage,
           enquiryType: activeForm,
           categories: activeForm === "booking" ? selectedCategories : [],
           days: activeForm === "booking" ? days : null,
@@ -163,9 +286,7 @@ export default function AdvertisePage() {
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || "Could not send enquiry.");
-      }
+      if (!response.ok) throw new Error(data.error || "Could not send enquiry.");
 
       setStatusMessage(
         activeForm === "booking"
@@ -180,9 +301,10 @@ export default function AdvertisePage() {
         phone: "",
         destination: "",
         preferredStartDate: "",
-        headline: "",
-        ctaText: "Learn more",
+        adMessage: "",
+        ctaText: "My website",
         logoUrl: "",
+        theme: "blue",
         message: "",
       });
       setSelectedCategories([]);
@@ -203,16 +325,12 @@ export default function AdvertisePage() {
           ‹ Back to Poll & See
         </Link>
 
-        <div className="mb-8 max-w-3xl">
-          <p className="mb-2 text-sm font-semibold uppercase tracking-[0.22em] text-gray-500">
-            Poll & See advertising
-          </p>
-          <h1 className="mb-3 text-4xl font-bold md:text-5xl">
-            Advertise with Poll & See
-          </h1>
+        <div className="mx-auto mb-8 max-w-3xl text-center">
+          <h1 className="mb-3 text-4xl font-bold md:text-5xl">Advertise with Poll & See</h1>
           <p className="text-lg text-gray-300">
-            Put your business in front of active voters with clean, category-based ads inside the poll flow.
+            Get your business shown repeatedly inside selected poll categories, just after people vote.
           </p>
+          {totalVoteCount !== null && <LiveVoteCounter value={totalVoteCount} />}
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
@@ -220,39 +338,12 @@ export default function AdvertisePage() {
             <section className="rounded-2xl border border-gray-700 bg-gray-800 p-5">
               <h2 className="mb-3 text-2xl font-semibold">How it works</h2>
               <div className="space-y-3 text-sm leading-6 text-gray-300">
-                <p>Ads appear after users vote, so your business is shown when people are already engaged.</p>
-                <p>After you submit an advertising request, we confirm availability, ask for any clarifications, and send an invoice. Once paid, your ad can go live.</p>
-              </div>
-            </section>
-
-            <section className="rounded-2xl border border-gray-700 bg-gray-800 p-5">
-              <h2 className="mb-4 text-2xl font-semibold">Example ad</h2>
-
-              <div className="relative block overflow-hidden rounded-xl border border-sky-700/80 bg-[#0a2438] p-4">
-                <div className="absolute left-0 top-0 h-full w-[2px] bg-gradient-to-b from-sky-300/45 via-sky-500/25 to-transparent" />
-                <div className="relative flex flex-col gap-3 pl-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0 flex-1 sm:pr-3">
-                    <p className="mb-1 text-[10px] uppercase tracking-wide text-amber-300/70">
-                      Sponsored
-                    </p>
-                    <p className="text-base font-semibold leading-snug text-white">
-                      Your Business
-                    </p>
-                    <p className="mt-1 text-[15px] leading-relaxed text-gray-100">
-                      A short, clean advert headline shown inside the poll flow.
-                    </p>
-                  </div>
-
-                  <div className="flex flex-row items-center justify-between gap-3 sm:flex-col sm:justify-center sm:gap-2 sm:flex-shrink-0">
-                    <div className="flex h-12 w-16 items-center justify-center rounded-lg border border-white/10 bg-white/10 text-xs font-semibold text-white sm:h-14">
-                      Logo
-                    </div>
-
-                    <span className="rounded-lg border border-sky-300/25 bg-[#16384d] px-4 py-2.5 text-sm font-medium text-sky-100">
-                      Learn more
-                    </span>
-                  </div>
-                </div>
+                <p>
+                  Fill in the advertising request with your logo, chosen categories, ad message, button text and the link you want the ad to open.
+                </p>
+                <p>
+                  We confirm availability, ask for any clarifications, and send an invoice. Once paid, your ad can go live.
+                </p>
               </div>
             </section>
 
@@ -262,11 +353,11 @@ export default function AdvertisePage() {
               <div className="mb-5 grid gap-3 rounded-2xl border border-gray-700 bg-gray-900 p-4 text-sm text-gray-300 md:grid-cols-2">
                 <div>
                   <p className="mb-2 font-medium text-white">Category pricing guide</p>
-                  <p>1 category: £25/day</p>
-                  <p>2 categories: £45/day</p>
-                  <p>3 categories: £65/day</p>
-                  <p>4 categories: £85/day</p>
-                  <p>5+ categories: lower rate per extra category</p>
+                  <p>1: £25/day</p>
+                  <p>2: £45/day</p>
+                  <p>3: £65/day</p>
+                  <p>4: £85/day</p>
+                  <p>5+: lower rate per extra category</p>
                 </div>
 
                 <div>
@@ -274,6 +365,7 @@ export default function AdvertisePage() {
                   <p>3+ days: 10% off</p>
                   <p>7+ days: 15% off</p>
                   <p>30+ days: 20% off</p>
+                  <p>90+ days: get in touch</p>
                 </div>
               </div>
 
@@ -317,9 +409,7 @@ export default function AdvertisePage() {
                 })}
               </div>
 
-              <label className="mb-2 block text-sm font-medium text-gray-300">
-                Number of days
-              </label>
+              <label className="mb-2 block text-sm font-medium text-gray-300">Number of days</label>
               <input
                 type="number"
                 min={1}
@@ -351,9 +441,7 @@ export default function AdvertisePage() {
                     </div>
                     <div className="flex justify-between gap-4">
                       <span>Duration discount</span>
-                      <span className="font-medium text-white">
-                        {Math.round(pricing.discount * 100)}%
-                      </span>
+                      <span className="font-medium text-white">{Math.round(pricing.discount * 100)}%</span>
                     </div>
                     <div className="mt-3 flex justify-between border-t border-gray-700 pt-3 text-base">
                       <span>Total price</span>
@@ -376,7 +464,7 @@ export default function AdvertisePage() {
                     : "border border-gray-700 bg-gray-900 text-white hover:bg-gray-800"
                 }`}
               >
-                Book advertising
+                Request advertising
               </button>
 
               <button
@@ -393,142 +481,103 @@ export default function AdvertisePage() {
             </div>
 
             <h2 className="mb-4 text-2xl font-semibold">
-              {activeForm === "booking" ? "Book advertising" : "Ask a question"}
+              {activeForm === "booking" ? "Request advertising" : "Ask a question"}
             </h2>
 
+            {activeForm === "booking" ? (
+              <div className={`relative mb-4 block overflow-hidden rounded-xl border p-4 transition ${theme.card}`}>
+                <div className={`absolute left-0 top-0 h-full w-[2px] bg-gradient-to-b ${theme.accent}`} />
+                <div className="relative flex flex-col gap-3 pl-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0 flex-1 sm:pr-3">
+                    <p className="mb-1 text-[10px] uppercase tracking-wide text-amber-300/70">Sponsored</p>
+                    <p className="text-base font-semibold leading-snug text-white">
+                      {formData.businessName || "Your Business"}
+                    </p>
+                    <p className="mt-1 text-[15px] leading-relaxed text-gray-100">
+                      {formData.adMessage || "Your ad message shown repeatedly in selected categories."}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-row items-center justify-between gap-3 sm:flex-col sm:justify-center sm:gap-2 sm:flex-shrink-0">
+                    {formData.logoUrl ? (
+                      <img src={formData.logoUrl} alt="" className="h-12 max-w-[170px] object-contain sm:h-14 sm:max-w-none" />
+                    ) : (
+                      <div className="flex h-12 w-24 items-center justify-center rounded-lg border border-white/10 bg-white/10 text-xs font-semibold text-white sm:h-14 sm:w-28">
+                        Logo
+                      </div>
+                    )}
+
+                    <span className={`rounded-lg border px-4 py-2.5 text-sm font-medium ${theme.cta}`}>
+                      {formData.ctaText || "My website"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
             <form onSubmit={handleSubmit} className="space-y-3">
-              <input
-                value={formData.name}
-                onChange={(event) => updateField("name", event.target.value)}
-                placeholder="Name"
-                required
-                className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
-              />
+              <input value={formData.name} onChange={(event) => updateField("name", event.target.value)} placeholder="Name" required className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500" />
 
               {activeForm === "booking" ? (
-                <input
-                  value={formData.businessName}
-                  onChange={(event) => updateField("businessName", event.target.value)}
-                  placeholder="Business name"
-                  required
-                  className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
-                />
+                <input value={formData.businessName} onChange={(event) => updateField("businessName", event.target.value)} placeholder="Business name shown as the ad heading" required className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500" />
               ) : null}
 
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(event) => updateField("email", event.target.value)}
-                placeholder="Email"
-                required
-                className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
-              />
+              <input type="email" value={formData.email} onChange={(event) => updateField("email", event.target.value)} placeholder="Email" required className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500" />
 
-              <input
-                value={formData.phone}
-                onChange={(event) => updateField("phone", event.target.value)}
-                placeholder="Phone / WhatsApp"
-                className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
-              />
+              <input value={formData.phone} onChange={(event) => updateField("phone", event.target.value)} placeholder="Phone / WhatsApp" className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500" />
 
               {activeForm === "booking" ? (
                 <>
-                  <input
-                    value={formData.destination}
-                    onChange={(event) => updateField("destination", event.target.value)}
-                    placeholder="Website, WhatsApp, Instagram or Facebook link"
-                    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
-                  />
+                  <input value={formData.destination} onChange={(event) => updateField("destination", event.target.value)} placeholder="Where should the ad link to? e.g. website, WhatsApp or Instagram" className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500" />
 
-                  <input
-                    type="date"
-                    value={formData.preferredStartDate}
-                    onChange={(event) => updateField("preferredStartDate", event.target.value)}
-                    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
-                  />
+                  <input type="date" value={formData.preferredStartDate} onChange={(event) => updateField("preferredStartDate", event.target.value)} className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500" />
 
-                  <input
-                    type="number"
-                    min={1}
-                    value={daysInput}
-                    onChange={(event) => setDaysInput(event.target.value)}
-                    placeholder="Number of days"
-                    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
-                  />
+                  <input type="number" min={1} value={daysInput} onChange={(event) => setDaysInput(event.target.value)} placeholder="Number of days" className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500" />
 
-                  <input
-                    value={formData.headline}
-                    onChange={(event) => updateField("headline", event.target.value)}
-                    placeholder="Advert headline"
-                    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
-                  />
+                  <input value={formData.adMessage} onChange={(event) => updateField("adMessage", event.target.value)} placeholder="Ad message shown under your business name" className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500" />
 
-                  <input
-                    value={formData.ctaText}
-                    onChange={(event) => updateField("ctaText", event.target.value)}
-                    placeholder="Button text"
-                    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
-                  />
+                  <input value={formData.ctaText} onChange={(event) => updateField("ctaText", event.target.value)} placeholder="Button text, e.g. My website" className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500" />
+
+                  <select value={formData.theme} onChange={(event) => updateField("theme", event.target.value)} className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500">
+                    {THEME_OPTIONS.map((themeOption) => (
+                      <option key={themeOption} value={themeOption}>
+                        {themeOption}
+                      </option>
+                    ))}
+                  </select>
 
                   <div>
                     <label className="flex h-11 cursor-pointer items-center justify-center rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm font-medium text-white transition hover:bg-gray-800">
                       {logoUploading ? "Uploading logo..." : formData.logoUrl ? "Logo uploaded" : "Upload logo"}
-                      <input
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                        onChange={handleLogoUpload}
-                        disabled={logoUploading}
-                        className="hidden"
-                      />
+                      <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={handleLogoUpload} disabled={logoUploading} className="hidden" />
                     </label>
 
                     {formData.logoUrl ? (
-                      <a
-                        href={formData.logoUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-1 block text-xs text-blue-300 hover:text-blue-200"
-                      >
+                      <a href={formData.logoUrl} target="_blank" rel="noreferrer" className="mt-1 block text-xs text-blue-300 hover:text-blue-200">
                         View uploaded logo
                       </a>
                     ) : null}
 
-                    <p className="mt-1 text-xs text-gray-500">
-                      PNG or SVG with a transparent background works best. JPG and WEBP are also accepted.
-                    </p>
+                    <p className="mt-1 text-xs text-gray-500">PNG or SVG with a transparent background works best.</p>
                   </div>
                 </>
               ) : null}
 
-              <textarea
-                value={formData.message}
-                onChange={(event) => updateField("message", event.target.value)}
-                placeholder={activeForm === "booking" ? "Anything else we should know?" : "Your question"}
-                rows={4}
-                className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none focus:border-gray-500"
-              />
+              <textarea value={formData.message} onChange={(event) => updateField("message", event.target.value)} placeholder={activeForm === "booking" ? "Anything else we should know?" : "Your question"} rows={4} className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none focus:border-gray-500" />
 
-              <button
-                type="submit"
-                disabled={sending || logoUploading}
-                className="h-11 w-full cursor-pointer rounded-xl bg-white px-4 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-60"
-              >
+              <button type="submit" disabled={sending || logoUploading} className="h-11 w-full cursor-pointer rounded-xl bg-white px-4 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-60">
                 {sending ? "Sending..." : activeForm === "booking" ? "Send advertising request" : "Send question"}
               </button>
             </form>
 
-            {statusMessage ? (
-              <p className="mt-3 text-sm text-green-300">{statusMessage}</p>
-            ) : null}
-
-            {error ? (
-              <p className="mt-3 text-sm text-red-300">{error}</p>
-            ) : null}
+            {statusMessage ? <p className="mt-3 text-sm text-green-300">{statusMessage}</p> : null}
+            {error ? <p className="mt-3 text-sm text-red-300">{error}</p> : null}
           </section>
         </div>
       </section>
 
       <Footer />
+      <ActivityIndicator votesLast24={votesLast24} />
     </main>
   );
 }
