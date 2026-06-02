@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getEmailCategoryColours } from "@/lib/categories";
 
 type PollRow = {
   id: number;
@@ -36,104 +37,6 @@ type PollWithOptions = PollRow & {
   options: DigestPollOption[];
 };
 
-const CATEGORY_COLOURS: Record<
-  string,
-  { text: string; bg: string; border: string }
-> = {
-  All: {
-    text: "#e5e7eb",
-    bg: "#1f2937",
-    border: "#4b5563",
-  },
-  Business: {
-    text: "#93c5fd",
-    bg: "#172554",
-    border: "#2563eb",
-  },
-  Community: {
-    text: "#fca5a5",
-    bg: "#2b171b",
-    border: "#ef4444",
-  },
-  Education: {
-    text: "#fde68a",
-    bg: "#2a1f0a",
-    border: "#f59e0b",
-  },
-  Finance: {
-    text: "#86efac",
-    bg: "#052e16",
-    border: "#22c55e",
-  },
-  Fun: {
-    text: "#f9a8d4",
-    bg: "#3b1028",
-    border: "#ec4899",
-  },
-  General: {
-    text: "#67e8f9",
-    bg: "#083344",
-    border: "#06b6d4",
-  },
-  Lifestyle: {
-    text: "#d8b4fe",
-    bg: "#2e1065",
-    border: "#a855f7",
-  },
-  Health: {
-    text: "#fdba74",
-    bg: "#431407",
-    border: "#f97316",
-  },
-  Politics: {
-    text: "#fdba74",
-    bg: "#431407",
-    border: "#ea580c",
-  },
-  Sports: {
-    text: "#f87171",
-    bg: "#450a0a",
-    border: "#b91c1c",
-  },
-  Tech: {
-    text: "#f9a8d4",
-    bg: "#3b0764",
-    border: "#d946ef",
-  },
-};
-
-const FALLBACK_CATEGORY_COLOURS = [
-  { text: "#93c5fd", bg: "#172554", border: "#2563eb" },
-  { text: "#fca5a5", bg: "#2b171b", border: "#ef4444" },
-  { text: "#fde68a", bg: "#2a1f0a", border: "#f59e0b" },
-  { text: "#86efac", bg: "#052e16", border: "#22c55e" },
-  { text: "#67e8f9", bg: "#083344", border: "#06b6d4" },
-  { text: "#d8b4fe", bg: "#2e1065", border: "#a855f7" },
-  { text: "#fdba74", bg: "#431407", border: "#f97316" },
-  { text: "#fdba74", bg: "#431407", border: "#ea580c" },
-  { text: "#f87171", bg: "#450a0a", border: "#b91c1c" },
-  { text: "#f9a8d4", bg: "#3b0764", border: "#d946ef" },
-];
-
-function getCategoryColours(category: string) {
-  const trimmed = category?.trim();
-
-  if (!trimmed) {
-    return CATEGORY_COLOURS.All;
-  }
-
-  if (CATEGORY_COLOURS[trimmed]) {
-    return CATEGORY_COLOURS[trimmed];
-  }
-
-  let hash = 0;
-  for (let i = 0; i < trimmed.length; i += 1) {
-    hash = trimmed.charCodeAt(i) + ((hash << 5) - hash);
-  }
-
-  return FALLBACK_CATEGORY_COLOURS[Math.abs(hash) % FALLBACK_CATEGORY_COLOURS.length];
-}
-
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, "&amp;")
@@ -161,7 +64,7 @@ function buildDigestEmail(params: {
   const pollsHtml = params.polls
     .map((poll) => {
       const pollUrl = `${params.appBaseUrl}/poll/${poll.slug}`;
-      const categoryColours = getCategoryColours(poll.category);
+      const categoryColours = getEmailCategoryColours(poll.category);
       const hasImageOptions = poll.options.some((option) => Boolean(option.imageUrl));
 
       const optionsHtml = hasImageOptions

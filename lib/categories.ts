@@ -68,6 +68,63 @@ export const FALLBACK_CATEGORY_COLOURS = [
   CATEGORY_COLOURS.Tech,
 ];
 
+export const EMAIL_CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: string }> = {
+  All: { text: "#e5e7eb", bg: "#1f2937", border: "#4b5563" },
+
+  Business: { text: "#bfdbfe", bg: "#102a63", border: "#2563eb" },
+
+  Community: { text: "#fecaca", bg: "#3a0d0d", border: "#b91c1c" },
+
+  Education: { text: "#f5e7c4", bg: "#3a2412", border: "#92400e" },
+
+  Finance: { text: "#bbf7d0", bg: "#052e16", border: "#16a34a" },
+
+  Fun: { text: "#fbcfe8", bg: "#4a0f2c", border: "#db2777" },
+
+  General: { text: "#bae6fd", bg: "#083344", border: "#0ea5e9" },
+
+  Lifestyle: { text: "#e9d5ff", bg: "#2e1065", border: "#6d28d9" },
+
+  Health: { text: "#fed7aa", bg: "#431407", border: "#f97316" },
+
+  Politics: { text: "#fef3c7", bg: "#3f2f05", border: "#ca8a04" },
+
+  Sports: { text: "#d9f99d", bg: "#243607", border: "#84cc16" },
+
+  Tech: { text: "#f5d0fe", bg: "#3b0764", border: "#a855f7" },
+};
+
+export const FALLBACK_EMAIL_CATEGORY_COLOURS = [
+  EMAIL_CATEGORY_COLOURS.Business,
+  EMAIL_CATEGORY_COLOURS.Community,
+  EMAIL_CATEGORY_COLOURS.Education,
+  EMAIL_CATEGORY_COLOURS.Finance,
+  EMAIL_CATEGORY_COLOURS.Fun,
+  EMAIL_CATEGORY_COLOURS.General,
+  EMAIL_CATEGORY_COLOURS.Lifestyle,
+  EMAIL_CATEGORY_COLOURS.Politics,
+  EMAIL_CATEGORY_COLOURS.Sports,
+  EMAIL_CATEGORY_COLOURS.Tech,
+];
+
+export function getEmailCategoryColours(category: string) {
+  const trimmed = category?.trim();
+
+  if (!trimmed) return EMAIL_CATEGORY_COLOURS.All;
+
+  if (EMAIL_CATEGORY_COLOURS[trimmed]) {
+    return EMAIL_CATEGORY_COLOURS[trimmed];
+  }
+
+  let hash = 0;
+
+  for (let i = 0; i < trimmed.length; i += 1) {
+    hash = trimmed.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  return FALLBACK_EMAIL_CATEGORY_COLOURS[Math.abs(hash) % FALLBACK_EMAIL_CATEGORY_COLOURS.length];
+}
+
 export function getOptionColour(index: number) {
   return OPTION_COLOURS[index] || OPTION_COLOURS[OPTION_COLOURS.length - 1];
 }
