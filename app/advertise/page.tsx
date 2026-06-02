@@ -339,7 +339,7 @@ export default function AdvertisePage() {
               <h2 className="mb-3 text-2xl font-semibold">How it works</h2>
               <div className="space-y-3 text-sm leading-6 text-gray-300">
                 <p>
-                  Fill in the advertising request with your logo, chosen categories, ad message, button text and the link you want the ad to open.
+                  Choose the categories and number of days you want below, then fill in the advertising request with your logo, ad message, button text and the link you want the ad to open.
                 </p>
                 <p>
                   We confirm availability, ask for any clarifications, and send an invoice. Once paid, your ad can go live.
@@ -356,8 +356,7 @@ export default function AdvertisePage() {
                   <p>1: £25/day</p>
                   <p>2: £45/day</p>
                   <p>3: £65/day</p>
-                  <p>4: £85/day</p>
-                  <p>5+: lower rate per extra category</p>
+                  <p>4+: lower rate per extra category</p>
                 </div>
 
                 <div>
@@ -480,15 +479,22 @@ export default function AdvertisePage() {
               </button>
             </div>
 
-            <h2 className="mb-4 text-2xl font-semibold">
+            <h2 className="mb-2 text-2xl font-semibold">
               {activeForm === "booking" ? "Request advertising" : "Ask a question"}
             </h2>
 
             {activeForm === "booking" ? (
+              <p className="mb-4 text-sm text-gray-300">
+                Fill in the details below to see what your ad will look like on mobile.
+              </p>
+            ) : null}
+
+            {activeForm === "booking" ? (
               <div className={`relative mb-4 block overflow-hidden rounded-xl border p-4 transition ${theme.card}`}>
                 <div className={`absolute left-0 top-0 h-full w-[2px] bg-gradient-to-b ${theme.accent}`} />
-                <div className="relative flex flex-col gap-3 pl-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0 flex-1 sm:pr-3">
+
+                <div className="relative space-y-3 pl-2">
+                  <div>
                     <p className="mb-1 text-[10px] uppercase tracking-wide text-amber-300/70">Sponsored</p>
                     <p className="text-base font-semibold leading-snug text-white">
                       {formData.businessName || "Your Business"}
@@ -498,11 +504,11 @@ export default function AdvertisePage() {
                     </p>
                   </div>
 
-                  <div className="flex flex-row items-center justify-between gap-3 sm:flex-col sm:justify-center sm:gap-2 sm:flex-shrink-0">
+                  <div className="flex items-center justify-between gap-3">
                     {formData.logoUrl ? (
-                      <img src={formData.logoUrl} alt="" className="h-12 max-w-[170px] object-contain sm:h-14 sm:max-w-none" />
+                      <img src={formData.logoUrl} alt="" className="h-12 max-w-[170px] object-contain" />
                     ) : (
-                      <div className="flex h-12 w-24 items-center justify-center rounded-lg border border-white/10 bg-white/10 text-xs font-semibold text-white sm:h-14 sm:w-28">
+                      <div className="flex h-12 w-28 items-center justify-center rounded-lg border border-white/10 bg-white/10 text-xs font-semibold text-white">
                         Logo
                       </div>
                     )}
