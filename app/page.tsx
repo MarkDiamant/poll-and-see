@@ -58,6 +58,12 @@ import {
   getOptionColour,
 } from "@/lib/categories";
 
+const STATUS_RIBBON_COLOURS: Record<BadgeLabel, string> = {
+  New: "bg-emerald-600/95",
+  Trending: "bg-amber-400/95",
+  Popular: "bg-blue-500/95",
+};
+
 const SORT_FILTERS: SortFilter[] = ["Newest", "Trending", "Popular"];
 
 function getCommonPrefixLength(a: string, b: string) {
