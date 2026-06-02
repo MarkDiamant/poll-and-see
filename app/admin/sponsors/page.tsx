@@ -544,12 +544,15 @@ export default function AdminSponsorsPage() {
                 <th className="px-4 py-3 font-medium">Categories</th>
                 <th className="px-4 py-3 font-medium">Theme</th>
                 <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
               {sponsors.map((sponsor) => (
-                <tr key={sponsor.id} className="border-t border-gray-700">
+                <tr
+  key={sponsor.id}
+  onClick={() => editSponsor(sponsor)}
+  className="cursor-pointer border-t border-gray-700 transition hover:bg-white/[0.03]"
+>
                   <td className="px-4 py-3">
                     <p className="font-medium text-white">{sponsor.business_name}</p>
                     <p className="text-xs text-gray-400">{sponsor.headline}</p>
@@ -557,11 +560,6 @@ export default function AdminSponsorsPage() {
                   <td className="px-4 py-3 text-gray-300">{sponsor.category}</td>
                   <td className="px-4 py-3 text-gray-300">{sponsor.theme || "default"}</td>
                   <td className="px-4 py-3 text-gray-300">{getSponsorStatus(sponsor)}</td>
-                  <td className="px-4 py-3">
-                    <button type="button" onClick={() => editSponsor(sponsor)} className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800">
-                      Edit
-                    </button>
-                  </td>
                 </tr>
               ))}
             </tbody>
