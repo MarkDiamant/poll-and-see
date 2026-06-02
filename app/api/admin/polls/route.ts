@@ -60,33 +60,43 @@ export async function GET(request: NextRequest) {
     const [
       { data: pollsData, error: pollsError },
       { data: slugRows, error: slugError },
-      { data: optionRows, error: optionError },
       { data: submissionRows, error: submissionRowsError },
-pendingSubmissionsCountResult,
-] = await Promise.all([
+      pendingSubmissionsCountResult,
+    ] = await Promise.all([
       query,
       supabaseAdmin.from("polls").select("id, slug").not("slug", "is", null),
-      supabaseAdmin
-        .from("poll_options")
-        .select("id, poll_id, option_text, image_url, vote_count")
-        .order("poll_id", { ascending: true })
-        .order("id", { ascending: true }),
       supabaseAdmin.from("poll_submissions").select("poll_id").not("poll_id", "is", null),
       supabaseAdmin
-  .from("poll_submissions")
-  .select("id", { count: "exact", head: true })
-  .eq("status", "pending"),
+        .from("poll_submissions")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending"),
     ]);
 
-    if (pollsError || slugError || optionError || submissionRowsError) {
+    if (pollsError || slugError || submissionRowsError) {
       return NextResponse.json({ error: "Could not load polls." }, { status: 500 });
     }
 
     const submissionPollIds = new Set(
       (submissionRows || [])
-        .map((row) => row.poll_id)
-        .filter((pollId): pollId is number => typeof pollId === "number")
+        .map((row) => Number(row.poll_id))
+        .filter((pollId) => Number.isInteger(pollId))
     );
+
+    const basePolls = (pollsData || []).filter((poll) => !submissionPollIds.has(Number(poll.id)));
+    const pollIds = basePolls.map((poll) => Number(poll.id));
+
+    const { data: optionRows, error: optionError } = pollIds.length
+      ? await supabaseAdmin
+          .from("poll_options")
+          .select("id, poll_id, option_text, image_url, vote_count")
+          .in("poll_id", pollIds)
+          .order("poll_id", { ascending: true })
+          .order("id", { ascending: true })
+      : { data: [], error: null };
+
+    if (optionError) {
+      return NextResponse.json({ error: "Could not load polls." }, { status: 500 });
+    }
 
     const optionsByPoll = new Map<
       number,
@@ -100,17 +110,22 @@ pendingSubmissionsCountResult,
     >();
 
     (optionRows || []).forEach((row) => {
-      const existing = optionsByPoll.get(row.poll_id) || [];
-      existing.push(row);
-      optionsByPoll.set(row.poll_id, existing);
+      const pollId = Number(row.poll_id);
+      const existing = optionsByPoll.get(pollId) || [];
+      existing.push({
+        id: Number(row.id),
+        poll_id: pollId,
+        option_text: row.option_text,
+        image_url: row.image_url,
+        vote_count: Number(row.vote_count || 0),
+      });
+      optionsByPoll.set(pollId, existing);
     });
 
-    const polls = (pollsData || [])
-      .filter((poll) => !submissionPollIds.has(poll.id))
-      .map((poll) => ({
-        ...poll,
-        options: optionsByPoll.get(poll.id) || [],
-      }));
+    const polls = basePolls.map((poll) => ({
+      ...poll,
+      options: optionsByPoll.get(Number(poll.id)) || [],
+    }));
 
     return NextResponse.json({
       polls,
