@@ -180,9 +180,8 @@ setOptionEdits((current) => {
   const next = { ...current };
 
   nextPolls.forEach((poll: PollRow) => {
-    if (!next[poll.id]) {
-      next[poll.id] = poll.options || [];
-    }
+    if (savingKeyRef.current === `save:${poll.id}`) return;
+    next[poll.id] = poll.options || [];
   });
 
   return next;
