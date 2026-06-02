@@ -1,24 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
-import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import Footer from "@/components/Footer";
 import LiveVoteCounter from "@/components/LiveVoteCounter";
 import ActivityIndicator from "@/components/ActivityIndicator";
 import { supabase } from "@/lib/supabase";
-
-const CATEGORIES = [
-  "Business",
-  "Community",
-  "Education",
-  "Finance",
-  "Fun",
-  "General",
-  "Lifestyle",
-  "Politics",
-  "Sports",
-];
+import { CATEGORY_OPTIONS, getCategoryColours } from "@/lib/categories";
 
 const THEME_OPTIONS = [
   "default",
@@ -177,6 +165,7 @@ export default function AdvertisePage() {
 
   const days = Math.max(Number(daysInput) || 1, 1);
   const theme = getAdvertTheme(formData.theme);
+  const allCategoryColours = getCategoryColours("All");
 
   const pricing = useMemo(() => {
     const categoryCount = selectedCategories.length;
@@ -234,7 +223,7 @@ export default function AdvertisePage() {
 
   const toggleAllCategories = () => {
     setSelectedCategories((current) =>
-      current.length === CATEGORIES.length ? [] : [...CATEGORIES]
+      current.length === CATEGORY_OPTIONS.length ? [] : [...CATEGORY_OPTIONS]
     );
   };
 
@@ -350,13 +339,13 @@ export default function AdvertisePage() {
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
       <SiteHeader />
 
-      <section className="mx-auto max-w-5xl px-6 pb-12 pt-6">
-        <Link href="/" className="mb-5 inline-flex text-sm font-medium text-gray-400 hover:text-white">
-          ‹ Back to Poll & See
-        </Link>
+      <section className="mx-auto max-w-5xl px-6 pb-12 pt-3">
 
         <div className="mx-auto mb-8 max-w-3xl text-center">
-          <h1 className="mb-3 text-4xl font-bold md:text-5xl">Advertise with Poll & See</h1>
+          <h1 className="mb-3 text-4xl font-bold md:text-5xl">
+            <span className="block md:inline">Advertise with</span>{" "}
+            <span className="block md:inline">Poll & See</span>
+          </h1>
           <p className="text-lg text-gray-300">
             Get your business shown repeatedly inside selected poll categories, just after people vote.
           </p>
@@ -406,27 +395,44 @@ export default function AdvertisePage() {
                 <button
                   type="button"
                   onClick={toggleAllCategories}
+                  style={
+                    selectedCategories.length === CATEGORY_OPTIONS.length
+                      ? {
+                          color: allCategoryColours.text,
+                          backgroundColor: allCategoryColours.bg,
+                          borderColor: allCategoryColours.border,
+                        }
+                      : undefined
+                  }
                   className={`h-10 cursor-pointer rounded-xl border px-3 text-sm font-medium transition ${
-                    selectedCategories.length === CATEGORIES.length
-                      ? "border-white bg-white text-black"
+                    selectedCategories.length === CATEGORY_OPTIONS.length
+                      ? ""
                       : "border-gray-700 bg-gray-900 text-gray-300 hover:bg-gray-800"
                   }`}
                 >
                   All categories
                 </button>
 
-                {CATEGORIES.map((category) => {
+                {CATEGORY_OPTIONS.map((category) => {
                   const active = selectedCategories.includes(category);
+                  const categoryColours = getCategoryColours(category);
 
                   return (
                     <button
                       key={category}
                       type="button"
                       onClick={() => toggleCategory(category)}
-                      className={`h-10 cursor-pointer rounded-xl border px-3 text-sm font-medium transition ${
+                      style={
                         active
-                          ? "border-white bg-white text-black"
-                          : "border-gray-700 bg-gray-900 text-gray-300 hover:bg-gray-800"
+                          ? {
+                              color: categoryColours.text,
+                              backgroundColor: categoryColours.bg,
+                              borderColor: categoryColours.border,
+                            }
+                          : undefined
+                      }
+                      className={`h-10 cursor-pointer rounded-xl border px-3 text-sm font-medium transition ${
+                        active ? "" : "border-gray-700 bg-gray-900 text-gray-300 hover:bg-gray-800"
                       }`}
                     >
                       {category}
@@ -515,7 +521,7 @@ export default function AdvertisePage() {
             ) : null}
 
             {activeForm === "booking" ? (
-              <div className={`relative mb-4 block overflow-hidden rounded-xl border p-4 transition ${theme.card}`}>
+              <div className={`relative -mx-2 mb-4 block overflow-hidden rounded-xl border p-4 transition sm:mx-0 ${theme.card}`}>
                 <div className={`absolute left-0 top-0 h-full w-[2px] bg-gradient-to-b ${theme.accent}`} />
 
                 <div className="relative space-y-3 pl-2">
@@ -538,7 +544,7 @@ export default function AdvertisePage() {
                       </div>
                     )}
 
-                    <span className={`rounded-lg border px-4 py-2.5 text-sm font-medium ${theme.cta}`}>
+                    <span className={`whitespace-nowrap rounded-lg border px-4 py-2.5 text-sm font-medium ${theme.cta}`}>
                       {formData.ctaText || "Learn more"}
                     </span>
                   </div>
