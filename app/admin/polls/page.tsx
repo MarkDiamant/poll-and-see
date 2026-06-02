@@ -540,12 +540,19 @@ const sortedPolls = useMemo(() => {
       {badge(hiddenPollCount, false)}
     </Link>
 
-    <Link
-      href="/admin/sponsors"
-      className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
-    >
-      <span>Advertisers</span>
-    </Link>
+<Link
+  href="/admin/sponsors"
+  className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+>
+  <span>Advertisers</span>
+</Link>
+
+<Link
+  href="/admin/advertiser-enquiries"
+  className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+>
+  <span>Enquiries</span>
+</Link>
   </nav>
 
   <input
