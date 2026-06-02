@@ -369,10 +369,10 @@ export default function AdvertisePage() {
               <h2 className="mb-3 text-2xl font-semibold">How it works</h2>
               <div className="space-y-3 text-sm leading-6 text-gray-300">
                 <p>
-                  Choose the categories and the number of days you want your ad to run, then create and view your ad below with your business name, message, button text, logo and link.
+                  Choose the categories where you want your ad to appear, then choose how many days it should run. After that, create your ad with your business name, message, button text, logo and link.
                 </p>
                 <p>
-                  We confirm availability, ask for any clarifications, and send an invoice. Once paid, your ad can go live.
+                  We’ll confirm availability for your selected categories and dates, then send an invoice. Once paid, your ad can go live.
                 </p>
               </div>
             </section>
@@ -399,7 +399,7 @@ export default function AdvertisePage() {
               </div>
 
               <p className="mb-2 text-sm font-medium text-gray-300">
-                Choose advertising categories and the number of days you want the ad to run, to see the price.
+                Choose where your ad should appear and how many days it should run to see the price.
               </p>
 
               <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -653,7 +653,7 @@ maxLength={20}
                   <textarea
                     value={formData.message}
                     onChange={(event) => updateField("message", event.target.value)}
-                    placeholder="Anything else we should know?"
+                    placeholder="Anything else you would like us to know?"
                     rows={3}
                     className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none focus:border-gray-500"
                   />
