@@ -41,13 +41,18 @@ export const RELATED_CATEGORY_ORDER: Record<string, string[]> = {
 };
 
 export const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: string; solid: string }> = {
-  All: { text: "#e5e7eb", bg: "rgba(31, 41, 55, 0.9)", border: "rgba(75, 85, 99, 1)", solid: "#374151" },
+  All: {
+    text: "#e5e7eb",
+    bg: "rgba(31, 41, 55, 0.9)",
+    border: "rgba(75, 85, 99, 1)",
+    solid: "#374151",
+  },
 
   Business: {
-    text: "#93c5fd",
-    bg: "rgba(37, 99, 235, 0.12)",
-    border: "rgba(37, 99, 235, 0.55)",
-    solid: "#2563eb",
+    text: "#bfdbfe",
+    bg: "rgba(29, 78, 216, 0.14)",
+    border: "rgba(37, 99, 235, 0.65)",
+    solid: "#1d4ed8",
   },
 
   Community: {
@@ -58,38 +63,38 @@ export const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border
   },
 
   Education: {
-    text: "#fde68a",
-    bg: "rgba(245, 158, 11, 0.12)",
-    border: "rgba(245, 158, 11, 0.55)",
-    solid: "#f59e0b",
+    text: "#fed7aa",
+    bg: "rgba(234, 88, 12, 0.14)",
+    border: "rgba(249, 115, 22, 0.65)",
+    solid: "#ea580c",
   },
 
   Finance: {
-    text: "#86efac",
-    bg: "rgba(34, 197, 94, 0.12)",
-    border: "rgba(34, 197, 94, 0.55)",
-    solid: "#22c55e",
+    text: "#bbf7d0",
+    bg: "rgba(20, 83, 45, 0.16)",
+    border: "rgba(22, 101, 52, 0.70)",
+    solid: "#14532d",
   },
 
   Fun: {
-    text: "#f9a8d4",
-    bg: "rgba(236, 72, 153, 0.12)",
-    border: "rgba(236, 72, 153, 0.55)",
-    solid: "#ec4899",
+    text: "#fbcfe8",
+    bg: "rgba(219, 39, 119, 0.15)",
+    border: "rgba(236, 72, 153, 0.70)",
+    solid: "#db2777",
   },
 
   General: {
-    text: "#67e8f9",
-    bg: "rgba(6, 182, 212, 0.12)",
-    border: "rgba(6, 182, 212, 0.55)",
-    solid: "#06b6d4",
+    text: "#bae6fd",
+    bg: "rgba(14, 165, 233, 0.14)",
+    border: "rgba(56, 189, 248, 0.60)",
+    solid: "#0ea5e9",
   },
 
   Lifestyle: {
-    text: "#d8b4fe",
-    bg: "rgba(168, 85, 247, 0.12)",
-    border: "rgba(168, 85, 247, 0.55)",
-    solid: "#a855f7",
+    text: "#e9d5ff",
+    bg: "rgba(107, 33, 168, 0.16)",
+    border: "rgba(126, 34, 206, 0.70)",
+    solid: "#6b21a8",
   },
 
   Health: {
@@ -100,10 +105,10 @@ export const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border
   },
 
   Politics: {
-    text: "#f3f4f6",
-    bg: "rgba(229, 231, 235, 0.10)",
-    border: "rgba(229, 231, 235, 0.45)",
-    solid: "#d1d5db",
+    text: "#fef3c7",
+    bg: "rgba(202, 138, 4, 0.14)",
+    border: "rgba(234, 179, 8, 0.65)",
+    solid: "#ca8a04",
   },
 
   Sports: {
@@ -122,15 +127,15 @@ export const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border
 };
 
 export const FALLBACK_CATEGORY_COLOURS = [
-  { text: "#93c5fd", bg: "rgba(37, 99, 235, 0.12)", border: "rgba(37, 99, 235, 0.55)", solid: "#2563eb" },
+  { text: "#bfdbfe", bg: "rgba(29, 78, 216, 0.14)", border: "rgba(37, 99, 235, 0.65)", solid: "#1d4ed8" },
   { text: "#f87171", bg: "rgba(185, 28, 28, 0.14)", border: "rgba(185, 28, 28, 0.65)", solid: "#b91c1c" },
-  { text: "#fde68a", bg: "rgba(245, 158, 11, 0.12)", border: "rgba(245, 158, 11, 0.55)", solid: "#f59e0b" },
-  { text: "#86efac", bg: "rgba(34, 197, 94, 0.12)", border: "rgba(34, 197, 94, 0.55)", solid: "#22c55e" },
-  { text: "#67e8f9", bg: "rgba(6, 182, 212, 0.12)", border: "rgba(6, 182, 212, 0.55)", solid: "#06b6d4" },
-  { text: "#d8b4fe", bg: "rgba(168, 85, 247, 0.12)", border: "rgba(168, 85, 247, 0.55)", solid: "#a855f7" },
-  { text: "#fdba74", bg: "rgba(249, 115, 22, 0.12)", border: "rgba(249, 115, 22, 0.55)", solid: "#f97316" },
-  { text: "#f3f4f6", bg: "rgba(229, 231, 235, 0.10)", border: "rgba(229, 231, 235, 0.45)", solid: "#d1d5db" },
+  { text: "#fed7aa", bg: "rgba(234, 88, 12, 0.14)", border: "rgba(249, 115, 22, 0.65)", solid: "#ea580c" },
+  { text: "#bbf7d0", bg: "rgba(20, 83, 45, 0.16)", border: "rgba(22, 101, 52, 0.70)", solid: "#14532d" },
+  { text: "#bae6fd", bg: "rgba(14, 165, 233, 0.14)", border: "rgba(56, 189, 248, 0.60)", solid: "#0ea5e9" },
+  { text: "#e9d5ff", bg: "rgba(107, 33, 168, 0.16)", border: "rgba(126, 34, 206, 0.70)", solid: "#6b21a8" },
+  { text: "#fef3c7", bg: "rgba(202, 138, 4, 0.14)", border: "rgba(234, 179, 8, 0.65)", solid: "#ca8a04" },
   { text: "#d9f99d", bg: "rgba(132, 204, 22, 0.14)", border: "rgba(132, 204, 22, 0.60)", solid: "#84cc16" },
+  { text: "#fbcfe8", bg: "rgba(219, 39, 119, 0.15)", border: "rgba(236, 72, 153, 0.70)", solid: "#db2777" },
   { text: "#f9a8d4", bg: "rgba(217, 70, 239, 0.12)", border: "rgba(217, 70, 239, 0.55)", solid: "#d946ef" },
 ];
 
