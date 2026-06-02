@@ -369,7 +369,7 @@ export default function AdvertisePage() {
               <h2 className="mb-3 text-2xl font-semibold">How it works</h2>
               <div className="space-y-3 text-sm leading-6 text-gray-300">
                 <p>
-                  Choose the categories and number of days you want below, then create your ad with your business name, message, button text, logo and link.
+                  Choose the categories and the number of days you want your ad to run, then create and view your ad below with your business name, message, button text, logo and link.
                 </p>
                 <p>
                   We confirm availability, ask for any clarifications, and send an invoice. Once paid, your ad can go live.
@@ -399,7 +399,7 @@ export default function AdvertisePage() {
               </div>
 
               <p className="mb-2 text-sm font-medium text-gray-300">
-                Choose advertising categories and number of days to see the price.
+                Choose advertising categories and the number of days you want the ad to run, to see the price.
               </p>
 
               <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -444,8 +444,8 @@ export default function AdvertisePage() {
                 className="mb-5 h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
               />
 
-              <div className="rounded-2xl border border-gray-700 bg-gray-900 p-4">
-                {pricing.categoryCount > 0 ? (
+              {pricing.categoryCount > 0 ? (
+  <div className="rounded-2xl border border-gray-700 bg-gray-900 p-4">
                   <div className="grid gap-2 text-sm text-gray-300">
                     <div className="flex justify-between gap-4">
                       <span>Selected categories</span>
@@ -472,8 +472,8 @@ export default function AdvertisePage() {
                       <span className="font-semibold text-white">£{pricing.total.toLocaleString()}</span>
                     </div>
                   </div>
-                ) : null}
-              </div>
+                </div>
+) : null}
             </section>
           </div>
 
@@ -510,7 +510,7 @@ export default function AdvertisePage() {
 
             {activeForm === "booking" ? (
               <p className="mb-4 text-sm text-gray-300">
-                Fill in the details below to see what your ad will look like on mobile.
+                Fill in the details below to see what your ad will look like.
               </p>
             ) : null}
 
@@ -553,7 +553,8 @@ export default function AdvertisePage() {
                     value={formData.businessName}
                     onChange={(event) => updateField("businessName", event.target.value)}
                     placeholder="Business name shown as the ad heading"
-                    required
+required
+maxLength={30}
                     className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
                   />
 
@@ -562,6 +563,7 @@ export default function AdvertisePage() {
                     onChange={(event) => updateField("adMessage", event.target.value)}
                     placeholder="Ad message shown under your business name"
                     required
+maxLength={75}
                     className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
                   />
 
@@ -570,6 +572,7 @@ export default function AdvertisePage() {
                     onChange={(event) => updateField("ctaText", event.target.value)}
                     placeholder="Button text, e.g. Learn more"
                     required
+maxLength={20}
                     className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
                   />
 
@@ -603,39 +606,49 @@ export default function AdvertisePage() {
                     <p className="mt-1 text-xs text-gray-500">PNG or SVG with a transparent background works best.</p>
                   </div>
 
-                  <select
-                    value={formData.theme}
-                    onChange={(event) => updateField("theme", event.target.value)}
-                    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 pr-10 text-sm text-white outline-none focus:border-gray-500"
-                  >
-                    <option value="default">Choose colour theme: Default</option>
-                    {[...THEME_OPTIONS]
-                      .filter((themeOption) => themeOption !== "default")
-                      .sort((a, b) => getThemeLabel(a).localeCompare(getThemeLabel(b)))
-                      .map((themeOption) => (
-                        <option key={themeOption} value={themeOption}>
-                          {getThemeLabel(themeOption)}
-                        </option>
-                      ))}
-                  </select>
+<div className="relative">
+  <select
+    value={formData.theme}
+    onChange={(event) => updateField("theme", event.target.value)}
+    className="h-11 w-full appearance-none rounded-xl border border-gray-700 bg-gray-900 px-4 pr-12 text-sm text-white outline-none focus:border-gray-500"
+  >
+    <option value="default">Choose colour theme: Default</option>
+    {[...THEME_OPTIONS]
+      .filter((themeOption) => themeOption !== "default")
+      .sort((a, b) => getThemeLabel(a).localeCompare(getThemeLabel(b)))
+      .map((themeOption) => (
+        <option key={themeOption} value={themeOption}>
+          {getThemeLabel(themeOption)}
+        </option>
+      ))}
+  </select>
+  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+    ▾
+  </span>
+</div>
 
-                  <input
-                    type="date"
-                    value={formData.preferredStartDate}
-                    onChange={(event) => updateField("preferredStartDate", event.target.value)}
-                    required
-                    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
-                  />
+<div>
+  <p className="mb-1 text-xs text-gray-400">Ad start date</p>
+  <input
+    type="date"
+    value={formData.preferredStartDate}
+    onChange={(event) => updateField("preferredStartDate", event.target.value)}
+    required
+    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
+  />
+</div>
 
-                  <input
-                    type="number"
-                    min={1}
-                    value={daysInput}
-                    onChange={(event) => setDaysInput(event.target.value)}
-                    placeholder="Number of days ad should run"
-                    required
-                    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
-                  />
+<div>
+  <p className="mb-1 text-xs text-gray-400">Number of days the ad should run</p>
+  <input
+    type="number"
+    min={1}
+    value={daysInput}
+    onChange={(event) => setDaysInput(event.target.value)}
+    required
+    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
+  />
+</div>
 
                   <textarea
                     value={formData.message}

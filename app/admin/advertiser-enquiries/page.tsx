@@ -19,6 +19,7 @@ type AdvertiserEnquiry = {
   headline: string | null;
   cta_text: string | null;
   logo_url: string | null;
+  theme: string | null;
   message: string | null;
 };
 
@@ -232,6 +233,7 @@ export default function AdminAdvertiserEnquiriesPage() {
                     <p><span className="text-gray-500">Start:</span> {enquiry.preferred_start_date || "Not provided"}</p>
                     <p><span className="text-gray-500">Headline:</span> {enquiry.headline || "Not provided"}</p>
                     <p><span className="text-gray-500">CTA:</span> {enquiry.cta_text || "Not provided"}</p>
+<p><span className="text-gray-500">Theme:</span> {enquiry.theme || "Not provided"}</p>
                     {enquiry.destination ? (
                       <a href={enquiry.destination} target="_blank" rel="noreferrer" className="mt-2 block text-blue-300 hover:text-blue-200">
                         Open destination
