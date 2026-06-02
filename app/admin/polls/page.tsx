@@ -222,9 +222,15 @@ setOptionEdits((current) => {
         setEmbedStatusEdits(
           Object.fromEntries(nextPolls.map((poll: PollRow) => [poll.id, getEmbedStatus(poll)]))
         );
-        setOptionEdits(
-          Object.fromEntries(nextPolls.map((poll: PollRow) => [poll.id, poll.options || []]))
-        );
+setOptionEdits((current) => {
+  const next = { ...current };
+
+  nextPolls.forEach((poll: PollRow) => {
+    next[poll.id] = poll.options || [];
+  });
+
+  return next;
+});
       } catch (err) {
         setError(err instanceof Error ? err.message : "Could not load polls.");
         setPolls([]);
