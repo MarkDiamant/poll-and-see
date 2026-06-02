@@ -423,11 +423,11 @@ export default function AdvertisePage() {
                       type="button"
                       onClick={() => toggleCategory(category)}
 style={{
-  color: categoryColours.text,
-  backgroundColor: active ? categoryColours.bg : "rgba(17, 24, 39, 0.9)",
-  borderColor: categoryColours.border,
+  color: active ? "#ffffff" : categoryColours.text,
+  backgroundColor: active ? categoryColours.solid : "rgba(17, 24, 39, 0.9)",
+  borderColor: active ? categoryColours.solid : categoryColours.border,
 }}
-className="h-10 cursor-pointer rounded-xl border px-3 text-sm font-medium transition hover:bg-gray-800"
+className="h-10 cursor-pointer rounded-xl border px-3 text-sm font-medium transition hover:opacity-90"
                     >
                       {category}
                     </button>
@@ -515,7 +515,7 @@ className="h-10 cursor-pointer rounded-xl border px-3 text-sm font-medium transi
             ) : null}
 
             {activeForm === "booking" ? (
-              <div className={`relative -mx-5 mb-4 block overflow-hidden rounded-none border-y border-x-0 p-4 transition sm:mx-0 sm:rounded-xl sm:border ${theme.card}`}>
+              <div className={`relative -mx-5 mb-4 block overflow-hidden rounded-xl border p-4 transition sm:mx-0 ${theme.card}`}>
                 <div className={`absolute left-0 top-0 h-full w-[2px] bg-gradient-to-b ${theme.accent}`} />
 
                 <div className="relative space-y-3 pl-2">
