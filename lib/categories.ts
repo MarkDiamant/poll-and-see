@@ -41,102 +41,31 @@ export const RELATED_CATEGORY_ORDER: Record<string, string[]> = {
 };
 
 export const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border: string; solid: string }> = {
-  All: {
-    text: "#e5e7eb",
-    bg: "rgba(31, 41, 55, 0.9)",
-    border: "rgba(75, 85, 99, 1)",
-    solid: "#374151",
-  },
-
-  Business: {
-    text: "#bfdbfe",
-    bg: "rgba(29, 78, 216, 0.14)",
-    border: "rgba(37, 99, 235, 0.65)",
-    solid: "#1d4ed8",
-  },
-
-  Community: {
-    text: "#f87171",
-    bg: "rgba(185, 28, 28, 0.14)",
-    border: "rgba(185, 28, 28, 0.65)",
-    solid: "#b91c1c",
-  },
-
-  Education: {
-    text: "#fed7aa",
-    bg: "rgba(234, 88, 12, 0.14)",
-    border: "rgba(249, 115, 22, 0.65)",
-    solid: "#ea580c",
-  },
-
-  Finance: {
-    text: "#bbf7d0",
-    bg: "rgba(20, 83, 45, 0.16)",
-    border: "rgba(22, 101, 52, 0.70)",
-    solid: "#14532d",
-  },
-
-  Fun: {
-    text: "#fbcfe8",
-    bg: "rgba(219, 39, 119, 0.15)",
-    border: "rgba(236, 72, 153, 0.70)",
-    solid: "#db2777",
-  },
-
-  General: {
-    text: "#bae6fd",
-    bg: "rgba(14, 165, 233, 0.14)",
-    border: "rgba(56, 189, 248, 0.60)",
-    solid: "#0ea5e9",
-  },
-
-  Lifestyle: {
-    text: "#e9d5ff",
-    bg: "rgba(107, 33, 168, 0.16)",
-    border: "rgba(126, 34, 206, 0.70)",
-    solid: "#6b21a8",
-  },
-
-  Health: {
-    text: "#fdba74",
-    bg: "rgba(249, 115, 22, 0.12)",
-    border: "rgba(249, 115, 22, 0.55)",
-    solid: "#f97316",
-  },
-
-  Politics: {
-    text: "#fef3c7",
-    bg: "rgba(202, 138, 4, 0.14)",
-    border: "rgba(234, 179, 8, 0.65)",
-    solid: "#ca8a04",
-  },
-
-  Sports: {
-    text: "#d9f99d",
-    bg: "rgba(132, 204, 22, 0.14)",
-    border: "rgba(132, 204, 22, 0.60)",
-    solid: "#84cc16",
-  },
-
-  Tech: {
-    text: "#f9a8d4",
-    bg: "rgba(217, 70, 239, 0.12)",
-    border: "rgba(217, 70, 239, 0.55)",
-    solid: "#d946ef",
-  },
+  All: { text: "#e5e7eb", bg: "rgba(31, 41, 55, 0.9)", border: "rgba(75, 85, 99, 1)", solid: "#374151" },
+  Business: { text: "#bfdbfe", bg: "rgba(37, 99, 235, 0.16)", border: "rgba(37, 99, 235, 0.7)", solid: "#2563eb" },
+  Community: { text: "#fecaca", bg: "rgba(185, 28, 28, 0.16)", border: "rgba(185, 28, 28, 0.75)", solid: "#b91c1c" },
+  Education: { text: "#f5e7c4", bg: "rgba(120, 53, 15, 0.18)", border: "rgba(180, 83, 9, 0.7)", solid: "#92400e" },
+  Finance: { text: "#bbf7d0", bg: "rgba(20, 83, 45, 0.2)", border: "rgba(22, 163, 74, 0.75)", solid: "#14532d" },
+  Fun: { text: "#fbcfe8", bg: "rgba(219, 39, 119, 0.18)", border: "rgba(236, 72, 153, 0.75)", solid: "#db2777" },
+  General: { text: "#bae6fd", bg: "rgba(14, 165, 233, 0.16)", border: "rgba(14, 165, 233, 0.7)", solid: "#0ea5e9" },
+  Lifestyle: { text: "#e9d5ff", bg: "rgba(109, 40, 217, 0.18)", border: "rgba(139, 92, 246, 0.75)", solid: "#6d28d9" },
+  Health: { text: "#fed7aa", bg: "rgba(249, 115, 22, 0.16)", border: "rgba(249, 115, 22, 0.7)", solid: "#f97316" },
+  Politics: { text: "#fef3c7", bg: "rgba(202, 138, 4, 0.22)", border: "rgba(234, 179, 8, 0.8)", solid: "#ca8a04" },
+  Sports: { text: "#d9f99d", bg: "rgba(132, 204, 22, 0.14)", border: "rgba(132, 204, 22, 0.60)", solid: "#84cc16" },
+  Tech: { text: "#f5d0fe", bg: "rgba(168, 85, 247, 0.16)", border: "rgba(192, 132, 252, 0.7)", solid: "#a855f7" },
 };
 
 export const FALLBACK_CATEGORY_COLOURS = [
-  { text: "#bfdbfe", bg: "rgba(29, 78, 216, 0.14)", border: "rgba(37, 99, 235, 0.65)", solid: "#1d4ed8" },
-  { text: "#f87171", bg: "rgba(185, 28, 28, 0.14)", border: "rgba(185, 28, 28, 0.65)", solid: "#b91c1c" },
-  { text: "#fed7aa", bg: "rgba(234, 88, 12, 0.14)", border: "rgba(249, 115, 22, 0.65)", solid: "#ea580c" },
-  { text: "#bbf7d0", bg: "rgba(20, 83, 45, 0.16)", border: "rgba(22, 101, 52, 0.70)", solid: "#14532d" },
-  { text: "#bae6fd", bg: "rgba(14, 165, 233, 0.14)", border: "rgba(56, 189, 248, 0.60)", solid: "#0ea5e9" },
-  { text: "#e9d5ff", bg: "rgba(107, 33, 168, 0.16)", border: "rgba(126, 34, 206, 0.70)", solid: "#6b21a8" },
-  { text: "#fef3c7", bg: "rgba(202, 138, 4, 0.14)", border: "rgba(234, 179, 8, 0.65)", solid: "#ca8a04" },
-  { text: "#d9f99d", bg: "rgba(132, 204, 22, 0.14)", border: "rgba(132, 204, 22, 0.60)", solid: "#84cc16" },
-  { text: "#fbcfe8", bg: "rgba(219, 39, 119, 0.15)", border: "rgba(236, 72, 153, 0.70)", solid: "#db2777" },
-  { text: "#f9a8d4", bg: "rgba(217, 70, 239, 0.12)", border: "rgba(217, 70, 239, 0.55)", solid: "#d946ef" },
+  CATEGORY_COLOURS.Business,
+  CATEGORY_COLOURS.Community,
+  CATEGORY_COLOURS.Education,
+  CATEGORY_COLOURS.Finance,
+  CATEGORY_COLOURS.General,
+  CATEGORY_COLOURS.Lifestyle,
+  CATEGORY_COLOURS.Politics,
+  CATEGORY_COLOURS.Sports,
+  CATEGORY_COLOURS.Fun,
+  CATEGORY_COLOURS.Tech,
 ];
 
 export function getOptionColour(index: number) {
