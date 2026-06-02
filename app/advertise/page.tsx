@@ -38,7 +38,7 @@ function getDiscount(days: number) {
 
 export default function AdvertisePage() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [days, setDays] = useState(1);
+  const [daysInput, setDaysInput] = useState("1");
   const [activeForm, setActiveForm] = useState<"booking" | "question">("booking");
   const [formData, setFormData] = useState({
     name: "",
@@ -57,9 +57,11 @@ export default function AdvertisePage() {
   const [statusMessage, setStatusMessage] = useState("");
   const [error, setError] = useState("");
 
+  const days = Math.max(Number(daysInput) || 1, 1);
+
   const pricing = useMemo(() => {
     const categoryCount = selectedCategories.length;
-    const cleanDays = Math.max(days || 1, 1);
+    const cleanDays = Math.max(Number(daysInput) || 1, 1);
 
     if (categoryCount === 0) {
       return {
@@ -68,7 +70,6 @@ export default function AdvertisePage() {
         days: cleanDays,
         categorySaving: 0,
         discount: 0,
-        dayDiscountAmount: 0,
         total: 0,
       };
     }
@@ -77,7 +78,6 @@ export default function AdvertisePage() {
     const categorySaving = categoryCount * DAILY_PRICES[1] - dailyPrice;
     const discount = getDiscount(cleanDays);
     const subtotal = dailyPrice * cleanDays;
-    const dayDiscountAmount = Math.round(subtotal * discount);
     const total = Math.round(subtotal * (1 - discount));
 
     return {
@@ -86,10 +86,9 @@ export default function AdvertisePage() {
       days: cleanDays,
       categorySaving,
       discount,
-      dayDiscountAmount,
       total,
     };
-  }, [selectedCategories, days]);
+  }, [selectedCategories, daysInput]);
 
   const toggleCategory = (category: string) => {
     setSelectedCategories((current) => {
@@ -99,6 +98,12 @@ export default function AdvertisePage() {
 
       return [...current, category];
     });
+  };
+
+  const toggleAllCategories = () => {
+    setSelectedCategories((current) =>
+      current.length === CATEGORIES.length ? [] : [...CATEGORIES]
+    );
   };
 
   const updateField = (key: keyof typeof formData, value: string) => {
@@ -164,7 +169,7 @@ export default function AdvertisePage() {
 
       setStatusMessage(
         activeForm === "booking"
-          ? "Thanks. Your sponsorship request has been sent."
+          ? "Thanks. Your advertising request has been sent."
           : "Thanks. Your question has been sent."
       );
 
@@ -181,7 +186,7 @@ export default function AdvertisePage() {
         message: "",
       });
       setSelectedCategories([]);
-      setDays(1);
+      setDaysInput("1");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not send enquiry.");
     } finally {
@@ -200,25 +205,54 @@ export default function AdvertisePage() {
 
         <div className="mb-8 max-w-3xl">
           <p className="mb-2 text-sm font-semibold uppercase tracking-[0.22em] text-gray-500">
-            Advertise
+            Poll & See advertising
           </p>
           <h1 className="mb-3 text-4xl font-bold md:text-5xl">
-            Sponsor Poll & See
+            Advertise with Poll & See
           </h1>
           <p className="text-lg text-gray-300">
-            Put your business in front of active voters with clean, category-based sponsor cards inside the poll flow.
+            Put your business in front of active voters with clean, category-based ads inside the poll flow.
           </p>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
           <div className="space-y-6">
             <section className="rounded-2xl border border-gray-700 bg-gray-800 p-5">
-              <h2 className="mb-3 text-2xl font-semibold">How sponsorship works</h2>
+              <h2 className="mb-3 text-2xl font-semibold">How it works</h2>
               <div className="space-y-3 text-sm leading-6 text-gray-300">
-                <p>Sponsors appear on poll voting/result pages after a user has voted and results are shown.</p>
-                <p>Sponsorship is category-based and manually approved before going live.</p>
-                <p>After you submit the request, we check the advert, confirm availability, and send an invoice.</p>
-                <p>Once paid, your sponsor card can be activated for the chosen dates and categories.</p>
+                <p>Ads appear after users vote, so your business is shown when people are already engaged.</p>
+                <p>After you submit an advertising request, we confirm availability, ask for any clarifications, and send an invoice. Once paid, your ad can go live.</p>
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-gray-700 bg-gray-800 p-5">
+              <h2 className="mb-4 text-2xl font-semibold">Example ad</h2>
+
+              <div className="relative block overflow-hidden rounded-xl border border-sky-700/80 bg-[#0a2438] p-4">
+                <div className="absolute left-0 top-0 h-full w-[2px] bg-gradient-to-b from-sky-300/45 via-sky-500/25 to-transparent" />
+                <div className="relative flex flex-col gap-3 pl-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0 flex-1 sm:pr-3">
+                    <p className="mb-1 text-[10px] uppercase tracking-wide text-amber-300/70">
+                      Sponsored
+                    </p>
+                    <p className="text-base font-semibold leading-snug text-white">
+                      Your Business
+                    </p>
+                    <p className="mt-1 text-[15px] leading-relaxed text-gray-100">
+                      A short, clean advert headline shown inside the poll flow.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-row items-center justify-between gap-3 sm:flex-col sm:justify-center sm:gap-2 sm:flex-shrink-0">
+                    <div className="flex h-12 w-16 items-center justify-center rounded-lg border border-white/10 bg-white/10 text-xs font-semibold text-white sm:h-14">
+                      Logo
+                    </div>
+
+                    <span className="rounded-lg border border-sky-300/25 bg-[#16384d] px-4 py-2.5 text-sm font-medium text-sky-100">
+                      Learn more
+                    </span>
+                  </div>
+                </div>
               </div>
             </section>
 
@@ -231,7 +265,8 @@ export default function AdvertisePage() {
                   <p>1 category: £25/day</p>
                   <p>2 categories: £45/day</p>
                   <p>3 categories: £65/day</p>
-                  <p>4+ categories: better rate per extra category</p>
+                  <p>4 categories: £85/day</p>
+                  <p>5+ categories: lower rate per extra category</p>
                 </div>
 
                 <div>
@@ -242,8 +277,26 @@ export default function AdvertisePage() {
                 </div>
               </div>
 
-              <p className="mb-2 text-sm font-medium text-gray-300">Categories interested in</p>
+              {selectedCategories.length === 0 ? (
+                <p className="mb-3 rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-gray-300">
+                  Choose at least one category to see pricing.
+                </p>
+              ) : null}
+
+              <p className="mb-2 text-sm font-medium text-gray-300">Choose advertising categories</p>
               <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                <button
+                  type="button"
+                  onClick={toggleAllCategories}
+                  className={`h-10 cursor-pointer rounded-xl border px-3 text-sm font-medium transition ${
+                    selectedCategories.length === CATEGORIES.length
+                      ? "border-white bg-white text-black"
+                      : "border-gray-700 bg-gray-900 text-gray-300 hover:bg-gray-800"
+                  }`}
+                >
+                  All categories
+                </button>
+
                 {CATEGORIES.map((category) => {
                   const active = selectedCategories.includes(category);
 
@@ -270,14 +323,14 @@ export default function AdvertisePage() {
               <input
                 type="number"
                 min={1}
-                value={days}
-                onChange={(event) => setDays(Number(event.target.value))}
+                value={daysInput}
+                onChange={(event) => setDaysInput(event.target.value)}
                 className="mb-5 h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
               />
 
               <div className="rounded-2xl border border-gray-700 bg-gray-900 p-4">
                 {pricing.categoryCount === 0 ? (
-                  <p className="text-sm text-gray-300">Choose at least one category to see pricing.</p>
+                  <p className="text-sm text-gray-300">Select categories above to calculate the price.</p>
                 ) : (
                   <div className="grid gap-2 text-sm text-gray-300">
                     <div className="flex justify-between gap-4">
@@ -323,7 +376,7 @@ export default function AdvertisePage() {
                     : "border border-gray-700 bg-gray-900 text-white hover:bg-gray-800"
                 }`}
               >
-                Book sponsorship
+                Book advertising
               </button>
 
               <button
@@ -340,7 +393,7 @@ export default function AdvertisePage() {
             </div>
 
             <h2 className="mb-4 text-2xl font-semibold">
-              {activeForm === "booking" ? "Book sponsorship" : "Ask a question"}
+              {activeForm === "booking" ? "Book advertising" : "Ask a question"}
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-3">
@@ -397,8 +450,8 @@ export default function AdvertisePage() {
                   <input
                     type="number"
                     min={1}
-                    value={days}
-                    onChange={(event) => setDays(Number(event.target.value))}
+                    value={daysInput}
+                    onChange={(event) => setDaysInput(event.target.value)}
                     placeholder="Number of days"
                     className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
                   />
@@ -460,7 +513,7 @@ export default function AdvertisePage() {
                 disabled={sending || logoUploading}
                 className="h-11 w-full cursor-pointer rounded-xl bg-white px-4 text-sm font-medium text-black transition hover:bg-gray-200 disabled:opacity-60"
               >
-                {sending ? "Sending..." : activeForm === "booking" ? "Send sponsorship request" : "Send question"}
+                {sending ? "Sending..." : activeForm === "booking" ? "Send advertising request" : "Send question"}
               </button>
             </form>
 
