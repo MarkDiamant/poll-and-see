@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { CATEGORY_OPTIONS, suggestCategoryFromQuestion, type CategoryOption } from "@/lib/categories";
 
 type PollSubmissionRow = {
   id: number;
@@ -17,29 +18,6 @@ type PollSubmissionRow = {
   status: "pending" | "ready";
   created_at: string | null;
 };
-
-type CategoryOption =
-  | "General"
-  | "Lifestyle"
-  | "Community"
-  | "Finance"
-  | "Business"
-  | "Education"
-  | "Fun"
-  | "Politics"
-  | "Sports";
-
-const CATEGORY_OPTIONS: CategoryOption[] = [
-  "General",
-  "Lifestyle",
-  "Community",
-  "Finance",
-  "Business",
-  "Education",
-  "Fun",
-  "Politics",
-  "Sports",
-];
 
 const ADMIN_KEY_STORAGE = "pollandsee-admin-key";
 
@@ -60,92 +38,6 @@ function isNewSubmission(createdAt: string | null) {
   return Date.now() - new Date(createdAt).getTime() <= 24 * 60 * 60 * 1000;
 }
 
-function suggestCategory(question: string): CategoryOption {
-  const q = question.toLowerCase().trim();
-
-  if (!q) return "General";
-
-  const hasAny = (terms: string[]) => terms.some((term) => q.includes(term));
-
-  const scores: Record<CategoryOption, number> = {
-    General: 0,
-    Lifestyle: 0,
-    Community: 0,
-    Finance: 0,
-    Business: 0,
-    Education: 0,
-    Fun: 0,
-    Politics: 0,
-    Sports: 0,
-  };
-
-  if (hasAny(["child", "children", "kid", "kids", "parent", "parents", "parenting", "school", "teacher", "teachers", "nursery", "playgroup", "homework", "discipline", "chinuch", "learning", "student", "students", "classroom", "school communication", "privileges"])) {
-    scores.Education += 4;
-  }
-
-  if (hasAny(["money", "debt", "income", "spending", "afford", "affordability", "salary", "earn", "value", "bills", "saving", "savings", "prices", "price", "cost", "costs", "rent", "mortgage", "tax", "financial", "finance", "split a bill", "splitting a bill", "charity giving"])) {
-    scores.Finance += 4;
-  }
-
-  if (hasAny(["business", "work", "job", "hire", "hiring", "customers", "customer", "pricing", "productivity", "management", "manager", "employee", "employees", "boss", "pay rise", "underpaid", "workplace", "branding", "career", "office"])) {
-    scores.Business += 4;
-  }
-
-  if (hasAny(["rude", "reply", "message", "cancel", "last minute", "interrupt", "awkward", "manners", "etiquette", "pressure", "social norms", "friend", "friends", "guest", "guests", "invite", "invited", "community", "communal", "neighbour", "neighbor"])) {
-    scores.Community += 4;
-  }
-
-  if (hasAny(["gym", "sleep", "food", "travel", "airport", "shabbos", "routine", "habit", "habits", "phone", "phones", "screen time", "daily", "morning", "evening", "weekend", "holiday", "eat", "coffee", "exercise", "fitness"])) {
-    scores.Lifestyle += 4;
-  }
-
-  if (hasAny(["would you rather", "dance", "sing", "cold showers", "air conditioning", "silly", "fun", "absurd", "playful", "movie", "game", "games", "favourite", "favorite"])) {
-    scores.Fun += 4;
-  }
-
-  if (hasAny(["politics", "political", "government", "prime minister", "president", "election", "vote", "voting", "labour", "conservative", "democrat", "republican", "trump", "biden", "starmer", "sunak", "farage", "israel", "gaza", "ukraine", "russia", "war", "immigration", "tax policy"])) {
-    scores.Politics += 4;
-  }
-
-  if (hasAny(["sport", "sports", "football", "soccer", "tennis", "cricket", "rugby", "basketball", "baseball", "golf", "boxing", "ufc", "formula 1", "f1", "olympics", "world cup", "super bowl", "premier league", "champions league", "nba", "nfl"])) {
-    scores.Sports += 4;
-  }
-
-  if (hasAny(["salary", "pay rise", "underpaid", "hiring", "workplace", "manager", "employee", "boss", "customers", "pricing"])) {
-    scores.Business += 2;
-  }
-
-  if (hasAny(["salary", "earn", "debt", "bills", "afford", "split a bill", "spending", "saving", "savings"])) {
-    scores.Finance += 2;
-  }
-
-  if (hasAny(["read a message", "not reply", "cancels last minute", "interrupts", "rude"])) {
-    scores.Community += 3;
-  }
-
-  if (scores.Education > 0 && hasAny(["child", "children", "kid", "kids", "school", "teacher", "parent", "parents", "homework", "discipline"])) {
-    return "Education";
-  }
-
-  if (scores.Fun > 0 && hasAny(["would you rather", "silly", "absurd", "dance", "sing", "cold showers", "air conditioning"])) {
-    return "Fun";
-  }
-
-  if (scores.Politics > 0 && hasAny(["politics", "political", "government", "prime minister", "president", "election", "labour", "conservative", "democrat", "republican", "trump", "biden", "starmer", "sunak", "farage", "israel", "gaza", "ukraine", "russia", "immigration"])) {
-    return "Politics";
-  }
-
-  if (scores.Sports > 0 && hasAny(["sport", "sports", "football", "soccer", "tennis", "cricket", "rugby", "basketball", "baseball", "golf", "boxing", "ufc", "formula 1", "f1", "olympics", "world cup", "super bowl", "premier league", "champions league", "nba", "nfl"])) {
-    return "Sports";
-  }
-
-  const ranked = CATEGORY_OPTIONS.filter((category) => category !== "General").sort(
-    (a, b) => scores[b] - scores[a]
-  );
-
-  return scores[ranked[0]] > 0 ? ranked[0] : "General";
-}
-
 export default function AdminSubmissionsPage() {
   const [adminKeyInput, setAdminKeyInput] = useState("");
   const [adminKey, setAdminKey] = useState("");
@@ -154,7 +46,7 @@ export default function AdminSubmissionsPage() {
   const [categoryFilter, setCategoryFilter] = useState<"all" | CategoryOption>("all");
   const [submissions, setSubmissions] = useState<PollSubmissionRow[]>([]);
   const [livePollCount, setLivePollCount] = useState(0);
-const [hiddenPollCount, setHiddenPollCount] = useState(0);
+  const [hiddenPollCount, setHiddenPollCount] = useState(0);
   const [questionEdits, setQuestionEdits] = useState<Record<number, string>>({});
   const [descriptionEdits, setDescriptionEdits] = useState<Record<number, string>>({});
   const [optionsEdits, setOptionsEdits] = useState<Record<number, string>>({});
@@ -383,7 +275,7 @@ return () => {
 
   const handleNewQuestionChange = (value: string) => {
     setNewQuestion(value);
-    setNewCategory(value.trim() ? suggestCategory(value) : "General");
+    setNewCategory(value.trim() ? suggestCategoryFromQuestion(value) : "General");
   };
 
    const saveSubmission = async (
