@@ -6,20 +6,9 @@ import Footer from "@/components/Footer";
 import SiteHeader from "@/components/SiteHeader";
 import ActivityIndicator from "@/components/ActivityIndicator";
 import { supabase } from "@/lib/supabase";
+import { CATEGORY_OPTIONS, type CategoryOption } from "@/lib/categories";
 
-const CATEGORY_OPTIONS = [
-  "General",
-  "Lifestyle",
-  "Community",
-  "Finance",
-  "Business",
-  "Education",
-  "Fun",
-  "Politics",
-  "Sports",
-] as const;
-
-type Category = (typeof CATEGORY_OPTIONS)[number] | "";
+type Category = CategoryOption | "";
 
 type PollCreateResponse = {
   pollUrl: string;
