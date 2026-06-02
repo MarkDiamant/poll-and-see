@@ -538,9 +538,9 @@ className="h-10 cursor-pointer rounded-xl border px-3 text-sm font-medium transi
                       </div>
                     )}
 
-                    <span className={`whitespace-nowrap rounded-lg border px-4 py-2.5 text-sm font-medium ${theme.cta}`}>
-                      {formData.ctaText || "Learn more"}
-                    </span>
+<span className={`flex min-h-[56px] max-w-[145px] items-center justify-center rounded-lg border px-4 py-2.5 text-center text-sm font-medium leading-tight ${theme.cta}`}>
+  {formData.ctaText || "Learn more"}
+</span>
                   </div>
                 </div>
               </div>
@@ -629,25 +629,47 @@ maxLength={20}
 
 <div>
   <p className="mb-1 text-xs text-gray-400">Ad start date</p>
-  <input
-    type="date"
-    value={formData.preferredStartDate}
-    onChange={(event) => updateField("preferredStartDate", event.target.value)}
-    required
-    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
-  />
+<input
+  type="date"
+  value={formData.preferredStartDate}
+  onChange={(event) => updateField("preferredStartDate", event.target.value)}
+  onClick={(event) => event.currentTarget.showPicker?.()}
+  required
+  className="h-11 w-full cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none [color-scheme:dark] focus:border-gray-500"
+/>
 </div>
 
 <div>
   <p className="mb-1 text-xs text-gray-400">Number of days the ad should run</p>
+<div className="relative">
   <input
     type="number"
     min={1}
+    inputMode="numeric"
     value={daysInput}
     onChange={(event) => setDaysInput(event.target.value)}
     required
-    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500"
+    className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 pr-14 text-sm text-white outline-none [color-scheme:dark] focus:border-gray-500"
   />
+
+  <div className="absolute right-2 top-1/2 flex -translate-y-1/2 flex-col overflow-hidden rounded-lg border border-gray-600 bg-gray-800">
+    <button
+      type="button"
+      onClick={() => setDaysInput((current) => String(Math.max(Number(current) || 1, 1) + 1))}
+      className="flex h-5 w-7 items-center justify-center text-xs text-gray-200 transition hover:bg-gray-700"
+    >
+      +
+    </button>
+
+    <button
+      type="button"
+      onClick={() => setDaysInput((current) => String(Math.max((Number(current) || 1) - 1, 1)))}
+      className="flex h-5 w-7 items-center justify-center border-t border-gray-600 text-xs text-gray-200 transition hover:bg-gray-700"
+    >
+      −
+    </button>
+  </div>
+</div>
 </div>
 
                   <textarea
