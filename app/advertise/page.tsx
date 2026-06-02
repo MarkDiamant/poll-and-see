@@ -159,7 +159,7 @@ export default function AdvertisePage() {
     destination: "",
     preferredStartDate: "",
     adMessage: "",
-    ctaText: "My website",
+    ctaText: "",
     logoUrl: "",
     theme: "blue",
     message: "",
@@ -302,7 +302,7 @@ export default function AdvertisePage() {
         destination: "",
         preferredStartDate: "",
         adMessage: "",
-        ctaText: "My website",
+        ctaText: "",
         logoUrl: "",
         theme: "blue",
         message: "",
@@ -368,13 +368,9 @@ export default function AdvertisePage() {
                 </div>
               </div>
 
-              {selectedCategories.length === 0 ? (
-                <p className="mb-3 rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-gray-300">
-                  Choose at least one category to see pricing.
-                </p>
-              ) : null}
-
-              <p className="mb-2 text-sm font-medium text-gray-300">Choose advertising categories</p>
+              <p className="mb-2 text-sm font-medium text-gray-300">
+                Choose advertising categories and number of days to see the price below.
+              </p>
               <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
                 <button
                   type="button"
@@ -542,15 +538,7 @@ export default function AdvertisePage() {
 
                   <input value={formData.adMessage} onChange={(event) => updateField("adMessage", event.target.value)} placeholder="Ad message shown under your business name" className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500" />
 
-                  <input value={formData.ctaText} onChange={(event) => updateField("ctaText", event.target.value)} placeholder="Button text, e.g. My website" className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500" />
-
-                  <select value={formData.theme} onChange={(event) => updateField("theme", event.target.value)} className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500">
-                    {THEME_OPTIONS.map((themeOption) => (
-                      <option key={themeOption} value={themeOption}>
-                        {themeOption}
-                      </option>
-                    ))}
-                  </select>
+                  <input value={formData.ctaText} onChange={(event) => updateField("ctaText", event.target.value)} placeholder="Button text, e.g. Learn more" className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500" />
 
                   <div>
                     <label className="flex h-11 cursor-pointer items-center justify-center rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm font-medium text-white transition hover:bg-gray-800">
@@ -566,6 +554,18 @@ export default function AdvertisePage() {
 
                     <p className="mt-1 text-xs text-gray-500">PNG or SVG with a transparent background works best.</p>
                   </div>
+
+                  <select value={formData.theme} onChange={(event) => updateField("theme", event.target.value)} className="h-11 w-full rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none focus:border-gray-500">
+                    <option value="default">Choose colour theme: Default</option>
+                    {[...THEME_OPTIONS]
+                      .filter((themeOption) => themeOption !== "default")
+                      .sort((a, b) => a.localeCompare(b))
+                      .map((themeOption) => (
+                        <option key={themeOption} value={themeOption}>
+                          {themeOption.charAt(0).toUpperCase() + themeOption.slice(1)}
+                        </option>
+                      ))}
+                  </select>
                 </>
               ) : null}
 
