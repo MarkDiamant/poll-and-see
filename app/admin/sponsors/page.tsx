@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { SIGNUP_CATEGORIES } from "@/lib/categories";
 
 type SponsorRow = {
   id: number;
@@ -20,17 +21,7 @@ type SponsorRow = {
 
 const ADMIN_KEY_STORAGE = "pollandsee-admin-key";
 
-const CATEGORY_OPTIONS = [
-  "General",
-  "Lifestyle",
-  "Community",
-  "Finance",
-  "Business",
-  "Education",
-  "Fun",
-  "Politics",
-  "Sports",
-];
+const CATEGORY_OPTIONS = SIGNUP_CATEGORIES;
 
 const THEME_OPTIONS = [
   "default",
