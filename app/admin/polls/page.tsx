@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { CATEGORY_OPTIONS, type CategoryOption } from "@/lib/categories";
 
 type PollOptionRow = {
   id: number;
@@ -28,30 +29,7 @@ type PollRow = {
   options: PollOptionRow[];
 };
 
-type CategoryOption =
-  | "General"
-  | "Lifestyle"
-  | "Community"
-  | "Finance"
-  | "Business"
-  | "Education"
-  | "Fun"
-  | "Politics"
-  | "Sports";
-
 type EmbedStatus = "live" | "closed" | "inactive";
-
-const CATEGORY_OPTIONS: CategoryOption[] = [
-  "General",
-  "Lifestyle",
-  "Community",
-  "Finance",
-  "Business",
-  "Education",
-  "Fun",
-  "Politics",
-  "Sports",
-];
 
 const ADMIN_KEY_STORAGE = "pollandsee-admin-key";
 const SITE_URL = "https://www.pollandsee.com";
