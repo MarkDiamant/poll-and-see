@@ -68,7 +68,7 @@ const INLINE_SUBSCRIBE_VOTE_COUNT_KEY = "poll-flow-vote-count";
 const INLINE_SUBSCRIBE_SHOWN_KEY = "poll-flow-inline-subscribe-shown";
 const POLL_FLOW_COUNTED_VOTE_PREFIX = "poll-flow-counted-vote-";
 const POLL_EMAIL_SUBSCRIBED_KEY = "poll-email-subscribed";
-const SPONSOR_FREQUENCY = 2;
+const SPONSOR_FREQUENCY = 3;
 const FIRST_VOTE_SPONSOR_SHOWN_KEY = "first-vote-sponsor-shown";
 
 function getSponsorVoteCount() {
