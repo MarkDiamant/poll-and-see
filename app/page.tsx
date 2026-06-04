@@ -631,7 +631,7 @@ if (savedSort && SORT_FILTERS.includes(savedSort)) {
         }, 100);
       }
     }
-  }, [loading, selectedCategory, livePolls]);
+  }, [loading, selectedCategory]);
 
   useEffect(() => {
     if (loading) return;
