@@ -764,7 +764,14 @@ if (savedSort && SORT_FILTERS.includes(savedSort)) {
     };
   }, [featuredPoll?.id, polls, syncFeaturedVoteCounts, syncTotalVoteCount, syncVoteDerivedData]);
 
-   const handleCategoryChange = (category: string) => {
+   const scrollToLivePolls = () => {
+    const livePollsSection = document.getElementById("live-polls");
+    if (livePollsSection) {
+      livePollsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
 
     const params = new URLSearchParams(window.location.search);
@@ -774,6 +781,14 @@ if (savedSort && SORT_FILTERS.includes(savedSort)) {
       const newUrl = `${window.location.pathname}${newSearch ? `?${newSearch}` : ""}${window.location.hash}`;
       window.history.replaceState({}, "", newUrl);
     }
+  };
+
+  const handleLivePollsShortcut = (category?: string) => {
+    if (category) {
+      handleCategoryChange(category);
+    }
+
+    setTimeout(scrollToLivePolls, 0);
   };
 
   const handlePollClick = (poll: Poll) => {
@@ -1000,19 +1015,41 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
           </p>
         </div>
 
-        <div className="mb-5 rounded-2xl border border-cyan-400/30 bg-gray-800/80 p-4 text-center shadow-[0_0_28px_rgba(34,211,238,0.10)]">
-          <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200">
-            Live Polls
-          </p>
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => handleLivePollsShortcut()}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              handleLivePollsShortcut();
+            }
+          }}
+          className="mb-5 cursor-pointer rounded-2xl border border-cyan-400/30 bg-gray-800/80 p-4 text-center shadow-[0_0_28px_rgba(34,211,238,0.10)] transition hover:border-cyan-300/50"
+        >
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              handleLivePollsShortcut();
+            }}
+            className="mb-3 inline-flex cursor-pointer items-center justify-center rounded-xl bg-white px-7 py-3 text-base font-semibold text-black transition hover:bg-gray-200"
+          >
+            Browse {totalPollCount.toLocaleString()} Live Polls ↓
+          </button>
 
-          <div className="mb-3 flex flex-wrap justify-center gap-1.5">
+          <div className="flex flex-wrap justify-center gap-1">
             {LIVE_POLL_CATEGORIES.map((category) => {
               const categoryColours = getCategoryColours(category);
 
               return (
-                <span
+                <button
                   key={category}
-                  className="rounded-full px-2.5 py-1 text-[11px] font-medium"
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleLivePollsShortcut(category);
+                  }}
+                  className="cursor-pointer rounded-full px-2 py-0.5 text-[10px] font-medium transition hover:opacity-90"
                   style={{
                     color: categoryColours.text,
                     backgroundColor: categoryColours.bg,
@@ -1020,23 +1057,10 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
                   }}
                 >
                   {category}
-                </span>
+                </button>
               );
             })}
           </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              const livePollsSection = document.getElementById("live-polls");
-              if (livePollsSection) {
-                livePollsSection.scrollIntoView({ behavior: "smooth", block: "start" });
-              }
-            }}
-            className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-white px-5 py-2.5 text-sm font-medium text-black transition hover:bg-gray-200"
-          >
-            Browse Live Polls ↓
-          </button>
         </div>
 
         <div className="relative rounded-2xl bg-gray-800 p-5 shadow-lg overflow-hidden">
