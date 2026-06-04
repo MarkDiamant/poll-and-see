@@ -626,7 +626,7 @@ if (savedSort && SORT_FILTERS.includes(savedSort)) {
         }, 100);
       }
     }
-  }, [loading, selectedCategory]);
+  }, [loading]);
 
   useEffect(() => {
     if (loading) return;
