@@ -80,7 +80,45 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Could not load sponsors." }, { status: 500 });
     }
 
-    return NextResponse.json({ sponsors: data || [] });
+    const sponsorIds = (data || []).map((sponsor) => sponsor.id);
+
+    const [impressionsResult, clicksResult] = await Promise.all([
+      sponsorIds.length > 0
+        ? supabaseAdmin
+            .from("sponsor_impressions")
+            .select("sponsor_id")
+            .in("sponsor_id", sponsorIds)
+        : Promise.resolve({ data: [], error: null }),
+      sponsorIds.length > 0
+        ? supabaseAdmin
+            .from("sponsor_clicks")
+            .select("sponsor_id")
+            .in("sponsor_id", sponsorIds)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
+
+    if (impressionsResult.error || clicksResult.error) {
+      return NextResponse.json({ error: "Could not load sponsor stats." }, { status: 500 });
+    }
+
+    const impressionsBySponsor = new Map<number, number>();
+    const clicksBySponsor = new Map<number, number>();
+
+    (impressionsResult.data || []).forEach((item) => {
+      impressionsBySponsor.set(item.sponsor_id, (impressionsBySponsor.get(item.sponsor_id) || 0) + 1);
+    });
+
+    (clicksResult.data || []).forEach((item) => {
+      clicksBySponsor.set(item.sponsor_id, (clicksBySponsor.get(item.sponsor_id) || 0) + 1);
+    });
+
+    const sponsorsWithStats = (data || []).map((sponsor) => ({
+      ...sponsor,
+      total_impressions: impressionsBySponsor.get(sponsor.id) || 0,
+      total_clicks: clicksBySponsor.get(sponsor.id) || 0,
+    }));
+
+    return NextResponse.json({ sponsors: sponsorsWithStats });
   } catch {
     return NextResponse.json({ error: "Could not load sponsors." }, { status: 500 });
   }
