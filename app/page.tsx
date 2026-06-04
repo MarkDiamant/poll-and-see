@@ -462,7 +462,10 @@ let last24Total = 0;
       const savedSort = sessionStorage.getItem("selectedPollSort") as SortFilter | null;
       const preferredCategory = queryCategory || savedCategory || "All";
 
-if (preferredCategory === "All" || availableCategories.includes(preferredCategory)) {
+if (
+  preferredCategory === "All" ||
+  availableCategories.includes(preferredCategory as (typeof availableCategories)[number])
+) {
   setSelectedCategory(preferredCategory);
 } else {
   setSelectedCategory("All");
