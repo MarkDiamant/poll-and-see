@@ -150,25 +150,25 @@ export default function HiddenPage() {
             </p>
           </div>
 
-          <nav className="flex items-center gap-2">
-            <Link href="/admin/polls" className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800">
+          <nav className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <Link href="/admin/polls" className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800">
               Live Polls
             </Link>
 
-            <Link href="/admin/submissions" className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800">
+            <Link href="/admin/submissions" className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800">
               Submissions
             </Link>
 
-<Link href="/admin/hidden" className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-black">
+<Link href="/admin/hidden" className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-black">
   <span>Hidden</span>
   {badge(items.length, true)}
 </Link>
 
-<Link href="/admin/sponsors" className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800">
+<Link href="/admin/sponsors" className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800">
   Advertisers
 </Link>
 
-<Link href="/admin/advertiser-enquiries" className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800">
+<Link href="/admin/advertiser-enquiries" className="inline-flex shrink-0 shrink-0 items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800">
   Enquiries
 </Link>
           </nav>
@@ -224,7 +224,7 @@ export default function HiddenPage() {
                         <div className="min-w-[380px] max-w-[520px] space-y-2">
                           <input
                             value={questionEdits[item.id] ?? ""}
-                            onChange={(event) =>
+                               onChange={(event) =>
                               setQuestionEdits((current) => ({
                                 ...current,
                                 [item.id]: event.target.value,

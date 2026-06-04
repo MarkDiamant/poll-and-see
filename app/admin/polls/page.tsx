@@ -521,17 +521,17 @@ const sortedPolls = useMemo(() => {
           </div>
 
  <div className="flex flex-wrap items-center gap-3">
-  <nav className="flex items-center gap-2">
+  <nav className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
    <Link
   href="/admin/polls"
-  className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-black"
+  className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-black"
 >
   <span>Live Polls</span>
   {badge(polls.length, true)}
 </Link>
     <Link
       href="/admin/submissions"
-      className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+      className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
     >
       <span>Submissions</span>
       {badge(pendingSubmissionsCount, false)}
@@ -539,7 +539,7 @@ const sortedPolls = useMemo(() => {
 
     <Link
       href="/admin/hidden"
-      className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+      className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
     >
       <span>Hidden</span>
       {badge(hiddenPollCount, false)}
@@ -547,14 +547,14 @@ const sortedPolls = useMemo(() => {
 
 <Link
   href="/admin/sponsors"
-  className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+  className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
 >
   <span>Advertisers</span>
 </Link>
 
 <Link
   href="/admin/advertiser-enquiries"
-  className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+  className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
 >
   <span>Enquiries</span>
 </Link>

@@ -232,7 +232,7 @@ export default function AdminAdvertiserEnquiriesPage() {
             </div>
           </div>
 
-          <nav className="flex flex-wrap items-center gap-2">
+          <nav className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <Link href="/admin/polls" className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800">
               Live Polls
             </Link>
@@ -245,7 +245,7 @@ export default function AdminAdvertiserEnquiriesPage() {
             <Link href="/admin/sponsors" className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800">
               Advertisers
             </Link>
-            <Link href="/admin/advertiser-enquiries" className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-black">
+            <Link href="/admin/advertiser-enquiries" className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-black">
               <span>Enquiries</span>
               {badge(enquiries.length, true)}
             </Link>
@@ -296,7 +296,7 @@ export default function AdminAdvertiserEnquiriesPage() {
               {filteredEnquiries.map((enquiry) => (
                 <tr key={enquiry.id} className="border-t border-gray-700 align-top">
                   <td className="min-w-[260px] px-4 py-4">
-                    <p className="font-semibold text-white">
+                    <p className="font-semibold text-white md:line-clamp-none line-clamp-2">
                       {enquiry.enquiry_type === "question" ? "Question" : "Booking"}
                     </p>
                     <p className="mt-1 text-gray-300">{enquiry.name}</p>
@@ -327,7 +327,7 @@ export default function AdminAdvertiserEnquiriesPage() {
                     ) : null}
                   </td>
 
-                  <td className="min-w-[260px] px-4 py-4 text-gray-300">
+                  <td className="min-w-[260px] px-4 py-4 text-gray-300 line-clamp-1 md:line-clamp-none">
                     {enquiry.message || "No message"}
                   </td>
 
