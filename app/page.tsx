@@ -1032,9 +1032,9 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
               event.stopPropagation();
               handleLivePollsShortcut();
             }}
-            className="mb-3 inline-flex cursor-pointer items-center justify-center rounded-xl bg-white px-7 py-3 text-base font-semibold text-black transition hover:bg-gray-200"
+            className="mb-3 inline-flex cursor-pointer items-center justify-center rounded-xl bg-blue-600 px-7 py-3 text-base font-semibold text-white shadow-[0_0_18px_rgba(37,99,235,0.35)] transition hover:bg-blue-500"
           >
-            Browse {totalPollCount.toLocaleString()} Live Polls ↓
+            Browse {totalPollCount.toLocaleString()} Live Polls
           </button>
 
           <div className="flex flex-wrap justify-center gap-1">
@@ -1049,7 +1049,7 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
                     event.stopPropagation();
                     handleLivePollsShortcut(category);
                   }}
-                  className="cursor-pointer rounded-full px-2 py-0.5 text-[10px] font-medium transition hover:opacity-90"
+                  className="cursor-pointer rounded-full px-2.5 py-0.5 text-[11px] font-medium transition hover:opacity-90"
                   style={{
                     color: categoryColours.text,
                     backgroundColor: categoryColours.bg,

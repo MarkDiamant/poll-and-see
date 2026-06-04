@@ -389,7 +389,7 @@ export default function AdminSponsorsPage() {
             </div>
           </div>
 
-          <nav className="flex flex-wrap items-center gap-2">
+          <nav className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <Link href="/admin/polls" className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800">
               Live Polls
             </Link>
