@@ -1366,7 +1366,7 @@ const [recentVotesResult, optionTotalsResult] = await Promise.all([
 
   const handleBack = () => {
     sessionStorage.setItem("restoreHomeScroll", "true");
-    router.push("/");
+    router.push("/#live-polls");
   };
 
   const toggleSubscriberCategory = (category: string) => {

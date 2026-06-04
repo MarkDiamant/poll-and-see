@@ -35,8 +35,12 @@ const DAILY_PRICES: Record<number, number> = {
   5: 100,
   6: 115,
   7: 130,
-  8: 140,
-  9: 150,
+  8: 145,
+  9: 160,
+  10: 170,
+  11: 180,
+  12: 190,
+  13: 195,
 };
 
 function getDiscount(days: number) {
@@ -175,7 +179,7 @@ export default function AdvertisePage() {
       return { categoryCount, dailyPrice: 0, days: cleanDays, categorySaving: 0, discount: 0, total: 0 };
     }
 
-    const dailyPrice = DAILY_PRICES[Math.min(categoryCount, 9)] || 150;
+    const dailyPrice = DAILY_PRICES[Math.min(categoryCount, 13)] || 195;
     const categorySaving = categoryCount * DAILY_PRICES[1] - dailyPrice;
     const discount = getDiscount(cleanDays);
     const subtotal = dailyPrice * cleanDays;
@@ -388,6 +392,7 @@ export default function AdvertisePage() {
                   <p>2: £45/day</p>
                   <p>3: £65/day</p>
                   <p>4+: lower rate per extra category</p>
+                  <p>13 categories: £195/day</p>
                 </div>
 
                 <div>

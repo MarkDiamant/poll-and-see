@@ -459,12 +459,17 @@ let last24Total = 0;
       const params = new URLSearchParams(window.location.search);
       const queryCategory = params.get("category");
       const savedCategory = sessionStorage.getItem("selectedPollCategory");
-   const preferredCategory = queryCategory || savedCategory || "All";
+      const savedSort = sessionStorage.getItem("selectedPollSort") as SortFilter | null;
+      const preferredCategory = queryCategory || savedCategory || "All";
 
 if (preferredCategory === "All" || availableCategories.includes(preferredCategory)) {
   setSelectedCategory(preferredCategory);
 } else {
   setSelectedCategory("All");
+}
+
+if (savedSort && SORT_FILTERS.includes(savedSort)) {
+  setSelectedSortFilter(savedSort);
 }
 
       const chosenFeaturedPoll = safePolls.find((p) => p.featured) || safePolls[0];
@@ -576,6 +581,10 @@ if (preferredCategory === "All" || availableCategories.includes(preferredCategor
   useEffect(() => {
     sessionStorage.setItem("selectedPollCategory", selectedCategory);
   }, [selectedCategory]);
+
+  useEffect(() => {
+    sessionStorage.setItem("selectedPollSort", selectedSortFilter);
+  }, [selectedSortFilter]);
 
   useEffect(() => {
     if (!loading) {
@@ -751,6 +760,7 @@ if (preferredCategory === "All" || availableCategories.includes(preferredCategor
   const handlePollClick = (poll: Poll) => {
     sessionStorage.setItem("lastViewedPollSlug", poll.slug);
     sessionStorage.setItem("selectedPollCategory", selectedCategory);
+    sessionStorage.setItem("selectedPollSort", selectedSortFilter);
     sessionStorage.setItem("homeScrollY", String(window.scrollY));
   };
 
