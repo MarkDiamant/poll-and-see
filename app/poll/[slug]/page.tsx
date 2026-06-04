@@ -1383,11 +1383,14 @@ const [recentVotesResult, optionTotalsResult] = await Promise.all([
   const handleBack = () => {
     sessionStorage.setItem("restoreHomeScroll", "true");
 
-    const savedCategory = sessionStorage.getItem("selectedPollCategory");
+    const savedCategory =
+      sessionStorage.getItem("lastViewedPollCategory") ||
+      sessionStorage.getItem("selectedPollCategory");
+
     const targetUrl =
       savedCategory && savedCategory !== "All"
-        ? `/?category=${encodeURIComponent(savedCategory)}#live-polls`
-        : "/#live-polls";
+        ? `/?category=${encodeURIComponent(savedCategory)}`
+        : "/";
 
     router.push(targetUrl);
   };

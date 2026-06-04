@@ -458,7 +458,9 @@ let last24Total = 0;
 
       const params = new URLSearchParams(window.location.search);
       const queryCategory = params.get("category");
-      const savedCategory = sessionStorage.getItem("selectedPollCategory");
+      const savedCategory =
+        sessionStorage.getItem("lastViewedPollCategory") ||
+        sessionStorage.getItem("selectedPollCategory");
       const savedSort = sessionStorage.getItem("selectedPollSort") as SortFilter | null;
       const preferredCategory = queryCategory || savedCategory || "All";
 
@@ -776,6 +778,7 @@ if (savedSort && SORT_FILTERS.includes(savedSort)) {
 
   const handlePollClick = (poll: Poll) => {
     sessionStorage.setItem("lastViewedPollSlug", poll.slug);
+    sessionStorage.setItem("lastViewedPollCategory", selectedCategory);
     sessionStorage.setItem("selectedPollCategory", selectedCategory);
     sessionStorage.setItem("selectedPollSortFilter", selectedSortFilter);
     sessionStorage.setItem("homeScrollY", String(window.scrollY));
