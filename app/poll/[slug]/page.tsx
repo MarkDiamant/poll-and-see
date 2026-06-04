@@ -650,6 +650,21 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
       href={sponsor.destination_url}
       target="_blank"
       rel="noreferrer sponsored"
+      onClick={() => {
+        fetch("/api/sponsors/click", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            sponsorId: sponsor.id,
+            pageContext: "poll-flow",
+            category,
+            destinationUrl: sponsor.destination_url,
+          }),
+          keepalive: true,
+        });
+      }}
       className={`relative mb-4 block overflow-hidden rounded-xl border p-4 transition hover:opacity-95 ${theme.card}`}
     >
       {/* LEFT ACCENT BAR */}
@@ -1934,7 +1949,7 @@ onVoteComplete={(pollId, category) => {
                     sponsorByPollContainerRef.current[bundle.poll.id] = el;
                   }}
                 >
-                  <SponsorCard sponsor={sponsorByPollId[bundle.poll.id]} />
+                  <SponsorCard sponsor={sponsorByPollId[bundle.poll.id]} category={bundle.poll.category} />
                 </div>
               ) : null}
 

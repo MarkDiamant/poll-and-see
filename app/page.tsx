@@ -602,8 +602,13 @@ if (savedSort && SORT_FILTERS.includes(savedSort)) {
     if (!loading) {
       const shouldRestore = sessionStorage.getItem("restoreHomeScroll");
       const lastViewedPollSlug = sessionStorage.getItem("lastViewedPollSlug");
+      const savedCategory = sessionStorage.getItem("selectedPollCategory");
 
       if (shouldRestore === "true") {
+        if (savedCategory && selectedCategory !== savedCategory) {
+          return;
+        }
+
         setTimeout(() => {
           if (lastViewedPollSlug) {
             const pollCard = document.getElementById(`poll-card-${lastViewedPollSlug}`);
@@ -626,7 +631,7 @@ if (savedSort && SORT_FILTERS.includes(savedSort)) {
         }, 100);
       }
     }
-  }, [loading]);
+  }, [loading, selectedCategory, livePolls]);
 
   useEffect(() => {
     if (loading) return;
@@ -886,7 +891,7 @@ const trendingPolls = useMemo(() => {
     .map((id) => pollMap.get(id))
     .filter((poll): poll is Poll => Boolean(poll))
     .filter((poll) => poll.id !== featuredPoll?.id)
-    .slice(0, 4);
+    .slice(0, 3);
 }, [polls, trendingPollIds, featuredPoll?.id]);
 
   const activePollCount =
@@ -993,42 +998,42 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
         </div>
 
         <div className="relative rounded-2xl bg-gray-800 p-5 shadow-lg overflow-hidden">
-          <div className="mb-4 flex items-center justify-between pr-2">
-            <span className="-ml-5 inline-flex h-9 items-center rounded-r-full bg-white px-4 text-sm font-semibold tracking-[0.04em] text-black">
+          <div className="mb-3 flex items-center gap-2 pr-2">
+            <span className="-ml-5 inline-flex h-8 items-center rounded-r-full bg-white px-4 text-sm font-semibold tracking-[0.04em] text-black">
               FEATURED POLL
             </span>
 
+            {featuredPoll ? (
+              <span
+                className="rounded-full px-2 py-1 text-xs"
+                style={{
+                  color: getCategoryColours(featuredPoll.category).text,
+                  backgroundColor: getCategoryColours(featuredPoll.category).bg,
+                  border: `1px solid ${getCategoryColours(featuredPoll.category).border}`,
+                }}
+              >
+                {featuredPoll.category}
+              </span>
+            ) : null}
+
             {featuredPoll && totalFeaturedVotes >= 50 ? (
-  <span className="text-sm text-gray-400">{totalFeaturedVotes} votes</span>
-) : null}
+              <span className="ml-auto text-sm text-gray-400">{totalFeaturedVotes} votes</span>
+            ) : null}
+
+            {featuredBadge ? (
+              <span className="-mr-6">
+                <StatusRibbon label={featuredBadge} />
+              </span>
+            ) : null}
           </div>
 
           {featuredPoll ? (
             <>
-              
-              <div className="mb-3 flex items-center">
-  <span
-    className="rounded-full px-2 py-1 text-xs"
-    style={{
-      color: getCategoryColours(featuredPoll.category).text,
-      backgroundColor: getCategoryColours(featuredPoll.category).bg,
-      border: `1px solid ${getCategoryColours(featuredPoll.category).border}`,
-    }}
-  >
-    {featuredPoll.category}
-  </span>
-
-  {featuredBadge ? (
-  <span className="ml-auto -mr-6">
-    <StatusRibbon label={featuredBadge} />
-  </span>
-) : null}
-</div>
 
               <h2 className="mb-2 text-2xl font-semibold">{featuredPoll.question}</h2>
-              <p className="mb-4 text-gray-300">{featuredPoll.description}</p>
+              <p className="mb-3 text-gray-300">{featuredPoll.description}</p>
 
-              <div className="mb-5 space-y-1.5">
+              <div className="mb-3 space-y-1">
                 {featuredOptions.map((option, index) => {
                   const count = featuredVoteCounts[option.id] || 0;
                   const percent = totalFeaturedVotes > 0
@@ -1040,7 +1045,7 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
                   return (
   <div
     key={option.id}
-    className="rounded-2xl p-2"
+    className="rounded-2xl p-1.5"
     style={{
       border: isSelected ? `2px solid ${optionColour}dd` : "2px solid transparent",
       boxShadow: isSelected ? `0 0 8px ${optionColour}22` : "none",
@@ -1110,14 +1115,14 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
           )}
         </div>
 
-        <div className="mt-6 rounded-2xl bg-gray-800 p-5 shadow-lg">
+        <div className="mt-5 rounded-2xl bg-gray-800 p-4 shadow-lg">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h3 className="text-2xl font-semibold">Trending now</h3>
             <span className="inline-block -mr-5 scale-125 origin-right"><StatusRibbon label="Trending" /></span>
           </div>
 
           {trendingPolls.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-3 md:grid-cols-3">
               {trendingPolls.map((poll) => {
                 const categoryColours = getCategoryColours(poll.category);
                 const badgeLabel = getBadgeLabel(poll, trendingIdSet, popularIdSet);
@@ -1128,7 +1133,7 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
                     key={poll.id}
                     href={`/poll/${poll.slug}`}
                     onClick={() => handlePollClick(poll)}
-                   className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gray-900/60 p-4 transition hover:border-gray-500 flex min-h-[190px] flex-col justify-between"
+                   className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gray-900/60 p-4 transition hover:border-gray-500 flex min-h-[150px] flex-col justify-between"
                   >
                 
                        <div className="mb-3 flex items-start justify-between gap-3">
@@ -1169,43 +1174,6 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
           )}
         </div>
 
-                <div className="mt-6 rounded-2xl border border-gray-600 bg-gray-800/80 p-5 md:mx-auto md:max-w-[560px] md:p-6">
-          <div className="text-center">
-            <p className="mb-2 text-base font-medium text-white md:text-lg">Don’t miss the best polls</p>
-            <p className="mb-3 text-sm text-gray-200">
-              Get interesting polls sent to you (max once per day)
-            </p>
-          </div>
-
-          <form onSubmit={handleSubscribe} className="mt-3 space-y-3">
-            <input
-              type="email"
-              value={subscriberEmail}
-              onChange={(event) => setSubscriberEmail(event.target.value)}
-              placeholder="Email address"
-              required
-              className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
-            />
-
-<button
-  type="submit"
-  disabled={subscribeLoading}
-className="mx-auto block w-[68%] md:w-[55%] cursor-pointer rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-medium text-black transition hover:bg-white disabled:opacity-70"
->
-              {subscribeLoading ? "Sending..." : "Get polls"}
-            </button>
-
-            <p className="text-center text-xs text-gray-400">No spam. Unsubscribe anytime.</p>
-          </form>
-
-          {subscribeMessage ? (
-            <p className="mt-2 text-sm text-green-300">{subscribeMessage}</p>
-          ) : null}
-
-          {subscribeError ? (
-            <p className="mt-2 text-sm text-red-300">{subscribeError}</p>
-          ) : null}
-        </div>
       </section>
 
       <section id="live-polls" className="mx-auto max-w-6xl scroll-mt-6 px-6 pb-6">
@@ -1288,11 +1256,52 @@ className={`h-8 cursor-pointer rounded-lg border px-3 text-xs font-medium transi
 
         {livePolls.length > 0 ? (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {livePolls.map((poll) => {
+            {livePolls.map((poll, index) => {
               const categoryColours = getCategoryColours(poll.category);
               const badgeLabel = getBadgeLabel(poll, trendingIdSet, popularIdSet);
 
               return (
+                <>
+                {index === 9 ? (
+                  <div className="rounded-2xl border border-gray-600 bg-gray-800/80 p-5 shadow-lg md:col-span-2 xl:col-span-3 md:mx-auto md:w-full md:max-w-[560px] md:p-6">
+                    <div className="text-center">
+                      <p className="mb-2 text-base font-medium text-white md:text-lg">Don’t miss the best polls</p>
+                      <p className="mb-3 text-sm text-gray-200">
+                        Get interesting polls sent to you (max once per day)
+                      </p>
+                    </div>
+
+                    <form onSubmit={handleSubscribe} className="mt-3 space-y-3">
+                      <input
+                        type="email"
+                        value={subscriberEmail}
+                        onChange={(event) => setSubscriberEmail(event.target.value)}
+                        placeholder="Email address"
+                        required
+                        className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
+                      />
+
+                      <button
+                        type="submit"
+                        disabled={subscribeLoading}
+                        className="mx-auto block w-[68%] md:w-[55%] cursor-pointer rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-medium text-black transition hover:bg-white disabled:opacity-70"
+                      >
+                        {subscribeLoading ? "Sending..." : "Get polls"}
+                      </button>
+
+                      <p className="text-center text-xs text-gray-400">No spam. Unsubscribe anytime.</p>
+                    </form>
+
+                    {subscribeMessage ? (
+                      <p className="mt-2 text-sm text-green-300">{subscribeMessage}</p>
+                    ) : null}
+
+                    {subscribeError ? (
+                      <p className="mt-2 text-sm text-red-300">{subscribeError}</p>
+                    ) : null}
+                  </div>
+                ) : null}
+
                 <Link
                   key={poll.id}
                   id={`poll-card-${poll.slug}`}
@@ -1342,6 +1351,7 @@ className={`h-8 cursor-pointer rounded-lg border px-3 text-xs font-medium transi
                     </div>
                   </div>
                 </Link>
+                </>
               );
             })}
           </div>
