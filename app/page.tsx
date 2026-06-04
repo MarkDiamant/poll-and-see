@@ -991,13 +991,52 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
           <LiveVoteCounter value={totalVoteCount} />
         </div>
 
-        <div className="mb-6 text-center">
+        <div className="mb-5 text-center">
           <p className="text-lg font-medium text-white md:text-xl">
             Real questions. Anonymous opinions.
           </p>
           <p className="mt-2 text-gray-300">
             Create a poll in seconds, share it, and see results instantly.
           </p>
+        </div>
+
+        <div className="mb-5 rounded-2xl border border-cyan-400/30 bg-gray-800/80 p-4 text-center shadow-[0_0_28px_rgba(34,211,238,0.10)]">
+          <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-cyan-200">
+            Live Polls
+          </p>
+
+          <div className="mb-3 flex flex-wrap justify-center gap-1.5">
+            {LIVE_POLL_CATEGORIES.map((category) => {
+              const categoryColours = getCategoryColours(category);
+
+              return (
+                <span
+                  key={category}
+                  className="rounded-full px-2.5 py-1 text-[11px] font-medium"
+                  style={{
+                    color: categoryColours.text,
+                    backgroundColor: categoryColours.bg,
+                    border: `1px solid ${categoryColours.border}`,
+                  }}
+                >
+                  {category}
+                </span>
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              const livePollsSection = document.getElementById("live-polls");
+              if (livePollsSection) {
+                livePollsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+              }
+            }}
+            className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-white px-5 py-2.5 text-sm font-medium text-black transition hover:bg-gray-200"
+          >
+            Browse Live Polls ↓
+          </button>
         </div>
 
         <div className="relative rounded-2xl bg-gray-800 p-5 shadow-lg overflow-hidden">
