@@ -17,7 +17,7 @@ export default function SiteHeader() {
             href="/submit-poll"
             className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-3 text-sm font-medium text-white transition hover:bg-blue-500 sm:hidden"
           >
-            Create Poll
+            Create Free Poll
           </Link>
         </div>
 
@@ -47,7 +47,7 @@ export default function SiteHeader() {
             href="/submit-poll"
             className="hidden h-11 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-3 text-sm font-medium text-white transition hover:bg-blue-500 sm:inline-flex md:px-5"
           >
-            Create Poll
+            Create Free Poll
           </Link>
         </div>
       </div>
