@@ -549,7 +549,7 @@ const hideSubmission = async (submissionId: number) => {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 px-6 py-8 text-white">
+    <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 px-3 py-6 text-white md:px-6 md:py-8">
       <section className="mx-auto max-w-[1500px]">
         <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4">
@@ -755,7 +755,239 @@ const hideSubmission = async (submissionId: number) => {
   </div>
 ) : null}
 
-        <div className="overflow-x-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg">
+        <div className="space-y-4 md:hidden">
+          {loading ? (
+            <div className="rounded-2xl border border-gray-700 bg-gray-800 p-5 text-center text-sm text-gray-300">
+              Loading submissions...
+            </div>
+          ) : null}
+
+          {!loading && sortedSubmissions.length === 0 ? (
+            <div className="rounded-2xl border border-gray-700 bg-gray-800 p-5 text-center text-sm text-gray-300">
+              No submissions waiting.
+            </div>
+          ) : null}
+
+          {!loading &&
+            sortedSubmissions.map((submission) => (
+              <div key={submission.id} className="rounded-2xl border border-gray-700 bg-gray-800 p-4 shadow-lg">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs text-gray-400">Submission ID {submission.id}</p>
+                    {submission.created_at ? (
+                      <p className="mt-0.5 text-[11px] text-gray-500">
+                        {new Date(submission.created_at).toLocaleString()}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  {isNewSubmission(submission.created_at) ? (
+                    <span className="rounded-full bg-green-500 px-2 py-0.5 text-[10px] font-bold text-black">
+                      NEW
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <p className="mb-1 text-xs text-gray-400">Question</p>
+                    <input
+                      type="text"
+                      value={questionEdits[submission.id] ?? ""}
+                      onChange={(event) =>
+                        setQuestionEdits((current) => ({
+                          ...current,
+                          [submission.id]: event.target.value,
+                        }))
+                      }
+                      onBlur={() => void saveSubmission(submission.id)}
+                      className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                    />
+                  </div>
+
+                  <div>
+                    <p className="mb-1 text-xs text-gray-400">Description</p>
+                    <textarea
+                      value={descriptionEdits[submission.id] ?? ""}
+                      onChange={(event) =>
+                        setDescriptionEdits((current) => ({
+                          ...current,
+                          [submission.id]: event.target.value,
+                        }))
+                      }
+                      onBlur={() => void saveSubmission(submission.id)}
+                      rows={2}
+                      className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                    />
+                  </div>
+
+                  <div>
+                    <p className="mb-1 text-xs text-gray-400">Options</p>
+                    <textarea
+                      value={optionsEdits[submission.id] ?? ""}
+                      onChange={(event) =>
+                        setOptionsEdits((current) => ({
+                          ...current,
+                          [submission.id]: event.target.value,
+                        }))
+                      }
+                      onBlur={(event) => {
+                        const nextOptions = event.target.value
+                          .split("\n")
+                          .map((item) => item.trim())
+                          .filter(Boolean);
+
+                        const nextImageUrls = (imageUrlEdits[submission.id] || "")
+                          .split("\n")
+                          .map((item) => item.trim())
+                          .slice(0, nextOptions.length);
+
+                        setOptionsEdits((current) => ({
+                          ...current,
+                          [submission.id]: nextOptions.join("\n"),
+                        }));
+
+                        setImageUrlEdits((current) => ({
+                          ...current,
+                          [submission.id]: nextImageUrls.join("\n"),
+                        }));
+
+                        void saveSubmission(submission.id, {
+                          options: nextOptions,
+                          option_image_urls: nextImageUrls,
+                        });
+                      }}
+                      rows={4}
+                      className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                    />
+                  </div>
+
+                  <div>
+                    <p className="mb-1 text-xs text-gray-400">Image URLs</p>
+                    <textarea
+                      value={imageUrlEdits[submission.id] ?? ""}
+                      onChange={(event) =>
+                        setImageUrlEdits((current) => ({
+                          ...current,
+                          [submission.id]: event.target.value,
+                        }))
+                      }
+                      onBlur={() => void saveSubmission(submission.id)}
+                      rows={2}
+                      className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <p className="mb-1 text-xs text-gray-400">Category</p>
+                      <select
+                        value={categoryEdits[submission.id] || "General"}
+                        onChange={(event) => {
+                          const nextCategory = event.target.value as CategoryOption;
+
+                          setCategoryEdits((current) => ({
+                            ...current,
+                            [submission.id]: nextCategory,
+                          }));
+
+                          void saveSubmission(submission.id, { category: nextCategory });
+                        }}
+                        className="h-10 w-full rounded-lg border border-gray-700 bg-gray-900 px-2 text-xs text-white outline-none"
+                      >
+                        {CATEGORY_OPTIONS.map((category) => (
+                          <option key={category} value={category}>
+                            {category}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <p className="mb-1 text-xs text-gray-400">Privacy</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextPrivate = !privacyEdits[submission.id];
+                          setPrivacyEdits((current) => ({
+                            ...current,
+                            [submission.id]: nextPrivate,
+                          }));
+                          void saveSubmission(submission.id, { is_private: nextPrivate });
+                        }}
+                        className={`h-10 w-full rounded-lg px-2 text-left text-xs font-medium transition ${
+                          privacyEdits[submission.id]
+                            ? "bg-white text-black hover:bg-gray-200"
+                            : "border border-gray-700 bg-gray-900 text-white hover:bg-gray-800"
+                        }`}
+                      >
+                        {privacyEdits[submission.id] ? "Private" : "Public"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="mb-1 text-xs text-gray-400">Email</p>
+                    <input
+                      type="text"
+                      value={emailEdits[submission.id] ?? ""}
+                      onChange={(event) =>
+                        setEmailEdits((current) => ({
+                          ...current,
+                          [submission.id]: event.target.value,
+                        }))
+                      }
+                      onBlur={() => void saveSubmission(submission.id)}
+                      className="h-10 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-white outline-none transition focus:border-gray-500"
+                      placeholder="No email"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 pt-2">
+                    <a
+                      href={submission.slug ? `/poll/${submission.slug}` : "#"}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={`rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-center text-xs font-medium text-white transition hover:bg-gray-800 ${
+                        !submission.slug ? "pointer-events-none opacity-40" : ""
+                      }`}
+                    >
+                      Open poll
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={() => void approveSubmission(submission.id)}
+                      disabled={savingKey === `approve:${submission.id}`}
+                      className="cursor-pointer rounded-lg bg-white px-3 py-2 text-xs font-medium text-black transition hover:bg-gray-200 disabled:opacity-40"
+                    >
+                      Approve
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => void hideSubmission(submission.id)}
+                      disabled={savingKey === `hide:${submission.id}`}
+                      className="cursor-pointer rounded-lg border border-yellow-600 bg-yellow-900 px-3 py-2 text-xs font-medium text-yellow-100 transition hover:bg-yellow-800 disabled:opacity-60"
+                    >
+                      Hide
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => void deleteSubmission(submission.id)}
+                      disabled={savingKey === `delete:${submission.id}`}
+                      className="cursor-pointer rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800 disabled:opacity-60"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+        </div>
+
+        <div className="hidden overflow-x-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg md:block">
           <table className="w-full text-sm">
             <thead className="sticky top-0 z-10 bg-gray-900/95 text-left text-gray-300">
               <tr>

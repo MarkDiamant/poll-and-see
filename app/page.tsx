@@ -471,6 +471,11 @@ if (
   setSelectedCategory("All");
 }
 
+const savedSortFilter = sessionStorage.getItem("selectedPollSortFilter") as SortFilter | null;
+if (savedSortFilter && SORT_FILTERS.includes(savedSortFilter)) {
+  setSelectedSortFilter(savedSortFilter);
+}
+
 if (savedSort && SORT_FILTERS.includes(savedSort)) {
   setSelectedSortFilter(savedSort);
 }
@@ -584,6 +589,10 @@ if (savedSort && SORT_FILTERS.includes(savedSort)) {
   useEffect(() => {
     sessionStorage.setItem("selectedPollCategory", selectedCategory);
   }, [selectedCategory]);
+
+  useEffect(() => {
+    sessionStorage.setItem("selectedPollSortFilter", selectedSortFilter);
+  }, [selectedSortFilter]);
 
   useEffect(() => {
     sessionStorage.setItem("selectedPollSort", selectedSortFilter);
@@ -763,7 +772,7 @@ if (savedSort && SORT_FILTERS.includes(savedSort)) {
   const handlePollClick = (poll: Poll) => {
     sessionStorage.setItem("lastViewedPollSlug", poll.slug);
     sessionStorage.setItem("selectedPollCategory", selectedCategory);
-    sessionStorage.setItem("selectedPollSort", selectedSortFilter);
+    sessionStorage.setItem("selectedPollSortFilter", selectedSortFilter);
     sessionStorage.setItem("homeScrollY", String(window.scrollY));
   };
 
