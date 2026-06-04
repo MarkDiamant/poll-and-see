@@ -509,7 +509,7 @@ const hideSubmission = async (submissionId: number) => {
 
   if (!adminKey) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 px-6 py-10 text-white">
+      <main className="min-h-screen w-full bg-gradient-to-b from-black to-gray-900 px-4 py-6 text-white">
         <section className="mx-auto max-w-xl rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-lg">
           <div className="mb-5 flex items-center gap-3">
             <Link href="/" aria-label="Go to homepage">
@@ -549,8 +549,8 @@ const hideSubmission = async (submissionId: number) => {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 px-3 py-6 text-white md:px-6 md:py-8">
-      <section className="mx-auto max-w-[1500px]">
+    <main className="min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-black to-gray-900 px-3 py-6 text-white md:px-6 md:py-8">
+      <section className="mx-auto w-full max-w-[1500px]">
         <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4">
             <Link href="/" aria-label="Go to homepage">
@@ -723,7 +723,7 @@ const hideSubmission = async (submissionId: number) => {
                   <textarea
                     value={newImageUrls}
                     onChange={(event) => setNewImageUrls(event.target.value)}
-                    rows={6}
+                    rows={1}
                     className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
                   />
                 </div>
@@ -755,7 +755,7 @@ const hideSubmission = async (submissionId: number) => {
   </div>
 ) : null}
 
-        <div className="space-y-4 md:hidden">
+        <div className="space-y-4 md:hidden w-full overflow-x-hidden">
           {loading ? (
             <div className="rounded-2xl border border-gray-700 bg-gray-800 p-5 text-center text-sm text-gray-300">
               Loading submissions...
@@ -873,7 +873,7 @@ const hideSubmission = async (submissionId: number) => {
                         }))
                       }
                       onBlur={() => void saveSubmission(submission.id)}
-                      rows={2}
+                      rows={1}
                       className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
                     />
                   </div>
@@ -988,7 +988,7 @@ const hideSubmission = async (submissionId: number) => {
         </div>
 
         <div className="hidden overflow-x-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg md:block">
-          <table className="w-full text-sm">
+          <table className="min-w-full text-sm">
             <thead className="sticky top-0 z-10 bg-gray-900/95 text-left text-gray-300">
               <tr>
                 <th className="px-4 py-3 font-medium">Poll</th>
