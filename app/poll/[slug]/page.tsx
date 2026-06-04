@@ -57,6 +57,7 @@ type Sponsor = {
   cta_text: string;
   destination_url: string;
   theme: string | null;
+  category: string;
 };
 
 const SAME_POLL_CLICK_GUARD_MS = 400;
@@ -641,7 +642,7 @@ function getSponsorTheme(theme: string | null) {
   return themes[key] || themes.default;
 }
 
-function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
+function SponsorCard({ sponsor, category }: { sponsor: Sponsor; category: string }) {
   const imageUrl = sponsor.logo_url?.trim() || null;
   const theme = getSponsorTheme(sponsor.theme);
 
@@ -659,7 +660,7 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
           body: JSON.stringify({
             sponsorId: sponsor.id,
             pageContext: "poll-flow",
-            category,
+            category: sponsor.category,
             destinationUrl: sponsor.destination_url,
           }),
           keepalive: true,
