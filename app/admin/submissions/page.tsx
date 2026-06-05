@@ -658,7 +658,7 @@ const hideSubmission = async (submissionId: number) => {
                   value={newQuestion}
                   onChange={(event) => handleNewQuestionChange(event.target.value)}
                   placeholder="Question"
-                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 min-h-[44px]"
                 />
               </div>
 
@@ -667,9 +667,9 @@ const hideSubmission = async (submissionId: number) => {
                 <textarea
                   value={newDescription}
                   onChange={(event) => setNewDescription(event.target.value)}
-                  rows={2}
+                  rows={1}
                   placeholder="Description"
-                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
+                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto h-[110px]"
                 />
               </div>
 
@@ -712,8 +712,8 @@ const hideSubmission = async (submissionId: number) => {
                 <textarea
                   value={newOptions}
                   onChange={(event) => setNewOptions(event.target.value)}
-                  rows={6}
-                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
+                  rows={4}
+                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto h-[110px]"
                 />
               </div>
 
@@ -724,7 +724,7 @@ const hideSubmission = async (submissionId: number) => {
                     value={newImageUrls}
                     onChange={(event) => setNewImageUrls(event.target.value)}
                     rows={1}
-                    className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
+                    className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto h-[110px]"
                   />
                 </div>
 
@@ -801,7 +801,7 @@ const hideSubmission = async (submissionId: number) => {
                         }))
                       }
                       onBlur={() => void saveSubmission(submission.id)}
-                      className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                      className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 min-h-[44px]"
                     />
                   </div>
 
@@ -816,8 +816,8 @@ const hideSubmission = async (submissionId: number) => {
                         }))
                       }
                       onBlur={() => void saveSubmission(submission.id)}
-                      rows={2}
-                      className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                      rows={1}
+                      className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 min-h-[60px]"
                     />
                   </div>
 
@@ -857,8 +857,8 @@ const hideSubmission = async (submissionId: number) => {
                           option_image_urls: nextImageUrls,
                         });
                       }}
-                      rows={4}
-                      className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                      rows={3}
+className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 min-h-[90px]"
                     />
                   </div>
 
@@ -874,7 +874,7 @@ const hideSubmission = async (submissionId: number) => {
                       }
                       onBlur={() => void saveSubmission(submission.id)}
                       rows={1}
-                      className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                      className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 h-[38px]"
                     />
                   </div>
 
@@ -1035,7 +1035,7 @@ const hideSubmission = async (submissionId: number) => {
                             }))
                           }
                           onBlur={() => void saveSubmission(submission.id)}
-                          className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                          className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 min-h-[44px]"
                         />
                         <textarea
                           value={descriptionEdits[submission.id] ?? ""}
@@ -1046,8 +1046,8 @@ const hideSubmission = async (submissionId: number) => {
                             }))
                           }
                           onBlur={() => void saveSubmission(submission.id)}
-                          rows={2}
-                          className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
+                          rows={1}
+                          className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto h-[110px]"
                         />
 
                         <p className="text-xs text-gray-400">

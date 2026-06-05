@@ -659,7 +659,7 @@ const sortedPolls = useMemo(() => {
                               }))
                             }
                             onBlur={() => void updatePoll(poll.id)}
-                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 h-[52px]"
                           />
                           <textarea
                             value={descriptionEdits[poll.id] ?? ""}
@@ -670,8 +670,8 @@ const sortedPolls = useMemo(() => {
                               }))
                             }
                             onBlur={() => void updatePoll(poll.id)}
-                           rows={2}
-className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
+                           rows={1}
+className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto h-[38px]"
                           />
                           <p className="text-xs text-gray-400">
                             Poll ID {poll.id}
@@ -688,7 +688,7 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
  {(optionEdits[poll.id] || []).map((option, optionIndex) => (
 <div
   key={`${poll.id}-${option.id || `new-${optionIndex}`}`}
- className="grid grid-cols-[1.5fr_84px_auto] items-center gap-2"
+ className="flex flex-col gap-2"
 >
 <input
   type="text"
@@ -846,7 +846,7 @@ onBlur={(event) => {
                       </td>
 
                       <td className="px-4 py-4 align-top">
-                   <div className="flex min-w-[96px] flex-col gap-1.5">
+                   <div className="flex flex-col gap-2 w-full">
                           <button
                             type="button"
                             onClick={() =>
