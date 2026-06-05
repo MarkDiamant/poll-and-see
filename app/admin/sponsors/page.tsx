@@ -378,18 +378,18 @@ export default function AdminSponsorsPage() {
     <main className="min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-black to-gray-900 px-3 py-6 text-white md:px-6 md:py-8">
       <section className="mx-auto w-full max-w-[1500px] overflow-x-hidden">
         <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex min-w-0 items-center gap-4">
             <Link href="/" aria-label="Go to homepage">
               <img src="/logo.png" alt="Poll & See" className="block h-12 w-auto object-contain" />
             </Link>
 
-            <div>
+            <div className="min-w-0">
               <h1 className="text-3xl font-semibold">Advertisers</h1>
               <p className="mt-1 text-sm text-gray-300">Create and manage sponsored advertiser cards.</p>
             </div>
           </div>
 
-          <nav className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-2 pr-2 -mr-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <nav className="flex flex-wrap items-center gap-2">
             <Link href="/admin/polls" className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800">
               Live Polls
             </Link>

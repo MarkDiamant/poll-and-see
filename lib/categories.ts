@@ -52,8 +52,8 @@ export const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border
   Parenting: { text: "#dbeafe", bg: "rgba(30, 58, 138, 0.18)", border: "rgba(37, 99, 235, 0.80)", solid: "#1e3a8a" },
   Politics: { text: "#fef9c3", bg: "rgba(250, 204, 21, 0.20)", border: "rgba(250, 204, 21, 0.85)", solid: "#eab308" },
   Sports: { text: "#d9f99d", bg: "rgba(132, 204, 22, 0.14)", border: "rgba(132, 204, 22, 0.60)", solid: "#84cc16" },
-  Technology: { text: "#f5d0fe", bg: "rgba(168, 85, 247, 0.16)", border: "rgba(192, 132, 252, 0.7)", solid: "#a855f7" },
-  Tech: { text: "#f5d0fe", bg: "rgba(168, 85, 247, 0.16)", border: "rgba(192, 132, 252, 0.7)", solid: "#a855f7" },
+  Technology: { text: "#cffafe", bg: "rgba(8, 145, 178, 0.18)", border: "rgba(6, 182, 212, 0.75)", solid: "#0891b2" },
+  Tech: { text: "#cffafe", bg: "rgba(8, 145, 178, 0.18)", border: "rgba(6, 182, 212, 0.75)", solid: "#0891b2" },
 };
 
 export const FALLBACK_CATEGORY_COLOURS = [
@@ -86,8 +86,8 @@ export const EMAIL_CATEGORY_COLOURS: Record<string, { text: string; bg: string; 
   Parenting: { text: "#dbeafe", bg: "#172554", border: "#1e40af" },
   Politics: { text: "#fef9c3", bg: "#422006", border: "#eab308" },
   Sports: { text: "#d9f99d", bg: "#243607", border: "#84cc16" },
-  Technology: { text: "#f5d0fe", bg: "#3b0764", border: "#a855f7" },
-  Tech: { text: "#f5d0fe", bg: "#3b0764", border: "#a855f7" },
+  Technology: { text: "#cffafe", bg: "#083344", border: "#06b6d4" },
+  Tech: { text: "#cffafe", bg: "#083344", border: "#06b6d4" },
 };
 
 export const FALLBACK_EMAIL_CATEGORY_COLOURS = [
