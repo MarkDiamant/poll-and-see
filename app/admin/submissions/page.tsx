@@ -550,7 +550,7 @@ const hideSubmission = async (submissionId: number) => {
 
   return (
     <main className="min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-black to-gray-900 px-3 py-6 text-white md:px-6 md:py-8">
-      <section className="mx-auto w-full max-w-[1500px]">
+      <section className="mx-auto w-full max-w-[1500px] overflow-x-hidden">
         <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4">
             <Link href="/" aria-label="Go to homepage">
@@ -568,7 +568,7 @@ const hideSubmission = async (submissionId: number) => {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <nav className="flex items-center gap-2">
+            <nav className="flex items-center gap-2 overflow-x-auto whitespace-nowrap max-w-full">
               <Link
                 href="/admin/polls"
                 className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
