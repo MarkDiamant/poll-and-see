@@ -658,7 +658,8 @@ const hideSubmission = async (submissionId: number) => {
                   value={newQuestion}
                   onChange={(event) => handleNewQuestionChange(event.target.value)}
                   placeholder="Question"
-                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 min-h-[44px]"
+                  rows={2}
+                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
                 />
               </div>
 
@@ -669,7 +670,7 @@ const hideSubmission = async (submissionId: number) => {
                   onChange={(event) => setNewDescription(event.target.value)}
                   rows={1}
                   placeholder="Description"
-                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto h-[110px]"
+                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
                 />
               </div>
 
@@ -713,7 +714,7 @@ const hideSubmission = async (submissionId: number) => {
                   value={newOptions}
                   onChange={(event) => setNewOptions(event.target.value)}
                   rows={4}
-                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto h-[110px]"
+                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
                 />
               </div>
 
@@ -724,7 +725,7 @@ const hideSubmission = async (submissionId: number) => {
                     value={newImageUrls}
                     onChange={(event) => setNewImageUrls(event.target.value)}
                     rows={1}
-                    className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto h-[110px]"
+                    className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
                   />
                 </div>
 
@@ -791,18 +792,18 @@ const hideSubmission = async (submissionId: number) => {
                 <div className="space-y-3">
                   <div>
                     <p className="mb-1 text-xs text-gray-400">Question</p>
-                    <input
-                      type="text"
-                      value={questionEdits[submission.id] ?? ""}
-                      onChange={(event) =>
-                        setQuestionEdits((current) => ({
-                          ...current,
-                          [submission.id]: event.target.value,
-                        }))
-                      }
-                      onBlur={() => void saveSubmission(submission.id)}
-                      className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 min-h-[44px]"
-                    />
+<textarea
+  value={questionEdits[submission.id] ?? ""}
+  onChange={(event) =>
+    setQuestionEdits((current) => ({
+      ...current,
+      [submission.id]: event.target.value,
+    }))
+  }
+  onBlur={() => void saveSubmission(submission.id)}
+  rows={2}
+  className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+/>
                   </div>
 
                   <div>
@@ -817,7 +818,7 @@ const hideSubmission = async (submissionId: number) => {
                       }
                       onBlur={() => void saveSubmission(submission.id)}
                       rows={1}
-                      className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 min-h-[60px]"
+                      className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
                     />
                   </div>
 
@@ -1035,7 +1036,7 @@ className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 
                             }))
                           }
                           onBlur={() => void saveSubmission(submission.id)}
-                          className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 min-h-[44px]"
+                          className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
                         />
                         <textarea
                           value={descriptionEdits[submission.id] ?? ""}
@@ -1047,7 +1048,7 @@ className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 
                           }
                           onBlur={() => void saveSubmission(submission.id)}
                           rows={1}
-                          className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto h-[110px]"
+                          className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto"
                         />
 
                         <p className="text-xs text-gray-400">

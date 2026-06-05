@@ -607,8 +607,8 @@ const sortedPolls = useMemo(() => {
           </div>
         ) : null}
 
-        <div className="rounded-2xl border border-gray-700 bg-gray-800 shadow-lg">
-  <table className="w-full text-sm table-fixed">
+        <div className="overflow-x-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg md:overflow-visible">
+  <table className="min-w-[900px] text-sm md:w-full">
             <thead className="sticky top-0 z-10 bg-gray-900/95 text-left text-gray-300">
               <tr>
                 <th className="px-4 py-3 font-medium">Poll</th>
