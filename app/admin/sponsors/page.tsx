@@ -375,8 +375,8 @@ export default function AdminSponsorsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 px-6 py-8 text-white">
-      <section className="mx-auto max-w-[1500px]">
+    <main className="min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-black to-gray-900 px-3 py-6 text-white md:px-6 md:py-8">
+      <section className="mx-auto w-full max-w-[1500px] overflow-x-hidden">
         <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4">
             <Link href="/" aria-label="Go to homepage">
@@ -414,7 +414,7 @@ export default function AdminSponsorsPage() {
           </div>
         ) : null}
 
-        <div className="mb-6 grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="mb-6 grid w-full max-w-full gap-5 overflow-x-hidden lg:grid-cols-[1.1fr_0.9fr]">
           <section className="rounded-2xl border border-gray-700 bg-gray-800 p-5">
             <h2 className="mb-4 text-xl font-semibold">{form.id ? "Edit sponsor" : "New sponsor"}</h2>
 
@@ -548,9 +548,9 @@ export default function AdminSponsorsPage() {
               </div>
             </a>
 
-            <p className="mt-3 text-xs text-gray-400">
-              Categories: {selectedCategoryText || "None"} · Theme: {form.theme}
-            </p>
+<p className="mt-3 max-w-full break-words text-xs text-gray-400">
+  Categories: {selectedCategoryText || "None"} · Theme: {form.theme}
+</p>
           </section>
         </div>
 
@@ -583,11 +583,11 @@ export default function AdminSponsorsPage() {
         {sponsor.headline}
       </p>
 
-      <div className="mt-3 space-y-1 text-xs text-gray-400">
-        <p>Categories: {sponsor.category}</p>
-        <p>Theme: {sponsor.theme || "default"}</p>
-        <p>Status: {getSponsorStatus(sponsor)}</p>
-      </div>
+<div className="mt-3 space-y-1 text-xs text-gray-400">
+  <p className="break-words">Categories: {sponsor.category}</p>
+  <p>Theme: {sponsor.theme || "default"}</p>
+  <p>Status: {getSponsorStatus(sponsor)}</p>
+</div>
     </button>
   ))}
 </div>
