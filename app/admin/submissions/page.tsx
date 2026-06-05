@@ -755,7 +755,7 @@ const hideSubmission = async (submissionId: number) => {
   </div>
 ) : null}
 
-        <div className="space-y-4 md:hidden w-full overflow-x-hidden max-h-[calc(100vh-120px)] overflow-y-auto">
+        <div className="space-y-4 md:hidden w-full overflow-x-hidden">
           {loading ? (
             <div className="rounded-2xl border border-gray-700 bg-gray-800 p-5 text-center text-sm text-gray-300">
               Loading submissions...

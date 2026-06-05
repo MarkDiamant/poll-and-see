@@ -607,8 +607,8 @@ const sortedPolls = useMemo(() => {
           </div>
         ) : null}
 
-        <div className="overflow-x-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg">
-  <table className="w-full text-sm">
+        <div className="rounded-2xl border border-gray-700 bg-gray-800 shadow-lg">
+  <table className="w-full text-sm table-fixed">
             <thead className="sticky top-0 z-10 bg-gray-900/95 text-left text-gray-300">
               <tr>
                 <th className="px-4 py-3 font-medium">Poll</th>
@@ -648,7 +648,7 @@ const sortedPolls = useMemo(() => {
                       }`}
                     >
                       <td className="px-4 py-4 align-top">
-                      <div className="min-w-[380px] max-w-[460px] space-y-2">
+                      <div className="w-full max-w-full space-y-2">
                           <input
                             type="text"
                             value={questionEdits[poll.id] ?? ""}
