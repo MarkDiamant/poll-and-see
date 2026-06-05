@@ -660,7 +660,7 @@ function SponsorCard({ sponsor, category }: { sponsor: Sponsor; category: string
           body: JSON.stringify({
             sponsorId: sponsor.id,
             pageContext: "poll-flow",
-            category: sponsor.category,
+            category,
             destinationUrl: sponsor.destination_url,
           }),
           keepalive: true,
@@ -1135,6 +1135,7 @@ const sponsorByPollContainerRef = useRef<Record<number, HTMLDivElement | null>>(
   const sponsorEligibleVoteCountRef = useRef(0);
   const previousPollCountRef = useRef(0);
   const previousShowInlineSubscribeRef = useRef(false);
+  const previousShowEndOfFeedRef = useRef(false);
   const preloadedQueueRef = useRef<PollBundle[]>([]);
   const pollsRef = useRef<PollBundle[]>([]);
   const skippedPollIdsRef = useRef<Set<number>>(new Set());
@@ -1263,13 +1264,17 @@ const [recentVotesResult, optionTotalsResult] = await Promise.all([
           }
 
           const options = data as PollOption[];
+          if (options.length === 0) {
+            return bundle;
+          }
+
           const voteCounts: VoteCounts = {};
           const hasVotedLocally = hasLocalVote(bundle.poll.id);
 
           options.forEach((option) => {
             const serverCount = option.vote_count || 0;
             const currentCount = bundle.voteCounts[option.id] || 0;
-            voteCounts[option.id] = hasVotedLocally ? Math.max(serverCount, currentCount) : serverCount;
+            voteCounts[option.id] = Math.max(serverCount, currentCount);
           });
 
           const nextBundle = {
@@ -1732,9 +1737,10 @@ return safeBundle;
       return;
     }
 
-    if (showEndOfFeed && endOfFeedRef.current) {
+    if (showEndOfFeed && !previousShowEndOfFeedRef.current && endOfFeedRef.current) {
 smoothScrollToElement(endOfFeedRef.current, 650, window.innerHeight * 0.62);
   previousShowInlineSubscribeRef.current = showInlineSubscribe;
+  previousShowEndOfFeedRef.current = showEndOfFeed;
   previousPollCountRef.current = polls.length;
   return;
 }
@@ -1758,8 +1764,9 @@ if (polls.length > previousPollCountRef.current && polls.length > 1) {
   }
 }
 
-    previousShowInlineSubscribeRef.current = showInlineSubscribe;
-    previousPollCountRef.current = polls.length;
+previousShowInlineSubscribeRef.current = showInlineSubscribe;
+previousShowEndOfFeedRef.current = showEndOfFeed;
+previousPollCountRef.current = polls.length;
     }, [polls, showInlineSubscribe, showEndOfFeed]);
 
   const handleSkipPoll = async (pollId: number) => {
