@@ -52,7 +52,7 @@ export const CATEGORY_COLOURS: Record<string, { text: string; bg: string; border
   Parenting: { text: "#dbeafe", bg: "rgba(30, 58, 138, 0.18)", border: "rgba(37, 99, 235, 0.80)", solid: "#1e3a8a" },
   Politics: { text: "#fef9c3", bg: "rgba(250, 204, 21, 0.20)", border: "rgba(250, 204, 21, 0.85)", solid: "#eab308" },
   Sports: { text: "#d9f99d", bg: "rgba(132, 204, 22, 0.14)", border: "rgba(132, 204, 22, 0.60)", solid: "#84cc16" },
-  Technology: { text: "#cffafe", bg: "rgba(8, 145, 178, 0.18)", border: "rgba(6, 182, 212, 0.75)", solid: "#0891b2" },
+  Technology: { text: "#f3f4f6", bg: "rgba(107, 114, 128, 0.18)", border: "rgba(209, 213, 219, 0.82)", solid: "#6b7280" },
   Tech: { text: "#cffafe", bg: "rgba(8, 145, 178, 0.18)", border: "rgba(6, 182, 212, 0.75)", solid: "#0891b2" },
 };
 
@@ -86,7 +86,7 @@ export const EMAIL_CATEGORY_COLOURS: Record<string, { text: string; bg: string; 
   Parenting: { text: "#dbeafe", bg: "#172554", border: "#1e40af" },
   Politics: { text: "#fef9c3", bg: "#422006", border: "#eab308" },
   Sports: { text: "#d9f99d", bg: "#243607", border: "#84cc16" },
-  Technology: { text: "#cffafe", bg: "#083344", border: "#06b6d4" },
+  Technology: { text: "#f3f4f6", bg: "#374151", border: "#d1d5db" },
   Tech: { text: "#cffafe", bg: "#083344", border: "#06b6d4" },
 };
 
