@@ -567,8 +567,31 @@ export default function AdminSponsorsPage() {
             <option value="Inactive">Inactive</option>
           </select>
         </div>
+<div className="space-y-3 md:hidden">
+  {filteredSponsors.map((sponsor) => (
+    <button
+      key={sponsor.id}
+      type="button"
+      onClick={() => editSponsor(sponsor)}
+      className="w-full rounded-2xl border border-gray-700 bg-gray-800 p-4 text-left"
+    >
+      <p className="font-medium text-white">
+        {sponsor.business_name}
+      </p>
 
-        <section className="overflow-hidden rounded-2xl border border-gray-700 bg-gray-800">
+      <p className="mt-1 text-sm text-gray-300">
+        {sponsor.headline}
+      </p>
+
+      <div className="mt-3 space-y-1 text-xs text-gray-400">
+        <p>Categories: {sponsor.category}</p>
+        <p>Theme: {sponsor.theme || "default"}</p>
+        <p>Status: {getSponsorStatus(sponsor)}</p>
+      </div>
+    </button>
+  ))}
+</div>
+        <section className="hidden overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 md:block">
           <table className="w-full text-sm">
             <thead className="bg-gray-900 text-left text-gray-300">
               <tr>
