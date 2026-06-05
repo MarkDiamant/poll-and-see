@@ -415,14 +415,14 @@ export default function AdminSponsorsPage() {
         ) : null}
 
         <div className="mb-6 grid w-full max-w-full gap-5 overflow-x-hidden lg:grid-cols-[1.1fr_0.9fr]">
-          <section className="rounded-2xl border border-gray-700 bg-gray-800 p-5">
+          <section className="w-full min-w-0 max-w-full overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 p-4 md:p-5">
             <h2 className="mb-4 text-xl font-semibold">{form.id ? "Edit sponsor" : "New sponsor"}</h2>
 
             <div className="grid gap-3 md:grid-cols-2">
               <input className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none" placeholder="Business name" value={form.business_name} onChange={(e) => setForm({ ...form, business_name: e.target.value })} />
               <input className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none" placeholder="Headline" value={form.headline} onChange={(e) => setForm({ ...form, headline: e.target.value })} />
-              <input className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none" placeholder="Logo URL" value={form.logo_url} onChange={(e) => setForm({ ...form, logo_url: e.target.value })} />
-              <input className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none" placeholder="Destination URL" value={form.destination_url} onChange={(e) => setForm({ ...form, destination_url: e.target.value })} />
+              <input className="w-full min-w-0 rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none" placeholder="Logo URL" value={form.logo_url} onChange={(e) => setForm({ ...form, logo_url: e.target.value })} />
+              <input className="w-full min-w-0 rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none" placeholder="Destination URL" value={form.destination_url} onChange={(e) => setForm({ ...form, destination_url: e.target.value })} />
               <input className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none" placeholder="CTA text" value={form.cta_text} onChange={(e) => setForm({ ...form, cta_text: e.target.value })} />
 
               <select className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none" value={form.theme} onChange={(e) => setForm({ ...form, theme: e.target.value })}>
@@ -524,7 +524,7 @@ export default function AdminSponsorsPage() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-gray-700 bg-gray-800 p-5">
+          <section className="w-full min-w-0 max-w-full overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 p-4 md:p-5">
             <h2 className="mb-4 text-xl font-semibold">Live preview</h2>
 
             <a href={form.destination_url || "#"} className={`relative block overflow-hidden rounded-xl border p-4 transition ${theme.card}`}>
