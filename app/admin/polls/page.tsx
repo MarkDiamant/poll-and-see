@@ -905,7 +905,7 @@ className={`rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-lef
             </tbody>
           </table>
 
-          <div className="divide-y divide-gray-700 md:hidden">
+          <div className="space-y-3 p-3 md:hidden">
             {loading ? (
               <div className="px-4 py-6 text-center text-gray-300">
                 Loading polls...
@@ -923,7 +923,7 @@ className={`rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-lef
                 const pollUrl = buildPollUrl(poll.slug);
 
                 return (
-                  <div key={poll.id} className="space-y-4 p-4">
+                  <div key={poll.id} className="space-y-4 rounded-2xl border border-gray-700 bg-gray-900/70 p-4">
                     <div className="space-y-2">
                       <textarea
                         value={questionEdits[poll.id] ?? ""}
