@@ -376,8 +376,11 @@ export default function AdvertisePage() {
                 <p>
                   Choose the categories where you want your ad to appear, then choose how many days it should run. After that, create your ad with your business name, message, button text, logo and link.
                 </p>
+                <p>
+  We’ll confirm availability for your selected categories and dates, then send an invoice. Once paid, your ad can go live.
+</p>
 <p>
-  Poll & See has already recorded over {Math.floor((totalVoteCount || 0) / 500) * 500} votes and is growing fast week on week. Businesses can dramatically increase the reach of their campaign by creating and sharing polls with staff, customers, WhatsApp groups, social media and email lists, generating additional votes, engagement and advert views.
+  Poll & See has already recorded over {(Math.floor((totalVoteCount || 0) / 1000) * 1000).toLocaleString()} votes and is growing fast week on week. Businesses can dramatically increase the reach of their campaign by creating and sharing polls with staff, customers, WhatsApp groups, social media and email lists, generating additional votes, engagement and advert views.
 </p>
               </div>
             </section>
