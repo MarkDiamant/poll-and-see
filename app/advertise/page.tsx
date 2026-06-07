@@ -28,19 +28,19 @@ const THEME_OPTIONS = [
 ];
 
 const DAILY_PRICES: Record<number, number> = {
-  1: 25,
-  2: 45,
-  3: 65,
-  4: 85,
-  5: 100,
-  6: 115,
-  7: 130,
-  8: 145,
-  9: 160,
-  10: 170,
-  11: 180,
-  12: 190,
-  13: 195,
+  1: 15,
+  2: 28,
+  3: 40,
+  4: 50,
+  5: 59,
+  6: 67,
+  7: 74,
+  8: 80,
+  9: 85,
+  10: 89,
+  11: 92,
+  12: 94,
+  13: 95,
 };
 
 function getDiscount(days: number) {
@@ -376,9 +376,9 @@ export default function AdvertisePage() {
                 <p>
                   Choose the categories where you want your ad to appear, then choose how many days it should run. After that, create your ad with your business name, message, button text, logo and link.
                 </p>
-                <p>
-                  We’ll confirm availability for your selected categories and dates, then send an invoice. Once paid, your ad can go live.
-                </p>
+<p>
+  Poll & See has already recorded over {Math.floor((totalVoteCount || 0) / 500) * 500} votes and is growing fast week on week. Businesses can dramatically increase the reach of their campaign by creating and sharing polls with staff, customers, WhatsApp groups, social media and email lists, generating additional votes, engagement and advert views.
+</p>
               </div>
             </section>
 
@@ -388,11 +388,11 @@ export default function AdvertisePage() {
               <div className="mb-5 grid gap-3 rounded-2xl border border-gray-700 bg-gray-900 p-4 text-sm text-gray-300 md:grid-cols-2">
                 <div>
                   <p className="mb-2 font-medium text-white">Category pricing guide</p>
-                  <p>1: £25/day</p>
-                  <p>2: £45/day</p>
-                  <p>3: £65/day</p>
-                  <p>4+: lower rate per extra category</p>
-                  <p>13 categories: £195/day</p>
+<p>1: £15/day</p>
+<p>2: £28/day</p>
+<p>3: £40/day</p>
+<p>4+: lower rate per extra category</p>
+<p>13 categories: £95/day</p>
                 </div>
 
                 <div>
