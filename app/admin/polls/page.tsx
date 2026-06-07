@@ -935,7 +935,7 @@ className={`rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-lef
                           }))
                         }
                         onBlur={() => void updatePoll(poll.id)}
-                        className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                        className="h-[76px] w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
                       />
 
                       <textarea
@@ -947,8 +947,8 @@ className={`rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-lef
                           }))
                         }
                         onBlur={() => void updatePoll(poll.id)}
-                        rows={2}
-                        className="w-full resize-none rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                        rows={1}
+                        className="h-[38px] w-full resize-none rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
                       />
 
                       <p className="text-xs text-gray-400">
@@ -968,7 +968,7 @@ className={`rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-lef
                       {(optionEdits[poll.id] || []).map((option, optionIndex) => (
                         <div
                           key={`${poll.id}-${option.id || `new-${optionIndex}`}`}
-                          className="grid grid-cols-[1fr_auto] gap-1.5 rounded-lg border border-gray-700 bg-black/20 p-2"
+                          className="grid grid-cols-[minmax(0,1fr)_64px_auto] items-center gap-1.5 rounded-lg border border-gray-700 bg-black/20 p-2"
                         >
                           <input
                             type="text"
@@ -979,8 +979,21 @@ className={`rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-lef
                             onBlur={(event) => {
                               saveOptionText(poll.id, optionIndex, event.target.value);
                             }}
-                            className="min-w-0 rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
+                            className="h-8 min-w-0 rounded-lg border border-gray-700 bg-gray-900 px-2 py-1 text-xs text-white outline-none transition focus:border-gray-500"
                             placeholder="Option text"
+                          />
+
+                          <input
+                            type="text"
+                            value={option.image_url || ""}
+                            onChange={(event) => {
+                              updateOptionImageUrl(poll.id, optionIndex, event.target.value);
+                            }}
+                            onBlur={(event) => {
+                              saveOptionImageUrl(poll.id, optionIndex, event.target.value);
+                            }}
+                            className="h-8 rounded-lg border border-gray-700 bg-gray-900 px-2 py-1 text-xs text-white outline-none transition focus:border-gray-500"
+                            placeholder="Img"
                           />
 
                           <div className="flex items-center justify-end gap-1.5 whitespace-nowrap text-[11px] text-gray-400">
@@ -1009,19 +1022,6 @@ className={`rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-lef
                               </button>
                             ) : null}
                           </div>
-
-                          <input
-                            type="text"
-                            value={option.image_url || ""}
-                            onChange={(event) => {
-                              updateOptionImageUrl(poll.id, optionIndex, event.target.value);
-                            }}
-                            onBlur={(event) => {
-                              saveOptionImageUrl(poll.id, optionIndex, event.target.value);
-                            }}
-                            className="col-span-2 rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
-                            placeholder="Image URL optional"
-                          />
                         </div>
                       ))}
 
