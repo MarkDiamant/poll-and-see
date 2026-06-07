@@ -607,8 +607,8 @@ const sortedPolls = useMemo(() => {
           </div>
         ) : null}
 
-        <div className="overflow-x-auto rounded-2xl border border-gray-700 bg-gray-800 shadow-lg md:overflow-visible">
-  <table className="min-w-[900px] text-sm md:w-full">
+        <div className="rounded-2xl border border-gray-700 bg-gray-800 shadow-lg">
+  <table className="hidden min-w-[900px] text-sm md:table md:w-full">
             <thead className="sticky top-0 z-10 bg-gray-900/95 text-left text-gray-300">
               <tr>
                 <th className="px-4 py-3 font-medium">Poll</th>
@@ -684,11 +684,11 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
                       </td>
 
                       <td className="px-4 py-4 align-top">
-                      <div className="min-w-[260px] max-w-[300px] space-y-2">
+                      <div className="min-w-[320px] max-w-[380px] space-y-1.5">
  {(optionEdits[poll.id] || []).map((option, optionIndex) => (
 <div
   key={`${poll.id}-${option.id || `new-${optionIndex}`}`}
- className="flex flex-col gap-2"
+ className="grid grid-cols-[1fr_78px_auto] items-center gap-1.5"
 >
 <input
   type="text"
@@ -712,11 +712,11 @@ onBlur={(event) => {
 onBlur={(event) => {
   saveOptionImageUrl(poll.id, optionIndex, event.target.value);
 }}
-  className="w-[84px] rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
-  placeholder="Image URL (optional)"
+  className="w-full rounded-lg border border-gray-700 bg-black/20 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
+  placeholder="Image"
 />
 
- <div className="flex h-full items-center justify-start gap-2 self-center whitespace-nowrap text-[11px] text-gray-400">
+ <div className="flex items-center justify-end gap-1.5 whitespace-nowrap text-[11px] text-gray-400">
   <span>{option.vote_count}</span>
 {(optionEdits[poll.id] || []).length > 2 ? (
   <button
@@ -904,6 +904,279 @@ className={`rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-lef
                 })}
             </tbody>
           </table>
+
+          <div className="divide-y divide-gray-700 md:hidden">
+            {loading ? (
+              <div className="px-4 py-6 text-center text-gray-300">
+                Loading polls...
+              </div>
+            ) : null}
+
+            {!loading && sortedPolls.length === 0 ? (
+              <div className="px-4 py-6 text-center text-gray-300">
+                No polls found.
+              </div>
+            ) : null}
+
+            {!loading &&
+              sortedPolls.map((poll) => {
+                const pollUrl = buildPollUrl(poll.slug);
+
+                return (
+                  <div key={poll.id} className="space-y-4 p-4">
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={questionEdits[poll.id] ?? ""}
+                        onChange={(event) =>
+                          setQuestionEdits((current) => ({
+                            ...current,
+                            [poll.id]: event.target.value,
+                          }))
+                        }
+                        onBlur={() => void updatePoll(poll.id)}
+                        className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                      />
+
+                      <textarea
+                        value={descriptionEdits[poll.id] ?? ""}
+                        onChange={(event) =>
+                          setDescriptionEdits((current) => ({
+                            ...current,
+                            [poll.id]: event.target.value,
+                          }))
+                        }
+                        onBlur={() => void updatePoll(poll.id)}
+                        rows={2}
+                        className="w-full resize-none rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                      />
+
+                      <p className="text-xs text-gray-400">
+                        Poll ID {poll.id}
+                        {poll.created_at
+                          ? ` • ${new Date(poll.created_at).toLocaleString()}`
+                          : ""}
+                        {poll.slug ? ` • /poll/${poll.slug}` : ""}
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                        Options
+                      </p>
+
+                      {(optionEdits[poll.id] || []).map((option, optionIndex) => (
+                        <div
+                          key={`${poll.id}-${option.id || `new-${optionIndex}`}`}
+                          className="grid grid-cols-[1fr_auto] gap-1.5 rounded-lg border border-gray-700 bg-black/20 p-2"
+                        >
+                          <input
+                            type="text"
+                            value={option.option_text}
+                            onChange={(event) => {
+                              updateOptionText(poll.id, optionIndex, event.target.value);
+                            }}
+                            onBlur={(event) => {
+                              saveOptionText(poll.id, optionIndex, event.target.value);
+                            }}
+                            className="min-w-0 rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
+                            placeholder="Option text"
+                          />
+
+                          <div className="flex items-center justify-end gap-1.5 whitespace-nowrap text-[11px] text-gray-400">
+                            <span>{option.vote_count}</span>
+                            {(optionEdits[poll.id] || []).length > 2 ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const next = [...(optionEdits[poll.id] || [])];
+                                  next.splice(optionIndex, 1);
+
+                                  setOptionEdits((current) => ({
+                                    ...current,
+                                    [poll.id]: next,
+                                  }));
+
+                                  void updatePoll(poll.id, {
+                                    option_updates: next,
+                                  });
+                                }}
+                                className="cursor-pointer text-sm font-bold leading-none text-red-400 hover:text-red-300"
+                                aria-label="Remove option"
+                                title="Remove option"
+                              >
+                                X
+                              </button>
+                            ) : null}
+                          </div>
+
+                          <input
+                            type="text"
+                            value={option.image_url || ""}
+                            onChange={(event) => {
+                              updateOptionImageUrl(poll.id, optionIndex, event.target.value);
+                            }}
+                            onBlur={(event) => {
+                              saveOptionImageUrl(poll.id, optionIndex, event.target.value);
+                            }}
+                            className="col-span-2 rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-gray-500"
+                            placeholder="Image URL optional"
+                          />
+                        </div>
+                      ))}
+
+                      <button
+                        type="button"
+                        onClick={() => addOptionRow(poll.id)}
+                        className="rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800"
+                      >
+                        Add option
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-300">
+                      <div className="space-y-1">
+                        <span className="text-gray-400">Category</span>
+                        <select
+                          value={categoryEdits[poll.id] || "General"}
+                          onChange={(event) => {
+                            const nextCategory = event.target.value as CategoryOption;
+                            setCategoryEdits((current) => ({
+                              ...current,
+                              [poll.id]: nextCategory,
+                            }));
+                            void updatePoll(poll.id, { category: nextCategory });
+                          }}
+                          className="w-full rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-xs text-white outline-none"
+                        >
+                          {CATEGORY_OPTIONS.map((category) => (
+                            <option key={category} value={category}>
+                              {category}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <span className="text-gray-400">Privacy</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const nextPrivate = !privacyEdits[poll.id];
+                            setPrivacyEdits((current) => ({
+                              ...current,
+                              [poll.id]: nextPrivate,
+                            }));
+                            void updatePoll(poll.id, { is_private: nextPrivate });
+                          }}
+                          className={`w-full rounded-lg px-2 py-1.5 text-left text-xs font-medium transition ${
+                            privacyEdits[poll.id]
+                              ? "bg-white text-black hover:bg-gray-200"
+                              : "border border-gray-700 bg-gray-900 text-white hover:bg-gray-800"
+                          }`}
+                        >
+                          {privacyEdits[poll.id] ? "Private" : "Public"}
+                        </button>
+                      </div>
+
+                      <div className="space-y-1">
+                        <span className="text-gray-400">Featured</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const nextFeatured = !featuredEdits[poll.id];
+                            setFeaturedEdits((current) => ({
+                              ...current,
+                              [poll.id]: nextFeatured,
+                            }));
+                            void updatePoll(poll.id, { featured: nextFeatured });
+                          }}
+                          className={`w-full rounded-lg px-2 py-1.5 text-left text-xs font-medium transition ${
+                            featuredEdits[poll.id]
+                              ? "bg-white text-black hover:bg-gray-200"
+                              : "border border-gray-700 bg-gray-900 text-white hover:bg-gray-800"
+                          }`}
+                        >
+                          {featuredEdits[poll.id] ? "Featured" : "Not featured"}
+                        </button>
+                      </div>
+
+                      <div className="space-y-1">
+                        <span className="text-gray-400">Embed</span>
+                        <select
+                          value={embedStatusEdits[poll.id] || "inactive"}
+                          onChange={(event) => {
+                            const nextEmbedStatus = event.target.value as EmbedStatus;
+                            setEmbedStatusEdits((current) => ({
+                              ...current,
+                              [poll.id]: nextEmbedStatus,
+                            }));
+                            void updatePoll(poll.id, { embedStatus: nextEmbedStatus });
+                          }}
+                          className="w-full rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-xs text-white outline-none"
+                        >
+                          <option value="live">Live</option>
+                          <option value="closed">Closed</option>
+                          <option value="inactive">Inactive</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void handleCopy(
+                            `share:${poll.id}`,
+                            buildPollShareText(questionEdits[poll.id] || poll.question, pollUrl)
+                          )
+                        }
+                        className="rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800"
+                      >
+                        {copiedKey === `share:${poll.id}` ? "Copied share text" : "Copy share text"}
+                      </button>
+
+                      <a
+                        href={pollUrl || "#"}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={`rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800 ${
+                          !pollUrl ? "pointer-events-none opacity-40" : ""
+                        }`}
+                      >
+                        Open poll
+                      </a>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void handleCopy(
+                            `iframe-dark:${poll.id}`,
+                            buildIframeCode(poll.embed_token, "dark")
+                          )
+                        }
+                        className="rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800"
+                      >
+                        {copiedKey === `iframe-dark:${poll.id}` ? "Copied dark iframe" : "Copy dark iframe"}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void handleCopy(
+                            `iframe-light:${poll.id}`,
+                            buildIframeCode(poll.embed_token, "light")
+                          )
+                        }
+                        className="rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-left text-xs font-medium text-white transition hover:bg-gray-800"
+                      >
+                        {copiedKey === `iframe-light:${poll.id}` ? "Copied light iframe" : "Copy light iframe"}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
         </div>
       </section>
 
