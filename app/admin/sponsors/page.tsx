@@ -17,6 +17,8 @@ type SponsorRow = {
   is_active: boolean;
   created_at: string | null;
   theme: string | null;
+  total_impressions?: number;
+  total_clicks?: number;
 };
 
 const ADMIN_KEY_STORAGE = "pollandsee-admin-key";
@@ -587,6 +589,8 @@ export default function AdminSponsorsPage() {
   <p className="break-words">Categories: {sponsor.category}</p>
   <p>Theme: {sponsor.theme || "default"}</p>
   <p>Status: {getSponsorStatus(sponsor)}</p>
+  <p>Impressions: {(sponsor.total_impressions || 0).toLocaleString()}</p>
+  <p>Clicks: {(sponsor.total_clicks || 0).toLocaleString()}</p>
 </div>
     </button>
   ))}
@@ -598,6 +602,8 @@ export default function AdminSponsorsPage() {
                 <th className="px-4 py-3 font-medium">Sponsor</th>
                 <th className="px-4 py-3 font-medium">Categories</th>
                 <th className="px-4 py-3 font-medium">Theme</th>
+                <th className="px-4 py-3 font-medium">Impressions</th>
+                <th className="px-4 py-3 font-medium">Clicks</th>
                 <th className="px-4 py-3 font-medium">Status</th>
               </tr>
             </thead>
@@ -614,6 +620,8 @@ export default function AdminSponsorsPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-300">{sponsor.category}</td>
                   <td className="px-4 py-3 text-gray-300">{sponsor.theme || "default"}</td>
+                  <td className="px-4 py-3 text-gray-300">{(sponsor.total_impressions || 0).toLocaleString()}</td>
+                  <td className="px-4 py-3 text-gray-300">{(sponsor.total_clicks || 0).toLocaleString()}</td>
                   <td className="px-4 py-3 text-gray-300">{getSponsorStatus(sponsor)}</td>
                 </tr>
               ))}
