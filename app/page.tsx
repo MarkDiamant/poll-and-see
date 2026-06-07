@@ -1244,20 +1244,10 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
 
       <section id="live-polls" className="mx-auto max-w-6xl scroll-mt-6 px-6 pb-6">
         <div className="mb-5">
-          <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[auto_minmax(240px,380px)_auto] lg:items-center lg:gap-4">
+          <div className="flex items-center justify-between gap-4">
             <h3 className="text-2xl font-semibold">Live Polls</h3>
 
-            <div className="w-full lg:justify-self-center">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Search polls..."
-                className="mx-auto h-10 w-full rounded-xl border border-gray-700 bg-gray-800 px-4 text-sm text-white outline-none transition placeholder:text-base placeholder:text-gray-400 focus:border-gray-500"
-              />
-            </div>
-
-            <span className="text-base font-medium text-gray-300 lg:justify-self-end">
+            <span className="text-base font-medium text-gray-300">
               {activePollCount} active polls
             </span>
           </div>
@@ -1317,6 +1307,16 @@ className={`h-8 cursor-pointer rounded-lg border px-3 text-xs font-medium transi
                 </button>
               );
             })}
+          </div>
+
+          <div className="mx-auto mt-4 max-w-[520px]">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search polls..."
+              className="h-10 w-full rounded-xl border border-gray-700 bg-gray-800 px-4 text-sm text-white outline-none transition placeholder:text-base placeholder:text-gray-400 focus:border-gray-500"
+            />
           </div>
         </div>
 
