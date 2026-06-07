@@ -925,8 +925,7 @@ className={`rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-lef
                 return (
                   <div key={poll.id} className="space-y-4 p-4">
                     <div className="space-y-2">
-                      <input
-                        type="text"
+                      <textarea
                         value={questionEdits[poll.id] ?? ""}
                         onChange={(event) =>
                           setQuestionEdits((current) => ({
@@ -935,7 +934,8 @@ className={`rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-lef
                           }))
                         }
                         onBlur={() => void updatePoll(poll.id)}
-                        className="h-[76px] w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
+                        rows={2}
+                        className="h-[58px] w-full resize-none rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm leading-5 text-white outline-none transition focus:border-gray-500"
                       />
 
                       <textarea
