@@ -52,6 +52,7 @@ export default function AdminSubmissionsPage() {
   const [searchInput, setSearchInput] = useState("");
   const [privacyFilter, setPrivacyFilter] = useState<"all" | "public" | "private">("all");
   const [categoryFilter, setCategoryFilter] = useState<"all" | CategoryOption>("all");
+  const [scheduleFilter, setScheduleFilter] = useState<"all" | "unscheduled" | "scheduled">("all");
   const [submissions, setSubmissions] = useState<PollSubmissionRow[]>([]);
   const [livePollCount, setLivePollCount] = useState(0);
   const [hiddenPollCount, setHiddenPollCount] = useState(0);
@@ -589,6 +590,8 @@ const hideSubmission = async (submissionId: number) => {
         if (privacyFilter === "public" && s.is_private) return false;
         if (privacyFilter === "private" && !s.is_private) return false;
         if (categoryFilter !== "all" && s.category !== categoryFilter) return false;
+        if (scheduleFilter === "scheduled" && s.status !== "scheduled") return false;
+        if (scheduleFilter === "unscheduled" && s.status === "scheduled") return false;
         return true;
       })
       .sort((a, b) => {
@@ -596,7 +599,7 @@ const hideSubmission = async (submissionId: number) => {
         const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
         return bTime - aTime;
       });
-  }, [submissions, privacyFilter, categoryFilter]);
+  }, [submissions, privacyFilter, categoryFilter, scheduleFilter]);
 
   if (!adminKey) {
     return (
@@ -711,30 +714,6 @@ const hideSubmission = async (submissionId: number) => {
               placeholder="Search submissions..."
               className="h-11 w-full min-w-[260px] rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500 md:w-[320px]"
             />
-
-            <select
-              value={privacyFilter}
-              onChange={(event) => setPrivacyFilter(event.target.value as "all" | "public" | "private")}
-              className="h-11 rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm text-white outline-none"
-            >
-              <option value="all">All</option>
-              <option value="public">Public</option>
-              <option value="private">Private</option>
-            </select>
-
-            <select
-              value={categoryFilter}
-              onChange={(event) => setCategoryFilter(event.target.value as "all" | CategoryOption)}
-              className="h-11 rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm text-white outline-none"
-            >
-              <option value="all">All categories</option>
-              {CATEGORY_OPTIONS.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
-
             <button
               type="button"
               onClick={handleLogout}
@@ -848,7 +827,7 @@ const hideSubmission = async (submissionId: number) => {
         </div>
 
         <div className="mb-4 rounded-2xl border border-gray-700 bg-gray-800 p-4">
-          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
             <div>
               <p className="mb-1 text-sm font-medium text-white">Bulk schedule selected polls</p>
               <p className="text-xs text-gray-400">
@@ -856,7 +835,42 @@ const hideSubmission = async (submissionId: number) => {
               </p>
             </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex flex-col gap-2 lg:flex-row lg:flex-wrap">
+              <select
+                value={privacyFilter}
+                onChange={(event) => setPrivacyFilter(event.target.value as "all" | "public" | "private")}
+                className="h-10 rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-white outline-none"
+              >
+                <option value="all">All privacy</option>
+                <option value="public">Public</option>
+                <option value="private">Private</option>
+              </select>
+
+              <select
+                value={categoryFilter}
+                onChange={(event) => setCategoryFilter(event.target.value as "all" | CategoryOption)}
+                className="h-10 rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-white outline-none"
+              >
+                <option value="all">All categories</option>
+                {CATEGORY_OPTIONS.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={scheduleFilter}
+                onChange={(event) =>
+                  setScheduleFilter(event.target.value as "all" | "unscheduled" | "scheduled")
+                }
+                className="h-10 rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-white outline-none"
+              >
+                <option value="all">All schedule status</option>
+                <option value="unscheduled">Unscheduled only</option>
+                <option value="scheduled">Scheduled only</option>
+              </select>
+
               <input
                 type="datetime-local"
                 value={bulkScheduleAt}
