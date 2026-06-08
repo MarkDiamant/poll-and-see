@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
 
 let query = supabaseAdmin
   .from("poll_submissions")
-  .select("id, poll_id, email, question, description, category, options, option_image_urls, is_private, status, created_at")
+  .select("id, poll_id, email, question, description, category, options, option_image_urls, is_private, status, scheduled_publish_at, created_at")
   .neq("status", "hidden")
   .order("created_at", { ascending: false });
 
@@ -248,8 +248,9 @@ const cleanedImageUrls = hasAnyImageUrls ? option_image_urls : [];
         option_image_urls: cleanedImageUrls.length > 0 ? cleanedImageUrls : null,
         is_private,
         status: "pending",
+        scheduled_publish_at: null,
       })
-      .select("id, poll_id, email, question, description, category, options, option_image_urls, is_private, status, created_at")
+      .select("id, poll_id, email, question, description, category, options, option_image_urls, is_private, status, scheduled_publish_at, created_at")
       .single();
 
     if (submissionInsertError || !submission) {

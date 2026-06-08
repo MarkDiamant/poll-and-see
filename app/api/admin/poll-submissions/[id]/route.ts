@@ -5,7 +5,8 @@ type SubmissionUpdatePayload = {
   question?: string;
   description?: string;
   slug?: string;
-  status?: "pending" | "ready";
+  status?: "pending" | "ready" | "scheduled" | "hidden";
+  scheduled_publish_at?: string | null;
   category?: string;
   is_private?: boolean;
   email?: string | null;
@@ -20,7 +21,7 @@ type SubmissionRow = {
   description: string | null;
   category: string | null;
   slug: string | null;
-  status: "pending" | "ready";
+  status: "pending" | "ready" | "scheduled" | "hidden";
   is_private: boolean | null;
 };
 
@@ -82,7 +83,7 @@ export async function PATCH(
 
     const { data: existingSubmission, error: existingSubmissionError } = await supabaseAdmin
       .from("poll_submissions")
-      .select("id, poll_id, question, description, category, slug, status, is_private")
+      .select("id, poll_id, question, description, category, slug, status, is_private, scheduled_publish_at")
       .eq("id", submissionId)
       .single();
 
@@ -142,11 +143,26 @@ export async function PATCH(
       if (
   body.status !== "pending" &&
   body.status !== "ready" &&
+  body.status !== "scheduled" &&
   body.status !== "hidden"
 ) {
         return NextResponse.json({ error: "Invalid status." }, { status: 400 });
       }
       updates.status = body.status;
+    }
+
+    if ("scheduled_publish_at" in body) {
+      if (!body.scheduled_publish_at) {
+        updates.scheduled_publish_at = null;
+      } else {
+        const scheduledDate = new Date(body.scheduled_publish_at);
+
+        if (Number.isNaN(scheduledDate.getTime())) {
+          return NextResponse.json({ error: "Invalid scheduled publish date." }, { status: 400 });
+        }
+
+        updates.scheduled_publish_at = scheduledDate.toISOString();
+      }
     }
 
     if ("category" in body) {
@@ -190,7 +206,7 @@ export async function PATCH(
       .from("poll_submissions")
       .update(updates)
       .eq("id", submissionId)
-      .select("id, email, question, description, category, options, option_image_urls, is_private, slug, status, created_at, poll_id")
+      .select("id, email, question, description, category, options, option_image_urls, is_private, slug, status, scheduled_publish_at, created_at, poll_id")
       .single();
 
     if (error || !data) {

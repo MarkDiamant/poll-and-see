@@ -15,7 +15,8 @@ type PollSubmissionRow = {
   option_image_urls: string[] | null;
   is_private: boolean | null;
   slug: string | null;
-  status: "pending" | "ready";
+  status: "pending" | "ready" | "scheduled";
+  scheduled_publish_at: string | null;
   created_at: string | null;
 };
 
@@ -31,6 +32,13 @@ function badge(count: number, isActive: boolean) {
       {count}
     </span>
   );
+}
+
+function formatDateTimeLocal(value: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 16);
 }
 
 function isNewSubmission(createdAt: string | null) {
@@ -54,6 +62,7 @@ export default function AdminSubmissionsPage() {
   const [emailEdits, setEmailEdits] = useState<Record<number, string>>({});
   const [categoryEdits, setCategoryEdits] = useState<Record<number, CategoryOption>>({});
   const [privacyEdits, setPrivacyEdits] = useState<Record<number, boolean>>({});
+  const [scheduledPublishEdits, setScheduledPublishEdits] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(false);
   const [savingKey, setSavingKey] = useState("");
   const [error, setError] = useState("");
@@ -168,6 +177,14 @@ setSubmissions(nextSubmissions);
               nextSubmissions.map((row: PollSubmissionRow) => [row.id, Boolean(row.is_private)])
             )
           );
+          setScheduledPublishEdits(
+            Object.fromEntries(
+              nextSubmissions.map((row: PollSubmissionRow) => [
+                row.id,
+                formatDateTimeLocal(row.scheduled_publish_at),
+              ])
+            )
+          );
         } else {
           setQuestionEdits((current) => {
             const next = { ...current };
@@ -224,6 +241,14 @@ setSubmissions(nextSubmissions);
             });
             return next;
           });
+
+          setScheduledPublishEdits((current) => {
+            const next = { ...current };
+            nextSubmissions.forEach((row: PollSubmissionRow) => {
+              if (next[row.id] === undefined) next[row.id] = formatDateTimeLocal(row.scheduled_publish_at);
+            });
+            return next;
+          });
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Could not load submissions.");
@@ -270,6 +295,7 @@ return () => {
     setEmailEdits({});
     setCategoryEdits({});
     setPrivacyEdits({});
+    setScheduledPublishEdits({});
     setError("");
   };
 
@@ -288,6 +314,8 @@ return () => {
       email: string;
       options: string[];
       option_image_urls: string[];
+      status: "pending" | "ready" | "scheduled" | "hidden";
+      scheduled_publish_at: string | null;
     }> = {}
   ) => {
     setSavingKey(`save:${submissionId}`);
@@ -315,6 +343,10 @@ return () => {
             (imageUrlEdits[submissionId] || "")
               .split("\n")
               .map((item) => item.trim()),
+          ...(overrides.status ? { status: overrides.status } : {}),
+          ...("scheduled_publish_at" in overrides
+            ? { scheduled_publish_at: overrides.scheduled_publish_at }
+            : {}),
         }),
       });
 
@@ -331,6 +363,27 @@ return () => {
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save submission.");
+    } finally {
+      setSavingKey("");
+    }
+  };
+
+  const scheduleSubmission = async (submissionId: number) => {
+    const value = scheduledPublishEdits[submissionId];
+
+    if (!value) {
+      setError("Choose a schedule date and time first.");
+      return;
+    }
+
+    setSavingKey(`schedule:${submissionId}`);
+    setError("");
+
+    try {
+      await saveSubmission(submissionId, {
+        status: "scheduled",
+        scheduled_publish_at: new Date(value).toISOString(),
+      });
     } finally {
       setSavingKey("");
     }
@@ -419,6 +472,10 @@ const createSubmission = async () => {
       setPrivacyEdits((current) => ({
         ...current,
         [data.submission.id]: Boolean(data.submission.is_private),
+      }));
+      setScheduledPublishEdits((current) => ({
+        ...current,
+        [data.submission.id]: formatDateTimeLocal(data.submission.scheduled_publish_at),
       }));
 
       setNewQuestion("");
@@ -583,6 +640,13 @@ const hideSubmission = async (submissionId: number) => {
                 <span>Submissions</span>
                 {badge(sortedSubmissions.length, true)}
               </Link>
+<Link
+  href="/admin/schedule"
+  className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+>
+  <span>Scheduled</span>
+</Link>
+
 <Link
   href="/admin/hidden"
   className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
@@ -943,6 +1007,38 @@ className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 
                     />
                   </div>
 
+                  <div>
+                    <p className="mb-1 text-xs text-gray-400">Schedule approval</p>
+                    <div className="grid grid-cols-[1fr_auto] gap-2">
+                      <input
+                        type="datetime-local"
+                        value={scheduledPublishEdits[submission.id] || ""}
+                        onChange={(event) =>
+                          setScheduledPublishEdits((current) => ({
+                            ...current,
+                            [submission.id]: event.target.value,
+                          }))
+                        }
+                        className="h-10 w-full cursor-pointer rounded-lg border border-gray-700 bg-gray-900 px-2 text-xs text-white outline-none [color-scheme:dark]"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => void scheduleSubmission(submission.id)}
+                        disabled={savingKey === `schedule:${submission.id}`}
+                        className="cursor-pointer rounded-lg border border-blue-600 bg-blue-900 px-3 py-2 text-xs font-medium text-blue-100 transition hover:bg-blue-800 disabled:opacity-60"
+                      >
+                        Schedule
+                      </button>
+                    </div>
+
+                    {submission.status === "scheduled" && submission.scheduled_publish_at ? (
+                      <p className="mt-1 text-xs text-blue-300">
+                        Scheduled for {new Date(submission.scheduled_publish_at).toLocaleString()}
+                      </p>
+                    ) : null}
+                  </div>
+
                   <div className="grid grid-cols-2 gap-2 pt-2">
                     <a
                       href={submission.slug ? `/poll/${submission.slug}` : "#"}
@@ -1190,6 +1286,27 @@ className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 
                             placeholder="No email"
                           />
                         </div>
+
+                        <div className="col-span-2 space-y-1">
+                          <span className="text-gray-400">Schedule approval</span>
+                          <input
+                            type="datetime-local"
+                            value={scheduledPublishEdits[submission.id] || ""}
+                            onChange={(event) =>
+                              setScheduledPublishEdits((current) => ({
+                                ...current,
+                                [submission.id]: event.target.value,
+                              }))
+                            }
+                            className="w-full cursor-pointer rounded-lg border border-gray-700 bg-gray-900 px-3 py-1.5 text-xs text-white outline-none [color-scheme:dark]"
+                          />
+
+                          {submission.status === "scheduled" && submission.scheduled_publish_at ? (
+                            <p className="text-xs text-blue-300">
+                              Scheduled for {new Date(submission.scheduled_publish_at).toLocaleString()}
+                            </p>
+                          ) : null}
+                        </div>
                       </div>
                     </td>
 
@@ -1214,6 +1331,15 @@ className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 
                           className="cursor-pointer rounded-lg bg-white px-2 py-1.5 text-left text-xs font-medium text-black transition hover:bg-gray-200 disabled:opacity-40"
                         >
                           Approve
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => void scheduleSubmission(submission.id)}
+                          disabled={savingKey === `schedule:${submission.id}`}
+                          className="cursor-pointer rounded-lg border border-blue-600 bg-blue-900 px-2 py-1.5 text-left text-xs font-medium text-blue-100 transition hover:bg-blue-800 disabled:opacity-60"
+                        >
+                          Schedule
                         </button>
 
 <button
