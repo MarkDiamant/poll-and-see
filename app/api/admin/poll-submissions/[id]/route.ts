@@ -210,7 +210,10 @@ export async function PATCH(
       .single();
 
     if (error || !data) {
-      return NextResponse.json({ error: "Could not update submission." }, { status: 500 });
+      return NextResponse.json(
+        { error: error?.message || "Could not update submission." },
+        { status: 500 }
+      );
     }
 
     if (typedSubmission.poll_id) {
