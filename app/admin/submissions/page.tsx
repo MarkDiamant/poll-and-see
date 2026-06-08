@@ -76,6 +76,8 @@ const savingKeyRef = useRef("");
   const [newImageUrls, setNewImageUrls] = useState("");
   const [creatingSubmission, setCreatingSubmission] = useState(false);
   const [createError, setCreateError] = useState("");
+  const [selectedSubmissionIds, setSelectedSubmissionIds] = useState<number[]>([]);
+  const [bulkScheduleAt, setBulkScheduleAt] = useState("");
 
   useEffect(() => {
     const saved = sessionStorage.getItem(ADMIN_KEY_STORAGE) || "";
@@ -384,6 +386,38 @@ return () => {
         status: "scheduled",
         scheduled_publish_at: new Date(value).toISOString(),
       });
+    } finally {
+      setSavingKey("");
+    }
+  };
+
+  const bulkScheduleSubmissions = async () => {
+    if (selectedSubmissionIds.length === 0) {
+      setError("Select at least one submission first.");
+      return;
+    }
+
+    if (!bulkScheduleAt) {
+      setError("Choose a bulk schedule date and time first.");
+      return;
+    }
+
+    setSavingKey("bulk-schedule");
+    setError("");
+
+    try {
+      await Promise.all(
+        selectedSubmissionIds.map((submissionId) =>
+          saveSubmission(submissionId, {
+            status: "scheduled",
+            scheduled_publish_at: new Date(bulkScheduleAt).toISOString(),
+          })
+        )
+      );
+
+      setSelectedSubmissionIds([]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not bulk schedule submissions.");
     } finally {
       setSavingKey("");
     }
@@ -813,6 +847,43 @@ const hideSubmission = async (submissionId: number) => {
           </div>
         </div>
 
+        <div className="mb-4 rounded-2xl border border-gray-700 bg-gray-800 p-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="mb-1 text-sm font-medium text-white">Bulk schedule selected polls</p>
+              <p className="text-xs text-gray-400">
+                {selectedSubmissionIds.length} selected
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <input
+                type="datetime-local"
+                value={bulkScheduleAt}
+                onChange={(event) => setBulkScheduleAt(event.target.value)}
+                className="h-10 cursor-pointer rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-white outline-none [color-scheme:dark]"
+              />
+
+              <button
+                type="button"
+                onClick={() => void bulkScheduleSubmissions()}
+                disabled={savingKey === "bulk-schedule"}
+                className="h-10 cursor-pointer rounded-lg bg-blue-600 px-4 text-sm font-medium text-white transition hover:bg-blue-500 disabled:opacity-50"
+              >
+                Schedule selected
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedSubmissionIds([])}
+                className="h-10 cursor-pointer rounded-lg border border-gray-700 bg-gray-900 px-4 text-sm font-medium text-white transition hover:bg-gray-800"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        </div>
+
 {error ? (
   <div className="mb-4 rounded-xl border border-red-500 bg-red-900 px-4 py-3 text-sm text-red-100 font-medium">
     ⚠️ {error}
@@ -836,7 +907,22 @@ const hideSubmission = async (submissionId: number) => {
             sortedSubmissions.map((submission) => (
               <div key={submission.id} className="rounded-2xl border border-gray-700 bg-gray-800 p-4 shadow-lg">
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <div className="min-w-0">
+                  <label className="flex shrink-0 cursor-pointer items-center gap-2 text-xs text-gray-300">
+                    <input
+                      type="checkbox"
+                      checked={selectedSubmissionIds.includes(submission.id)}
+                      onChange={(event) => {
+                        setSelectedSubmissionIds((current) =>
+                          event.target.checked
+                            ? [...current, submission.id]
+                            : current.filter((id) => id !== submission.id)
+                        );
+                      }}
+                    />
+                    Select
+                  </label>
+
+                  <div className="min-w-0 flex-1">
                     <p className="text-xs text-gray-400">Submission ID {submission.id}</p>
                     {submission.created_at ? (
                       <p className="mt-0.5 text-[11px] text-gray-500">
@@ -1087,6 +1173,22 @@ className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 
           <table className="min-w-full text-sm">
             <thead className="sticky top-0 z-10 bg-gray-900/95 text-left text-gray-300">
               <tr>
+                <th className="px-4 py-3 font-medium">
+                  <input
+                    type="checkbox"
+                    checked={
+                      sortedSubmissions.length > 0 &&
+                      sortedSubmissions.every((submission) =>
+                        selectedSubmissionIds.includes(submission.id)
+                      )
+                    }
+                    onChange={(event) => {
+                      setSelectedSubmissionIds(
+                        event.target.checked ? sortedSubmissions.map((submission) => submission.id) : []
+                      );
+                    }}
+                  />
+                </th>
                 <th className="px-4 py-3 font-medium">Poll</th>
                 <th className="px-4 py-3 font-medium">Options / Images</th>
                 <th className="px-4 py-3 font-medium">Settings</th>
@@ -1097,7 +1199,7 @@ className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-gray-300">
+                  <td colSpan={5} className="px-4 py-6 text-center text-gray-300">
                     Loading submissions...
                   </td>
                 </tr>
@@ -1105,7 +1207,7 @@ className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 
 
               {!loading && sortedSubmissions.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-gray-300">
+                  <td colSpan={5} className="px-4 py-6 text-center text-gray-300">
                     No submissions waiting.
                   </td>
                 </tr>
@@ -1119,6 +1221,20 @@ className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 
                       index % 2 === 0 ? "bg-gray-800" : "bg-black/40"
                     }`}
                   >
+                    <td className="px-4 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedSubmissionIds.includes(submission.id)}
+                        onChange={(event) => {
+                          setSelectedSubmissionIds((current) =>
+                            event.target.checked
+                              ? [...current, submission.id]
+                              : current.filter((id) => id !== submission.id)
+                          );
+                        }}
+                      />
+                    </td>
+
                     <td className="px-4 py-4">
                       <div className="min-w-[380px] max-w-[460px] space-y-2">
                         <input
