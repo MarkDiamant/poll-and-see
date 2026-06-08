@@ -1065,7 +1065,7 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
 
         <div className="relative rounded-2xl bg-gray-800 p-5 shadow-lg overflow-hidden">
           <div className="mb-3 flex items-center gap-2 pr-2">
-            <span className="-ml-5 inline-flex h-8 items-center rounded-r-full bg-white px-4 text-sm font-semibold tracking-[0.04em] text-black">
+            <span className="-ml-5 inline-flex h-8 shrink-0 items-center rounded-r-full bg-white px-3 text-[11px] font-semibold tracking-[0.04em] text-black sm:px-4 sm:text-sm">
               FEATURED POLL
             </span>
 
@@ -1083,7 +1083,9 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
             ) : null}
 
             {featuredPoll && totalFeaturedVotes >= 50 ? (
-              <span className="ml-auto text-sm text-gray-400">{totalFeaturedVotes} votes</span>
+              <span className="ml-auto shrink-0 whitespace-nowrap text-sm text-gray-400">
+                {totalFeaturedVotes} votes
+              </span>
             ) : null}
 
             {featuredBadge ? (
