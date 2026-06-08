@@ -874,6 +874,8 @@ const hideSubmission = async (submissionId: number) => {
               <input
                 type="datetime-local"
                 value={bulkScheduleAt}
+                onClick={(event) => event.currentTarget.showPicker?.()}
+                onFocus={(event) => event.currentTarget.showPicker?.()}
                 onChange={(event) => setBulkScheduleAt(event.target.value)}
                 className="h-10 cursor-pointer rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-white outline-none [color-scheme:dark]"
               />
@@ -1113,6 +1115,8 @@ className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 
                       <input
                         type="datetime-local"
                         value={scheduledPublishEdits[submission.id] || ""}
+                        onClick={(event) => event.currentTarget.showPicker?.()}
+                        onFocus={(event) => event.currentTarget.showPicker?.()}
                         onChange={(event) =>
                           setScheduledPublishEdits((current) => ({
                             ...current,
@@ -1422,6 +1426,8 @@ className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 
                           <input
                             type="datetime-local"
                             value={scheduledPublishEdits[submission.id] || ""}
+                            onClick={(event) => event.currentTarget.showPicker?.()}
+                            onFocus={(event) => event.currentTarget.showPicker?.()}
                             onChange={(event) =>
                               setScheduledPublishEdits((current) => ({
                                 ...current,
