@@ -308,11 +308,15 @@ return () => {
           is_private: overrides.is_private ?? Boolean(privacyEdits[pollId]),
           featured: overrides.featured ?? Boolean(featuredEdits[pollId]),
           ...getEmbedPayload(overrides.embedStatus ?? embedStatusEdits[pollId] ?? "inactive"),
-          option_updates: (overrides.option_updates ?? optionEdits[pollId] ?? []).map((option) => ({
-            id: option.id || null,
-            option_text: option.option_text,
-            image_url: option.image_url || null,
-          })),
+          ...("option_updates" in overrides
+            ? {
+                option_updates: (overrides.option_updates || []).map((option) => ({
+                  id: option.id || null,
+                  option_text: option.option_text,
+                  image_url: option.image_url || null,
+                })),
+              }
+            : {}),
         }),
       });
 
@@ -639,6 +643,7 @@ const sortedPolls = useMemo(() => {
                 sortedPolls.map((poll, index) => {
                   const pollUrl = buildPollUrl(poll.slug);
                   const iframeCode = buildIframeCode(poll.embed_token);
+                  const visibleOptions = optionEdits[poll.id]?.length ? optionEdits[poll.id] : poll.options || [];
 
                   return (
                     <tr
@@ -685,7 +690,7 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
 
                       <td className="px-4 py-4 align-top">
                       <div className="min-w-[320px] max-w-[380px] space-y-1.5">
- {(optionEdits[poll.id] || []).map((option, optionIndex) => (
+ {visibleOptions.map((option, optionIndex) => (
 <div
   key={`${poll.id}-${option.id || `new-${optionIndex}`}`}
  className="grid grid-cols-[1fr_78px_auto] items-center gap-1.5"
@@ -718,11 +723,11 @@ onBlur={(event) => {
 
  <div className="flex items-center justify-end gap-1.5 whitespace-nowrap text-[11px] text-gray-400">
   <span>{option.vote_count}</span>
-{(optionEdits[poll.id] || []).length > 2 ? (
+{visibleOptions.length > 2 ? (
   <button
     type="button"
     onClick={() => {
-      const next = [...(optionEdits[poll.id] || [])];
+      const next = [...visibleOptions];
       next.splice(optionIndex, 1);
 
       setOptionEdits((current) => ({
@@ -921,6 +926,7 @@ className={`rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-lef
             {!loading &&
               sortedPolls.map((poll) => {
                 const pollUrl = buildPollUrl(poll.slug);
+                const visibleOptions = optionEdits[poll.id]?.length ? optionEdits[poll.id] : poll.options || [];
 
                 return (
                   <div key={poll.id} className="space-y-4 rounded-2xl border border-gray-700 bg-gray-900/70 p-4">
@@ -965,7 +971,7 @@ className={`rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-lef
                         Options
                       </p>
 
-                      {(optionEdits[poll.id] || []).map((option, optionIndex) => (
+                      {visibleOptions.map((option, optionIndex) => (
                         <div
                           key={`${poll.id}-${option.id || `new-${optionIndex}`}`}
                           className="grid grid-cols-[minmax(0,1fr)_64px_auto] items-center gap-1.5 rounded-lg border border-gray-700 bg-black/20 p-2"
@@ -998,11 +1004,11 @@ className={`rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-lef
 
                           <div className="flex items-center justify-end gap-1.5 whitespace-nowrap text-[11px] text-gray-400">
                             <span>{option.vote_count}</span>
-                            {(optionEdits[poll.id] || []).length > 2 ? (
+                            {visibleOptions.length > 2 ? (
                               <button
                                 type="button"
                                 onClick={() => {
-                                  const next = [...(optionEdits[poll.id] || [])];
+                                  const next = [...visibleOptions];
                                   next.splice(optionIndex, 1);
 
                                   setOptionEdits((current) => ({
