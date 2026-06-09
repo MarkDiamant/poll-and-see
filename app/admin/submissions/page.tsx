@@ -707,13 +707,6 @@ const hideSubmission = async (submissionId: number) => {
 </Link>
             </nav>
 
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="Search submissions..."
-              className="h-11 w-full min-w-[260px] rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500 md:w-[320px]"
-            />
             <button
               type="button"
               onClick={handleLogout}
@@ -836,6 +829,14 @@ const hideSubmission = async (submissionId: number) => {
             </div>
 
             <div className="flex flex-col gap-2 lg:flex-row lg:flex-wrap">
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
+                placeholder="Search submissions..."
+                className="h-10 min-w-[260px] rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
+              />
+
               <select
                 value={privacyFilter}
                 onChange={(event) => setPrivacyFilter(event.target.value as "all" | "public" | "private")}

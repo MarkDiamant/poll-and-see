@@ -85,14 +85,41 @@ export async function GET(request: NextRequest) {
     const basePolls = (pollsData || []).filter((poll) => !submissionPollIds.has(Number(poll.id)));
     const pollIds = basePolls.map((poll) => Number(poll.id));
 
-    const { data: optionRows, error: optionError } = pollIds.length
-      ? await supabaseAdmin
+    const optionRows: Array<{
+      id: number;
+      poll_id: number;
+      option_text: string;
+      image_url: string | null;
+      vote_count: number;
+    }> = [];
+
+    let optionError: unknown = null;
+
+    if (pollIds.length) {
+      const pageSize = 1000;
+      let from = 0;
+
+      while (true) {
+        const { data, error } = await supabaseAdmin
           .from("poll_options")
           .select("id, poll_id, option_text, image_url, vote_count")
           .in("poll_id", pollIds)
           .order("poll_id", { ascending: true })
           .order("id", { ascending: true })
-      : { data: [], error: null };
+          .range(from, from + pageSize - 1);
+
+        if (error) {
+          optionError = error;
+          break;
+        }
+
+        optionRows.push(...((data || []) as typeof optionRows));
+
+        if (!data || data.length < pageSize) break;
+
+        from += pageSize;
+      }
+    }
 
     if (optionError) {
       return NextResponse.json({ error: "Could not load polls." }, { status: 500 });
