@@ -496,6 +496,14 @@ const lastReactionRefreshRef = useRef(0);
               .order("id", { ascending: true }),
           ]);
 
+          console.log(
+            "Results page",
+            "votedPollIds:",
+            votedPollIds.length,
+            "optionRows:",
+            optionRows?.length
+          );
+
           const pollMap = new Map<number, Poll>();
           (pollRows || []).forEach((poll) => {
             pollMap.set(poll.id, poll as Poll);
