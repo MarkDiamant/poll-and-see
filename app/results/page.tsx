@@ -68,6 +68,34 @@ function getEmptyReactionCounts(): ReactionCounts {
   };
 }
 
+async function loadPollOptionsForPollIds(pollIds: number[]) {
+  const optionRows: PollOption[] = [];
+  const pageSize = 1000;
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from("poll_options")
+      .select("id, poll_id, option_text, vote_count, image_url")
+      .in("poll_id", pollIds)
+      .order("poll_id", { ascending: true })
+      .order("id", { ascending: true })
+      .range(from, from + pageSize - 1);
+
+    if (error) {
+      throw error;
+    }
+
+    optionRows.push(...((data || []) as PollOption[]));
+
+    if (!data || data.length < pageSize) break;
+
+    from += pageSize;
+  }
+
+  return optionRows;
+}
+
 function getResultsBrowserId() {
   if (typeof window === "undefined") return "";
 
@@ -484,25 +512,13 @@ const lastReactionRefreshRef = useRef(0);
         const votedPollIds = votedMeta.map((item) => item.pollId);
 
         if (votedPollIds.length > 0) {
-          const [{ data: pollRows }, { data: optionRows }] = await Promise.all([
+          const [{ data: pollRows }, optionRows] = await Promise.all([
             supabase
               .from("polls")
               .select("id, question, description, category, slug, is_private, is_publicly_listed, total_votes")
               .in("id", votedPollIds),
-            supabase
-              .from("poll_options")
-              .select("id, poll_id, option_text, vote_count, image_url")
-              .in("poll_id", votedPollIds)
-              .order("id", { ascending: true }),
+            loadPollOptionsForPollIds(votedPollIds),
           ]);
-
-          console.log(
-            "Results page",
-            "votedPollIds:",
-            votedPollIds.length,
-            "optionRows:",
-            optionRows?.length
-          );
 
           const pollMap = new Map<number, Poll>();
           (pollRows || []).forEach((poll) => {
@@ -685,13 +701,9 @@ useEffect(() => {
     const pollIds = visiblePollIds;
 
     try {
-      const { data, error } = await supabase
-        .from("poll_options")
-        .select("id, poll_id, option_text, vote_count, image_url")
-        .in("poll_id", pollIds)
-        .order("id", { ascending: true });
+      const data = await loadPollOptionsForPollIds(pollIds);
 
-      if (error || !data) return;
+      if (!data) return;
 
       const optionsByPoll = new Map<number, PollOption[]>();
 
