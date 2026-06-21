@@ -42,7 +42,26 @@ export default function Footer() {
           </Link>
         </div>
 
-        <p>© {new Date().getFullYear()} Poll & See</p>
+        <div className="mt-4 flex flex-col items-center gap-3">
+  <a
+    href="https://diamantsolutions.co.uk"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="group flex items-center gap-3 transition hover:opacity-80"
+  >
+    <span className="text-sm font-semibold text-gray-400">
+      Built by
+    </span>
+
+    <img
+      src="/diamant-solutions-logo.svg"
+      alt="Diamant Solutions"
+      className="h-8 w-auto"
+    />
+  </a>
+
+  <p>© {new Date().getFullYear()} Poll & See</p>
+</div>
       </div>
     </footer>
   );
