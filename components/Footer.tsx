@@ -47,17 +47,27 @@ export default function Footer() {
     href="https://diamantsolutions.co.uk"
     target="_blank"
     rel="noopener noreferrer"
-    className="group flex items-center gap-3 transition hover:opacity-80"
+    className="group flex flex-col items-center gap-1 transition hover:opacity-80"
   >
-    <span className="text-sm font-semibold text-gray-400">
-      Built by
+    <div className="flex items-center gap-2">
+      <span className="text-sm font-semibold text-gray-400">
+        Built by
+      </span>
+
+      <img
+        src="/diamant-solutions-logo.svg"
+        alt="Diamant Solutions"
+        className="h-8 w-auto"
+      />
+    </div>
+
+    <span className="text-xs text-gray-400">
+      Custom websites, systems & automations.
     </span>
 
-    <img
-      src="/diamant-solutions-logo.svg"
-      alt="Diamant Solutions"
-      className="h-8 w-auto"
-    />
+    <span className="text-xs font-semibold text-green-400">
+      Want something built?
+    </span>
   </a>
 
   <p>© {new Date().getFullYear()} Poll & See</p>
