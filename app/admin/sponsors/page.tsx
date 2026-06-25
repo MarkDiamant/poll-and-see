@@ -215,6 +215,16 @@ function getDateLabel(dateKey: string) {
   });
 }
 
+function getTimeLabel(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return date.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function sponsorRunsOnDate(sponsor: SponsorRow, dateKey: string) {
   if (!sponsor.is_active) return false;
 
@@ -240,7 +250,7 @@ export default function AdminSponsorsPage() {
   const theme = getSponsorTheme(form.theme);
 
   useEffect(() => {
-    const saved = sessionStorage.getItem(ADMIN_KEY_STORAGE) || "";
+    const saved = localStorage.getItem(ADMIN_KEY_STORAGE) || "";
     if (saved) {
       setAdminKey(saved);
       setAdminKeyInput(saved);
@@ -298,7 +308,7 @@ export default function AdminSponsorsPage() {
   const handleUnlock = () => {
     const trimmed = adminKeyInput.trim();
     if (!trimmed) return;
-    sessionStorage.setItem(ADMIN_KEY_STORAGE, trimmed);
+    localStorage.setItem(ADMIN_KEY_STORAGE, trimmed);
     setAdminKey(trimmed);
     setError("");
   };
@@ -631,12 +641,21 @@ export default function AdminSponsorsPage() {
 
           {isBooked ? (
             <div className="mt-2 space-y-1">
-              {day.bookedSponsors.map((sponsor) => (
-                <div key={`${day.dateKey}-${sponsor.id}`} className="rounded-lg bg-black/20 px-2 py-1.5">
-                  <p className="truncate text-xs font-medium text-white">{sponsor.business_name}</p>
-                  <p className="mt-0.5 break-words text-[11px] text-gray-400">{sponsor.category}</p>
-                </div>
-              ))}
+{day.bookedSponsors.map((sponsor) => (
+  <div key={`${day.dateKey}-${sponsor.id}`} className="rounded-lg bg-black/20 px-2 py-1.5">
+    <div className="flex items-start justify-between gap-2">
+      <p className="min-w-0 truncate text-xs font-medium text-white">
+        {sponsor.business_name}
+      </p>
+
+      <p className="shrink-0 whitespace-nowrap text-[11px] text-blue-200">
+        {getTimeLabel(sponsor.start_at)} to {getTimeLabel(sponsor.end_at)}
+      </p>
+    </div>
+
+    <p className="mt-0.5 break-words text-[11px] text-gray-400">{sponsor.category}</p>
+  </div>
+))}
             </div>
           ) : null}
         </div>

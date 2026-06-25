@@ -63,7 +63,7 @@ export default function HiddenPage() {
     const load = async () => {
       const res = await fetch("/api/admin/hidden", {
         headers: {
-          "x-admin-key": sessionStorage.getItem(ADMIN_KEY_STORAGE) || "",
+          "x-admin-key": localStorage.getItem(ADMIN_KEY_STORAGE) || "",
         },
       });
 
@@ -99,7 +99,7 @@ export default function HiddenPage() {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        "x-admin-key": sessionStorage.getItem(ADMIN_KEY_STORAGE) || "",
+        "x-admin-key": localStorage.getItem(ADMIN_KEY_STORAGE) || "",
       },
       body: JSON.stringify({
         question: questionEdits[id],
@@ -120,7 +120,7 @@ export default function HiddenPage() {
     await fetch(`/api/admin/poll-submissions/${id}/approve`, {
       method: "POST",
       headers: {
-        "x-admin-key": sessionStorage.getItem(ADMIN_KEY_STORAGE) || "",
+        "x-admin-key": localStorage.getItem(ADMIN_KEY_STORAGE) || "",
       },
     });
 

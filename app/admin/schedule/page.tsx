@@ -43,7 +43,7 @@ export default function AdminSchedulePage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const saved = sessionStorage.getItem(ADMIN_KEY_STORAGE) || "";
+    const saved = localStorage.getItem(ADMIN_KEY_STORAGE) || "";
     if (saved) {
       setAdminKey(saved);
       setAdminKeyInput(saved);
@@ -95,7 +95,7 @@ export default function AdminSchedulePage() {
   const handleUnlock = () => {
     const trimmed = adminKeyInput.trim();
     if (!trimmed) return;
-    sessionStorage.setItem(ADMIN_KEY_STORAGE, trimmed);
+    localStorage.setItem(ADMIN_KEY_STORAGE, trimmed);
     setAdminKey(trimmed);
     setError("");
   };
