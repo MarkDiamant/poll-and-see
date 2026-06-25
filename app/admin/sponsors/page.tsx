@@ -165,9 +165,23 @@ function getSponsorTheme(theme: string | null) {
 
 function formatDateTimeLocal(value: string) {
   if (!value) return "";
+
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  return date.toISOString().slice(0, 16);
+
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+
+  const getPart = (type: string) => parts.find((part) => part.type === type)?.value || "";
+
+  return `${getPart("year")}-${getPart("month")}-${getPart("day")}T${getPart("hour")}:${getPart("minute")}`;
 }
 
 function calculateEndAt(startAt: string, days: number) {
@@ -219,9 +233,29 @@ function getTimeLabel(value: string) {
   if (Number.isNaN(date.getTime())) return "";
 
   return date.toLocaleTimeString("en-GB", {
+    timeZone: "Europe/London",
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function getSponsorDateTimeLabel(sponsor: SponsorRow, dateKey: string) {
+  const startKey = getDateKey(new Date(sponsor.start_at));
+  const endKey = getDateKey(new Date(sponsor.end_at));
+
+  if (startKey === dateKey && endKey === dateKey) {
+    return `${getTimeLabel(sponsor.start_at)} to ${getTimeLabel(sponsor.end_at)}`;
+  }
+
+  if (startKey === dateKey) {
+    return `Starts ${getTimeLabel(sponsor.start_at)}`;
+  }
+
+  if (endKey === dateKey) {
+    return `Ends ${getTimeLabel(sponsor.end_at)}`;
+  }
+
+  return "All day";
 }
 
 function sponsorRunsOnDate(sponsor: SponsorRow, dateKey: string) {
@@ -669,7 +703,7 @@ export default function AdminSponsorsPage() {
       </p>
 
       <p className="shrink-0 whitespace-nowrap text-[11px] text-blue-200">
-        {getTimeLabel(sponsor.start_at)} to {getTimeLabel(sponsor.end_at)}
+        {getSponsorDateTimeLabel(sponsor, day.dateKey)}
       </p>
     </div>
 
