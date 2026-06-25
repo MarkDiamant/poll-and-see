@@ -177,14 +177,13 @@ function calculateEndAt(startAt: string, days: number) {
   if (Number.isNaN(date.getTime())) return "";
 
   date.setDate(date.getDate() + Math.max(days || 1, 1));
+  date.setHours(8, 59, 0, 0);
 
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
 
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
+  return `${year}-${month}-${day}T08:59`;
 }
 
 function getSponsorStatus(sponsor: SponsorRow) {
@@ -325,6 +324,17 @@ export default function AdminSponsorsPage() {
         categories: next.length > 0 ? next : [category],
       };
     });
+  };
+
+  const getDefaultStartAt = () => {
+    const date = new Date();
+    date.setHours(9, 0, 0, 0);
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}T09:00`;
   };
 
   const editSponsor = (sponsor: SponsorRow) => {
@@ -576,7 +586,17 @@ export default function AdminSponsorsPage() {
               </button>
 
               {form.id ? (
-                <button type="button" onClick={() => setForm(DEFAULT_FORM)} className="rounded-xl border border-gray-700 bg-gray-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-gray-800">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setForm({
+                      ...DEFAULT_FORM,
+                      start_at: getDefaultStartAt(),
+                      end_at: calculateEndAt(getDefaultStartAt(), DEFAULT_FORM.days),
+                    })
+                  }
+                  className="rounded-xl border border-gray-700 bg-gray-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+                >
                   New sponsor
                 </button>
               ) : null}
