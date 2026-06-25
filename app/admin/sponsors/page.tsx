@@ -184,6 +184,15 @@ function formatDateTimeLocal(value: string) {
   return `${getPart("year")}-${getPart("month")}-${getPart("day")}T${getPart("hour")}:${getPart("minute")}`;
 }
 
+function toUtcIsoFromDateTimeLocal(value: string) {
+  if (!value) return "";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return date.toISOString();
+}
+
 function calculateEndAt(startAt: string, days: number) {
   if (!startAt) return "";
 
@@ -413,7 +422,8 @@ export default function AdminSponsorsPage() {
         },
         body: JSON.stringify({
           ...form,
-          end_at: form.end_at || calculateEndAt(form.start_at, form.days),
+          start_at: toUtcIsoFromDateTimeLocal(form.start_at),
+          end_at: toUtcIsoFromDateTimeLocal(form.end_at || calculateEndAt(form.start_at, form.days)),
           category: selectedCategoryText,
           categories: form.categories,
         }),
