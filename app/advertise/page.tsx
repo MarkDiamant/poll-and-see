@@ -243,10 +243,6 @@ export default function AdvertisePage() {
     setDaysInput((current) => String(Math.max((Number(current) || 1) - 1, 1)));
   };
 
-  const openDatePicker = (input: HTMLInputElement) => {
-    input.showPicker?.();
-  };
-
   const handleLogoUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -670,30 +666,13 @@ maxLength={20}
 
 <div>
   <p className="mb-1 text-xs text-gray-400">Ad start date</p>
-  <div className="relative">
-    <input
-      type="date"
-      value={formData.preferredStartDate}
-      onChange={(event) => updateField("preferredStartDate", event.target.value)}
-      onClick={(event) => openDatePicker(event.currentTarget)}
-      required
-      className="h-11 w-full cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-4 pr-12 text-sm text-white outline-none opacity-0"
-    />
-
-    <button
-      type="button"
-      onClick={(event) => {
-        const input = event.currentTarget.previousElementSibling as HTMLInputElement | null;
-        if (input) openDatePicker(input);
-      }}
-      className="absolute inset-0 flex h-11 w-full cursor-pointer items-center justify-between rounded-xl border border-gray-700 bg-gray-900 px-4 text-left text-sm text-white outline-none [color-scheme:dark] focus:border-gray-500"
-    >
-      <span className={formData.preferredStartDate ? "text-white" : "text-gray-500"}>
-        {formData.preferredStartDate || "dd/mm/yyyy"}
-      </span>
-      <span className="text-base text-white">📅</span>
-    </button>
-  </div>
+  <input
+    type="date"
+    value={formData.preferredStartDate}
+    onChange={(event) => updateField("preferredStartDate", event.target.value)}
+    required
+    className="h-11 w-full cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-4 text-sm text-white outline-none [color-scheme:dark] focus:border-gray-500"
+  />
 </div>
 
 <div>
