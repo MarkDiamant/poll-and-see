@@ -199,6 +199,35 @@ function getSponsorStatus(sponsor: SponsorRow) {
   return "Live now";
 }
 
+function getDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function getDateLabel(dateKey: string) {
+  return new Date(`${dateKey}T12:00:00`).toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+}
+
+function sponsorRunsOnDate(sponsor: SponsorRow, dateKey: string) {
+  if (!sponsor.is_active) return false;
+
+  const dayStart = new Date(`${dateKey}T00:00:00`).getTime();
+  const dayEnd = new Date(`${dateKey}T23:59:59`).getTime();
+  const sponsorStart = new Date(sponsor.start_at).getTime();
+  const sponsorEnd = new Date(sponsor.end_at).getTime();
+
+  if (Number.isNaN(sponsorStart) || Number.isNaN(sponsorEnd)) return false;
+
+  return sponsorStart <= dayEnd && sponsorEnd >= dayStart;
+}
+
 export default function AdminSponsorsPage() {
   const [adminKeyInput, setAdminKeyInput] = useState("");
   const [adminKey, setAdminKey] = useState("");
@@ -247,6 +276,24 @@ export default function AdminSponsorsPage() {
   const filteredSponsors = sponsors.filter((sponsor) =>
     statusFilter === "all" ? true : getSponsorStatus(sponsor) === statusFilter
   );
+
+  const scheduleDays = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return Array.from({ length: 28 }).map((_, index) => {
+      const date = new Date(today);
+      date.setDate(today.getDate() + index);
+
+      const dateKey = getDateKey(date);
+      const bookedSponsors = sponsors.filter((sponsor) => sponsorRunsOnDate(sponsor, dateKey));
+
+      return {
+        dateKey,
+        bookedSponsors,
+      };
+    });
+  }, [sponsors]);
 
   const handleUnlock = () => {
     const trimmed = adminKeyInput.trim();
@@ -553,6 +600,50 @@ export default function AdminSponsorsPage() {
 <p className="mt-3 max-w-full break-words text-xs text-gray-400">
   Categories: {selectedCategoryText || "None"} · Theme: {form.theme}
 </p>
+
+<div className="mt-5 border-t border-gray-700 pt-4">
+  <div className="mb-3 flex items-center justify-between gap-3">
+    <h3 className="text-base font-semibold text-white">Advert schedule</h3>
+    <span className="text-xs text-gray-400">Next 28 days</span>
+  </div>
+
+  <div className="max-h-[520px] space-y-2 overflow-y-auto pr-1">
+    {scheduleDays.map((day) => {
+      const isBooked = day.bookedSponsors.length > 0;
+
+      return (
+        <div
+          key={day.dateKey}
+          className={`rounded-xl border p-3 ${
+            isBooked
+              ? "border-blue-500/50 bg-blue-950/35"
+              : "border-gray-700 bg-gray-900/80"
+          }`}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-medium text-white">{getDateLabel(day.dateKey)}</p>
+            <p className={isBooked ? "text-xs text-blue-200" : "text-xs text-gray-500"}>
+              {isBooked
+                ? `${day.bookedSponsors.length} booked`
+                : "Available"}
+            </p>
+          </div>
+
+          {isBooked ? (
+            <div className="mt-2 space-y-1">
+              {day.bookedSponsors.map((sponsor) => (
+                <div key={`${day.dateKey}-${sponsor.id}`} className="rounded-lg bg-black/20 px-2 py-1.5">
+                  <p className="truncate text-xs font-medium text-white">{sponsor.business_name}</p>
+                  <p className="mt-0.5 break-words text-[11px] text-gray-400">{sponsor.category}</p>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      );
+    })}
+  </div>
+</div>
           </section>
         </div>
 
