@@ -338,7 +338,9 @@ export default function AdminSponsorsPage() {
       date.setDate(today.getDate() + index);
 
       const dateKey = getDateKey(date);
-      const bookedSponsors = sponsors.filter((sponsor) => sponsorRunsOnDate(sponsor, dateKey));
+      const bookedSponsors = sponsors
+  .filter((sponsor) => sponsorRunsOnDate(sponsor, dateKey))
+  .sort((a, b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime());
 
       return {
         dateKey,
