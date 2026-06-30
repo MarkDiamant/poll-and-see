@@ -293,6 +293,7 @@ export default function AdminSponsorsPage() {
   const [adminKeyInput, setAdminKeyInput] = useState("");
   const [adminKey, setAdminKey] = useState("");
   const [sponsors, setSponsors] = useState<SponsorRow[]>([]);
+  const [subscriberCount, setSubscriberCount] = useState(0);
   const [form, setForm] = useState(DEFAULT_FORM);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -324,6 +325,7 @@ export default function AdminSponsorsPage() {
       }
 
       setSponsors(data.sponsors || []);
+      setSubscriberCount(data.subscriber_count || 0);
     };
 
     void loadSponsors();
@@ -530,6 +532,32 @@ export default function AdminSponsorsPage() {
               Enquiries
             </Link>
           </nav>
+        </div>
+
+        <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-2xl border border-gray-700 bg-gray-800 p-4">
+            <p className="text-xs uppercase tracking-wide text-gray-400">Advertisers</p>
+            <p className="mt-1 text-2xl font-semibold text-white">{sponsors.length.toLocaleString()}</p>
+          </div>
+
+          <div className="rounded-2xl border border-gray-700 bg-gray-800 p-4">
+            <p className="text-xs uppercase tracking-wide text-gray-400">Live now</p>
+            <p className="mt-1 text-2xl font-semibold text-white">
+              {sponsors.filter((sponsor) => getSponsorStatus(sponsor) === "Live now").length.toLocaleString()}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-gray-700 bg-gray-800 p-4">
+            <p className="text-xs uppercase tracking-wide text-gray-400">Scheduled</p>
+            <p className="mt-1 text-2xl font-semibold text-white">
+              {sponsors.filter((sponsor) => getSponsorStatus(sponsor) === "Scheduled").length.toLocaleString()}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-gray-700 bg-gray-800 p-4">
+            <p className="text-xs uppercase tracking-wide text-gray-400">Subscribers</p>
+            <p className="mt-1 text-2xl font-semibold text-white">{subscriberCount.toLocaleString()}</p>
+          </div>
         </div>
 
         {error ? (

@@ -80,6 +80,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Could not load sponsors." }, { status: 500 });
     }
 
+    const subscribersResult = await supabaseAdmin
+      .from("subscribers")
+      .select("id", { count: "exact", head: true })
+      .eq("is_active", true);
+
+    if (subscribersResult.error) {
+      return NextResponse.json({ error: "Could not load subscriber stats." }, { status: 500 });
+    }
+
     const sponsorsWithStats = await Promise.all(
       (data || []).map(async (sponsor) => {
         const [impressionsResult, clicksResult] = await Promise.all([
@@ -105,7 +114,10 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    return NextResponse.json({ sponsors: sponsorsWithStats });
+    return NextResponse.json({
+      sponsors: sponsorsWithStats,
+      subscriber_count: subscribersResult.count || 0,
+    });
   } catch {
     return NextResponse.json({ error: "Could not load sponsors." }, { status: 500 });
   }
