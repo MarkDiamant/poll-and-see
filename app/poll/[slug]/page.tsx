@@ -1905,6 +1905,18 @@ onVoteComplete={(pollId, category) => {
           [pollId]: sponsor,
         }));
 
+        void fetch("/api/sponsors/impression", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            sponsorId: sponsor.id,
+            category,
+            destinationUrl: sponsor.destination_url,
+          }),
+        }).catch(() => {});
+
         // sponsor card only
       }
     }

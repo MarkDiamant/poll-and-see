@@ -49,14 +49,5 @@ export async function GET(request: NextRequest) {
       return categories.includes(category.toLowerCase());
     }) || null;
 
-  if (sponsor) {
-    await supabaseAdmin.from("sponsor_impressions").insert({
-      sponsor_id: sponsor.id,
-      page_context: "poll-flow",
-      category,
-      destination_url: sponsor.destination_url,
-    });
-  }
-
   return NextResponse.json({ sponsor });
 }
