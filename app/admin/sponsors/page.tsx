@@ -209,6 +209,15 @@ function calculateEndAt(startAt: string, days: number) {
   return `${year}-${month}-${day}T08:59`;
 }
 
+function getSponsorTotalDays(sponsor: SponsorRow) {
+  const start = new Date(sponsor.start_at).getTime();
+  const end = new Date(sponsor.end_at).getTime();
+
+  if (Number.isNaN(start) || Number.isNaN(end) || end <= start) return 0;
+
+  return Math.max(1, Math.ceil((end - start) / (24 * 60 * 60 * 1000)));
+}
+
 function getSponsorStatus(sponsor: SponsorRow) {
   if (!sponsor.is_active) return "Inactive";
 
@@ -765,6 +774,7 @@ export default function AdminSponsorsPage() {
   <p className="break-words">Categories: {sponsor.category}</p>
   <p>Theme: {sponsor.theme || "default"}</p>
   <p>Status: {getSponsorStatus(sponsor)}</p>
+  <p>Days: {getSponsorTotalDays(sponsor).toLocaleString()}</p>
   <p>Impressions: {(sponsor.total_impressions || 0).toLocaleString()}</p>
   <p>Clicks: {(sponsor.total_clicks || 0).toLocaleString()}</p>
 </div>
@@ -778,6 +788,7 @@ export default function AdminSponsorsPage() {
                 <th className="px-4 py-3 font-medium">Sponsor</th>
                 <th className="px-4 py-3 font-medium">Categories</th>
                 <th className="px-4 py-3 font-medium">Theme</th>
+                <th className="px-4 py-3 font-medium">Days</th>
                 <th className="px-4 py-3 font-medium">Impressions</th>
                 <th className="px-4 py-3 font-medium">Clicks</th>
                 <th className="px-4 py-3 font-medium">Status</th>
@@ -796,6 +807,7 @@ export default function AdminSponsorsPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-300">{sponsor.category}</td>
                   <td className="px-4 py-3 text-gray-300">{sponsor.theme || "default"}</td>
+                  <td className="px-4 py-3 text-gray-300">{getSponsorTotalDays(sponsor).toLocaleString()}</td>
                   <td className="px-4 py-3 text-gray-300">{(sponsor.total_impressions || 0).toLocaleString()}</td>
                   <td className="px-4 py-3 text-gray-300">{(sponsor.total_clicks || 0).toLocaleString()}</td>
                   <td className="px-4 py-3 text-gray-300">{getSponsorStatus(sponsor)}</td>
