@@ -747,6 +747,7 @@ function PollCard({
     showGoToAllPolls,
   onVoteComplete,
   onSkipPoll,
+  onSkipCategory,
   isFollowOnPoll,
   totalVoteCount,
 }: {
@@ -755,6 +756,7 @@ function PollCard({
   showGoToAllPolls: boolean;
   onVoteComplete: (pollId: number, category: string) => void;
   onSkipPoll: (pollId: number) => void;
+  onSkipCategory: (pollId: number, category: string) => void;
   isFollowOnPoll: boolean;
   totalVoteCount: number;
 }) {
@@ -1032,16 +1034,27 @@ const handleVote = async (optionId: number) => {
           ))}
           {error ? <p className="text-sm text-red-300">{error}</p> : null}
 
-          <div className="flex items-center justify-between pt-1">
+          <div className="flex items-start justify-between pt-1">
             {isFollowOnPoll ? (
-              <button
-                type="button"
-                onClick={() => onSkipPoll(bundle.poll.id)}
-                className="inline-flex cursor-pointer items-center gap-1.5 text-sm font-medium text-gray-400 transition hover:text-white"
-              >
-                <span>See another poll</span>
-                <span aria-hidden="true" className="relative top-[1px] sm:-top-[1px] text-sm leading-none">›</span>
-              </button>
+              <div className="flex flex-col items-start gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => onSkipPoll(bundle.poll.id)}
+                  className="inline-flex cursor-pointer items-center gap-1.5 text-sm font-medium text-gray-400 transition hover:text-white"
+                >
+                  <span>See another poll</span>
+                  <span aria-hidden="true" className="relative top-[1px] sm:-top-[1px] text-sm leading-none">›</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onSkipCategory(bundle.poll.id, bundle.poll.category)}
+                  className="inline-flex cursor-pointer items-center gap-1.5 text-sm font-medium text-gray-500 transition hover:text-white"
+                >
+                  <span>Skip all {bundle.poll.category} polls</span>
+                  <span aria-hidden="true" className="relative top-[1px] sm:-top-[1px] text-sm leading-none">›</span>
+                </button>
+              </div>
             ) : (
               <span />
             )}
@@ -1139,6 +1152,7 @@ const sponsorByPollContainerRef = useRef<Record<number, HTMLDivElement | null>>(
   const preloadedQueueRef = useRef<PollBundle[]>([]);
   const pollsRef = useRef<PollBundle[]>([]);
   const skippedPollIdsRef = useRef<Set<number>>(new Set());
+  const skippedCategoriesRef = useRef<Set<string>>(new Set());
 
   const [subscriberEmail, setSubscriberEmail] = useState("");
   const [subscriberCategories, setSubscriberCategories] = useState<string[]>(["All Categories"]);
@@ -1645,6 +1659,7 @@ return safeBundle;
         (poll) =>
           !excludeIds.includes(poll.id) &&
           !skippedPollIdsRef.current.has(poll.id) &&
+          !skippedCategoriesRef.current.has(poll.category) &&
           !hasLocalVote(poll.id)
       );
 
@@ -1780,6 +1795,7 @@ previousPollCountRef.current = polls.length;
       if (!next) break;
       if (currentShownIds.includes(next.poll.id)) continue;
       if (skippedPollIdsRef.current.has(next.poll.id)) continue;
+      if (skippedCategoriesRef.current.has(next.poll.category)) continue;
       if (hasLocalVote(next.poll.id)) continue;
 
        setShowEndOfFeed(false);
@@ -1803,6 +1819,7 @@ previousPollCountRef.current = polls.length;
       if (!next) break;
       if (currentShownIds.includes(next.poll.id)) continue;
       if (skippedPollIdsRef.current.has(next.poll.id)) continue;
+      if (skippedCategoriesRef.current.has(next.poll.category)) continue;
       if (hasLocalVote(next.poll.id)) continue;
 
       setShowEndOfFeed(false);
@@ -1826,6 +1843,7 @@ previousPollCountRef.current = polls.length;
       if (!next) break;
       if (currentShownIds.includes(next.poll.id)) continue;
       if (skippedPollIdsRef.current.has(next.poll.id)) continue;
+      if (skippedCategoriesRef.current.has(next.poll.category)) continue;
       if (hasLocalVote(next.poll.id)) continue;
 
       setShowEndOfFeed(false);
@@ -1841,6 +1859,18 @@ previousPollCountRef.current = polls.length;
 
     setPolls((current) => current.filter((item) => item.poll.id !== pollId));
     setShowEndOfFeed(true);
+  };
+
+  const handleSkipCategory = async (pollId: number, category: string) => {
+    skippedCategoriesRef.current.add(category);
+
+    preloadedQueueRef.current = preloadedQueueRef.current.filter(
+      (item) => item.poll.category !== category
+    );
+
+    setPolls((current) => current.filter((item) => item.poll.category !== category));
+
+    await handleSkipPoll(pollId);
   };
 
   return (
@@ -1968,6 +1998,9 @@ onVoteComplete={(pollId, category) => {
 }}
                 onSkipPoll={(pollId) => {
                   void handleSkipPoll(pollId);
+                }}
+                onSkipCategory={(pollId, category) => {
+                  void handleSkipCategory(pollId, category);
                 }}
                 isFollowOnPoll={index > 0}
                 totalVoteCount={totalVoteCount}
