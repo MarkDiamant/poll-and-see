@@ -47,10 +47,10 @@ export default function Footer() {
     href="https://diamantsolutions.co.uk"
     target="_blank"
     rel="noopener noreferrer"
-    className="group flex flex-col items-center gap-1 opacity-80 transition hover:opacity-100"
+    className="group flex flex-col items-center gap-1 transition hover:opacity-80"
   >
     <div className="flex items-center gap-2">
-      <span className="text-xs font-medium text-gray-500">
+      <span className="text-sm font-semibold text-gray-400">
         Built by
       </span>
 
@@ -65,7 +65,7 @@ export default function Footer() {
       Custom websites, systems & automations.
     </span>
 
-    <span className="text-[11px] font-medium text-gray-500 transition group-hover:text-green-400">
+    <span className="text-xs font-semibold text-green-400">
       Want something built?
     </span>
   </a>
