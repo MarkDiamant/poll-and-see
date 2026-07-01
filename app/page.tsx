@@ -918,7 +918,6 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
     : searchedPolls.length;
   const trendingIdSet = useMemo(() => new Set(trendingPollIds), [trendingPollIds]);
   const popularIdSet = useMemo(() => new Set(popularPollIds), [popularPollIds]);
-  const featuredBadge = featuredPoll ? getBadgeLabel(featuredPoll, trendingIdSet, popularIdSet) : null;
 
   useEffect(() => {
     if (loading) return;
@@ -1088,11 +1087,6 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
               </span>
             ) : null}
 
-            {featuredBadge ? (
-              <span className="-mr-6">
-                <StatusRibbon label={featuredBadge} />
-              </span>
-            ) : null}
           </div>
 
           {featuredPoll ? (

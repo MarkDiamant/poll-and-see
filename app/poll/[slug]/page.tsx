@@ -1049,7 +1049,7 @@ const handleVote = async (optionId: number) => {
                 <button
                   type="button"
                   onClick={() => onSkipCategory(bundle.poll.id, bundle.poll.category)}
-                  className="inline-flex cursor-pointer items-center gap-1.5 text-sm font-medium text-gray-500 transition hover:text-white"
+                  className="inline-flex cursor-pointer items-center gap-1.5 text-sm font-medium text-gray-400 transition hover:text-white"
                 >
                   <span>Skip all {bundle.poll.category} polls</span>
                   <span aria-hidden="true" className="relative top-[1px] sm:-top-[1px] text-sm leading-none">›</span>
@@ -2002,7 +2002,7 @@ onVoteComplete={(pollId, category) => {
                 onSkipCategory={(pollId, category) => {
                   void handleSkipCategory(pollId, category);
                 }}
-                isFollowOnPoll={index > 0}
+                isFollowOnPoll={index > 0 || bundle.poll.slug !== slug}
                 totalVoteCount={totalVoteCount}
               />
 
