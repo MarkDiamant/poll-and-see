@@ -57,7 +57,7 @@ export default function Footer() {
       <img
         src="/diamant-solutions-logo.svg"
         alt="Diamant Solutions"
-        className="h-7 w-auto"
+        className="h-6 w-auto"
       />
     </div>
 
