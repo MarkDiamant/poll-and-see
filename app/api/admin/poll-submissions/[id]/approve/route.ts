@@ -309,6 +309,26 @@ const { error: deleteSubmissionError } = await supabaseAdmin
         );
       }
 
+      if (!Boolean(typedSubmission.is_private) && !updatedPoll.is_publicly_listed) {
+        const { data: forcedLivePoll, error: forcedLiveError } = await supabaseAdmin
+          .from("polls")
+          .update({ is_publicly_listed: true })
+          .eq("id", updatedPoll.id)
+          .select(
+            "id, question, description, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed"
+          )
+          .single();
+
+        if (forcedLiveError || !forcedLivePoll) {
+          return NextResponse.json(
+            { error: forcedLiveError?.message || "Poll approved, but could not be made live." },
+            { status: 500 }
+          );
+        }
+
+        return NextResponse.json({ poll: forcedLivePoll });
+      }
+
       return NextResponse.json({ poll: updatedPoll });
     }
 
@@ -381,6 +401,26 @@ const { error: deleteSubmissionError } = await supabaseAdmin
         { error: "Poll created, but submission could not be removed. Please delete it manually." },
         { status: 500 }
       );
+    }
+
+    if (!Boolean(typedSubmission.is_private) && !insertedPoll.is_publicly_listed) {
+      const { data: forcedLivePoll, error: forcedLiveError } = await supabaseAdmin
+        .from("polls")
+        .update({ is_publicly_listed: true })
+        .eq("id", insertedPoll.id)
+        .select(
+          "id, question, description, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed"
+        )
+        .single();
+
+      if (forcedLiveError || !forcedLivePoll) {
+        return NextResponse.json(
+          { error: forcedLiveError?.message || "Poll created, but could not be made live." },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({ poll: forcedLivePoll });
     }
 
     return NextResponse.json({ poll: insertedPoll });
