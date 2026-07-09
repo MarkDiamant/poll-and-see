@@ -175,7 +175,7 @@ export async function PATCH(
   const isPrivate = Boolean(body.is_private);
   updates.is_private = isPrivate;
   pollUpdates.is_private = isPrivate;
-  pollUpdates.is_publicly_listed = !isPrivate;
+  pollUpdates.is_publicly_listed = false;
 }
 
     if ("email" in body) {
