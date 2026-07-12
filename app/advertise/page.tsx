@@ -28,19 +28,19 @@ const THEME_OPTIONS = [
 ];
 
 const DAILY_PRICES: Record<number, number> = {
-  1: 15,
-  2: 28,
-  3: 40,
-  4: 50,
-  5: 59,
-  6: 67,
-  7: 74,
-  8: 80,
-  9: 85,
-  10: 89,
-  11: 92,
-  12: 94,
-  13: 95,
+  1: 5,
+  2: 10,
+  3: 15,
+  4: 20,
+  5: 25,
+  6: 30,
+  7: 35,
+  8: 35,
+  9: 35,
+  10: 35,
+  11: 35,
+  12: 35,
+  13: 35,
 };
 
 function getDiscount(days: number) {
@@ -179,7 +179,7 @@ export default function AdvertisePage() {
       return { categoryCount, dailyPrice: 0, days: cleanDays, categorySaving: 0, discount: 0, total: 0 };
     }
 
-    const dailyPrice = DAILY_PRICES[Math.min(categoryCount, 13)] || 195;
+    const dailyPrice = DAILY_PRICES[Math.min(categoryCount, 13)] || 35;
     const categorySaving = categoryCount * DAILY_PRICES[1] - dailyPrice;
     const discount = getDiscount(cleanDays);
     const subtotal = dailyPrice * cleanDays;
@@ -387,11 +387,11 @@ export default function AdvertisePage() {
               <div className="mb-5 grid gap-3 rounded-2xl border border-gray-700 bg-gray-900 p-4 text-sm text-gray-300 md:grid-cols-2">
                 <div>
                   <p className="mb-2 font-medium text-white">Category pricing guide</p>
-<p>1: £15/day</p>
-<p>2: £28/day</p>
-<p>3: £40/day</p>
-<p>4+: lower rate per extra category</p>
-<p>13 categories: £95/day</p>
+<p>£5 per category/day</p>
+<p>2 categories: £10/day</p>
+<p>4 categories: £20/day</p>
+<p>7+ categories: £35/day</p>
+<p>All categories: £35/day</p>
                 </div>
 
                 <div>
