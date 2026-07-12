@@ -408,26 +408,32 @@ export default function AdvertisePage() {
               </p>
 
               <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                <button
-                  type="button"
-                  onClick={toggleAllCategories}
-                  style={
-                    selectedCategories.length === CATEGORY_OPTIONS.length
-                      ? {
-                          color: allCategoryColours.text,
-                          backgroundColor: allCategoryColours.bg,
-                          borderColor: allCategoryColours.border,
-                        }
-                      : undefined
-                  }
-                  className={`h-10 cursor-pointer rounded-xl border px-3 text-sm font-semibold transition ${
-                    selectedCategories.length === CATEGORY_OPTIONS.length
-                      ? ""
-                      : "border-amber-400/70 bg-amber-500/10 text-amber-200 hover:bg-amber-500/15"
-                  }`}
-                >
-                  All 13 categories
-                </button>
+                <div className="relative h-10 overflow-hidden rounded-xl">
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -inset-[100%] animate-[spin_5s_linear_infinite] bg-[conic-gradient(from_90deg,transparent_0deg,transparent_300deg,rgba(251,191,36,0.95)_340deg,transparent_360deg)]"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={toggleAllCategories}
+                    style={
+                      selectedCategories.length === CATEGORY_OPTIONS.length
+                        ? {
+                            color: allCategoryColours.text,
+                            backgroundColor: allCategoryColours.bg,
+                          }
+                        : undefined
+                    }
+                    className={`absolute inset-px z-10 cursor-pointer rounded-[11px] px-3 text-sm font-semibold transition ${
+                      selectedCategories.length === CATEGORY_OPTIONS.length
+                        ? ""
+                        : "bg-gray-900 text-gray-300 hover:bg-gray-800"
+                    }`}
+                  >
+                    All 13 categories
+                  </button>
+                </div>
 
                 {CATEGORY_OPTIONS.map((category) => {
                   const active = selectedCategories.includes(category);
@@ -549,7 +555,7 @@ className="h-10 cursor-pointer rounded-xl border px-3 text-sm font-medium transi
 
             {activeForm === "booking" ? (
               <p className="mb-4 text-sm text-gray-300">
-                Fill in the details below to see what your ad will look like.
+                Edit the fields below and watch your ad update instantly.
               </p>
             ) : null}
 
