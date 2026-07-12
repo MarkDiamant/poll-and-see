@@ -429,7 +429,7 @@ export default function AdvertisePage() {
                           }
                         : undefined
                     }
-className={`absolute inset-px z-10 cursor-pointer rounded-[11px] px-3 text-sm font-semibold transition ${
+className={`absolute inset-px z-10 cursor-pointer rounded-[11px] px-2 text-[12px] sm:px-3 sm:text-sm font-semibold whitespace-nowrap transition ${
   selectedCategories.length === CATEGORY_OPTIONS.length
     ? "bg-amber-500/15 text-white shadow-[0_0_24px_rgba(251,191,36,0.45)]"
     : "bg-gray-900 text-gray-300 hover:bg-gray-800"
