@@ -420,13 +420,13 @@ export default function AdvertisePage() {
                         }
                       : undefined
                   }
-                  className={`h-10 cursor-pointer rounded-xl border px-3 text-sm font-medium transition ${
+                  className={`h-10 cursor-pointer rounded-xl border px-3 text-sm font-semibold transition ${
                     selectedCategories.length === CATEGORY_OPTIONS.length
                       ? ""
-                      : "border-gray-700 bg-gray-900 text-gray-300 hover:bg-gray-800"
+                      : "border-amber-400/70 bg-amber-500/10 text-amber-200 hover:bg-amber-500/15"
                   }`}
                 >
-                  All categories
+                  All 13 categories
                 </button>
 
                 {CATEGORY_OPTIONS.map((category) => {
