@@ -411,7 +411,11 @@ export default function AdvertisePage() {
                 <div className="relative h-10 overflow-hidden rounded-xl">
                   <span
                     aria-hidden="true"
-                    className="pointer-events-none absolute -inset-[100%] animate-[spin_5s_linear_infinite] bg-[conic-gradient(from_90deg,transparent_0deg,transparent_300deg,rgba(251,191,36,0.95)_340deg,transparent_360deg)]"
+                    className={`pointer-events-none absolute -inset-[100%] animate-[spin_5s_linear_infinite] ${
+  selectedCategories.length === CATEGORY_OPTIONS.length
+    ? "bg-[conic-gradient(from_90deg,transparent_0deg,transparent_250deg,rgba(251,191,36,1)_300deg,rgba(255,230,140,1)_340deg,transparent_360deg)]"
+    : "bg-[conic-gradient(from_90deg,transparent_0deg,transparent_300deg,rgba(251,191,36,0.95)_340deg,transparent_360deg)]"
+}`}
                   />
 
                   <button
@@ -425,11 +429,11 @@ export default function AdvertisePage() {
                           }
                         : undefined
                     }
-                    className={`absolute inset-px z-10 cursor-pointer rounded-[11px] px-3 text-sm font-semibold transition ${
-                      selectedCategories.length === CATEGORY_OPTIONS.length
-                        ? ""
-                        : "bg-gray-900 text-gray-300 hover:bg-gray-800"
-                    }`}
+className={`absolute inset-px z-10 cursor-pointer rounded-[11px] px-3 text-sm font-semibold transition ${
+  selectedCategories.length === CATEGORY_OPTIONS.length
+    ? "bg-amber-500/10 text-white shadow-[0_0_18px_rgba(251,191,36,0.28)]"
+    : "bg-gray-900 text-gray-300 hover:bg-gray-800"
+}`}
                   >
                     All 13 categories
                   </button>
@@ -555,7 +559,7 @@ className="h-10 cursor-pointer rounded-xl border px-3 text-sm font-medium transi
 
             {activeForm === "booking" ? (
               <p className="mb-4 text-sm text-gray-300">
-                Edit the fields below and watch your ad update instantly.
+                Edit the fields below to watch your ad update live.
               </p>
             ) : null}
 
