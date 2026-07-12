@@ -35,11 +35,11 @@ const DAILY_PRICES: Record<number, number> = {
   5: 25,
   6: 30,
   7: 35,
-  8: 35,
-  9: 35,
-  10: 35,
-  11: 35,
-  12: 35,
+  8: 40,
+  9: 45,
+  10: 50,
+  11: 55,
+  12: 60,
   13: 35,
 };
 
@@ -179,8 +179,8 @@ export default function AdvertisePage() {
       return { categoryCount, dailyPrice: 0, days: cleanDays, categorySaving: 0, discount: 0, total: 0 };
     }
 
-    const dailyPrice = DAILY_PRICES[Math.min(categoryCount, 13)] || 35;
-    const categorySaving = categoryCount * DAILY_PRICES[1] - dailyPrice;
+    const dailyPrice = DAILY_PRICES[Math.min(categoryCount, 13)] || categoryCount * 5;
+    const categorySaving = categoryCount === CATEGORY_OPTIONS.length ? 30 : 0;
     const discount = getDiscount(cleanDays);
     const subtotal = dailyPrice * cleanDays;
     const total = Math.round(subtotal * (1 - discount));
@@ -390,8 +390,8 @@ export default function AdvertisePage() {
 <p>£5 per category/day</p>
 <p>2 categories: £10/day</p>
 <p>4 categories: £20/day</p>
-<p>7+ categories: £35/day</p>
-<p>All categories: £35/day</p>
+<p>All 13 categories: £35/day</p>
+<p className="text-gray-400">Normally £65/day</p>
                 </div>
 
                 <div>
@@ -489,13 +489,15 @@ className="h-10 cursor-pointer rounded-xl border px-3 text-sm font-medium transi
                       <span className="font-medium text-white">{pricing.categoryCount}</span>
                     </div>
                     <div className="flex justify-between gap-4">
-                      <span>Multi-category price</span>
+                      <span>Daily price</span>
                       <span className="font-medium text-white">£{pricing.dailyPrice}/day</span>
                     </div>
-                    <div className="flex justify-between gap-4">
-                      <span>Multi-category saving</span>
-                      <span className="font-medium text-white">£{pricing.categorySaving}/day</span>
-                    </div>
+                    {pricing.categorySaving > 0 ? (
+                      <div className="flex justify-between gap-4">
+                        <span>All-category saving</span>
+                        <span className="font-medium text-white">£{pricing.categorySaving}/day</span>
+                      </div>
+                    ) : null}
                     <div className="flex justify-between gap-4">
                       <span>Days</span>
                       <span className="font-medium text-white">{pricing.days}</span>
