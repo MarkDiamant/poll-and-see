@@ -390,7 +390,7 @@ export default function AdvertisePage() {
 <p>£5 per category/day</p>
 <p>2 categories: £10/day</p>
 <p>4 categories: £20/day</p>
-<p>All 13 categories: £35/day</p>
+<p className="text-lg font-semibold text-white">All 13 categories: £35/day</p>
 <p className="text-gray-400">Normally £65/day</p>
                 </div>
 
