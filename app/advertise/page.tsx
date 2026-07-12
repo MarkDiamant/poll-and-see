@@ -382,7 +382,7 @@ export default function AdvertisePage() {
             </section>
 
             <section className="rounded-2xl border border-gray-700 bg-gray-800 p-5">
-              <h2 className="mb-4 text-2xl font-semibold">Pricing calculator</h2>
+              <h2 className="mb-4 text-2xl font-semibold">Advert pricing calculator</h2>
 
               <div className="mb-5 grid gap-3 rounded-2xl border border-gray-700 bg-gray-900 p-4 text-sm text-gray-300 md:grid-cols-2">
                 <div>
@@ -391,7 +391,7 @@ export default function AdvertisePage() {
 <p>2 categories: £10/day</p>
 <p>4 categories: £20/day</p>
 <p className="text-lg font-semibold text-white">All 13 categories: £35/day</p>
-<p className="text-gray-400">Normally £65/day</p>
+<p className="text-gray-400">Save £30/day</p>
                 </div>
 
                 <div>
@@ -399,12 +399,12 @@ export default function AdvertisePage() {
                   <p>3+ days: 10% off</p>
                   <p>7+ days: 15% off</p>
                   <p>30+ days: 20% off</p>
-                  <p>90+ days: get in touch</p>
+                  <p>90+ days: Contact us for bespoke pricing</p>
                 </div>
               </div>
 
               <p className="mb-2 text-sm font-medium text-gray-300">
-                Choose where your ad should appear and how many days it should run to see the price.
+                Choose your categories and campaign length to calculate the price.
               </p>
 
               <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
