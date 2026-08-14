@@ -1,6 +1,44 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+
+type Region = "UK" | "US" | "All";
+
+const REGION_STORAGE_KEY = "pollandsee-region";
 
 export default function SiteHeader() {
+  const [region, setRegion] = useState<Region>("UK");
+
+  useEffect(() => {
+    const savedRegion = localStorage.getItem(REGION_STORAGE_KEY);
+
+    if (savedRegion === "UK" || savedRegion === "US" || savedRegion === "All") {
+      setRegion(savedRegion);
+      return;
+    }
+
+    void fetch("/api/region")
+      .then((response) => response.json())
+      .then((data) => {
+        const detectedRegion: Region = data.region === "US" ? "US" : "UK";
+        setRegion(detectedRegion);
+        localStorage.setItem(REGION_STORAGE_KEY, detectedRegion);
+      })
+      .catch(() => {
+        setRegion("UK");
+      });
+  }, []);
+
+  const changeRegion = (nextRegion: Region) => {
+    setRegion(nextRegion);
+    localStorage.setItem(REGION_STORAGE_KEY, nextRegion);
+    window.dispatchEvent(
+      new CustomEvent("pollandsee-region-change", {
+        detail: nextRegion,
+      })
+    );
+  };
   return (
     <header className="mx-auto max-w-6xl px-4 pb-4 pt-5 md:px-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
@@ -49,6 +87,25 @@ export default function SiteHeader() {
           >
             Create Free Poll
           </Link>
+        </div>
+      </div>
+
+      <div className="mt-3 flex justify-center sm:justify-end">
+        <div className="inline-flex rounded-lg border border-gray-700 bg-gray-900 p-1 text-xs">
+          {(["UK", "US", "All"] as Region[]).map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => changeRegion(option)}
+              className={`rounded-md px-2.5 py-1.5 transition ${
+                region === option
+                  ? "bg-white text-black"
+                  : "text-gray-300 hover:text-white"
+              }`}
+            >
+              {option === "UK" ? "🇬🇧 UK" : option === "US" ? "🇺🇸 US" : "🌍 All"}
+            </button>
+          ))}
         </div>
       </div>
     </header>
