@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
 
 let query = supabaseAdmin
   .from("poll_submissions")
-  .select("id, poll_id, email, question, description, category, options, option_image_urls, is_private, status, scheduled_publish_at, created_at")
+  .select("id, poll_id, email, question, description, category, region, options, option_image_urls, is_private, status, scheduled_publish_at, created_at")
   .neq("status", "hidden")
   .order("created_at", { ascending: false });
 
@@ -147,8 +147,11 @@ export async function POST(request: NextRequest) {
 
     const question = String(body.question || "").trim();
     const description = String(body.description || "").trim();
-    const category = String(body.category || "General").trim() || "General";
-    const is_private = Boolean(body.is_private);
+const category = String(body.category || "General").trim() || "General";
+const region = ["UK", "US", "Universal"].includes(String(body.region))
+  ? String(body.region)
+  : "Universal";
+const is_private = Boolean(body.is_private);
     const options = Array.isArray(body.options)
       ? body.options.map((item: unknown) => String(item || "").trim()).filter(Boolean)
       : [];
@@ -200,6 +203,7 @@ const cleanedImageUrls = hasAnyImageUrls ? option_image_urls : [];
         question,
         description,
         category,
+        region,
         slug,
         featured: false,
         is_private,
@@ -244,13 +248,14 @@ const cleanedImageUrls = hasAnyImageUrls ? option_image_urls : [];
         question,
         description: description || null,
         category,
+        region,
         options,
         option_image_urls: cleanedImageUrls.length > 0 ? cleanedImageUrls : null,
         is_private,
         status: "pending",
         scheduled_publish_at: null,
       })
-      .select("id, poll_id, email, question, description, category, options, option_image_urls, is_private, status, scheduled_publish_at, created_at")
+      .select("id, poll_id, email, question, description, category, region, options, option_image_urls, is_private, status, scheduled_publish_at, created_at")
       .single();
 
     if (submissionInsertError || !submission) {
