@@ -827,6 +827,7 @@ className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-s
                             {poll.slug ? ` • /poll/${poll.slug}` : ""}
                           </p>
                         </div>
+                      </div>
                       </td>
 
                       <td className="px-4 py-4 align-top">
