@@ -60,6 +60,23 @@ export default function SiteHeader() {
         </div>
 
         <div className="flex w-full shrink-0 items-center justify-center gap-2 sm:w-auto sm:justify-end">
+          <div className="hidden rounded-xl border border-gray-700 bg-gray-900 p-1 sm:inline-flex">
+            {(["UK", "US", "All"] as Region[]).map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => changeRegion(option)}
+                className={`h-9 rounded-lg px-3 text-xs font-medium transition ${
+                  region === option
+                    ? "bg-white text-black"
+                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                }`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+
           <Link
             href="/"
             className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm font-medium text-white transition hover:bg-gray-800 md:px-5"
@@ -90,20 +107,20 @@ export default function SiteHeader() {
         </div>
       </div>
 
-      <div className="mt-3 flex justify-center sm:justify-end">
-        <div className="inline-flex rounded-lg border border-gray-700 bg-gray-900 p-1 text-xs">
+      <div className="flex justify-center sm:hidden">
+        <div className="inline-flex rounded-xl border border-gray-700 bg-gray-900 p-1">
           {(["UK", "US", "All"] as Region[]).map((option) => (
             <button
               key={option}
               type="button"
               onClick={() => changeRegion(option)}
-              className={`rounded-md px-2.5 py-1.5 transition ${
+              className={`h-9 rounded-lg px-3 text-xs font-medium transition ${
                 region === option
                   ? "bg-white text-black"
-                  : "text-gray-300 hover:text-white"
+                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
               }`}
             >
-              {option === "UK" ? "🇬🇧 UK" : option === "US" ? "🇺🇸 US" : "🌍 All"}
+              {option}
             </button>
           ))}
         </div>
