@@ -12,6 +12,7 @@ type Poll = {
   question: string;
   description: string;
   category: string;
+  region: "UK" | "US" | "Universal";
   slug: string;
   featured?: boolean;
   is_private?: boolean;
@@ -293,6 +294,7 @@ export default function Home() {
   const [featuredPollVoted, setFeaturedPollVoted] = useState(false);
   const [featuredSelectedOptionId, setFeaturedSelectedOptionId] = useState<number | null>(null);
 const [selectedCategory, setSelectedCategory] = useState("All");
+const [selectedRegion, setSelectedRegion] = useState<"UK" | "US" | "All">("UK");
 const [selectedSortFilter, setSelectedSortFilter] = useState<SortFilter>("Newest");
   const [searchTerm, setSearchTerm] = useState("");
   const [subscriberEmail, setSubscriberEmail] = useState("");
@@ -431,7 +433,7 @@ let last24Total = 0;
           const [pollsResult, totalPollCountResult] = await Promise.all([
                 supabase
           .from("polls")
-          .select("id, question, description, category, slug, featured, is_private, is_publicly_listed, created_at")
+          .select("id, question, description, category, region, slug, featured, is_private, is_publicly_listed, created_at")
           .eq("is_private", false)
           .eq("is_publicly_listed", true)
 .order("created_at", { ascending: false }),
@@ -589,8 +591,20 @@ if (savedSort && SORT_FILTERS.includes(savedSort)) {
   }, []);
 
   useEffect(() => {
-    sessionStorage.setItem("selectedPollCategory", selectedCategory);
-  }, [selectedCategory]);
+  sessionStorage.setItem("selectedPollCategory", selectedCategory);
+}, [selectedCategory]);
+
+useEffect(() => {
+  const savedRegion = localStorage.getItem("pollandsee-region");
+
+  if (savedRegion === "UK" || savedRegion === "US" || savedRegion === "All") {
+    setSelectedRegion(savedRegion);
+  }
+}, []);
+
+useEffect(() => {
+  localStorage.setItem("pollandsee-region", selectedRegion);
+}, [selectedRegion]);
 
   useEffect(() => {
     sessionStorage.setItem("selectedPollSortFilter", selectedSortFilter);
@@ -871,9 +885,15 @@ if (savedSort && SORT_FILTERS.includes(savedSort)) {
    const categories = ["All", ...LIVE_POLL_CATEGORIES];
 
   const filteredPolls = useMemo(() => {
-   if (selectedCategory === "All") return polls;
-    return polls.filter((poll) => poll.category === selectedCategory);
-  }, [polls, selectedCategory]);
+  const regionalPolls = polls.filter((poll) => {
+    if (selectedRegion === "All") return true;
+    return poll.region === "Universal" || poll.region === selectedRegion;
+  });
+
+  if (selectedCategory === "All") return regionalPolls;
+
+  return regionalPolls.filter((poll) => poll.category === selectedCategory);
+}, [polls, selectedCategory, selectedRegion]);
 
   const searchedPolls = useMemo(() => {
     const trimmed = searchTerm.trim().toLowerCase();
@@ -997,6 +1017,25 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
   return (
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
       <SiteHeader />
+
+      <div className="mx-auto flex max-w-4xl justify-end px-6">
+        <div className="flex rounded-lg border border-gray-700 bg-gray-900 p-1 text-xs">
+          {(["UK", "US", "All"] as const).map((region) => (
+            <button
+              key={region}
+              type="button"
+              onClick={() => setSelectedRegion(region)}
+              className={`rounded-md px-2.5 py-1.5 transition ${
+                selectedRegion === region
+                  ? "bg-white text-black"
+                  : "text-gray-300 hover:text-white"
+              }`}
+            >
+              {region === "UK" ? "🇬🇧 UK" : region === "US" ? "🇺🇸 US" : "🌍 All"}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <section className="mx-auto max-w-4xl px-6 pb-6 pt-1">
         <div className="mb-5 text-center">
