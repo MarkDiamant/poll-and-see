@@ -8,6 +8,7 @@ type SubmissionRow = {
   question: string;
   description: string | null;
   category: string | null;
+  region: "UK" | "US" | "Universal" | null;
   options: string[] | null;
   option_image_urls: string[] | null;
   is_private: boolean | null;
@@ -201,7 +202,7 @@ export async function POST(
 
     const { data: submission, error: submissionError } = await supabaseAdmin
       .from("poll_submissions")
-      .select("id, poll_id, email, question, description, category, options, option_image_urls, is_private, status, created_at")
+      .select("id, poll_id, email, question, description, category, region, options, option_image_urls, is_private, status, created_at")
       .eq("id", submissionId)
       .single();
 
@@ -230,6 +231,7 @@ const { data: updatedPoll, error: pollUpdateError } = await supabaseAdmin
     question: typedSubmission.question,
     description: typedSubmission.description || "",
     category: typedSubmission.category || "General",
+    region: typedSubmission.region || "Universal",
     is_private: Boolean(typedSubmission.is_private),
     is_publicly_listed: !Boolean(typedSubmission.is_private),
 created_at: new Date().toISOString(),
@@ -346,6 +348,7 @@ const { error: deleteSubmissionError } = await supabaseAdmin
         question: typedSubmission.question,
         description: typedSubmission.description || "",
         category: typedSubmission.category || "General",
+        region: typedSubmission.region || "Universal",
         slug,
         featured: false,
         is_private: Boolean(typedSubmission.is_private),
