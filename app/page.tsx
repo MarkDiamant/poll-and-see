@@ -294,7 +294,7 @@ export default function Home() {
   const [featuredPollVoted, setFeaturedPollVoted] = useState(false);
   const [featuredSelectedOptionId, setFeaturedSelectedOptionId] = useState<number | null>(null);
 const [selectedCategory, setSelectedCategory] = useState("All");
-const [selectedRegion, setSelectedRegion] = useState<"UK" | "US" | "All">("UK");
+const [selectedRegion, setSelectedRegion] = useState<"UK" | "US" | "All" | null>(null);
 const [selectedSortFilter, setSelectedSortFilter] = useState<SortFilter>("Newest");
   const [searchTerm, setSearchTerm] = useState("");
   const [subscriberEmail, setSubscriberEmail] = useState("");
@@ -595,15 +595,35 @@ if (savedSort && SORT_FILTERS.includes(savedSort)) {
 }, [selectedCategory]);
 
 useEffect(() => {
-  const savedRegion = localStorage.getItem("pollandsee-region");
+  const loadRegion = async () => {
+    const savedRegion = localStorage.getItem("pollandsee-region");
 
-  if (savedRegion === "UK" || savedRegion === "US" || savedRegion === "All") {
-    setSelectedRegion(savedRegion);
-  }
+    if (savedRegion === "UK" || savedRegion === "US" || savedRegion === "All") {
+      setSelectedRegion(savedRegion);
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/region");
+      const data = await response.json();
+
+      if (data.region === "US") {
+        setSelectedRegion("US");
+      } else {
+        setSelectedRegion("UK");
+      }
+    } catch {
+      setSelectedRegion("UK");
+    }
+  };
+
+  void loadRegion();
 }, []);
 
 useEffect(() => {
-  localStorage.setItem("pollandsee-region", selectedRegion);
+  if (selectedRegion) {
+    localStorage.setItem("pollandsee-region", selectedRegion);
+  }
 }, [selectedRegion]);
 
   useEffect(() => {
@@ -886,7 +906,7 @@ useEffect(() => {
 
   const filteredPolls = useMemo(() => {
   const regionalPolls = polls.filter((poll) => {
-    if (selectedRegion === "All") return true;
+    if (!selectedRegion || selectedRegion === "All") return true;
     return poll.region === "Universal" || poll.region === selectedRegion;
   });
 
