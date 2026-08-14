@@ -103,6 +103,7 @@ export default function AdminPollsPage() {
 const [searchInput, setSearchInput] = useState("");
 const [privacyFilter, setPrivacyFilter] = useState<"all" | "public" | "private">("all");
 const [categoryFilter, setCategoryFilter] = useState<"all" | CategoryOption>("all");
+const [regionFilter, setRegionFilter] = useState<"all" | PollRegion>("all");
   const [polls, setPolls] = useState<PollRow[]>([]);
   const totalPollCount = polls.length;
   const [pendingSubmissionsCount, setPendingSubmissionsCount] = useState(0);
@@ -112,6 +113,8 @@ const [hiddenPollCount, setHiddenPollCount] = useState(0);
   const [descriptionEdits, setDescriptionEdits] = useState<Record<number, string>>({});
 const [categoryEdits, setCategoryEdits] = useState<Record<number, CategoryOption>>({});
 const [regionEdits, setRegionEdits] = useState<Record<number, PollRegion>>({});
+const [selectedPollIds, setSelectedPollIds] = useState<number[]>([]);
+const [bulkRegion, setBulkRegion] = useState<PollRegion>("Universal");
 const [privacyEdits, setPrivacyEdits] = useState<Record<number, boolean>>({});
   const [featuredEdits, setFeaturedEdits] = useState<Record<number, boolean>>({});
   const [embedStatusEdits, setEmbedStatusEdits] = useState<Record<number, EmbedStatus>>({});
@@ -465,12 +468,65 @@ const saveOptionImageUrl = (pollId: number, optionIndex: number, value: string) 
   void updatePoll(pollId, { option_updates: next });
 };
 
+const applyBulkRegion = async () => {
+  if (selectedPollIds.length === 0) return;
+
+  setSavingKey("bulk-region");
+  setError("");
+
+  try {
+    const responses = await Promise.all(
+      selectedPollIds.map((pollId) =>
+        fetch(`/api/admin/polls/${pollId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-key": adminKey,
+          },
+          body: JSON.stringify({
+            region: bulkRegion,
+          }),
+        })
+      )
+    );
+
+    if (responses.some((response) => !response.ok)) {
+      throw new Error("Could not update all selected polls.");
+    }
+
+    setPolls((current) =>
+      current.map((poll) =>
+        selectedPollIds.includes(poll.id)
+          ? { ...poll, region: bulkRegion }
+          : poll
+      )
+    );
+
+    setRegionEdits((current) => {
+      const next = { ...current };
+
+      selectedPollIds.forEach((pollId) => {
+        next[pollId] = bulkRegion;
+      });
+
+      return next;
+    });
+
+    setSelectedPollIds([]);
+  } catch (err) {
+    setError(err instanceof Error ? err.message : "Could not update selected polls.");
+  } finally {
+    setSavingKey("");
+  }
+};
+
 const sortedPolls = useMemo(() => {
   return [...polls]
     .filter((poll) => {
       if (privacyFilter === "public" && poll.is_private) return false;
       if (privacyFilter === "private" && !poll.is_private) return false;
       if (categoryFilter !== "all" && poll.category !== categoryFilter) return false;
+      if (regionFilter !== "all" && poll.region !== regionFilter) return false;
       return true;
     })
     .sort((a, b) => {
@@ -478,7 +534,7 @@ const sortedPolls = useMemo(() => {
       const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
       return bTime - aTime;
     });
-}, [polls, privacyFilter, categoryFilter]);
+}, [polls, privacyFilter, categoryFilter, regionFilter]);
 
   if (!adminKey) {
     return (
@@ -611,6 +667,17 @@ const sortedPolls = useMemo(() => {
     ))}
   </select>
 
+  <select
+    value={regionFilter}
+    onChange={(event) => setRegionFilter(event.target.value as "all" | PollRegion)}
+    className="h-11 rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm text-white outline-none"
+  >
+    <option value="all">All regions</option>
+    <option value="Universal">🌍 Universal</option>
+    <option value="UK">🇬🇧 UK</option>
+    <option value="US">🇺🇸 US</option>
+  </select>
+
   <button
     type="button"
     onClick={handleLogout}
@@ -626,6 +693,50 @@ const sortedPolls = useMemo(() => {
             {error}
           </div>
         ) : null}
+
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-gray-700 bg-gray-800 p-3">
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-white">
+            <input
+              type="checkbox"
+              checked={
+                sortedPolls.length > 0 &&
+                sortedPolls.every((poll) => selectedPollIds.includes(poll.id))
+              }
+              onChange={(event) => {
+                if (event.target.checked) {
+                  setSelectedPollIds(sortedPolls.map((poll) => poll.id));
+                } else {
+                  setSelectedPollIds([]);
+                }
+              }}
+              className="h-4 w-4"
+            />
+            Select all visible
+          </label>
+
+          <span className="text-sm text-gray-300">
+            Selected: {selectedPollIds.length}
+          </span>
+
+          <select
+            value={bulkRegion}
+            onChange={(event) => setBulkRegion(event.target.value as PollRegion)}
+            className="h-10 rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm text-white outline-none"
+          >
+            <option value="Universal">🌍 Universal</option>
+            <option value="UK">🇬🇧 UK</option>
+            <option value="US">🇺🇸 US</option>
+          </select>
+
+          <button
+            type="button"
+            disabled={selectedPollIds.length === 0 || savingKey === "bulk-region"}
+            onClick={() => void applyBulkRegion()}
+            className="h-10 rounded-xl bg-white px-4 text-sm font-medium text-black transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {savingKey === "bulk-region" ? "Applying..." : "Apply region"}
+          </button>
+        </div>
 
         <div className="rounded-2xl border border-gray-700 bg-gray-800 shadow-lg">
   <table className="hidden min-w-[900px] text-sm md:table md:w-full">
@@ -693,6 +804,20 @@ const sortedPolls = useMemo(() => {
                             onBlur={() => void updatePoll(poll.id)}
                            rows={1}
 className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto h-[38px]"
+                          />
+                          <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedPollIds.includes(poll.id)}
+                            onChange={(event) => {
+                              setSelectedPollIds((current) =>
+                                event.target.checked
+                                  ? Array.from(new Set([...current, poll.id]))
+                                  : current.filter((id) => id !== poll.id)
+                              );
+                            }}
+                            className="h-4 w-4 shrink-0"
+                            aria-label={`Select poll ${poll.id}`}
                           />
                           <p className="text-xs text-gray-400">
                             Poll ID {poll.id}
@@ -993,13 +1118,28 @@ className={`rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-lef
                         className="h-[38px] w-full resize-none rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
                       />
 
-                      <p className="text-xs text-gray-400">
-                        Poll ID {poll.id}
-                        {poll.created_at
-                          ? ` • ${new Date(poll.created_at).toLocaleString()}`
-                          : ""}
-                        {poll.slug ? ` • /poll/${poll.slug}` : ""}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedPollIds.includes(poll.id)}
+                          onChange={(event) => {
+                            setSelectedPollIds((current) =>
+                              event.target.checked
+                                ? Array.from(new Set([...current, poll.id]))
+                                : current.filter((id) => id !== poll.id)
+                            );
+                          }}
+                          className="h-4 w-4 shrink-0"
+                          aria-label={`Select poll ${poll.id}`}
+                        />
+                        <p className="text-xs text-gray-400">
+                          Poll ID {poll.id}
+                          {poll.created_at
+                            ? ` • ${new Date(poll.created_at).toLocaleString()}`
+                            : ""}
+                          {poll.slug ? ` • /poll/${poll.slug}` : ""}
+                        </p>
+                      </div>
                     </div>
 
                     <div className="space-y-1.5">

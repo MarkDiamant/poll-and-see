@@ -54,6 +54,9 @@ function cleanSponsorPayload(body: Record<string, unknown>) {
     cta_text: String(body.cta_text || "").trim(),
     destination_url: normaliseExternalUrl(String(body.destination_url || "")),
     category: categories.join(","),
+    region: ["UK", "US", "Universal"].includes(String(body.region))
+      ? String(body.region)
+      : "Universal",
     start_at: String(body.start_at || "").trim(),
     end_at: String(body.end_at || "").trim(),
     is_active: Boolean(body.is_active),
@@ -73,7 +76,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabaseAdmin
       .from("sponsors")
-      .select("id, business_name, headline, logo_url, cta_text, destination_url, category, start_at, end_at, is_active, created_at, theme")
+      .select("id, business_name, headline, logo_url, cta_text, destination_url, category, region, start_at, end_at, is_active, created_at, theme")
       .order("created_at", { ascending: false });
 
     if (error) {
