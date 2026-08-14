@@ -15,6 +15,7 @@ type Poll = {
   question: string;
   description: string | null;
   category: string;
+  region: "UK" | "US" | "Universal" | null;
   slug: string;
   is_private: boolean | null;
   is_publicly_listed: boolean | null;
@@ -94,6 +95,27 @@ async function loadPollOptionsForPollIds(pollIds: number[]) {
   }
 
   return optionRows;
+}
+
+async function getSelectedRegion(): Promise<"UK" | "US" | "All"> {
+  if (typeof window === "undefined") return "UK";
+
+  const savedRegion = localStorage.getItem("pollandsee-region");
+
+  if (savedRegion === "UK" || savedRegion === "US" || savedRegion === "All") {
+    return savedRegion;
+  }
+
+  try {
+    const response = await fetch("/api/region");
+    const data = await response.json();
+    const detectedRegion = data.region === "US" ? "US" : "UK";
+
+    localStorage.setItem("pollandsee-region", detectedRegion);
+    return detectedRegion;
+  } catch {
+    return "UK";
+  }
 }
 
 function getResultsBrowserId() {
@@ -562,14 +584,24 @@ const lastReactionRefreshRef = useRef(0);
 
         const { data: newPollRows } = await supabase
           .from("polls")
-          .select("id, question, description, category, slug, is_private, is_publicly_listed, total_votes")
+          .select("id, question, description, category, region, slug, is_private, is_publicly_listed, total_votes")
           .eq("is_private", false)
           .eq("is_publicly_listed", true)
           .order("id", { ascending: false })
           .limit(100);
 
+        const selectedRegion = await getSelectedRegion();
         const votedSet = new Set(votedPollIds);
-        setNewPolls(((newPollRows || []) as Poll[]).filter((poll) => !votedSet.has(poll.id)));
+
+        setNewPolls(
+          ((newPollRows || []) as Poll[]).filter(
+            (poll) =>
+              !votedSet.has(poll.id) &&
+              (selectedRegion === "All" ||
+                poll.region === "Universal" ||
+                poll.region === selectedRegion)
+          )
+        );
       } catch {
         setVotedPolls([]);
         setNewPolls([]);

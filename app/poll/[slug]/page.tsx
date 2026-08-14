@@ -59,6 +59,7 @@ type Sponsor = {
   destination_url: string;
   theme: string | null;
   category: string;
+  region?: "UK" | "US" | "Universal";
 };
 
 const SAME_POLL_CLICK_GUARD_MS = 400;
@@ -1187,14 +1188,21 @@ const sponsorByPollContainerRef = useRef<Record<number, HTMLDivElement | null>>(
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
   const [totalVoteCount, setTotalVoteCount] = useState(0);
   const [anchorCategory, setAnchorCategory] = useState("");
-
+  const [selectedRegion, setSelectedRegion] = useState<"UK" | "US" | "All">("UK");
   const categoryMenuRef = useRef<HTMLDivElement | null>(null);
   const adminRefreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     pollsRef.current = polls;
   }, [polls]);
+  useEffect(() => {
+    const loadRegion = async () => {
+      const region = await getSelectedRegion();
+      setSelectedRegion(region);
+    };
 
+    void loadRegion();
+  }, []);
   useEffect(() => {
     if (
       !hasEmailSubscribedLocally() &&
