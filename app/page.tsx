@@ -1038,25 +1038,6 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
     <main className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
       <SiteHeader />
 
-      <div className="mx-auto flex max-w-4xl justify-end px-6">
-        <div className="flex rounded-lg border border-gray-700 bg-gray-900 p-1 text-xs">
-          {(["UK", "US", "All"] as const).map((region) => (
-            <button
-              key={region}
-              type="button"
-              onClick={() => setSelectedRegion(region)}
-              className={`rounded-md px-2.5 py-1.5 transition ${
-                selectedRegion === region
-                  ? "bg-white text-black"
-                  : "text-gray-300 hover:text-white"
-              }`}
-            >
-              {region === "UK" ? "🇬🇧 UK" : region === "US" ? "🇺🇸 US" : "🌍 All"}
-            </button>
-          ))}
-        </div>
-      </div>
-
       <section className="mx-auto max-w-4xl px-6 pb-6 pt-1">
         <div className="mb-5 text-center">
           <h1 className="mb-2 text-4xl font-bold md:text-5xl">Poll & See</h1>

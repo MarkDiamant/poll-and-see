@@ -60,13 +60,13 @@ export default function SiteHeader() {
         </div>
 
         <div className="flex w-full shrink-0 items-center justify-center gap-2 sm:w-auto sm:justify-end">
-          <div className="hidden rounded-xl border border-gray-700 bg-gray-900 p-1 sm:inline-flex">
+          <div className="mr-2 hidden rounded-lg border border-gray-700 bg-gray-900 p-0.5 sm:inline-flex">
             {(["UK", "US", "All"] as Region[]).map((option) => (
               <button
                 key={option}
                 type="button"
                 onClick={() => changeRegion(option)}
-                className={`h-9 rounded-lg px-3 text-xs font-medium transition ${
+                className={`h-7 rounded-md px-2.5 text-[11px] font-medium transition ${
                   region === option
                     ? "bg-white text-black"
                     : "text-gray-300 hover:bg-gray-800 hover:text-white"
@@ -107,7 +107,7 @@ export default function SiteHeader() {
         </div>
       </div>
 
-      <div className="flex justify-center sm:hidden">
+      <div className="mb-1 flex justify-end sm:hidden">
         <div className="inline-flex rounded-xl border border-gray-700 bg-gray-900 p-1">
           {(["UK", "US", "All"] as Region[]).map((option) => (
             <button
