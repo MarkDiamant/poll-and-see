@@ -27,7 +27,7 @@ type Poll = {
   question: string;
   description: string;
   category: string;
-  region: "UK" | "US" | "Universal";
+  region?: "UK" | "US" | "Universal";
   slug: string;
   is_private?: boolean;
   created_at?: string | null;
@@ -344,9 +344,33 @@ async function submitVote(pollId: number, optionId: number) {
   }
 }
 
-async function loadActiveSponsor(category: string): Promise<Sponsor | null> {
+async function getSelectedRegion(): Promise<"UK" | "US" | "All"> {
+  if (typeof window === "undefined") return "UK";
+
+  const savedRegion = localStorage.getItem("pollandsee-region");
+
+  if (savedRegion === "UK" || savedRegion === "US" || savedRegion === "All") {
+    return savedRegion;
+  }
+
+  try {
+    const response = await fetch("/api/region");
+    const data = await response.json();
+    const detectedRegion = data.region === "US" ? "US" : "UK";
+
+    localStorage.setItem("pollandsee-region", detectedRegion);
+    return detectedRegion;
+  } catch {
+    return "UK";
+  }
+}
+
+async function loadActiveSponsor(
+  category: string,
+  region: "UK" | "US" | "All" = "UK"
+): Promise<Sponsor | null> {
   const response = await fetch(
-    `/api/sponsors/active?category=${encodeURIComponent(category)}&t=${Date.now()}`,
+    `/api/sponsors/active?category=${encodeURIComponent(category)}&region=${encodeURIComponent(region)}&t=${Date.now()}`,
     {
       cache: "no-store",
     }
@@ -1656,7 +1680,7 @@ return safeBundle;
       }
 
       const pollList = (data || []) as Poll[];
-const selectedRegion = localStorage.getItem("pollandsee-region");
+const selectedRegion = await getSelectedRegion();
 
 const unseen = pollList.filter(
   (poll) =>
@@ -1923,7 +1947,9 @@ previousPollCountRef.current = polls.length;
                 badgeLabel={badgeLabel}
                 showGoToAllPolls={true}
 onVoteComplete={(pollId, category) => {
-  void loadActiveSponsor(category).then((sponsor) => {
+  void getSelectedRegion()
+    .then((selectedRegion) => loadActiveSponsor(category, selectedRegion))
+    .then((sponsor) => {
     const currentShownIds = pollsRef.current.map((item) => item.poll.id);
     const flowAnchorCategory =
       anchorCategory || pollsRef.current[0]?.poll.category || "";

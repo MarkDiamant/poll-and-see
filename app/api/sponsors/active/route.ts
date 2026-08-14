@@ -16,6 +16,12 @@ function getAdminClient() {
 
 export async function GET(request: NextRequest) {
   const category = request.nextUrl.searchParams.get("category")?.trim();
+  const requestedRegion = request.nextUrl.searchParams.get("region")?.trim();
+
+  const region =
+    requestedRegion === "UK" || requestedRegion === "US" || requestedRegion === "All"
+      ? requestedRegion
+      : "UK";
 
   if (!category) {
     return NextResponse.json({ sponsor: null });
@@ -26,7 +32,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from("sponsors")
-    .select("id, business_name, headline, logo_url, cta_text, destination_url, theme, category")
+    .select("id, business_name, headline, logo_url, cta_text, destination_url, theme, category, region")
     .eq("is_active", true)
     .lte("start_at", now)
     .gt("end_at", now)
@@ -46,7 +52,14 @@ export async function GET(request: NextRequest) {
         .map((value) => value.trim().toLowerCase())
         .filter(Boolean);
 
-      return categories.includes(category.toLowerCase());
+      const sponsorRegion = String(item.region || "Universal");
+
+      const regionMatches =
+        region === "All" ||
+        sponsorRegion === "Universal" ||
+        sponsorRegion === region;
+
+      return categories.includes(category.toLowerCase()) && regionMatches;
     }) || null;
 
   return NextResponse.json({ sponsor });
