@@ -27,6 +27,7 @@ type Poll = {
   question: string;
   description: string;
   category: string;
+  region: "UK" | "US" | "Universal";
   slug: string;
   is_private?: boolean;
   created_at?: string | null;
@@ -1523,7 +1524,7 @@ return safeBundle;
     const [pollResult, optionsResult] = await Promise.all([
       supabase
         .from("polls")
-        .select("id, question, description, category, slug, is_private, created_at")
+        .select("id, question, description, category, region, slug, is_private, created_at")
         .eq("id", pollId)
         .single(),
       supabase
@@ -1643,7 +1644,7 @@ return safeBundle;
     try {
       const { data, error } = await supabase
         .from("polls")
-.select("id, question, description, category, slug, is_private, created_at")
+.select("id, question, description, category, region, slug, is_private, created_at")
 .eq("is_private", false)
 .eq("is_publicly_listed", true)
 .order("id", { ascending: false });
@@ -1655,13 +1656,19 @@ return safeBundle;
       }
 
       const pollList = (data || []) as Poll[];
-            const unseen = pollList.filter(
-        (poll) =>
-          !excludeIds.includes(poll.id) &&
-          !skippedPollIdsRef.current.has(poll.id) &&
-          !skippedCategoriesRef.current.has(poll.category) &&
-          !hasLocalVote(poll.id)
-      );
+const selectedRegion = localStorage.getItem("pollandsee-region");
+
+const unseen = pollList.filter(
+  (poll) =>
+    (selectedRegion === "All" ||
+      !selectedRegion ||
+      poll.region === "Universal" ||
+      poll.region === selectedRegion) &&
+    !excludeIds.includes(poll.id) &&
+    !skippedPollIdsRef.current.has(poll.id) &&
+    !skippedCategoriesRef.current.has(poll.category) &&
+    !hasLocalVote(poll.id)
+);
 
       const priorityCategories = getPriorityCategories(flowAnchorCategory);
       const ordered: Poll[] = [];
