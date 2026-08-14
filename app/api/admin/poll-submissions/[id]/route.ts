@@ -8,6 +8,7 @@ type SubmissionUpdatePayload = {
   status?: "pending" | "ready" | "scheduled" | "hidden";
   scheduled_publish_at?: string | null;
   category?: string;
+  region?: "UK" | "US" | "Universal";
   is_private?: boolean;
   email?: string | null;
   options?: string[];
@@ -20,6 +21,7 @@ type SubmissionRow = {
   question: string;
   description: string | null;
   category: string | null;
+  region: "UK" | "US" | "Universal" | null;
   slug: string | null;
   status: "pending" | "ready" | "scheduled" | "hidden";
   is_private: boolean | null;
@@ -83,7 +85,7 @@ export async function PATCH(
 
     const { data: existingSubmission, error: existingSubmissionError } = await supabaseAdmin
       .from("poll_submissions")
-      .select("id, poll_id, question, description, category, slug, status, is_private, scheduled_publish_at")
+      .select("id, poll_id, question, description, category, region, slug, status, is_private, scheduled_publish_at")
       .eq("id", submissionId)
       .single();
 
@@ -171,6 +173,17 @@ export async function PATCH(
       pollUpdates.category = category;
     }
 
+    if ("region" in body) {
+      const region = body.region;
+
+      if (region !== "UK" && region !== "US" && region !== "Universal") {
+        return NextResponse.json({ error: "Invalid region." }, { status: 400 });
+      }
+
+      updates.region = region;
+      pollUpdates.region = region;
+    }
+
     if ("is_private" in body) {
   const isPrivate = Boolean(body.is_private);
   updates.is_private = isPrivate;
@@ -206,7 +219,7 @@ export async function PATCH(
       .from("poll_submissions")
       .update(updates)
       .eq("id", submissionId)
-      .select("id, email, question, description, category, options, option_image_urls, is_private, slug, status, scheduled_publish_at, created_at, poll_id")
+      .select("id, email, question, description, category, region, options, option_image_urls, is_private, slug, status, scheduled_publish_at, created_at, poll_id")
       .single();
 
     if (error || !data) {

@@ -11,6 +11,7 @@ type PollSubmissionRow = {
   question: string;
   description: string | null;
   category: string | null;
+  region: "UK" | "US" | "Universal" | null;
   options: string[] | null;
   option_image_urls: string[] | null;
   is_private: boolean | null;
@@ -61,8 +62,9 @@ export default function AdminSubmissionsPage() {
   const [optionsEdits, setOptionsEdits] = useState<Record<number, string>>({});
   const [imageUrlEdits, setImageUrlEdits] = useState<Record<number, string>>({});
   const [emailEdits, setEmailEdits] = useState<Record<number, string>>({});
-  const [categoryEdits, setCategoryEdits] = useState<Record<number, CategoryOption>>({});
-  const [privacyEdits, setPrivacyEdits] = useState<Record<number, boolean>>({});
+const [categoryEdits, setCategoryEdits] = useState<Record<number, CategoryOption>>({});
+const [regionEdits, setRegionEdits] = useState<Record<number, "UK" | "US" | "Universal">>({});
+const [privacyEdits, setPrivacyEdits] = useState<Record<number, boolean>>({});
   const [scheduledPublishEdits, setScheduledPublishEdits] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(false);
   const [savingKey, setSavingKey] = useState("");
@@ -71,8 +73,9 @@ export default function AdminSubmissionsPage() {
 const savingKeyRef = useRef("");
   const [newQuestion, setNewQuestion] = useState("");
   const [newDescription, setNewDescription] = useState("");
-  const [newCategory, setNewCategory] = useState<CategoryOption>("General");
-  const [newIsPrivate, setNewIsPrivate] = useState(false);
+const [newCategory, setNewCategory] = useState<CategoryOption>("General");
+const [newRegion, setNewRegion] = useState<"UK" | "US" | "Universal">("Universal");
+const [newIsPrivate, setNewIsPrivate] = useState(false);
   const [newOptions, setNewOptions] = useState("");
   const [newImageUrls, setNewImageUrls] = useState("");
   const [creatingSubmission, setCreatingSubmission] = useState(false);
@@ -167,14 +170,21 @@ setSubmissions(nextSubmissions);
           setEmailEdits(
             Object.fromEntries(nextSubmissions.map((row: PollSubmissionRow) => [row.id, row.email || ""]))
           );
-          setCategoryEdits(
-            Object.fromEntries(
-              nextSubmissions.map((row: PollSubmissionRow) => [
-                row.id,
-                (row.category as CategoryOption) || "General",
-              ])
-            )
-          );
+setRegionEdits((current) => {
+  const next = { ...current };
+  nextSubmissions.forEach((row: PollSubmissionRow) => {
+    if (next[row.id] === undefined) next[row.id] = row.region || "Universal";
+  });
+  return next;
+});
+
+setPrivacyEdits((current) => {
+  const next = { ...current };
+  nextSubmissions.forEach((row: PollSubmissionRow) => {
+    if (next[row.id] === undefined) next[row.id] = Boolean(row.is_private);
+  });
+  return next;
+});
           setPrivacyEdits(
             Object.fromEntries(
               nextSubmissions.map((row: PollSubmissionRow) => [row.id, Boolean(row.is_private)])
@@ -296,9 +306,10 @@ return () => {
     setOptionsEdits({});
     setImageUrlEdits({});
     setEmailEdits({});
-    setCategoryEdits({});
-    setPrivacyEdits({});
-    setScheduledPublishEdits({});
+setCategoryEdits({});
+setRegionEdits({});
+setPrivacyEdits({});
+setScheduledPublishEdits({});
     setError("");
   };
 
@@ -312,9 +323,10 @@ return () => {
     overrides: Partial<{
       question: string;
       description: string;
-      category: CategoryOption;
-      is_private: boolean;
-      email: string;
+category: CategoryOption;
+region: "UK" | "US" | "Universal";
+is_private: boolean;
+email: string;
       options: string[];
       option_image_urls: string[];
       status: "pending" | "ready" | "scheduled" | "hidden";
@@ -334,8 +346,9 @@ return () => {
         body: JSON.stringify({
           question: ((overrides.question ?? questionEdits[submissionId]) || "").trim(),
           description: ((overrides.description ?? descriptionEdits[submissionId]) || "").trim(),
-          category: overrides.category ?? categoryEdits[submissionId] ?? "General",
-          is_private: overrides.is_private ?? Boolean(privacyEdits[submissionId]),
+category: overrides.category ?? categoryEdits[submissionId] ?? "General",
+region: overrides.region ?? regionEdits[submissionId] ?? "Universal",
+is_private: overrides.is_private ?? Boolean(privacyEdits[submissionId]),
                     email: ((overrides.email ?? emailEdits[submissionId]) || "").trim(),
           options: overrides.options ?? (optionsEdits[submissionId] || "")
             .split("\n")
@@ -467,8 +480,9 @@ const createSubmission = async () => {
         body: JSON.stringify({
           question: newQuestion.trim(),
           description: newDescription.trim(),
-          category: newCategory,
-          is_private: newIsPrivate,
+category: newCategory,
+region: newRegion,
+is_private: newIsPrivate,
           options: newOptions
             .split("\n")
             .map((item) => item.trim())
@@ -500,11 +514,15 @@ const createSubmission = async () => {
         [data.submission.id]: (data.submission.option_image_urls || []).join("\n"),
       }));
       setEmailEdits((current) => ({ ...current, [data.submission.id]: data.submission.email || "" }));
-      setCategoryEdits((current) => ({
-        ...current,
-        [data.submission.id]: (data.submission.category as CategoryOption) || "General",
-      }));
-      setPrivacyEdits((current) => ({
+setCategoryEdits((current) => ({
+  ...current,
+  [data.submission.id]: (data.submission.category as CategoryOption) || "General",
+}));
+setRegionEdits((current) => ({
+  ...current,
+  [data.submission.id]: data.submission.region || "Universal",
+}));
+setPrivacyEdits((current) => ({
         ...current,
         [data.submission.id]: Boolean(data.submission.is_private),
       }));
@@ -515,9 +533,10 @@ const createSubmission = async () => {
 
       setNewQuestion("");
       setNewDescription("");
-      setNewCategory("General");
-      setNewIsPrivate(false);
-      setNewOptions("");
+setNewCategory("General");
+setNewRegion("Universal");
+setNewIsPrivate(false);
+setNewOptions("");
       setNewImageUrls("");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not create submission.";
@@ -759,9 +778,24 @@ const hideSubmission = async (submissionId: number) => {
                   </select>
                 </div>
 
-                <div>
-                  <p className="mb-1 text-xs text-gray-400">Privacy</p>
-                  <button
+<div>
+  <p className="mb-1 text-xs text-gray-400">Region</p>
+  <select
+    value={newRegion}
+    onChange={(event) =>
+      setNewRegion(event.target.value as "UK" | "US" | "Universal")
+    }
+    className="h-10 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none"
+  >
+    <option value="Universal">🌍 Universal</option>
+    <option value="UK">🇬🇧 UK</option>
+    <option value="US">🇺🇸 US</option>
+  </select>
+</div>
+
+<div>
+  <p className="mb-1 text-xs text-gray-400">Privacy</p>
+  <button
                     type="button"
                     onClick={() => setNewIsPrivate((current) => !current)}
                     className={`h-10 w-full rounded-lg px-3 py-2 text-left text-sm transition ${
@@ -1383,12 +1417,34 @@ className="w-full resize-none overflow-y-auto rounded-lg border border-gray-700 
                           </select>
                         </div>
 
-                        <div className="space-y-1">
-                          <span className="text-gray-400">Privacy</span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const nextPrivate = !privacyEdits[submission.id];
+<div className="space-y-1">
+  <span className="text-gray-400">Region</span>
+  <select
+    value={regionEdits[submission.id] || "Universal"}
+    onChange={(event) => {
+      const nextRegion = event.target.value as "UK" | "US" | "Universal";
+
+      setRegionEdits((current) => ({
+        ...current,
+        [submission.id]: nextRegion,
+      }));
+
+      void saveSubmission(submission.id, { region: nextRegion });
+    }}
+    className="w-full rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-xs text-white outline-none"
+  >
+    <option value="Universal">🌍 Universal</option>
+    <option value="UK">🇬🇧 UK</option>
+    <option value="US">🇺🇸 US</option>
+  </select>
+</div>
+
+<div className="space-y-1">
+  <span className="text-gray-400">Privacy</span>
+  <button
+    type="button"
+    onClick={() => {
+      const nextPrivate = !privacyEdits[submission.id];
                               setPrivacyEdits((current) => ({
                                 ...current,
                                 [submission.id]: nextPrivate,
