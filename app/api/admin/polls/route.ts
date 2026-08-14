@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     let query = supabaseAdmin
       .from("polls")
       .select(
-        "id, question, description, category, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed"
+        "id, question, description, category, region, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed"
       )
       .order("created_at", { ascending: false });
 
@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
     const supabaseAdmin = getAdminClient();
     const body = await request.json();
 
-    const { question, description, category, is_private, options } = body;
+    const { question, description, category, region = "Universal", is_private, options } = body;
 
     if (!question || !options || options.length < 2) {
       return NextResponse.json({ error: "Invalid data." }, { status: 400 });
@@ -197,6 +197,7 @@ export async function POST(request: NextRequest) {
         question,
         description,
         category,
+        region: ["UK", "US", "Universal"].includes(region) ? region : "Universal",
         is_private: Boolean(is_private),
         slug,
       })
