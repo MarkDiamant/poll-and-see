@@ -12,6 +12,7 @@ type SponsorRow = {
   cta_text: string;
   destination_url: string;
   category: string;
+  region: "UK" | "US" | "Universal";
   start_at: string;
   end_at: string;
   is_active: boolean;
@@ -52,6 +53,7 @@ const DEFAULT_FORM = {
   cta_text: "Learn more",
   destination_url: "",
   categories: ["Community"],
+  region: "Universal",
   start_at: "",
   days: 1,
   end_at: "",
@@ -405,6 +407,7 @@ export default function AdminSponsorsPage() {
         .split(",")
         .map((item) => item.trim())
         .filter(Boolean),
+      region: sponsor.region || "Universal",
       start_at: formatDateTimeLocal(sponsor.start_at),
       days: Math.max(
         1,
@@ -585,6 +588,21 @@ export default function AdminSponsorsPage() {
                 ))}
               </select>
 
+              <select
+                className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none"
+                value={form.region}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    region: e.target.value as "UK" | "US" | "Universal",
+                  })
+                }
+              >
+                <option value="Universal">🌍 Universal</option>
+                <option value="UK">🇬🇧 UK</option>
+                <option value="US">🇺🇸 US</option>
+              </select>
+
 <input
   type="datetime-local"
   className="w-full cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white outline-none [color-scheme:dark] focus:border-gray-500"
@@ -711,7 +729,7 @@ export default function AdminSponsorsPage() {
             </a>
 
 <p className="mt-3 max-w-full break-words text-xs text-gray-400">
-  Categories: {selectedCategoryText || "None"} · Theme: {form.theme}
+  Categories: {selectedCategoryText || "None"} · Region: {form.region} · Theme: {form.theme}
 </p>
 
 <div className="mt-5 border-t border-gray-700 pt-4">
