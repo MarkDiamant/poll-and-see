@@ -18,6 +18,7 @@ type PollRow = {
   description: string | null;
   slug: string | null;
   category: string | null;
+  region: PollRegion;
   is_private: boolean | null;
   featured: boolean | null;
   embed_token: string | null;
@@ -30,6 +31,7 @@ type PollRow = {
 };
 
 type EmbedStatus = "live" | "closed" | "inactive";
+type PollRegion = "UK" | "US" | "Universal";
 
 const ADMIN_KEY_STORAGE = "pollandsee-admin-key";
 const SITE_URL = "https://www.pollandsee.com";
@@ -108,8 +110,9 @@ const [hiddenPollCount, setHiddenPollCount] = useState(0);
 
   const [questionEdits, setQuestionEdits] = useState<Record<number, string>>({});
   const [descriptionEdits, setDescriptionEdits] = useState<Record<number, string>>({});
-  const [categoryEdits, setCategoryEdits] = useState<Record<number, CategoryOption>>({});
-  const [privacyEdits, setPrivacyEdits] = useState<Record<number, boolean>>({});
+const [categoryEdits, setCategoryEdits] = useState<Record<number, CategoryOption>>({});
+const [regionEdits, setRegionEdits] = useState<Record<number, PollRegion>>({});
+const [privacyEdits, setPrivacyEdits] = useState<Record<number, boolean>>({});
   const [featuredEdits, setFeaturedEdits] = useState<Record<number, boolean>>({});
   const [embedStatusEdits, setEmbedStatusEdits] = useState<Record<number, EmbedStatus>>({});
   const [optionEdits, setOptionEdits] = useState<Record<number, PollOptionRow[]>>({});
@@ -213,6 +216,11 @@ setOptionEdits((current) => {
             nextPolls.map((poll: PollRow) => [poll.id, (poll.category as CategoryOption) || "General"])
           )
         );
+        setRegionEdits(
+  Object.fromEntries(
+    nextPolls.map((poll: PollRow) => [poll.id, poll.region || "Universal"])
+  )
+);
         setPrivacyEdits(
           Object.fromEntries(nextPolls.map((poll: PollRow) => [poll.id, Boolean(poll.is_private)]))
         );
@@ -271,8 +279,9 @@ return () => {
     setPendingSubmissionsCount(0);
     setQuestionEdits({});
     setDescriptionEdits({});
-    setCategoryEdits({});
-    setPrivacyEdits({});
+setCategoryEdits({});
+setRegionEdits({});
+setPrivacyEdits({});
     setFeaturedEdits({});
     setEmbedStatusEdits({});
     setOptionEdits({});
@@ -285,6 +294,7 @@ return () => {
       question: string;
       description: string;
       category: CategoryOption;
+      region: PollRegion;
       is_private: boolean;
       featured: boolean;
       embedStatus: EmbedStatus;
@@ -305,6 +315,7 @@ return () => {
           question: ((overrides.question ?? questionEdits[pollId]) || "").trim(),
           description: ((overrides.description ?? descriptionEdits[pollId]) || "").trim(),
           category: overrides.category ?? categoryEdits[pollId] ?? "General",
+          region: overrides.region ?? regionEdits[pollId] ?? "Universal",
           is_private: overrides.is_private ?? Boolean(privacyEdits[pollId]),
           featured: overrides.featured ?? Boolean(featuredEdits[pollId]),
           ...getEmbedPayload(overrides.embedStatus ?? embedStatusEdits[pollId] ?? "inactive"),
@@ -357,7 +368,12 @@ return () => {
           [pollId]: data.poll.category as CategoryOption,
         }));
       }
-
+if (typeof data.poll?.region === "string") {
+  setRegionEdits((current) => ({
+    ...current,
+    [pollId]: data.poll.region as PollRegion,
+  }));
+}
       if (typeof data.poll?.is_private === "boolean") {
         setPrivacyEdits((current) => ({ ...current, [pollId]: data.poll.is_private }));
       }
@@ -766,7 +782,7 @@ onBlur={(event) => {
                             <span className="text-gray-400">Category</span>
                             <select
                               value={categoryEdits[poll.id] || "General"}
-                                                            onChange={(event) => {
+                              onChange={(event) => {
                                 const nextCategory = event.target.value as CategoryOption;
                                 setCategoryEdits((current) => ({
                                   ...current,
@@ -774,13 +790,33 @@ onBlur={(event) => {
                                 }));
                                 void updatePoll(poll.id, { category: nextCategory });
                               }}
-                             className="w-full rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-xs text-white outline-none"
+                              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-xs text-white outline-none"
                             >
                               {CATEGORY_OPTIONS.map((category) => (
                                 <option key={category} value={category}>
                                   {category}
                                 </option>
                               ))}
+                            </select>
+                          </div>
+
+                          <div className="space-y-1">
+                            <span className="text-gray-400">Region</span>
+                            <select
+                              value={regionEdits[poll.id] || "Universal"}
+                              onChange={(event) => {
+                                const nextRegion = event.target.value as PollRegion;
+                                setRegionEdits((current) => ({
+                                  ...current,
+                                  [poll.id]: nextRegion,
+                                }));
+                                void updatePoll(poll.id, { region: nextRegion });
+                              }}
+                              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-xs text-white outline-none"
+                            >
+                              <option value="Universal">🌍 Universal</option>
+                              <option value="UK">🇬🇧 UK</option>
+                              <option value="US">🇺🇸 US</option>
                             </select>
                           </div>
 
@@ -1060,6 +1096,26 @@ className={`rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-lef
                               {category}
                             </option>
                           ))}
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <span className="text-gray-400">Region</span>
+                        <select
+                          value={regionEdits[poll.id] || "Universal"}
+                          onChange={(event) => {
+                            const nextRegion = event.target.value as PollRegion;
+                            setRegionEdits((current) => ({
+                              ...current,
+                              [poll.id]: nextRegion,
+                            }));
+                            void updatePoll(poll.id, { region: nextRegion });
+                          }}
+                          className="w-full rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-xs text-white outline-none"
+                        >
+                          <option value="Universal">🌍 Universal</option>
+                          <option value="UK">🇬🇧 UK</option>
+                          <option value="US">🇺🇸 US</option>
                         </select>
                       </div>
 

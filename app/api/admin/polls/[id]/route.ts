@@ -12,6 +12,7 @@ type PollUpdatePayload = {
   description?: string;
   slug?: string;
   category?: string;
+  region?: "UK" | "US" | "Universal";
   is_private?: boolean;
   featured?: boolean;
   is_embeddable?: boolean;
@@ -120,6 +121,16 @@ export async function PATCH(
 
     if ("category" in body) {
       updates.category = (body.category || "General").trim() || "General";
+    }
+
+    if ("region" in body) {
+      const region = body.region || "Universal";
+
+      if (!["UK", "US", "Universal"].includes(region)) {
+        return NextResponse.json({ error: "Invalid poll region." }, { status: 400 });
+      }
+
+      updates.region = region;
     }
 
     if ("is_private" in body) {
@@ -238,6 +249,7 @@ export async function PATCH(
       if ("description" in updates) submissionSyncUpdates.description = updates.description;
       if ("slug" in updates) submissionSyncUpdates.slug = updates.slug;
       if ("category" in updates) submissionSyncUpdates.category = updates.category;
+      if ("region" in updates) submissionSyncUpdates.region = updates.region;
       if ("is_private" in updates) submissionSyncUpdates.is_private = updates.is_private;
 
       if (Object.keys(submissionSyncUpdates).length > 0) {
@@ -253,7 +265,7 @@ export async function PATCH(
         supabaseAdmin
           .from("polls")
           .select(
-            "id, question, description, category, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed"
+            "id, question, description, category, region, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed"
           )
           .eq("id", pollId)
           .single(),
