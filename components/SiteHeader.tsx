@@ -66,7 +66,7 @@ export default function SiteHeader() {
                 key={option}
                 type="button"
                 onClick={() => changeRegion(option)}
-                className={`h-7 rounded-md px-2.5 text-[11px] font-medium transition ${
+                className={`h-7 cursor-pointer rounded-md px-2.5 text-[11px] font-medium transition ${
                   region === option
                     ? "bg-white text-black"
                     : "text-gray-300 hover:bg-gray-800 hover:text-white"
@@ -98,31 +98,29 @@ export default function SiteHeader() {
             Results
           </Link>
 
+          <div className="ml-1 inline-flex shrink-0 rounded-md border border-gray-700 bg-gray-900 p-0.5 sm:hidden">
+            {(["UK", "US", "All"] as Region[]).map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => changeRegion(option)}
+                className={`h-6 cursor-pointer rounded px-1.5 text-[9px] font-medium transition ${
+                  region === option
+                    ? "bg-white text-black"
+                    : "text-gray-300 hover:text-white"
+                }`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+
           <Link
             href="/submit-poll"
             className="hidden h-11 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-3 text-sm font-medium text-white transition hover:bg-blue-500 sm:inline-flex md:px-5"
           >
             Create Free Poll
           </Link>
-        </div>
-      </div>
-
-      <div className="mb-1 flex justify-end sm:hidden">
-        <div className="inline-flex rounded-xl border border-gray-700 bg-gray-900 p-1">
-          {(["UK", "US", "All"] as Region[]).map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => changeRegion(option)}
-              className={`h-9 rounded-lg px-3 text-xs font-medium transition ${
-                region === option
-                  ? "bg-white text-black"
-                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
-              }`}
-            >
-              {option}
-            </button>
-          ))}
         </div>
       </div>
     </header>
