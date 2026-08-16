@@ -82,13 +82,13 @@ const UNIVERSAL_USD_DAILY_PRICES: Record<number, number> = {
   4: 50,
   5: 63,
   6: 76,
-  7: 84,
-  8: 84,
-  9: 84,
-  10: 84,
-  11: 84,
-  12: 84,
-  13: 84,
+  7: 85,
+  8: 85,
+  9: 85,
+  10: 85,
+  11: 85,
+  12: 85,
+  13: 85,
 };
 
 function getDiscount(days: number) {
