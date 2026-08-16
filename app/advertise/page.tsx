@@ -35,11 +35,11 @@ const UK_DAILY_PRICES: Record<number, number> = {
   5: 25,
   6: 30,
   7: 35,
-  8: 40,
-  9: 45,
-  10: 50,
-  11: 55,
-  12: 60,
+  8: 35,
+  9: 35,
+  10: 35,
+  11: 35,
+  12: 35,
   13: 35,
 };
 
@@ -51,11 +51,11 @@ const US_DAILY_PRICES: Record<number, number> = {
   5: 35,
   6: 42,
   7: 49,
-  8: 56,
-  9: 63,
-  10: 70,
-  11: 77,
-  12: 84,
+  8: 49,
+  9: 49,
+  10: 49,
+  11: 49,
+  12: 49,
   13: 49,
 };
 
@@ -66,13 +66,29 @@ const UNIVERSAL_DAILY_PRICES: Record<number, number> = {
   4: 36,
   5: 45,
   6: 54,
-  7: 63,
-  8: 72,
-  9: 81,
-  10: 90,
-  11: 99,
-  12: 108,
+  7: 60,
+  8: 60,
+  9: 60,
+  10: 60,
+  11: 60,
+  12: 60,
   13: 60,
+};
+
+const UNIVERSAL_USD_DAILY_PRICES: Record<number, number> = {
+  1: 13,
+  2: 25,
+  3: 38,
+  4: 50,
+  5: 63,
+  6: 76,
+  7: 84,
+  8: 84,
+  9: 84,
+  10: 84,
+  11: 84,
+  12: 84,
+  13: 84,
 };
 
 function getDiscount(days: number) {
@@ -204,14 +220,20 @@ export default function AdvertisePage() {
   const days = Math.max(Number(daysInput) || 1, 1);
   const theme = getAdvertTheme(formData.theme);
   const allCategoryColours = getCategoryColours("All");
-  const isUsPricing = advertRegion === "US";
-  const currencySymbol = isUsPricing ? "$" : "£";
-  const activeDailyPrices =
-    advertRegion === "US"
-      ? US_DAILY_PRICES
-      : advertRegion === "Universal"
-        ? UNIVERSAL_DAILY_PRICES
-        : UK_DAILY_PRICES;
+const isUsPricing =
+  advertRegion === "US" ||
+  (advertRegion === "Universal" && selectedRegion === "US");
+
+const currencySymbol = isUsPricing ? "$" : "£";
+
+const activeDailyPrices =
+  advertRegion === "US"
+    ? US_DAILY_PRICES
+    : advertRegion === "Universal"
+      ? selectedRegion === "US"
+        ? UNIVERSAL_USD_DAILY_PRICES
+        : UNIVERSAL_DAILY_PRICES
+      : UK_DAILY_PRICES;
 
   const pricing = useMemo(() => {
     const categoryCount = selectedCategories.length;
@@ -221,12 +243,7 @@ export default function AdvertisePage() {
       return { categoryCount, dailyPrice: 0, days: cleanDays, categorySaving: 0, discount: 0, total: 0 };
     }
 
-    const dailyPrices =
-      advertRegion === "US"
-        ? US_DAILY_PRICES
-        : advertRegion === "Universal"
-          ? UNIVERSAL_DAILY_PRICES
-          : UK_DAILY_PRICES;
+const dailyPrices = activeDailyPrices;
     const dailyPrice = dailyPrices[Math.min(categoryCount, 13)] || categoryCount * dailyPrices[1];
     const standardAllCategoryPrice = dailyPrices[1] * CATEGORY_OPTIONS.length;
     const categorySaving =
@@ -238,7 +255,7 @@ export default function AdvertisePage() {
     const total = Math.round(subtotal * (1 - discount));
 
     return { categoryCount, dailyPrice, days: cleanDays, categorySaving, discount, total };
-  }, [selectedCategories, daysInput, advertRegion]);
+  }, [selectedCategories, daysInput, advertRegion, activeDailyPrices]);
 
   useEffect(() => {
     const savedRegion = localStorage.getItem("pollandsee-region");
@@ -256,9 +273,15 @@ export default function AdvertisePage() {
     const handleRegionChange = (event: Event) => {
       const nextRegion = (event as CustomEvent<"UK" | "US" | "All">).detail;
 
-      if (nextRegion === "UK" || nextRegion === "US" || nextRegion === "All") {
-        setSelectedRegion(nextRegion);
-      }
+if (nextRegion === "UK" || nextRegion === "US" || nextRegion === "All") {
+  setSelectedRegion(nextRegion);
+
+  if (nextRegion === "US") {
+    setAdvertRegion("US");
+  } else {
+    setAdvertRegion("UK");
+  }
+}
     };
 
     window.addEventListener("pollandsee-region-change", handleRegionChange);
@@ -451,7 +474,7 @@ export default function AdvertisePage() {
               <h2 className="mb-3 text-2xl font-semibold">How it works</h2>
               <div className="space-y-3 text-sm leading-6 text-gray-300">
                 <p>
-                  Create your advert using the form on this page. Choose the categories, campaign length, then add your business name, message, button text, logo and link. Your advert preview updates live as you type.
+                  Create your advert using the form on this page. Choose where you want to advertise, your categories and campaign length, then add your business name, message, button text, logo and link. Your advert preview updates live as you type.
                 </p>
                 <p>
   We'll confirm availability and send an invoice. Once paid, your ad can go live.
