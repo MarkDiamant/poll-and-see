@@ -505,18 +505,36 @@ useEffect(() => {
 
   void loadRegion();
 
-  const handleRegionChange = () => {
+  const handleRegionChange = (
+    event: Event
+  ) => {
+    const nextRegion = (
+      event as CustomEvent<"UK" | "US" | "All">
+    ).detail;
+
+    if (
+      nextRegion === "UK" ||
+      nextRegion === "US" ||
+      nextRegion === "All"
+    ) {
+      setSelectedRegion(nextRegion);
+    }
+  };
+
+  const reloadSavedRegion = () => {
     void loadRegion();
   };
 
-  window.addEventListener("storage", handleRegionChange);
-  window.addEventListener("focus", handleRegionChange);
-  window.addEventListener("pageshow", handleRegionChange);
+  window.addEventListener("pollandsee-region-change", handleRegionChange);
+  window.addEventListener("storage", reloadSavedRegion);
+  window.addEventListener("focus", reloadSavedRegion);
+  window.addEventListener("pageshow", reloadSavedRegion);
 
   return () => {
-    window.removeEventListener("storage", handleRegionChange);
-    window.removeEventListener("focus", handleRegionChange);
-    window.removeEventListener("pageshow", handleRegionChange);
+    window.removeEventListener("pollandsee-region-change", handleRegionChange);
+    window.removeEventListener("storage", reloadSavedRegion);
+    window.removeEventListener("focus", reloadSavedRegion);
+    window.removeEventListener("pageshow", reloadSavedRegion);
   };
 }, []);
 
