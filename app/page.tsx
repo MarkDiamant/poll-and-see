@@ -651,9 +651,34 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
-  if (selectedRegion) {
-    localStorage.setItem("pollandsee-region", selectedRegion);
-  }
+  if (!selectedRegion) return;
+
+  localStorage.setItem("pollandsee-region", selectedRegion);
+
+  const refreshForRegionChange = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("polls")
+        .select(
+          "id, question, description, category, region, slug, featured, is_private, is_publicly_listed, created_at"
+        )
+        .eq("is_private", false)
+        .eq("is_publicly_listed", true)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Could not refresh polls after region change", error);
+        return;
+      }
+
+      setPolls((data || []) as Poll[]);
+      clearCachedPollBundles();
+    } catch (error) {
+      console.error("Could not refresh polls after region change", error);
+    }
+  };
+
+  void refreshForRegionChange();
 }, [selectedRegion]);
 
 useEffect(() => {
@@ -795,6 +820,32 @@ useEffect(() => {
     };
   }, [loadHomeData]);
     useEffect(() => {
+    if (!featuredPoll?.id) {
+      setFeaturedPollVoted(false);
+      setFeaturedSelectedOptionId(null);
+      return;
+    }
+
+    const savedVote = localStorage.getItem(`poll-voted-${featuredPoll.id}`);
+    const savedSelectedOption = localStorage.getItem(
+      `poll-selected-option-${featuredPoll.id}`
+    );
+
+    setFeaturedPollVoted(savedVote === "true");
+
+    if (savedSelectedOption) {
+      const parsedOptionId = parseInt(savedSelectedOption, 10);
+      setFeaturedSelectedOptionId(
+        Number.isNaN(parsedOptionId) ? null : parsedOptionId
+      );
+    } else {
+      setFeaturedSelectedOptionId(null);
+    }
+
+    void syncFeaturedVoteCounts(featuredPoll.id);
+  }, [featuredPoll?.id, syncFeaturedVoteCounts]);
+
+  useEffect(() => {
     const channel = supabase
       .channel("homepage-live-votes")
       .on(
