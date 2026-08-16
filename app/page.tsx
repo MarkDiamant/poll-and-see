@@ -682,7 +682,18 @@ useEffect(() => {
     }
   }, [loading, selectedCategory]);
 
-  const featuredPoll = polls.find((p) => p.featured) || polls[0];
+    const regionalHomepagePolls = useMemo(() => {
+    if (!selectedRegion || selectedRegion === "All") {
+      return polls;
+    }
+
+    return polls.filter(
+      (poll) => poll.region === "Universal" || poll.region === selectedRegion
+    );
+  }, [polls, selectedRegion]);
+
+  const featuredPoll =
+    regionalHomepagePolls.find((poll) => poll.featured) || regionalHomepagePolls[0];
    useEffect(() => {
     const refreshHomePolls = () => {
       if (adminRefreshTimeoutRef.current) {
@@ -944,18 +955,29 @@ useEffect(() => {
   }, [searchedPolls, featuredPoll?.id, selectedSortFilter, recentVoteCounts, totalVoteCountsByPoll]);
 
 const trendingPolls = useMemo(() => {
-  const pollMap = new Map(polls.map((poll) => [poll.id, poll]));
+  const pollMap = new Map(regionalHomepagePolls.map((poll) => [poll.id, poll]));
+
   return trendingPollIds
     .map((id) => pollMap.get(id))
     .filter((poll): poll is Poll => Boolean(poll))
     .filter((poll) => poll.id !== featuredPoll?.id)
     .slice(0, 3);
-}, [polls, trendingPollIds, featuredPoll?.id]);
+}, [regionalHomepagePolls, trendingPollIds, featuredPoll?.id]);
+
+  const regionalPollCount = useMemo(() => {
+    if (!selectedRegion || selectedRegion === "All") {
+      return polls.length;
+    }
+
+    return polls.filter(
+      (poll) => poll.region === "Universal" || poll.region === selectedRegion
+    ).length;
+  }, [polls, selectedRegion]);
 
   const activePollCount =
-selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter === "Newest"
-    ? totalPollCount
-    : searchedPolls.length;
+    selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter === "Newest"
+      ? regionalPollCount
+      : searchedPolls.length;
   const trendingIdSet = useMemo(() => new Set(trendingPollIds), [trendingPollIds]);
   const popularIdSet = useMemo(() => new Set(popularPollIds), [popularPollIds]);
 
@@ -1073,7 +1095,7 @@ selectedCategory === "All" && searchTerm.trim() === "" && selectedSortFilter ===
             }}
             className="mb-3 inline-flex cursor-pointer items-center justify-center rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-7 py-3 text-base font-semibold text-cyan-200 transition hover:bg-cyan-500/15"
           >
-            Explore {totalPollCount.toLocaleString()} Live Polls
+            Explore {regionalPollCount.toLocaleString()} Live Polls
           </button>
 
           <div className="flex flex-wrap justify-center gap-1">
