@@ -315,13 +315,27 @@ setPrivacyEdits({});
           "x-admin-key": adminKey,
         },
         body: JSON.stringify({
-          question: ((overrides.question ?? questionEdits[pollId]) || "").trim(),
-          description: ((overrides.description ?? descriptionEdits[pollId]) || "").trim(),
-          category: overrides.category ?? categoryEdits[pollId] ?? "General",
-          region: overrides.region ?? regionEdits[pollId] ?? "Universal",
-          is_private: overrides.is_private ?? Boolean(privacyEdits[pollId]),
-          featured: overrides.featured ?? Boolean(featuredEdits[pollId]),
-          ...getEmbedPayload(overrides.embedStatus ?? embedStatusEdits[pollId] ?? "inactive"),
+          ...("question" in overrides
+            ? { question: (overrides.question || "").trim() }
+            : {}),
+          ...("description" in overrides
+            ? { description: (overrides.description || "").trim() }
+            : {}),
+          ...("category" in overrides
+            ? { category: overrides.category }
+            : {}),
+          ...("region" in overrides
+            ? { region: overrides.region }
+            : {}),
+          ...("is_private" in overrides
+            ? { is_private: overrides.is_private }
+            : {}),
+          ...("featured" in overrides
+            ? { featured: overrides.featured }
+            : {}),
+...(overrides.embedStatus
+  ? getEmbedPayload(overrides.embedStatus)
+  : {}),
           ...("option_updates" in overrides
             ? {
                 option_updates: (overrides.option_updates || []).map((option) => ({
@@ -795,25 +809,33 @@ const sortedPolls = useMemo(() => {
                       <div className="w-full max-w-full space-y-2">
                           <input
                             type="text"
-                            value={questionEdits[poll.id] ?? ""}
-                            onChange={(event) =>
-                              setQuestionEdits((current) => ({
-                                ...current,
-                                [poll.id]: event.target.value,
-                              }))
-                            }
-                            onBlur={() => void updatePoll(poll.id)}
+value={questionEdits[poll.id] ?? ""}
+onChange={(event) =>
+  setQuestionEdits((current) => ({
+    ...current,
+    [poll.id]: event.target.value,
+  }))
+}
+onBlur={() =>
+  void updatePoll(poll.id, {
+    question: questionEdits[poll.id] ?? "",
+  })
+}
                             className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 h-[52px]"
                           />
                           <textarea
-                            value={descriptionEdits[poll.id] ?? ""}
-                            onChange={(event) =>
-                              setDescriptionEdits((current) => ({
-                                ...current,
-                                [poll.id]: event.target.value,
-                              }))
-                            }
-                            onBlur={() => void updatePoll(poll.id)}
+value={descriptionEdits[poll.id] ?? ""}
+onChange={(event) =>
+  setDescriptionEdits((current) => ({
+    ...current,
+    [poll.id]: event.target.value,
+  }))
+}
+onBlur={() =>
+  void updatePoll(poll.id, {
+    description: descriptionEdits[poll.id] ?? "",
+  })
+}
                            rows={1}
 className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500 resize-none overflow-y-auto h-[38px]"
                           />
@@ -1106,28 +1128,36 @@ className={`rounded-lg border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-lef
                   <div key={poll.id} className="space-y-4 rounded-2xl border border-gray-700 bg-gray-900/70 p-4">
                     <div className="space-y-2">
                       <textarea
-                        value={questionEdits[poll.id] ?? ""}
-                        onChange={(event) =>
-                          setQuestionEdits((current) => ({
-                            ...current,
-                            [poll.id]: event.target.value,
-                          }))
-                        }
-                        onBlur={() => void updatePoll(poll.id)}
-                        rows={2}
+value={questionEdits[poll.id] ?? ""}
+onChange={(event) =>
+  setQuestionEdits((current) => ({
+    ...current,
+    [poll.id]: event.target.value,
+  }))
+}
+onBlur={() =>
+  void updatePoll(poll.id, {
+    question: questionEdits[poll.id] ?? "",
+  })
+}
+rows={2}
                         className="h-[58px] w-full resize-none rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm leading-5 text-white outline-none transition focus:border-gray-500"
                       />
 
                       <textarea
-                        value={descriptionEdits[poll.id] ?? ""}
-                        onChange={(event) =>
-                          setDescriptionEdits((current) => ({
-                            ...current,
-                            [poll.id]: event.target.value,
-                          }))
-                        }
-                        onBlur={() => void updatePoll(poll.id)}
-                        rows={1}
+value={descriptionEdits[poll.id] ?? ""}
+onChange={(event) =>
+  setDescriptionEdits((current) => ({
+    ...current,
+    [poll.id]: event.target.value,
+  }))
+}
+onBlur={() =>
+  void updatePoll(poll.id, {
+    description: descriptionEdits[poll.id] ?? "",
+  })
+}
+rows={1}
                         className="h-[38px] w-full resize-none rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none transition focus:border-gray-500"
                       />
 
