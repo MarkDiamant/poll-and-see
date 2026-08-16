@@ -693,16 +693,27 @@ const sortedPolls = useMemo(() => {
     ))}
   </select>
 
-  <select
-    value={regionFilter}
-    onChange={(event) => setRegionFilter(event.target.value as "all" | PollRegion)}
-    className="h-11 rounded-xl border border-gray-700 bg-gray-900 px-3 text-sm text-white outline-none"
-  >
-    <option value="all">All regions</option>
-    <option value="Universal">🌍 Universal</option>
-    <option value="UK">🇬🇧 UK</option>
-    <option value="US">🇺🇸 US</option>
-  </select>
+<div className="flex h-11 overflow-hidden rounded-xl border border-gray-700 bg-gray-900">
+  {[
+    { value: "all", label: "All" },
+    { value: "UK", label: "🇬🇧 UK" },
+    { value: "US", label: "🇺🇸 US" },
+    { value: "Universal", label: "🌍 Universal" },
+  ].map((item) => (
+    <button
+      key={item.value}
+      type="button"
+      onClick={() => setRegionFilter(item.value as "all" | PollRegion)}
+      className={`px-3 text-xs font-medium transition ${
+        regionFilter === item.value
+          ? "bg-white text-black"
+          : "text-white hover:bg-gray-800"
+      }`}
+    >
+      {item.label}
+    </button>
+  ))}
+</div>
 
   <button
     type="button"

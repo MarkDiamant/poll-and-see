@@ -52,8 +52,9 @@ export default function AdminSubmissionsPage() {
   const [adminKey, setAdminKey] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [privacyFilter, setPrivacyFilter] = useState<"all" | "public" | "private">("all");
-  const [categoryFilter, setCategoryFilter] = useState<"all" | CategoryOption>("all");
-  const [scheduleFilter, setScheduleFilter] = useState<"all" | "unscheduled" | "scheduled">("all");
+const [categoryFilter, setCategoryFilter] = useState<"all" | CategoryOption>("all");
+const [regionFilter, setRegionFilter] = useState<"all" | "UK" | "US" | "Universal">("all");
+const [scheduleFilter, setScheduleFilter] = useState<"all" | "unscheduled" | "scheduled">("all");
   const [submissions, setSubmissions] = useState<PollSubmissionRow[]>([]);
   const [livePollCount, setLivePollCount] = useState(0);
   const [hiddenPollCount, setHiddenPollCount] = useState(0);
@@ -604,21 +605,22 @@ const hideSubmission = async (submissionId: number) => {
   };
 
   const sortedSubmissions = useMemo(() => {
-    return [...submissions]
-      .filter((s) => {
-        if (privacyFilter === "public" && s.is_private) return false;
-        if (privacyFilter === "private" && !s.is_private) return false;
-        if (categoryFilter !== "all" && s.category !== categoryFilter) return false;
-        if (scheduleFilter === "scheduled" && s.status !== "scheduled") return false;
-        if (scheduleFilter === "unscheduled" && s.status === "scheduled") return false;
-        return true;
-      })
-      .sort((a, b) => {
-        const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
-        const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
-        return bTime - aTime;
-      });
-  }, [submissions, privacyFilter, categoryFilter, scheduleFilter]);
+  return [...submissions]
+    .filter((s) => {
+      if (privacyFilter === "public" && s.is_private) return false;
+      if (privacyFilter === "private" && !s.is_private) return false;
+      if (categoryFilter !== "all" && s.category !== categoryFilter) return false;
+      if (regionFilter !== "all" && s.region !== regionFilter) return false;
+      if (scheduleFilter === "scheduled" && s.status !== "scheduled") return false;
+      if (scheduleFilter === "unscheduled" && s.status === "scheduled") return false;
+      return true;
+    })
+    .sort((a, b) => {
+      const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return bTime - aTime;
+    });
+}, [submissions, privacyFilter, categoryFilter, regionFilter, scheduleFilter]);
 
   if (!adminKey) {
     return (
@@ -870,7 +872,29 @@ const hideSubmission = async (submissionId: number) => {
                 placeholder="Search submissions..."
                 className="h-10 min-w-[260px] rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-gray-500"
               />
-
+<div className="flex h-10 overflow-hidden rounded-lg border border-gray-700 bg-gray-900">
+  {[
+    { value: "all", label: "All" },
+    { value: "UK", label: "🇬🇧 UK" },
+    { value: "US", label: "🇺🇸 US" },
+    { value: "Universal", label: "🌍 Universal" },
+  ].map((item) => (
+    <button
+      key={item.value}
+      type="button"
+      onClick={() =>
+        setRegionFilter(item.value as "all" | "UK" | "US" | "Universal")
+      }
+      className={`px-3 text-xs font-medium transition ${
+        regionFilter === item.value
+          ? "bg-white text-black"
+          : "text-white hover:bg-gray-800"
+      }`}
+    >
+      {item.label}
+    </button>
+  ))}
+</div>
               <select
                 value={privacyFilter}
                 onChange={(event) => setPrivacyFilter(event.target.value as "all" | "public" | "private")}
