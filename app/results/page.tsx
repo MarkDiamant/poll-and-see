@@ -483,8 +483,9 @@ export default function ResultsPage() {
   const [votedPolls, setVotedPolls] = useState<PollBundle[]>([]);
   const [newPolls, setNewPolls] = useState<Poll[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [showTopButton, setShowTopButton] = useState(false);
+const [searchTerm, setSearchTerm] = useState("");
+const [selectedRegion, setSelectedRegion] = useState<"UK" | "US" | "All" | null>(null);
+const [showTopButton, setShowTopButton] = useState(false);
   const [totalVoteCount, setTotalVoteCount] = useState<number | null>(null);
 const [votesLast24, setVotesLast24] = useState(0);
   const [browserId, setBrowserId] = useState("");
@@ -492,9 +493,32 @@ const [reactionCountsByPoll, setReactionCountsByPoll] = useState<Record<number, 
 const [selectedReactionsByPoll, setSelectedReactionsByPoll] = useState<Record<number, ReactionType | null>>({});
 const lastReactionRefreshRef = useRef(0);
 
-  useEffect(() => {
-    setBrowserId(getResultsBrowserId());
-  }, []);
+useEffect(() => {
+  setBrowserId(getResultsBrowserId());
+}, []);
+
+useEffect(() => {
+  const loadRegion = async () => {
+    const region = await getSelectedRegion();
+    setSelectedRegion(region);
+  };
+
+  void loadRegion();
+
+  const handleRegionChange = () => {
+    void loadRegion();
+  };
+
+  window.addEventListener("storage", handleRegionChange);
+  window.addEventListener("focus", handleRegionChange);
+  window.addEventListener("pageshow", handleRegionChange);
+
+  return () => {
+    window.removeEventListener("storage", handleRegionChange);
+    window.removeEventListener("focus", handleRegionChange);
+    window.removeEventListener("pageshow", handleRegionChange);
+  };
+}, []);
 
   useEffect(() => {
     const loadResults = async () => {
@@ -537,7 +561,7 @@ const lastReactionRefreshRef = useRef(0);
           const [{ data: pollRows }, optionRows] = await Promise.all([
             supabase
               .from("polls")
-              .select("id, question, description, category, slug, is_private, is_publicly_listed, total_votes")
+              .select("id, question, description, category, region, slug, is_private, is_publicly_listed, total_votes")
               .in("id", votedPollIds),
             loadPollOptionsForPollIds(votedPollIds),
           ]);
@@ -590,18 +614,13 @@ const lastReactionRefreshRef = useRef(0);
           .order("id", { ascending: false })
           .limit(100);
 
-        const selectedRegion = await getSelectedRegion();
-        const votedSet = new Set(votedPollIds);
+const votedSet = new Set(votedPollIds);
 
-        setNewPolls(
-          ((newPollRows || []) as Poll[]).filter(
-            (poll) =>
-              !votedSet.has(poll.id) &&
-              (selectedRegion === "All" ||
-                poll.region === "Universal" ||
-                poll.region === selectedRegion)
-          )
-        );
+setNewPolls(
+  ((newPollRows || []) as Poll[]).filter(
+    (poll) => !votedSet.has(poll.id)
+  )
+);
       } catch {
         setVotedPolls([]);
         setNewPolls([]);
@@ -810,11 +829,32 @@ const refreshVisibleResults = () => {
     };
   }, [refreshTotalVoteCount, refreshDisplayedVoteCounts]);
 
-  const filteredVotedPolls = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
-    if (!term) return votedPolls;
-    return votedPolls.filter((bundle) => bundle.poll.question.toLowerCase().includes(term));
-  }, [searchTerm, votedPolls]);
+const filteredVotedPolls = useMemo(() => {
+  const term = searchTerm.trim().toLowerCase();
+
+  return votedPolls.filter((bundle) => {
+    const matchesSearch =
+      !term || bundle.poll.question.toLowerCase().includes(term);
+
+    const matchesRegion =
+      !selectedRegion ||
+      selectedRegion === "All" ||
+      bundle.poll.region === "Universal" ||
+      bundle.poll.region === selectedRegion;
+
+    return matchesSearch && matchesRegion;
+  });
+}, [searchTerm, votedPolls, selectedRegion]);
+
+const filteredNewPolls = useMemo(() => {
+  return newPolls.filter(
+    (poll) =>
+      !selectedRegion ||
+      selectedRegion === "All" ||
+      poll.region === "Universal" ||
+      poll.region === selectedRegion
+  );
+}, [newPolls, selectedRegion]);
 
   const handleReaction = async (pollId: number, reactionType: ReactionType) => {
     if (!browserId) return;
@@ -963,9 +1003,9 @@ const refreshVisibleResults = () => {
                 <h2 className="text-2xl font-semibold">New polls to vote on</h2>
               </div>
 
-              {newPolls.length > 0 ? (
+              {filteredNewPolls.length > 0 ? (
                 <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                  {newPolls.map((poll) => (
+                  {filteredNewPolls.map((poll) => (
                     <Link
                       key={poll.id}
                       href={`/poll/${poll.slug}`}

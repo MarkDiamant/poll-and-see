@@ -8,7 +8,7 @@ type Region = "UK" | "US" | "All";
 const REGION_STORAGE_KEY = "pollandsee-region";
 
 export default function SiteHeader() {
-  const [region, setRegion] = useState<Region>("UK");
+  const [region, setRegion] = useState<Region | null>(null);
 
   useEffect(() => {
     const savedRegion = localStorage.getItem(REGION_STORAGE_KEY);
@@ -67,7 +67,7 @@ export default function SiteHeader() {
                 type="button"
                 onClick={() => changeRegion(option)}
                 className={`h-7 cursor-pointer rounded-md px-2.5 text-[11px] font-medium transition ${
-                  region === option
+                  region !== null && region === option
                     ? "bg-white text-black"
                     : "text-gray-300 hover:bg-gray-800 hover:text-white"
                 }`}
@@ -105,7 +105,7 @@ export default function SiteHeader() {
                 type="button"
                 onClick={() => changeRegion(option)}
                 className={`h-6 cursor-pointer rounded px-1.5 text-[9px] font-medium transition ${
-                  region === option
+                  region !== null && region === option
                     ? "bg-white text-black"
                     : "text-gray-300 hover:text-white"
                 }`}
