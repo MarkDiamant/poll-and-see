@@ -15,6 +15,7 @@ type AdvertiserEnquiry = {
   destination: string | null;
   categories: string | null;
   days: number | null;
+  region: "UK" | "US" | "Universal" | null;
   preferred_start_date: string | null;
   headline: string | null;
   cta_text: string | null;
@@ -131,6 +132,7 @@ export default function AdminAdvertiserEnquiriesPage() {
           cta_text: enquiry.cta_text || "Learn more",
           destination_url: normaliseExternalUrl(enquiry.destination),
           category: enquiry.categories || "",
+          region: enquiry.region || "UK",
           start_at: dates.startAt,
           end_at: dates.endAt,
           is_active: false,
@@ -310,6 +312,10 @@ export default function AdminAdvertiserEnquiriesPage() {
                   <td className="min-w-[320px] px-4 py-4 text-gray-300">
                     <p><span className="text-gray-500">Business:</span> {enquiry.business_name || "Not provided"}</p>
                     <p><span className="text-gray-500">Categories:</span> {enquiry.categories || "Not provided"}</p>
+                    <p>
+                      <span className="text-gray-500">Market:</span>{" "}
+                      {enquiry.region === "Universal" ? "UK + US" : enquiry.region || "Not provided"}
+                    </p>
                     <p><span className="text-gray-500">Days:</span> {enquiry.days || "Not provided"}</p>
                     <p><span className="text-gray-500">Start:</span> {enquiry.preferred_start_date || "Not provided"}</p>
                     <p><span className="text-gray-500">Headline:</span> {enquiry.headline || "Not provided"}</p>

@@ -484,7 +484,33 @@ if (savedSort && SORT_FILTERS.includes(savedSort)) {
   setSelectedSortFilter(savedSort);
 }
 
-      const chosenFeaturedPoll = safePolls.find((p) => p.featured) || safePolls[0];
+      const savedRegion = localStorage.getItem("pollandsee-region");
+      const initialRegion =
+        savedRegion === "UK" || savedRegion === "US" || savedRegion === "All"
+          ? savedRegion
+          : "UK";
+
+      const regionalPolls =
+        initialRegion === "All"
+          ? safePolls
+          : safePolls.filter(
+              (poll) => poll.region === "Universal" || poll.region === initialRegion
+            );
+
+      const chosenFeaturedPoll =
+        initialRegion === "All"
+          ? regionalPolls.find(
+              (poll) => poll.featured && poll.region === "Universal"
+            ) ||
+            regionalPolls.find((poll) => poll.featured) ||
+            regionalPolls[0]
+          : regionalPolls.find(
+              (poll) => poll.featured && poll.region === initialRegion
+            ) ||
+            regionalPolls.find(
+              (poll) => poll.featured && poll.region === "Universal"
+            ) ||
+            regionalPolls[0];
 
       if (!chosenFeaturedPoll) {
         setFeaturedOptions([]);
@@ -499,13 +525,17 @@ if (savedSort && SORT_FILTERS.includes(savedSort)) {
       }
 
       const savedVote = localStorage.getItem(`poll-voted-${chosenFeaturedPoll.id}`);
-      const savedSelectedOption = localStorage.getItem(`poll-selected-option-${chosenFeaturedPoll.id}`);
+      const savedSelectedOption = localStorage.getItem(
+        `poll-selected-option-${chosenFeaturedPoll.id}`
+      );
 
       setFeaturedPollVoted(savedVote === "true");
 
       if (savedSelectedOption) {
         const parsedOptionId = parseInt(savedSelectedOption, 10);
-        setFeaturedSelectedOptionId(Number.isNaN(parsedOptionId) ? null : parsedOptionId);
+        setFeaturedSelectedOptionId(
+          Number.isNaN(parsedOptionId) ? null : parsedOptionId
+        );
       } else {
         setFeaturedSelectedOptionId(null);
       }
@@ -626,6 +656,22 @@ useEffect(() => {
   }
 }, [selectedRegion]);
 
+useEffect(() => {
+  const handleRegionChange = (event: Event) => {
+    const nextRegion = (event as CustomEvent<"UK" | "US" | "All">).detail;
+
+    if (nextRegion === "UK" || nextRegion === "US" || nextRegion === "All") {
+      setSelectedRegion(nextRegion);
+    }
+  };
+
+  window.addEventListener("pollandsee-region-change", handleRegionChange);
+
+  return () => {
+    window.removeEventListener("pollandsee-region-change", handleRegionChange);
+  };
+}, []);
+
   useEffect(() => {
     sessionStorage.setItem("selectedPollSortFilter", selectedSortFilter);
   }, [selectedSortFilter]);
@@ -693,7 +739,19 @@ useEffect(() => {
   }, [polls, selectedRegion]);
 
   const featuredPoll =
-    regionalHomepagePolls.find((poll) => poll.featured) || regionalHomepagePolls[0];
+    selectedRegion === "All"
+      ? regionalHomepagePolls.find(
+          (poll) => poll.featured && poll.region === "Universal"
+        ) ||
+        regionalHomepagePolls.find((poll) => poll.featured) ||
+        regionalHomepagePolls[0]
+      : regionalHomepagePolls.find(
+          (poll) => poll.featured && poll.region === selectedRegion
+        ) ||
+        regionalHomepagePolls.find(
+          (poll) => poll.featured && poll.region === "Universal"
+        ) ||
+        regionalHomepagePolls[0];
    useEffect(() => {
     const refreshHomePolls = () => {
       if (adminRefreshTimeoutRef.current) {

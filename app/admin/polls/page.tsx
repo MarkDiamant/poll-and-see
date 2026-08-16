@@ -346,8 +346,12 @@ setPrivacyEdits({});
         );
 
         if (data.poll?.featured) {
+          const featuredRegion = data.poll.region || regionEdits[pollId] || "Universal";
+
           next = next.map((poll) =>
-            poll.id === pollId ? poll : { ...poll, featured: false }
+            poll.id === pollId || poll.region !== featuredRegion
+              ? poll
+              : { ...poll, featured: false }
           );
         }
 
@@ -384,9 +388,17 @@ if (typeof data.poll?.region === "string") {
       if (typeof data.poll?.featured === "boolean") {
         setFeaturedEdits((current) => {
           const next = { ...current };
-          Object.keys(next).forEach((key) => {
-            next[Number(key)] = false;
-          });
+
+          if (data.poll.featured) {
+            const featuredRegion = data.poll.region || regionEdits[pollId] || "Universal";
+
+            polls.forEach((poll) => {
+              if (poll.id !== pollId && poll.region === featuredRegion) {
+                next[poll.id] = false;
+              }
+            });
+          }
+
           next[pollId] = data.poll.featured;
           return next;
         });

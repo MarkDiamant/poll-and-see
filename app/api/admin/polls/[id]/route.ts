@@ -227,11 +227,31 @@ export async function PATCH(
     }
 
     if ("featured" in body && body.featured === true) {
-  await supabaseAdmin
-    .from("polls")
-    .update({ featured: false })
-    .neq("id", pollId);
-}
+      let featuredRegion = updates.region as "UK" | "US" | "Universal" | undefined;
+
+      if (!featuredRegion) {
+        const { data: currentPoll, error: currentPollError } = await supabaseAdmin
+          .from("polls")
+          .select("region")
+          .eq("id", pollId)
+          .single();
+
+        if (currentPollError || !currentPoll) {
+          return NextResponse.json(
+            { error: "Could not determine poll region." },
+            { status: 500 }
+          );
+        }
+
+        featuredRegion = currentPoll.region || "Universal";
+      }
+
+      await supabaseAdmin
+        .from("polls")
+        .update({ featured: false })
+        .eq("region", featuredRegion)
+        .neq("id", pollId);
+    }
 
     if (Object.keys(updates).length > 0) {
       const { error: updateError } = await supabaseAdmin

@@ -27,7 +27,7 @@ const THEME_OPTIONS = [
   "sky",
 ];
 
-const DAILY_PRICES: Record<number, number> = {
+const UK_DAILY_PRICES: Record<number, number> = {
   1: 5,
   2: 10,
   3: 15,
@@ -41,6 +41,38 @@ const DAILY_PRICES: Record<number, number> = {
   11: 55,
   12: 60,
   13: 35,
+};
+
+const US_DAILY_PRICES: Record<number, number> = {
+  1: 7,
+  2: 14,
+  3: 21,
+  4: 28,
+  5: 35,
+  6: 42,
+  7: 49,
+  8: 56,
+  9: 63,
+  10: 70,
+  11: 77,
+  12: 84,
+  13: 49,
+};
+
+const UNIVERSAL_DAILY_PRICES: Record<number, number> = {
+  1: 9,
+  2: 18,
+  3: 27,
+  4: 36,
+  5: 45,
+  6: 54,
+  7: 63,
+  8: 72,
+  9: 81,
+  10: 90,
+  11: 99,
+  12: 108,
+  13: 60,
 };
 
 function getDiscount(days: number) {
@@ -144,6 +176,8 @@ function getAdvertTheme(theme: string) {
 }
 
 export default function AdvertisePage() {
+  const [selectedRegion, setSelectedRegion] = useState<"UK" | "US" | "All">("UK");
+  const [advertRegion, setAdvertRegion] = useState<"UK" | "US" | "Universal">("UK");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [daysInput, setDaysInput] = useState("1");
   const [activeForm, setActiveForm] = useState<"booking" | "question">("booking");
@@ -170,6 +204,14 @@ export default function AdvertisePage() {
   const days = Math.max(Number(daysInput) || 1, 1);
   const theme = getAdvertTheme(formData.theme);
   const allCategoryColours = getCategoryColours("All");
+  const isUsPricing = advertRegion === "US";
+  const currencySymbol = isUsPricing ? "$" : "£";
+  const activeDailyPrices =
+    advertRegion === "US"
+      ? US_DAILY_PRICES
+      : advertRegion === "Universal"
+        ? UNIVERSAL_DAILY_PRICES
+        : UK_DAILY_PRICES;
 
   const pricing = useMemo(() => {
     const categoryCount = selectedCategories.length;
@@ -179,14 +221,52 @@ export default function AdvertisePage() {
       return { categoryCount, dailyPrice: 0, days: cleanDays, categorySaving: 0, discount: 0, total: 0 };
     }
 
-    const dailyPrice = DAILY_PRICES[Math.min(categoryCount, 13)] || categoryCount * 5;
-    const categorySaving = categoryCount === CATEGORY_OPTIONS.length ? 30 : 0;
+    const dailyPrices =
+      advertRegion === "US"
+        ? US_DAILY_PRICES
+        : advertRegion === "Universal"
+          ? UNIVERSAL_DAILY_PRICES
+          : UK_DAILY_PRICES;
+    const dailyPrice = dailyPrices[Math.min(categoryCount, 13)] || categoryCount * dailyPrices[1];
+    const standardAllCategoryPrice = dailyPrices[1] * CATEGORY_OPTIONS.length;
+    const categorySaving =
+      categoryCount === CATEGORY_OPTIONS.length
+        ? standardAllCategoryPrice - dailyPrices[13]
+        : 0;
     const discount = getDiscount(cleanDays);
     const subtotal = dailyPrice * cleanDays;
     const total = Math.round(subtotal * (1 - discount));
 
     return { categoryCount, dailyPrice, days: cleanDays, categorySaving, discount, total };
-  }, [selectedCategories, daysInput]);
+  }, [selectedCategories, daysInput, advertRegion]);
+
+  useEffect(() => {
+    const savedRegion = localStorage.getItem("pollandsee-region");
+
+    if (savedRegion === "UK" || savedRegion === "US" || savedRegion === "All") {
+      setSelectedRegion(savedRegion);
+
+      if (savedRegion === "US") {
+        setAdvertRegion("US");
+      } else {
+        setAdvertRegion("UK");
+      }
+    }
+
+    const handleRegionChange = (event: Event) => {
+      const nextRegion = (event as CustomEvent<"UK" | "US" | "All">).detail;
+
+      if (nextRegion === "UK" || nextRegion === "US" || nextRegion === "All") {
+        setSelectedRegion(nextRegion);
+      }
+    };
+
+    window.addEventListener("pollandsee-region-change", handleRegionChange);
+
+    return () => {
+      window.removeEventListener("pollandsee-region-change", handleRegionChange);
+    };
+  }, []);
 
   useEffect(() => {
     const loadVoteStats = async () => {
@@ -312,6 +392,7 @@ export default function AdvertisePage() {
           enquiryType: activeForm,
           categories: activeForm === "booking" ? selectedCategories : [],
           days: activeForm === "booking" ? days : null,
+          region: activeForm === "booking" ? advertRegion : null,
         }),
       });
 
@@ -384,14 +465,40 @@ export default function AdvertisePage() {
             <section className="rounded-2xl border border-gray-700 bg-gray-800 p-5">
               <h2 className="mb-4 text-2xl font-semibold">Advert pricing calculator</h2>
 
+              <p className="mb-2 text-sm font-medium text-gray-300">
+                Where would you like your advert shown?
+              </p>
+
+              <div className="mb-5 grid grid-cols-3 gap-2">
+                {(["UK", "US", "Universal"] as const).map((region) => (
+                  <button
+                    key={region}
+                    type="button"
+                    onClick={() => setAdvertRegion(region)}
+                    className={`h-10 cursor-pointer rounded-xl border px-2 text-sm font-medium transition ${
+                      advertRegion === region
+                        ? "border-white bg-white text-black"
+                        : "border-gray-700 bg-gray-900 text-gray-300 hover:bg-gray-800 hover:text-white"
+                    }`}
+                  >
+                    {region === "Universal" ? "UK + US" : region}
+                  </button>
+                ))}
+              </div>
+
               <div className="mb-5 grid gap-3 rounded-2xl border border-gray-700 bg-gray-900 p-4 text-sm text-gray-300 md:grid-cols-2">
                 <div>
                   <p className="mb-2 font-medium text-white">Category pricing guide</p>
-<p>£5 per category/day</p>
-<p>2 categories: £10/day</p>
-<p>4 categories: £20/day</p>
-<p className="text-lg font-semibold text-white">All 13 categories: £35/day</p>
-<p className="text-gray-400">Save £30/day</p>
+<p>{currencySymbol}{activeDailyPrices[1]} per category/day</p>
+<p>2 categories: {currencySymbol}{activeDailyPrices[2]}/day</p>
+<p>4 categories: {currencySymbol}{activeDailyPrices[4]}/day</p>
+<p className="text-lg font-semibold text-white">
+  All 13 categories: {currencySymbol}{activeDailyPrices[13]}/day
+</p>
+<p className="text-gray-400">
+  Save {currencySymbol}
+  {(activeDailyPrices[1] * CATEGORY_OPTIONS.length) - activeDailyPrices[13]}/day
+</p>
                 </div>
 
                 <div>
@@ -500,12 +607,12 @@ className="h-10 cursor-pointer rounded-xl border px-3 text-sm font-medium transi
                     </div>
                     <div className="flex justify-between gap-4">
                       <span>Daily price</span>
-                      <span className="font-medium text-white">£{pricing.dailyPrice}/day</span>
+                      <span className="font-medium text-white">{currencySymbol}{pricing.dailyPrice}/day</span>
                     </div>
                     {pricing.categorySaving > 0 ? (
                       <div className="flex justify-between gap-4">
                         <span>All-category saving</span>
-                        <span className="font-medium text-white">£{pricing.categorySaving}/day</span>
+                        <span className="font-medium text-white">{currencySymbol}{pricing.categorySaving}/day</span>
                       </div>
                     ) : null}
                     <div className="flex justify-between gap-4">
@@ -518,7 +625,7 @@ className="h-10 cursor-pointer rounded-xl border px-3 text-sm font-medium transi
                     </div>
                     <div className="mt-3 flex justify-between border-t border-gray-700 pt-3 text-base">
                       <span>Total price</span>
-                      <span className="font-semibold text-white">£{pricing.total.toLocaleString()}</span>
+                      <span className="font-semibold text-white">{currencySymbol}{pricing.total.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>

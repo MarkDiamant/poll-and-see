@@ -41,6 +41,9 @@ export async function POST(request: NextRequest) {
     const logoUrl = String(body.logoUrl || "").trim();
     const theme = String(body.theme || "").trim();
     const message = String(body.message || "").trim();
+    const region = ["UK", "US", "Universal"].includes(String(body.region))
+      ? String(body.region)
+      : "UK";
 
     if (!name || !email) {
       return NextResponse.json(
@@ -70,6 +73,7 @@ export async function POST(request: NextRequest) {
         destination: destination || null,
         categories: categories.join(",") || null,
         days: Number.isFinite(days) && days > 0 ? days : null,
+        region,
         preferred_start_date: preferredStartDate || null,
         headline: headline || null,
         cta_text: ctaText || null,
@@ -99,6 +103,9 @@ export async function POST(request: NextRequest) {
         <p><strong>Phone/WhatsApp:</strong> ${escapeHtml(phone || "Not provided")}</p>
         <p><strong>Destination:</strong> ${escapeHtml(destination || "Not provided")}</p>
         <p><strong>Categories:</strong> ${escapeHtml(categories.join(", ") || "Not provided")}</p>
+        <p><strong>Market:</strong> ${escapeHtml(
+          region === "Universal" ? "UK + US" : region
+        )}</p>
         <p><strong>Days:</strong> ${escapeHtml(days ? String(days) : "Not provided")}</p>
         <p><strong>Preferred start date:</strong> ${escapeHtml(preferredStartDate || "Not provided")}</p>
         <p><strong>Headline:</strong> ${escapeHtml(headline || "Not provided")}</p>
