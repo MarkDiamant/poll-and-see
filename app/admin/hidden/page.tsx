@@ -128,6 +128,33 @@ export default function HiddenPage() {
     setSaving(null);
   };
 
+  const deletePoll = async (id: number) => {
+    const item = items.find((row) => row.id === id);
+
+    const confirmed = window.confirm(
+      `Permanently delete "${item?.question || "this poll"}"? This cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    setSaving(id);
+
+    const response = await fetch(`/api/admin/poll-submissions/${id}`, {
+      method: "DELETE",
+      headers: {
+        "x-admin-key": localStorage.getItem(ADMIN_KEY_STORAGE) || "",
+      },
+    });
+
+    if (response.ok) {
+      setItems((current) => current.filter((item) => item.id !== id));
+    } else {
+      window.alert("Could not delete poll.");
+    }
+
+    setSaving(null);
+  };
+
   const handleCopy = async (key: string, value: string) => {
     if (!value) return;
 
@@ -338,6 +365,15 @@ export default function HiddenPage() {
                             className="cursor-pointer rounded-lg bg-white px-2.5 py-1.5 text-left text-xs font-medium text-black transition hover:bg-gray-200 disabled:cursor-default disabled:opacity-40"
                           >
                             Make Public
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => void deletePoll(item.id)}
+                            disabled={saving === item.id}
+                            className="cursor-pointer rounded-lg border border-red-500/50 bg-red-950/40 px-2.5 py-1.5 text-left text-xs font-medium text-red-200 transition hover:bg-red-950/70 disabled:cursor-default disabled:opacity-40"
+                          >
+                            Delete
                           </button>
                         </div>
                       </td>
