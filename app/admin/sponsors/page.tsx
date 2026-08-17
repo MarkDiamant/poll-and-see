@@ -496,7 +496,10 @@ export default function AdminSponsorsPage() {
       setSponsors((current) => {
         const existing = current.some((item) => item.id === data.sponsor.id);
         if (existing) {
-          return current.map((item) => (item.id === data.sponsor.id ? data.sponsor : item));
+          return [
+            data.sponsor,
+            ...current.filter((item) => item.id !== data.sponsor.id),
+          ];
         }
 
         return [data.sponsor, ...current];
