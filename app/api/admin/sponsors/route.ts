@@ -199,4 +199,58 @@ export async function PATCH(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: "Could not update sponsor." }, { status: 500 });
   }
+}export async function DELETE(request: NextRequest) {
+  const auth = isAuthorized(request);
+
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: 401 });
+  }
+
+  try {
+    const supabaseAdmin = getAdminClient();
+    const body = await request.json();
+    const id = Number(body.id);
+
+    if (!Number.isInteger(id)) {
+      return NextResponse.json({ error: "Invalid sponsor id." }, { status: 400 });
+    }
+
+    // Remove tracking rows first in case foreign keys do not cascade.
+    const { error: impressionsError } = await supabaseAdmin
+      .from("sponsor_impressions")
+      .delete()
+      .eq("sponsor_id", id);
+
+    if (impressionsError) {
+      return NextResponse.json(
+        { error: "Could not delete sponsor impressions." },
+        { status: 500 }
+      );
+    }
+
+    const { error: clicksError } = await supabaseAdmin
+      .from("sponsor_clicks")
+      .delete()
+      .eq("sponsor_id", id);
+
+    if (clicksError) {
+      return NextResponse.json(
+        { error: "Could not delete sponsor clicks." },
+        { status: 500 }
+      );
+    }
+
+    const { error } = await supabaseAdmin
+      .from("sponsors")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      return NextResponse.json({ error: "Could not delete sponsor." }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: "Could not delete sponsor." }, { status: 500 });
+  }
 }

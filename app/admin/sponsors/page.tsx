@@ -423,6 +423,48 @@ export default function AdminSponsorsPage() {
 
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+  const deleteSponsor = async () => {
+    if (!form.id) return;
+
+    const sponsor = sponsors.find((item) => item.id === form.id);
+    const confirmed = window.confirm(
+      `Delete ${sponsor?.business_name || "this sponsor"} permanently? This cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    setSaving(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/admin/sponsors", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": adminKey,
+        },
+        body: JSON.stringify({ id: form.id }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Could not delete sponsor.");
+      }
+
+      setSponsors((current) => current.filter((item) => item.id !== form.id));
+
+      setForm({
+        ...DEFAULT_FORM,
+        start_at: getDefaultStartAt(),
+        end_at: calculateEndAt(getDefaultStartAt(), DEFAULT_FORM.days),
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not delete sponsor.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const saveSponsor = async () => {
     setSaving(true);
@@ -687,19 +729,30 @@ export default function AdminSponsorsPage() {
               </button>
 
               {form.id ? (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setForm({
-                      ...DEFAULT_FORM,
-                      start_at: getDefaultStartAt(),
-                      end_at: calculateEndAt(getDefaultStartAt(), DEFAULT_FORM.days),
-                    })
-                  }
-                  className="rounded-xl border border-gray-700 bg-gray-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
-                >
-                  New sponsor
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setForm({
+                        ...DEFAULT_FORM,
+                        start_at: getDefaultStartAt(),
+                        end_at: calculateEndAt(getDefaultStartAt(), DEFAULT_FORM.days),
+                      })
+                    }
+                    className="rounded-xl border border-gray-700 bg-gray-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+                  >
+                    New sponsor
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={deleteSponsor}
+                    disabled={saving}
+                    className="rounded-xl border border-red-500/50 bg-red-950/40 px-5 py-2 text-sm font-medium text-red-200 transition hover:bg-red-950/70 disabled:opacity-60"
+                  >
+                    Delete sponsor
+                  </button>
+                </>
               ) : null}
             </div>
           </section>
@@ -817,8 +870,9 @@ export default function AdminSponsorsPage() {
       </p>
 
 <div className="mt-3 space-y-1 text-xs text-gray-400">
-  <p className="break-words">Categories: {sponsor.category}</p>
-  <p>Theme: {sponsor.theme || "default"}</p>
+<p className="break-words">Categories: {sponsor.category}</p>
+<p>Region: {sponsor.region}</p>
+<p>Theme: {sponsor.theme || "default"}</p>
   <p>Status: {getSponsorStatus(sponsor)}</p>
   <p>Days: {getSponsorTotalDays(sponsor).toLocaleString()}</p>
   <p>Impressions: {(sponsor.total_impressions || 0).toLocaleString()}</p>
@@ -832,8 +886,9 @@ export default function AdminSponsorsPage() {
             <thead className="bg-gray-900 text-left text-gray-300">
               <tr>
                 <th className="px-4 py-3 font-medium">Sponsor</th>
-                <th className="px-4 py-3 font-medium">Categories</th>
-                <th className="px-4 py-3 font-medium">Theme</th>
+<th className="px-4 py-3 font-medium">Categories</th>
+<th className="px-4 py-3 font-medium">Region</th>
+<th className="px-4 py-3 font-medium">Theme</th>
                 <th className="px-4 py-3 font-medium">Days</th>
                 <th className="px-4 py-3 font-medium">Impressions</th>
                 <th className="px-4 py-3 font-medium">Clicks</th>
@@ -851,8 +906,9 @@ export default function AdminSponsorsPage() {
                     <p className="font-medium text-white">{sponsor.business_name}</p>
                     <p className="text-xs text-gray-400">{sponsor.headline}</p>
                   </td>
-                  <td className="px-4 py-3 text-gray-300">{sponsor.category}</td>
-                  <td className="px-4 py-3 text-gray-300">{sponsor.theme || "default"}</td>
+<td className="px-4 py-3 text-gray-300">{sponsor.category}</td>
+<td className="px-4 py-3 text-gray-300">{sponsor.region}</td>
+<td className="px-4 py-3 text-gray-300">{sponsor.theme || "default"}</td>
                   <td className="px-4 py-3 text-gray-300">{getSponsorTotalDays(sponsor).toLocaleString()}</td>
                   <td className="px-4 py-3 text-gray-300">{(sponsor.total_impressions || 0).toLocaleString()}</td>
                   <td className="px-4 py-3 text-gray-300">{(sponsor.total_clicks || 0).toLocaleString()}</td>
