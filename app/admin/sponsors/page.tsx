@@ -17,7 +17,6 @@ type SponsorRow = {
   end_at: string;
   is_active: boolean;
   created_at: string | null;
-  updated_at: string | null;
   theme: string | null;
   total_impressions?: number;
   total_clicks?: number;
@@ -327,7 +326,28 @@ export default function AdminSponsorsPage() {
         return;
       }
 
-      setSponsors(data.sponsors || []);
+      setSponsors((current) => {
+        const incoming: SponsorRow[] = data.sponsors || [];
+
+        if (!current.length) {
+          return incoming;
+        }
+
+        const currentOrder = new Map(
+          current.map((sponsor, index) => [sponsor.id, index])
+        );
+
+        return [...incoming].sort((a, b) => {
+          const aIndex = currentOrder.get(a.id);
+          const bIndex = currentOrder.get(b.id);
+
+          if (aIndex === undefined && bIndex === undefined) return 0;
+          if (aIndex === undefined) return -1;
+          if (bIndex === undefined) return 1;
+
+          return aIndex - bIndex;
+        });
+      });
       setSubscriberCount(data.subscriber_count || 0);
     };
 

@@ -76,8 +76,8 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabaseAdmin
       .from("sponsors")
-      .select("id, business_name, headline, logo_url, cta_text, destination_url, category, region, start_at, end_at, is_active, created_at, updated_at, theme")
-      .order("updated_at", { ascending: false });
+      .select("id, business_name, headline, logo_url, cta_text, destination_url, category, region, start_at, end_at, is_active, created_at, theme")
+      .order("created_at", { ascending: false });
 
     if (error) {
       return NextResponse.json({ error: "Could not load sponsors." }, { status: 500 });
