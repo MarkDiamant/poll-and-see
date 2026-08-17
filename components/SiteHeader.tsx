@@ -13,10 +13,16 @@ export default function SiteHeader() {
   useEffect(() => {
     const savedRegion = localStorage.getItem(REGION_STORAGE_KEY);
 
-    if (savedRegion === "UK" || savedRegion === "US" || savedRegion === "All") {
-      setRegion(savedRegion);
-      return;
-    }
+if (savedRegion === "UK" || savedRegion === "US") {
+  setRegion(savedRegion);
+  return;
+}
+
+if (savedRegion === "All") {
+  setRegion("UK");
+  localStorage.setItem(REGION_STORAGE_KEY, "UK");
+  return;
+}
 
     void fetch("/api/region")
       .then((response) => response.json())
@@ -61,7 +67,7 @@ export default function SiteHeader() {
 
         <div className="flex w-full shrink-0 items-center justify-center gap-2 sm:w-auto sm:justify-end">
           <div className="mr-2 hidden rounded-lg border border-gray-700 bg-gray-900 p-0.5 sm:inline-flex">
-            {(["UK", "US", "All"] as Region[]).map((option) => (
+            {(["UK", "US"] as Region[]).map((option) => (
               <button
                 key={option}
                 type="button"
@@ -99,7 +105,7 @@ export default function SiteHeader() {
           </Link>
 
           <div className="ml-1 inline-flex shrink-0 rounded-md border border-gray-700 bg-gray-900 p-0.5 sm:hidden">
-            {(["UK", "US", "All"] as Region[]).map((option) => (
+            {(["UK", "US"] as Region[]).map((option) => (
               <button
                 key={option}
                 type="button"
