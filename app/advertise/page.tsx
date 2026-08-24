@@ -483,6 +483,22 @@ if (nextRegion === "UK" || nextRegion === "US" || nextRegion === "All") {
   Poll & See has already recorded over {(Math.floor((totalVoteCount || 0) / 1000) * 1000).toLocaleString()} votes and contiues to grow. Increase your advert's reach even further by sharing polls with customers, staff, WhatsApp groups, social media and email, generating more votes, and more advert views.
 </p>
               </div>
+
+              <div className="mt-5 border-t border-gray-700 pt-5">
+                <p className="mb-3 text-sm font-medium text-gray-300">
+                  See what advertisers say about Poll & See
+                </p>
+
+                <iframe
+                  src="https://www.woulduseagain.com/website-badge/poll-and-see-e2f944cf?variant=compact"
+                  title="Poll & See Would Use Again Trust Badge"
+                  width="320"
+                  height="76"
+                  className="block h-[76px] w-[320px] max-w-full border-0 bg-transparent"
+                  scrolling="no"
+                  loading="lazy"
+                />
+              </div>
             </section>
 
             <section className="rounded-2xl border border-gray-700 bg-gray-800 p-5">
