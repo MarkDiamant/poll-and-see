@@ -143,11 +143,11 @@ export async function PATCH(
 
     if ("status" in body) {
       if (
-  body.status !== "pending" &&
-  body.status !== "ready" &&
-  body.status !== "scheduled" &&
-  body.status !== "hidden"
-) {
+        body.status !== "pending" &&
+        body.status !== "ready" &&
+        body.status !== "scheduled" &&
+        body.status !== "hidden"
+      ) {
         return NextResponse.json({ error: "Invalid status." }, { status: 400 });
       }
       updates.status = body.status;
@@ -185,11 +185,13 @@ export async function PATCH(
     }
 
     if ("is_private" in body) {
-  const isPrivate = Boolean(body.is_private);
-  updates.is_private = isPrivate;
-  pollUpdates.is_private = isPrivate;
-  pollUpdates.is_publicly_listed = false;
-}
+      const isPrivate = Boolean(body.is_private);
+      updates.is_private = isPrivate;
+      pollUpdates.is_private = isPrivate;
+      if (isPrivate) {
+        pollUpdates.is_publicly_listed = false;
+      }
+    }
 
     if ("email" in body) {
       updates.email = (body.email || "").trim() || null;
@@ -246,12 +248,12 @@ export async function PATCH(
       }
 
       if ("options" in body || "option_image_urls" in body) {
-const nextOptions = (data.options || [])
-  .map((item: string) => item.trim())
-  .filter(Boolean);
+        const nextOptions = (data.options || [])
+          .map((item: string) => item.trim())
+          .filter(Boolean);
 
-const nextImageUrls = (data.option_image_urls || [])
-  .map((item: string | null) => (item || "").trim());
+        const nextImageUrls = (data.option_image_urls || [])
+          .map((item: string | null) => (item || "").trim());
 
         const { data: existingOptions } = await supabaseAdmin
           .from("poll_options")
@@ -260,7 +262,6 @@ const nextImageUrls = (data.option_image_urls || [])
           .order("id", { ascending: true });
 
         const optionRows = existingOptions || [];
-
         const limit = Math.max(nextOptions.length, optionRows.length);
 
         for (let index = 0; index < limit; index += 1) {
