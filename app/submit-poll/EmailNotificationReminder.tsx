@@ -10,12 +10,32 @@ export default function EmailNotificationReminder() {
     const form = document.querySelector<HTMLFormElement>("form");
     if (!form) return;
 
-    const handleSubmit = (event: SubmitEvent) => {
-      const emailCheckbox = Array.from(form.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')).find(
-        (input) => input.parentElement?.textContent?.includes("Email me if my poll goes live")
-      );
+    const findEmailCheckbox = () =>
+      Array.from(form.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')).find((input) => {
+        const text = input.parentElement?.textContent || "";
+        return text.includes("Email me if my poll goes live") || text.includes("Email me with updates about my poll");
+      });
 
-      if (!emailCheckbox || emailCheckbox.checked || form.dataset.emailReminderConfirmed === "true") {
+    const emailCheckbox = findEmailCheckbox();
+    const emailLabel = emailCheckbox?.parentElement;
+    const emailText = emailLabel?.querySelector("span");
+
+    if (emailText) {
+      emailText.textContent = "Email me with updates about my poll";
+    }
+
+    if (emailLabel && !emailLabel.nextElementSibling?.classList.contains("poll-email-helper")) {
+      const helper = document.createElement("p");
+      helper.className = "poll-email-helper text-xs text-gray-300";
+      helper.textContent =
+        "We’ll let you know if it goes live publicly, or contact you if there’s an issue, clarification needed, or it can’t be published. No marketing.";
+      emailLabel.insertAdjacentElement("afterend", helper);
+    }
+
+    const handleSubmit = (event: SubmitEvent) => {
+      const currentEmailCheckbox = findEmailCheckbox();
+
+      if (!currentEmailCheckbox || currentEmailCheckbox.checked || form.dataset.emailReminderConfirmed === "true") {
         delete form.dataset.emailReminderConfirmed;
         return;
       }
@@ -40,9 +60,10 @@ export default function EmailNotificationReminder() {
 
   const addEmail = () => {
     if (!pendingForm) return;
-    const emailCheckbox = Array.from(pendingForm.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')).find(
-      (input) => input.parentElement?.textContent?.includes("Email me if my poll goes live")
-    );
+    const emailCheckbox = Array.from(pendingForm.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')).find((input) => {
+      const text = input.parentElement?.textContent || "";
+      return text.includes("Email me if my poll goes live") || text.includes("Email me with updates about my poll");
+    });
 
     setOpen(false);
     if (emailCheckbox && !emailCheckbox.checked) emailCheckbox.click();
