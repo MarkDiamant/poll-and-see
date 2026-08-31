@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import EmailNotificationReminder from "./EmailNotificationReminder";
 
 const SITE_URL = "https://www.pollandsee.com";
 
@@ -37,5 +38,10 @@ export default function SubmitPollLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return (
+    <>
+      {children}
+      <EmailNotificationReminder />
+    </>
+  );
 }
