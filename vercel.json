@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/scheduled-approvals",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/poll-milestones",
+      "schedule": "*/10 * * * *"
     }
   ]
 }
