@@ -77,15 +77,36 @@ export async function GET(request: NextRequest) {
     const votes = Number(poll.total_votes || 0);
     const email = submitterByPoll.get(poll.id);
     if (!email || poll.is_private) continue;
-    for (const milestone of MILESTONES) {
-      if (votes < milestone || alreadySent.has(`${poll.id}:${milestone}`)) continue;
-      const pollUrl = `${appBaseUrl}/poll/${poll.slug}`;
-      const content = buildEmail({ milestone, pollUrl, appBaseUrl });
-      const response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${resendApiKey}`, "Content-Type": "application/json" }, body: JSON.stringify({ from: emailFrom, to: email, subject: content.subject, html: content.html, text: content.text }) });
-      if (!response.ok) { console.error("Milestone email failed", poll.id, milestone, await response.text()); continue; }
-      const responseData = await response.json().catch(() => ({}));
-      const { error: insertError } = await supabase.from("poll_milestone_emails").insert({ poll_id: poll.id, milestone, email, resend_id: responseData?.id || null });
-      if (!insertError) { alreadySent.add(`${poll.id}:${milestone}`); sent.push({ pollId: poll.id, milestone }); }
+
+    const reached = [...MILESTONES].reverse().find((milestone) => votes >= milestone);
+    if (!reached) continue;
+
+    const hasReachedOrHigherEmail = MILESTONES.some(
+      (milestone) => milestone >= reached && alreadySent.has(`${poll.id}:${milestone}`)
+    );
+    if (hasReachedOrHigherEmail || alreadySent.has(`${poll.id}:${reached}`)) continue;
+
+    const pollUrl = `${appBaseUrl}/poll/${poll.slug}`;
+    const content = buildEmail({ milestone: reached, pollUrl, appBaseUrl });
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${resendApiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: emailFrom, to: email, subject: content.subject, html: content.html, text: content.text })
+    });
+    if (!response.ok) {
+      console.error("Milestone email failed", poll.id, reached, await response.text());
+      continue;
+    }
+    const responseData = await response.json().catch(() => ({}));
+    const { error: insertError } = await supabase.from("poll_milestone_emails").insert({
+      poll_id: poll.id,
+      milestone: reached,
+      email,
+      resend_id: responseData?.id || null
+    });
+    if (!insertError) {
+      alreadySent.add(`${poll.id}:${reached}`);
+      sent.push({ pollId: poll.id, milestone: reached });
     }
   }
   return NextResponse.json({ ok: true, sent });
