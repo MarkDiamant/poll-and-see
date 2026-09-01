@@ -14,6 +14,10 @@ function escapeHtml(value: string) {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
+function normaliseQuestion(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
 function emailCopy(milestone: number) {
   if (milestone === 50) return {
     subject: "Your poll is gaining traction 🎉",
@@ -46,37 +50,89 @@ export async function GET(request: NextRequest) {
   if (!cronSecret || request.headers.get("authorization") !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
+
   const resendApiKey = process.env.RESEND_API_KEY;
   const emailFrom = process.env.EMAIL_FROM;
   const appBaseUrl = process.env.APP_BASE_URL || "https://www.pollandsee.com";
   if (!resendApiKey || !emailFrom) return NextResponse.json({ error: "Email is not configured." }, { status: 500 });
 
   const supabase = getAdminClient();
-  const { data: submissions, error } = await supabase
+
+  // Keep a durable poll -> submitter email mapping. This also repairs the old case
+  // where a submission points at a hidden duplicate while an identical public poll is live.
+  const { data: submissions, error: submissionsError } = await supabase
     .from("poll_submissions")
-    .select("poll_id,email")
-    .not("poll_id", "is", null)
+    .select("id,poll_id,email,question")
     .not("email", "is", null);
-  if (error) return NextResponse.json({ error: "Could not load poll submitters." }, { status: 500 });
+  if (submissionsError) return NextResponse.json({ error: "Could not load poll submitters." }, { status: 500 });
+
+  const { data: publicPolls, error: publicPollsError } = await supabase
+    .from("polls")
+    .select("id,question,slug,total_votes,is_private,is_publicly_listed")
+    .eq("is_publicly_listed", true)
+    .eq("is_private", false);
+  if (publicPollsError) return NextResponse.json({ error: "Could not load public polls." }, { status: 500 });
+
+  const publicById = new Map<number, any>();
+  const publicByQuestion = new Map<string, any>();
+  for (const poll of publicPolls || []) {
+    publicById.set(poll.id, poll);
+    const key = normaliseQuestion(String(poll.question || ""));
+    const existing = publicByQuestion.get(key);
+    if (key && (!existing || Number(poll.total_votes || 0) > Number(existing.total_votes || 0))) {
+      publicByQuestion.set(key, poll);
+    }
+  }
+
+  const contactRows: Array<{ poll_id: number; email: string; source: string }> = [];
+  for (const row of submissions || []) {
+    const email = typeof row.email === "string" ? row.email.trim() : "";
+    if (!email) continue;
+
+    let targetPoll = row.poll_id ? publicById.get(row.poll_id) : undefined;
+    let source = "submission_link";
+    if (!targetPoll) {
+      targetPoll = publicByQuestion.get(normaliseQuestion(String(row.question || "")));
+      source = "submission_exact_live_match";
+    }
+    if (targetPoll) contactRows.push({ poll_id: targetPoll.id, email, source });
+  }
+
+  if (contactRows.length) {
+    const { error: contactError } = await supabase
+      .from("poll_submitter_contacts")
+      .upsert(contactRows, { onConflict: "poll_id" });
+    if (contactError) return NextResponse.json({ error: "Could not save poll submitter mappings." }, { status: 500 });
+  }
+
+  const { data: contacts, error: contactsError } = await supabase
+    .from("poll_submitter_contacts")
+    .select("poll_id,email");
+  if (contactsError) return NextResponse.json({ error: "Could not load poll submitter mappings." }, { status: 500 });
 
   const submitterByPoll = new Map<number, string>();
-  for (const row of submissions || []) {
+  for (const row of contacts || []) {
     const email = typeof row.email === "string" ? row.email.trim() : "";
     if (row.poll_id && email) submitterByPoll.set(row.poll_id, email);
   }
+
   const pollIds = [...submitterByPoll.keys()];
   if (!pollIds.length) return NextResponse.json({ ok: true, sent: [] });
 
-  const { data: polls, error: pollsError } = await supabase.from("polls").select("id,slug,total_votes,is_private").in("id", pollIds);
-  if (pollsError) return NextResponse.json({ error: "Could not load poll totals." }, { status: 500 });
-  const { data: sentRows } = await supabase.from("poll_milestone_emails").select("poll_id,milestone").in("poll_id", pollIds);
+  const polls = (publicPolls || []).filter((poll) => submitterByPoll.has(poll.id));
+  const { data: sentRows, error: sentRowsError } = await supabase
+    .from("poll_milestone_emails")
+    .select("poll_id,milestone")
+    .in("poll_id", pollIds);
+  if (sentRowsError) return NextResponse.json({ error: "Could not load milestone history." }, { status: 500 });
+
   const alreadySent = new Set((sentRows || []).map((r) => `${r.poll_id}:${r.milestone}`));
   const sent: Array<{ pollId: number; milestone: number }> = [];
 
-  for (const poll of polls || []) {
+  for (const poll of polls) {
     const votes = Number(poll.total_votes || 0);
     const email = submitterByPoll.get(poll.id);
-    if (!email || poll.is_private) continue;
+    if (!email) continue;
 
     const reached = [...MILESTONES].reverse().find((milestone) => votes >= milestone);
     if (!reached) continue;
@@ -84,7 +140,17 @@ export async function GET(request: NextRequest) {
     const hasReachedOrHigherEmail = MILESTONES.some(
       (milestone) => milestone >= reached && alreadySent.has(`${poll.id}:${milestone}`)
     );
-    if (hasReachedOrHigherEmail || alreadySent.has(`${poll.id}:${reached}`)) continue;
+    if (hasReachedOrHigherEmail) continue;
+
+    // Reserve the milestone first. The unique (poll_id,milestone) constraint prevents
+    // two overlapping cron runs from sending the same email twice.
+    const { error: reserveError } = await supabase.from("poll_milestone_emails").insert({
+      poll_id: poll.id,
+      milestone: reached,
+      email,
+      resend_id: "pending"
+    });
+    if (reserveError) continue;
 
     const pollUrl = `${appBaseUrl}/poll/${poll.slug}`;
     const content = buildEmail({ milestone: reached, pollUrl, appBaseUrl });
@@ -93,21 +159,23 @@ export async function GET(request: NextRequest) {
       headers: { Authorization: `Bearer ${resendApiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({ from: emailFrom, to: email, subject: content.subject, html: content.html, text: content.text })
     });
+
     if (!response.ok) {
       console.error("Milestone email failed", poll.id, reached, await response.text());
+      await supabase.from("poll_milestone_emails").delete().eq("poll_id", poll.id).eq("milestone", reached).eq("resend_id", "pending");
       continue;
     }
+
     const responseData = await response.json().catch(() => ({}));
-    const { error: insertError } = await supabase.from("poll_milestone_emails").insert({
-      poll_id: poll.id,
-      milestone: reached,
-      email,
-      resend_id: responseData?.id || null
-    });
-    if (!insertError) {
-      alreadySent.add(`${poll.id}:${reached}`);
-      sent.push({ pollId: poll.id, milestone: reached });
-    }
+    await supabase
+      .from("poll_milestone_emails")
+      .update({ resend_id: responseData?.id || null })
+      .eq("poll_id", poll.id)
+      .eq("milestone", reached);
+
+    alreadySent.add(`${poll.id}:${reached}`);
+    sent.push({ pollId: poll.id, milestone: reached });
   }
+
   return NextResponse.json({ ok: true, sent });
 }
