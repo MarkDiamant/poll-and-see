@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import SubmitterEmailPanel from "./SubmitterEmailPanel";
+import AdminEmailEnhancer from "./AdminEmailEnhancer";
 
 export const metadata: Metadata = {
   robots: {
@@ -12,7 +12,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <>
       {children}
-      <SubmitterEmailPanel />
+      <AdminEmailEnhancer />
     </>
   );
 }
