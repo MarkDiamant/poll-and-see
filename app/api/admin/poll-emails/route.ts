@@ -13,6 +13,13 @@ function isAuthorized(request: NextRequest) {
   return request.headers.get("x-admin-key") === process.env.POLL_ADMIN_KEY;
 }
 
+type EmailItem = {
+  poll_id: number;
+  submission_id: number | null;
+  email: string | null;
+  status: string;
+};
+
 export async function GET(request: NextRequest) {
   if (!isAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -20,45 +27,69 @@ export async function GET(request: NextRequest) {
 
   const supabase = getAdminClient();
 
-  const [{ data: polls, error: pollsError }, { data: submissions, error: submissionsError }] =
-    await Promise.all([
-      supabase
-        .from("polls")
-        .select("id, question, slug, is_publicly_listed, submitter_email")
-        .not("submitter_email", "is", null)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("poll_submissions")
-        .select("id, poll_id, question, email, status")
-        .not("email", "is", null)
-        .order("created_at", { ascending: false }),
-    ]);
+  const [
+    { data: polls, error: pollsError },
+    { data: submissions, error: submissionsError },
+    { data: contacts, error: contactsError },
+  ] = await Promise.all([
+    supabase
+      .from("polls")
+      .select("id, is_publicly_listed, submitter_email")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("poll_submissions")
+      .select("id, poll_id, email, status")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("poll_submitter_contacts")
+      .select("poll_id, email"),
+  ]);
 
-  if (pollsError || submissionsError) {
+  if (pollsError || submissionsError || contactsError) {
     return NextResponse.json({ error: "Could not load submitter emails." }, { status: 500 });
   }
 
-  const byPollId = new Map<number, { poll_id: number; question: string; email: string; status: string }>();
+  const contactEmailByPollId = new Map<number, string>();
+  for (const contact of contacts || []) {
+    if (!contact.email) continue;
+    contactEmailByPollId.set(Number(contact.poll_id), String(contact.email));
+  }
+
+  const pollEmailByPollId = new Map<number, string | null>();
+  const items: EmailItem[] = [];
 
   for (const poll of polls || []) {
-    if (!poll.submitter_email) continue;
-    byPollId.set(Number(poll.id), {
-      poll_id: Number(poll.id),
-      question: poll.question,
-      email: poll.submitter_email,
+    const pollId = Number(poll.id);
+    const email =
+      contactEmailByPollId.get(pollId) ||
+      (poll.submitter_email ? String(poll.submitter_email) : null);
+
+    pollEmailByPollId.set(pollId, email);
+    items.push({
+      poll_id: pollId,
+      submission_id: null,
+      email,
       status: poll.is_publicly_listed ? "live" : "not live",
     });
   }
 
   for (const submission of submissions || []) {
-    if (!submission.email || !submission.poll_id) continue;
-    byPollId.set(Number(submission.poll_id), {
-      poll_id: Number(submission.poll_id),
-      question: submission.question,
-      email: submission.email,
-      status: submission.status,
+    const pollId = Number(submission.poll_id);
+    if (!Number.isInteger(pollId)) continue;
+
+    const email =
+      (submission.email ? String(submission.email) : null) ||
+      contactEmailByPollId.get(pollId) ||
+      pollEmailByPollId.get(pollId) ||
+      null;
+
+    items.push({
+      poll_id: pollId,
+      submission_id: Number(submission.id),
+      email,
+      status: String(submission.status || "pending"),
     });
   }
 
-  return NextResponse.json({ items: Array.from(byPollId.values()) });
+  return NextResponse.json({ items });
 }
