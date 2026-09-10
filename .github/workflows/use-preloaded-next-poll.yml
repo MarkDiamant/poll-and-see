@@ -1,5 +1,10 @@
 name: Use preloaded next poll immediately
-on: workflow_dispatch
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/use-preloaded-next-poll.yml'
 permissions:
   contents: write
 jobs:
