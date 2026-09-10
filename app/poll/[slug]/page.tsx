@@ -181,7 +181,6 @@ function getLocalSelectedOption(pollId: number): number | null {
 function markPollVotedLocally(pollId: number, optionId: number | null) {
   const voteKey = getPollVotedKey(pollId);
 
-  // 🔒 prevent double-application of local vote
   if (localStorage.getItem(voteKey) === "true") {
     return;
   }
@@ -213,7 +212,6 @@ function setCachedPollBundle(bundle: PollBundle) {
   try {
     sessionStorage.setItem(`${POLL_BUNDLE_CACHE_PREFIX}${bundle.poll.slug}`, JSON.stringify(bundle));
   } catch {
-    // ignore cache failures
   }
 }
 
@@ -301,11 +299,7 @@ function StatusRibbon({ label }: { label: BadgeLabel }) {
 
 function smoothScrollToElement(element: HTMLElement, duration = 650, topOffset?: number) {
   const startY = window.scrollY;
-
-  // 👇 key change: place element higher in viewport (not at top)
   const elementTop = element.getBoundingClientRect().top + window.scrollY;
-
-  // show it around upper-middle of screen
   const targetY =
   typeof topOffset === "number"
     ? elementTop - topOffset
@@ -694,11 +688,8 @@ function SponsorCard({ sponsor, category }: { sponsor: Sponsor; category: string
       }}
       className={`relative mb-4 block overflow-hidden rounded-xl border p-4 transition hover:opacity-95 ${theme.card}`}
     >
-      {/* LEFT ACCENT BAR */}
       <div className={`absolute left-0 top-0 h-full w-[2px] bg-gradient-to-b ${theme.accent}`} />
       <div className="relative flex flex-col gap-3 pl-2 sm:flex-row sm:items-start sm:justify-between">
-
-        {/* LEFT TEXT */}
         <div className="min-w-0 flex-1 sm:pr-3">
           <p className="mb-1 text-[10px] uppercase tracking-wide text-amber-300/70">
             Sponsored
@@ -725,9 +716,7 @@ function SponsorCard({ sponsor, category }: { sponsor: Sponsor; category: string
           </p>
         </div>
 
-        {/* RIGHT: LOGO + CTA */}
         <div className="flex flex-row items-center justify-between gap-3 sm:flex-col sm:justify-center sm:gap-2 sm:flex-shrink-0">
-
           {imageUrl ? (
             <img
               src={imageUrl}
@@ -759,9 +748,7 @@ function SponsorCard({ sponsor, category }: { sponsor: Sponsor; category: string
           >
             {sponsor.cta_text}
           </button>
-
         </div>
-
       </div>
     </a>
   );
@@ -808,7 +795,6 @@ function PollCard({
     setSelected(selectedLocally);
 
     setCounts(() => {
-  // 🔒 always trust server snapshot first to avoid stacking duplicates
   return bundle.voteCounts;
 });
 
@@ -867,7 +853,6 @@ function PollCard({
         });
         return;
       } catch {
-        // fall through
       }
     }
 
@@ -934,7 +919,6 @@ const handleVote = async (optionId: number) => {
   setVoted(true);
   setSelected(optionId);
 
-  // 🔒 FIX: prevent vote inflation (single controlled increment only)
   setCounts(() => {
     const base = { ...bundle.voteCounts };
     base[optionId] = (base[optionId] || 0) + 1;
@@ -1289,7 +1273,6 @@ const [recentVotesResult, optionTotalsResult] = await Promise.all([
         setTotalVoteCount(data?.total_votes || 0);
       }
     } catch {
-      // ignore sync failures
     }
   };
 
@@ -1316,7 +1299,6 @@ const [recentVotesResult, optionTotalsResult] = await Promise.all([
           }
 
           const voteCounts: VoteCounts = {};
-          const hasVotedLocally = hasLocalVote(bundle.poll.id);
 
           options.forEach((option) => {
             const serverCount = option.vote_count || 0;
@@ -1337,7 +1319,6 @@ const [recentVotesResult, optionTotalsResult] = await Promise.all([
 
       setPolls(refreshed);
     } catch {
-      // ignore sync failures
     }
   };
 
@@ -1548,7 +1529,6 @@ const safeBundle = {
   voteCounts: { ...bundle.voteCounts },
 };
 
-// 🔒 ensure no external mutation leaks into cache/state
 setCachedPollBundle(safeBundle);
 return safeBundle;
   };
@@ -1608,7 +1588,6 @@ return safeBundle;
     setPolls((current) => {
   const map = new Map<number, PollBundle>();
 
-  // preserve newest UI state first (optimistic wins)
   for (const item of current) {
     map.set(item.poll.id, item);
   }
@@ -1620,7 +1599,6 @@ return safeBundle;
       ...refreshedItem,
       voteCounts: {
         ...refreshedItem.voteCounts,
-        // 🔒 never overwrite higher optimistic UI values
         ...existing?.voteCounts,
       },
     });
@@ -1987,12 +1965,13 @@ onVoteComplete={(pollId, category) => {
             destinationUrl: sponsor.destination_url,
           }),
         }).catch(() => {});
-
-        // sponsor card only
       }
     }
 
-    void preloadQueue([...currentShownIds, pollId], flowAnchorCategory).then(() => {
+    void (preloadedQueueRef.current.length > 0
+      ? Promise.resolve()
+      : preloadQueue([...currentShownIds, pollId], flowAnchorCategory)
+    ).then(() => {
       while (preloadedQueueRef.current.length > 0) {
         const next = preloadedQueueRef.current.shift();
         if (!next) break;
@@ -2105,7 +2084,6 @@ className="mx-auto block w-[68%] md:w-[55%] cursor-pointer rounded-lg bg-gray-10
    {index > 0 && (index + 1) % 5 === 0 ? (
   <div className="mb-8 mt-4 flex justify-center">
    <div className="w-full max-w-md rounded-2xl border border-blue-500/40 bg-gray-800/80 p-5 text-center shadow-[0_0_20px_rgba(59,130,246,0.1)]">
-      
       <p className="mb-3 text-base font-medium text-white">
         {CREATE_POLL_PROMPTS[Math.floor(index / 5) % CREATE_POLL_PROMPTS.length]}
       </p>
@@ -2116,7 +2094,6 @@ className="mx-auto block w-[68%] md:w-[55%] cursor-pointer rounded-lg bg-gray-10
       >
         Create your own poll in seconds
       </Link>
-
     </div>
   </div>
 ) : null}
