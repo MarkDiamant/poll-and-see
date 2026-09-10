@@ -1,0 +1,32 @@
+name: Adjust poll scroll
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/adjust-poll-scroll.yml']
+permissions:
+  contents: write
+jobs:
+  adjust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Make exact change
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('app/poll/[slug]/page.tsx')
+          s = p.read_text()
+          old = 'smoothScrollToElement(pollEl as HTMLElement, 650, 8);'
+          new = 'smoothScrollToElement(pollEl as HTMLElement, 500, 8);'
+          if s.count(old) != 1:
+              raise SystemExit('Expected exactly one target')
+          p.write_text(s.replace(old, new, 1))
+          PY
+      - name: Commit
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add 'app/poll/[slug]/page.tsx'
+          git diff --cached --quiet && exit 0
+          git commit -m 'Speed up follow-on poll scroll'
+          git push
