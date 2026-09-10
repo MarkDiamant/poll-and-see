@@ -1,0 +1,33 @@
+name: Set poll scroll to 300ms
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/set-poll-scroll-300.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update only follow-on poll scroll and clean up
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('app/poll/[slug]/page.tsx')
+          s = p.read_text()
+          old = 'smoothScrollToElement(pollEl as HTMLElement, 400, 8);'
+          new = 'smoothScrollToElement(pollEl as HTMLElement, 300, 8);'
+          assert s.count(old) == 1, f'Expected exactly one target, found {s.count(old)}'
+          p.write_text(s.replace(old, new))
+          PY
+          rm .github/workflows/set-poll-scroll-300.yml
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add 'app/poll/[slug]/page.tsx' .github/workflows/set-poll-scroll-300.yml
+          git commit -m 'Speed up follow-on poll scroll to 300ms'
+          git push
