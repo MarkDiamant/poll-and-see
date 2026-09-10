@@ -1,4 +1,4 @@
-name: One time preload optimisation
+name: Final 300ms poll scroll adjustment
 on:
   push:
     paths:
@@ -10,87 +10,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Change code
+      - name: Change only follow-on scroll and clean workflows
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('app/poll/[slug]/page.tsx')
           s=p.read_text()
-          old='''    void preloadQueue([...currentShownIds, pollId], flowAnchorCategory).then(() => {
-      while (preloadedQueueRef.current.length > 0) {
-        const next = preloadedQueueRef.current.shift();
-        if (!next) break;
-        if (currentShownIds.includes(next.poll.id)) continue;
-        if (skippedPollIdsRef.current.has(next.poll.id)) continue;
-        if (hasLocalVote(next.poll.id)) continue;
-
-        setShowEndOfFeed(false);
-        setPolls((current) => {
-          if (current.some((item) => item.poll.id === next.poll.id)) return current;
-          return [...current, next];
-        });
-
-        if (shouldShowSponsor) {
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              const sponsorEl = sponsorByPollContainerRef.current[pollId];
-              if (sponsorEl) {
-                smoothScrollToElement(sponsorEl, 650, 8);
-              }
-            });
-          });
-        }
-
-        return;
-      }
-
-      setShowEndOfFeed(true);
-    });'''
-          new='''    const appendNextPreloadedPoll = () => {
-      while (preloadedQueueRef.current.length > 0) {
-        const next = preloadedQueueRef.current.shift();
-        if (!next) break;
-        if (currentShownIds.includes(next.poll.id)) continue;
-        if (skippedPollIdsRef.current.has(next.poll.id)) continue;
-        if (hasLocalVote(next.poll.id)) continue;
-
-        setShowEndOfFeed(false);
-        setPolls((current) => {
-          if (current.some((item) => item.poll.id === next.poll.id)) return current;
-          return [...current, next];
-        });
-
-        if (shouldShowSponsor) {
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              const sponsorEl = sponsorByPollContainerRef.current[pollId];
-              if (sponsorEl) {
-                smoothScrollToElement(sponsorEl, 650, 8);
-              }
-            });
-          });
-        }
-
-        void preloadQueue([...currentShownIds, pollId, next.poll.id], flowAnchorCategory);
-        return true;
-      }
-      return false;
-    };
-
-    if (!appendNextPreloadedPoll()) {
-      void preloadQueue([...currentShownIds, pollId], flowAnchorCategory).then(() => {
-        if (!appendNextPreloadedPoll()) setShowEndOfFeed(true);
-      });
-    }'''
+          old='smoothScrollToElement(pollEl as HTMLElement, 400, 8);'
+          new='smoothScrollToElement(pollEl as HTMLElement, 300, 8);'
           assert s.count(old)==1, s.count(old)
           p.write_text(s.replace(old,new,1))
           PY
-      - name: Commit code
-        shell: bash
-        run: |
+          rm -f .github/workflows/one-time-preload-fix.yml .github/workflows/set-poll-scroll-300.yml
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add 'app/poll/[slug]/page.tsx'
-          git commit -m 'Use preloaded next poll immediately'
+          git add -A
+          git commit -m 'Speed up follow-on poll scroll to 300ms'
           git push
