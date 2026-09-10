@@ -1,0 +1,66 @@
+name: Optimise next poll loading
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/adjust-poll-scroll.yml']
+permissions:
+  contents: write
+jobs:
+  adjust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Optimise
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('app/poll/[slug]/page.tsx')
+          s = p.read_text()
+          marker = '    void preloadQueue([...currentShownIds, pollId], flowAnchorCategory).then(() => {'
+          start = s.index(marker, s.index('onVoteComplete='))
+          end_marker = '\n    });\n  });\n\n  const voteCount'
+          end = s.index(end_marker, start)
+          old = s[start:end]
+          if old.count('preloadedQueueRef.current.shift()') != 1:
+              raise SystemExit('Unexpected target block')
+          new = '''    const appendNextPreloadedPoll = () => {
+      while (preloadedQueueRef.current.length > 0) {
+        const next = preloadedQueueRef.current.shift();
+        if (!next) break;
+        if (currentShownIds.includes(next.poll.id)) continue;
+        if (skippedPollIdsRef.current.has(next.poll.id)) continue;
+        if (hasLocalVote(next.poll.id)) continue;
+        setShowEndOfFeed(false);
+        setPolls((current) => {
+          if (current.some((item) => item.poll.id === next.poll.id)) return current;
+          return [...current, next];
+        });
+        if (shouldShowSponsor) {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              const sponsorEl = sponsorByPollContainerRef.current[pollId];
+              if (sponsorEl) smoothScrollToElement(sponsorEl, 650, 8);
+            });
+          });
+        }
+        void preloadQueue([...currentShownIds, pollId, next.poll.id], flowAnchorCategory);
+        return true;
+      }
+      return false;
+    };
+
+    if (!appendNextPreloadedPoll()) {
+      void preloadQueue([...currentShownIds, pollId], flowAnchorCategory).then(() => {
+        if (!appendNextPreloadedPoll()) setShowEndOfFeed(true);
+      });
+    }'''
+          p.write_text(s[:start] + new + s[end:])
+          PY
+      - name: Commit
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add 'app/poll/[slug]/page.tsx'
+          git diff --cached --quiet && exit 0
+          git commit -m 'Use preloaded next poll immediately'
+          git push
