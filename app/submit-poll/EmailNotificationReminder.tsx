@@ -50,6 +50,45 @@ export default function EmailNotificationReminder() {
     return () => form.removeEventListener("submit", handleSubmit, true);
   }, []);
 
+  useEffect(() => {
+    const improveSuccessSharing = () => {
+      const headings = Array.from(document.querySelectorAll<HTMLHeadingElement>("h2"));
+      const successHeading = headings.find((heading) => heading.textContent?.includes("Your poll is live"));
+      if (!successHeading) return;
+
+      const successPanel = successHeading.closest("div.space-y-5");
+      if (!successPanel || successPanel.getAttribute("data-sharing-enhanced") === "true") return;
+
+      successPanel.setAttribute("data-sharing-enhanced", "true");
+
+      const intro = successHeading.parentElement?.querySelector("p");
+      if (intro) {
+        intro.textContent = "Get more people voting. Share your poll now and see what people really think.";
+        intro.className = "text-sm text-gray-200 md:text-base";
+      }
+
+      const buttons = Array.from(successPanel.querySelectorAll<HTMLButtonElement>("button"));
+      const copyButton = buttons.find((button) => button.textContent?.trim() === "Copy link");
+      const shareButton = buttons.find((button) => button.textContent?.trim() === "Share");
+
+      if (shareButton) {
+        shareButton.textContent = "Share poll";
+        shareButton.className =
+          "w-full cursor-pointer rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-500 sm:flex-1";
+      }
+
+      if (copyButton) {
+        copyButton.className =
+          "w-full cursor-pointer rounded-xl border border-gray-700 bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800 sm:flex-1";
+      }
+    };
+
+    improveSuccessSharing();
+    const observer = new MutationObserver(improveSuccessSharing);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
+
   const continueWithoutEmail = () => {
     if (!pendingForm) return;
     pendingForm.dataset.emailReminderConfirmed = "true";
