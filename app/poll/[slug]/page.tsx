@@ -1792,7 +1792,7 @@ if (polls.length > previousPollCountRef.current && polls.length > 1) {
   const pollEl = pollRefs.current[lastPollId];
 
   if (pollEl) {
-    smoothScrollToElement(pollEl as HTMLElement, 400, 8);
+    smoothScrollToElement(pollEl as HTMLElement, 300, 8);
   }
 }
 
