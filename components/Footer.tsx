@@ -62,7 +62,7 @@ export default function Footer() {
     </div>
 
     <span className="text-xs text-gray-400">
-      Custom websites, systems & automations.
+      Websites • CRM Systems • Direction
     </span>
 
     <span className="text-xs font-semibold text-green-400">
