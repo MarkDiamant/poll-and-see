@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       query,
       supabaseAdmin.from("polls").select("id, slug").not("slug", "is", null),
       supabaseAdmin.from("poll_submissions").select("poll_id, status").not("poll_id", "is", null),
-      supabaseAdmin.from("poll_submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
+      supabaseAdmin.from("poll_submissions").select("id", { count: "exact", head: true }).neq("status", "hidden"),
     ]);
     if (pollsError || slugError || submissionRowsError) return NextResponse.json({ error: "Could not load polls." }, { status: 500 });
 
