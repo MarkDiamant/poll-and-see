@@ -103,7 +103,7 @@ let query = supabaseAdmin
     ] = await Promise.all([
       query,
       supabaseAdmin.from("polls").select("id, slug, is_publicly_listed"),
-      supabaseAdmin.from("poll_submissions").select("poll_id").not("poll_id", "is", null),
+      supabaseAdmin.from("poll_submissions").select("poll_id, status").not("poll_id", "is", null),
     ]);
 
     if (error || pollRowsError || allSubmissionRowsError) {
@@ -122,13 +122,22 @@ let query = supabaseAdmin
       slug: row.poll_id ? slugByPollId.get(row.poll_id) || null : null,
     }));
 
-    // Match the Live Polls endpoint exactly: any linked submission keeps a non-public poll
-    // out of Live Polls, including hidden submissions.
-    const linkedSubmissionPollIds = new Set(
-      (allSubmissionRows || []).map((row) => Number(row.poll_id)).filter((id) => Number.isInteger(id))
+    const hiddenSubmissionPollIds = new Set(
+      (allSubmissionRows || [])
+        .filter((row) => row.status === "hidden")
+        .map((row) => Number(row.poll_id))
+        .filter((id) => Number.isInteger(id))
+    );
+    const nonLiveSubmissionPollIds = new Set(
+      (allSubmissionRows || [])
+        .filter((row) => row.status !== "hidden")
+        .map((row) => Number(row.poll_id))
+        .filter((id) => Number.isInteger(id))
     );
     const livePollCount = (pollRows || []).filter(
-      (poll) => Boolean(poll.is_publicly_listed) || !linkedSubmissionPollIds.has(Number(poll.id))
+      (poll) =>
+        !hiddenSubmissionPollIds.has(Number(poll.id)) &&
+        (Boolean(poll.is_publicly_listed) || !nonLiveSubmissionPollIds.has(Number(poll.id)))
     ).length;
 
     return NextResponse.json({
