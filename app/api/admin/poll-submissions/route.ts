@@ -99,14 +99,14 @@ let query = supabaseAdmin
     const [
       { data, error },
       { data: pollRows, error: pollRowsError },
-      livePollCountResult,
+      { data: allSubmissionRows, error: allSubmissionRowsError },
     ] = await Promise.all([
       query,
       supabaseAdmin.from("polls").select("id, slug, is_publicly_listed"),
-      supabaseAdmin.from("polls").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("poll_submissions").select("poll_id").not("poll_id", "is", null),
     ]);
 
-    if (error || pollRowsError) {
+    if (error || pollRowsError || allSubmissionRowsError) {
       return NextResponse.json({ error: "Could not load submissions." }, { status: 500 });
     }
 
@@ -122,8 +122,10 @@ let query = supabaseAdmin
       slug: row.poll_id ? slugByPollId.get(row.poll_id) || null : null,
     }));
 
+    // Match the Live Polls endpoint exactly: any linked submission keeps a non-public poll
+    // out of Live Polls, including hidden submissions.
     const linkedSubmissionPollIds = new Set(
-      (data || []).map((row) => Number(row.poll_id)).filter((id) => Number.isInteger(id))
+      (allSubmissionRows || []).map((row) => Number(row.poll_id)).filter((id) => Number.isInteger(id))
     );
     const livePollCount = (pollRows || []).filter(
       (poll) => Boolean(poll.is_publicly_listed) || !linkedSubmissionPollIds.has(Number(poll.id))
