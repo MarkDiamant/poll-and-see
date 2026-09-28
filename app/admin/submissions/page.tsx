@@ -503,7 +503,6 @@ is_private: newIsPrivate,
       }
 
       setSubmissions((current) => [data.submission, ...current]);
-      setLivePollCount((current) => current + 1);
       setQuestionEdits((current) => ({ ...current, [data.submission.id]: data.submission.question }));
       setDescriptionEdits((current) => ({ ...current, [data.submission.id]: data.submission.description || "" }));
       setOptionsEdits((current) => ({
