@@ -34,9 +34,25 @@ export async function GET(request: NextRequest) {
     ]);
     if (pollsError || slugError || submissionRowsError) return NextResponse.json({ error: "Could not load polls." }, { status: 500 });
 
-    const nonLiveSubmissionPollIds = new Set((submissionRows || []).map((row) => Number(row.poll_id)).filter((id) => Number.isInteger(id)));
-    // A poll that is already publicly listed is live and belongs on Live Polls even if a stale/linked submission row still exists.
-    const basePolls = (pollsData || []).filter((poll) => Boolean(poll.is_publicly_listed) || !nonLiveSubmissionPollIds.has(Number(poll.id)));
+    const hiddenSubmissionPollIds = new Set(
+      (submissionRows || [])
+        .filter((row) => row.status === "hidden")
+        .map((row) => Number(row.poll_id))
+        .filter((id) => Number.isInteger(id))
+    );
+    const nonLiveSubmissionPollIds = new Set(
+      (submissionRows || [])
+        .filter((row) => row.status !== "hidden")
+        .map((row) => Number(row.poll_id))
+        .filter((id) => Number.isInteger(id))
+    );
+    // Hidden polls never belong in Live Polls. Otherwise a publicly listed poll is live,
+    // while an unlisted poll with an active submission remains in Submissions.
+    const basePolls = (pollsData || []).filter(
+      (poll) =>
+        !hiddenSubmissionPollIds.has(Number(poll.id)) &&
+        (Boolean(poll.is_publicly_listed) || !nonLiveSubmissionPollIds.has(Number(poll.id)))
+    );
     const pollIds = basePolls.map((poll) => Number(poll.id));
     const optionRows: Array<{ id:number; poll_id:number; option_text:string; image_url:string|null; vote_count:number }> = [];
     if (pollIds.length) {
