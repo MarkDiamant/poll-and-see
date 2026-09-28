@@ -102,7 +102,7 @@ let query = supabaseAdmin
       livePollCountResult,
     ] = await Promise.all([
       query,
-      supabaseAdmin.from("polls").select("id, slug"),
+      supabaseAdmin.from("polls").select("id, slug, is_publicly_listed"),
       supabaseAdmin.from("polls").select("id", { count: "exact", head: true }),
     ]);
 
@@ -122,12 +122,16 @@ let query = supabaseAdmin
       slug: row.poll_id ? slugByPollId.get(row.poll_id) || null : null,
     }));
 
+    const linkedSubmissionPollIds = new Set(
+      (data || []).map((row) => Number(row.poll_id)).filter((id) => Number.isInteger(id))
+    );
+    const livePollCount = (pollRows || []).filter(
+      (poll) => Boolean(poll.is_publicly_listed) || !linkedSubmissionPollIds.has(Number(poll.id))
+    ).length;
+
     return NextResponse.json({
       submissions,
-     livePollCount: Math.max(
-  (livePollCountResult.count || 0) - ((data || []).length),
-  0
-),
+      livePollCount,
     });
   } catch {
     return NextResponse.json({ error: "Could not load submissions." }, { status: 500 });
