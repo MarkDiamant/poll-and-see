@@ -42,7 +42,7 @@ type PollBundle = {
 };
 
 type BadgeLabel = "New" | "Trending" | "Popular";
-type SortFilter = "Newest" | "Trending" | "Popular";
+type SortFilter = "Newest" | "Trending" | "Popular" | "Most One-Sided" | "Closest";
 
 type IdleWindow = Window &
   typeof globalThis & {
@@ -65,7 +65,8 @@ const STATUS_RIBBON_COLOURS: Record<BadgeLabel, string> = {
   Popular: "bg-blue-500/95",
 };
 
-const SORT_FILTERS: SortFilter[] = ["Newest", "Trending", "Popular"];
+const SORT_FILTERS: SortFilter[] = ["Newest", "Trending", "Popular", "Most One-Sided", "Closest"];
+const RESULT_SORT_MIN_VOTES = 30;
 
 function getCommonPrefixLength(a: string, b: string) {
   const maxLength = Math.min(a.length, b.length);
@@ -290,6 +291,8 @@ export default function Home() {
   const [popularPollIds, setPopularPollIds] = useState<number[]>([]);
   const [recentVoteCounts, setRecentVoteCounts] = useState<Record<number, number>>({});
   const [totalVoteCountsByPoll, setTotalVoteCountsByPoll] = useState<Record<number, number>>({});
+  const [leadingVoteShareByPoll, setLeadingVoteShareByPoll] = useState<Record<number, number>>({});
+  const [topTwoMarginByPoll, setTopTwoMarginByPoll] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(true);
   const [featuredPollVoted, setFeaturedPollVoted] = useState(false);
   const [featuredSelectedOptionId, setFeaturedSelectedOptionId] = useState<number | null>(null);
@@ -355,6 +358,8 @@ const [selectedSortFilter, setSelectedSortFilter] = useState<SortFilter>("Newest
     setPopularPollIds([]);
     setRecentVoteCounts({});
     setTotalVoteCountsByPoll({});
+    setLeadingVoteShareByPoll({});
+    setTopTwoMarginByPoll({});
     setVotesLast24(0);
     return;
   }
@@ -392,10 +397,24 @@ let last24Total = 0;
 });
 
     const totalVoteCounts: Record<number, number> = {};
+    const optionVoteCountsByPoll: Record<number, number[]> = {};
     (optionTotalsResult.data || []).forEach((option) => {
       const pollId = Number(option.poll_id);
       if (!validPollIds.has(pollId)) return;
-      totalVoteCounts[pollId] = (totalVoteCounts[pollId] || 0) + (option.vote_count || 0);
+      const voteCount = Number(option.vote_count || 0);
+      totalVoteCounts[pollId] = (totalVoteCounts[pollId] || 0) + voteCount;
+      (optionVoteCountsByPoll[pollId] ||= []).push(voteCount);
+    });
+
+    const leadingShares: Record<number, number> = {};
+    const topTwoMargins: Record<number, number> = {};
+    Object.entries(optionVoteCountsByPoll).forEach(([pollIdText, counts]) => {
+      const pollId = Number(pollIdText);
+      const total = totalVoteCounts[pollId] || 0;
+      if (total === 0) return;
+      const sortedCounts = [...counts].sort((a, b) => b - a);
+      leadingShares[pollId] = (sortedCounts[0] || 0) / total;
+      topTwoMargins[pollId] = ((sortedCounts[0] || 0) - (sortedCounts[1] || 0)) / total;
     });
 
      const trendingIds = Object.entries(recentCounts)
@@ -418,6 +437,8 @@ let last24Total = 0;
 
     setRecentVoteCounts(recentCounts);
     setTotalVoteCountsByPoll(totalVoteCounts);
+    setLeadingVoteShareByPoll(leadingShares);
+    setTopTwoMarginByPoll(topTwoMargins);
     setTrendingPollIds(trendingIds);
     setPopularPollIds(popularIds);
     setVotesLast24(last24Total);
@@ -559,6 +580,8 @@ if (savedSort && SORT_FILTERS.includes(savedSort)) {
       setPopularPollIds([]);
       setRecentVoteCounts({});
       setTotalVoteCountsByPoll({});
+      setLeadingVoteShareByPoll({});
+      setTopTwoMarginByPoll({});
     } finally {
       setLoading(false);
     }
@@ -1060,8 +1083,28 @@ useEffect(() => {
       });
     }
 
+    if (selectedSortFilter === "Most One-Sided") {
+      return basePolls
+        .filter((poll) => (totalVoteCountsByPoll[poll.id] || 0) >= RESULT_SORT_MIN_VOTES)
+        .sort((a, b) => {
+          const diff = (leadingVoteShareByPoll[b.id] || 0) - (leadingVoteShareByPoll[a.id] || 0);
+          if (diff !== 0) return diff;
+          return (totalVoteCountsByPoll[b.id] || 0) - (totalVoteCountsByPoll[a.id] || 0);
+        });
+    }
+
+    if (selectedSortFilter === "Closest") {
+      return basePolls
+        .filter((poll) => (totalVoteCountsByPoll[poll.id] || 0) >= RESULT_SORT_MIN_VOTES)
+        .sort((a, b) => {
+          const diff = (topTwoMarginByPoll[a.id] ?? 1) - (topTwoMarginByPoll[b.id] ?? 1);
+          if (diff !== 0) return diff;
+          return (totalVoteCountsByPoll[b.id] || 0) - (totalVoteCountsByPoll[a.id] || 0);
+        });
+    }
+
     return basePolls;
-  }, [searchedPolls, featuredPoll?.id, selectedSortFilter, recentVoteCounts, totalVoteCountsByPoll]);
+  }, [searchedPolls, featuredPoll?.id, selectedSortFilter, recentVoteCounts, totalVoteCountsByPoll, leadingVoteShareByPoll, topTwoMarginByPoll]);
 
 const trendingPolls = useMemo(() => {
   const pollMap = new Map(regionalHomepagePolls.map((poll) => [poll.id, poll]));
@@ -1455,7 +1498,7 @@ className="h-10 min-w-[88px] cursor-pointer rounded-xl px-3 text-sm font-medium 
 <p className="mt-4 mb-2 text-xs text-gray-400 uppercase tracking-wide text-center">
   Sort by
 </p>
-<div className="grid grid-cols-3 gap-2 sm:flex sm:justify-center">
+<div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-center">
             {SORT_FILTERS.map((filter) => {
               const isActive = selectedSortFilter === filter;
 
