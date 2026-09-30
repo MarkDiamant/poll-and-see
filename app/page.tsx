@@ -292,7 +292,7 @@ export default function Home() {
   const [recentVoteCounts, setRecentVoteCounts] = useState<Record<number, number>>({});
   const [totalVoteCountsByPoll, setTotalVoteCountsByPoll] = useState<Record<number, number>>({});
   const [leadingVoteShareByPoll, setLeadingVoteShareByPoll] = useState<Record<number, number>>({});
-  const [topTwoMarginByPoll, setTopTwoMarginByPoll] = useState<Record<number, number>>({});
+  const [distributionImbalanceByPoll, setDistributionImbalanceByPoll] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(true);
   const [featuredPollVoted, setFeaturedPollVoted] = useState(false);
   const [featuredSelectedOptionId, setFeaturedSelectedOptionId] = useState<number | null>(null);
@@ -359,7 +359,7 @@ const [selectedSortFilter, setSelectedSortFilter] = useState<SortFilter>("Newest
     setRecentVoteCounts({});
     setTotalVoteCountsByPoll({});
     setLeadingVoteShareByPoll({});
-    setTopTwoMarginByPoll({});
+    setDistributionImbalanceByPoll({});
     setVotesLast24(0);
     return;
   }
@@ -416,14 +416,18 @@ let last24Total = 0;
     });
 
     const leadingShares: Record<number, number> = {};
-    const topTwoMargins: Record<number, number> = {};
+    const distributionImbalances: Record<number, number> = {};
     Object.entries(optionVoteCountsByPoll).forEach(([pollIdText, counts]) => {
       const pollId = Number(pollIdText);
       const total = totalVoteCounts[pollId] || 0;
       if (total === 0) return;
       const sortedCounts = [...counts].sort((a, b) => b - a);
       leadingShares[pollId] = (sortedCounts[0] || 0) / total;
-      topTwoMargins[pollId] = ((sortedCounts[0] || 0) - (sortedCounts[1] || 0)) / total;
+      const idealShare = 1 / sortedCounts.length;
+      distributionImbalances[pollId] = sortedCounts.reduce(
+        (sum, count) => sum + Math.abs(count / total - idealShare),
+        0
+      );
     });
 
      const trendingIds = Object.entries(recentCounts)
@@ -447,7 +451,7 @@ let last24Total = 0;
     setRecentVoteCounts(recentCounts);
     setTotalVoteCountsByPoll(totalVoteCounts);
     setLeadingVoteShareByPoll(leadingShares);
-    setTopTwoMarginByPoll(topTwoMargins);
+    setDistributionImbalanceByPoll(distributionImbalances);
     setTrendingPollIds(trendingIds);
     setPopularPollIds(popularIds);
     setVotesLast24(last24Total);
@@ -590,7 +594,7 @@ if (savedSort && SORT_FILTERS.includes(savedSort)) {
       setRecentVoteCounts({});
       setTotalVoteCountsByPoll({});
       setLeadingVoteShareByPoll({});
-      setTopTwoMarginByPoll({});
+      setDistributionImbalanceByPoll({});
     } finally {
       setLoading(false);
     }
@@ -1106,14 +1110,14 @@ useEffect(() => {
       return basePolls
         .filter((poll) => (totalVoteCountsByPoll[poll.id] || 0) >= RESULT_SORT_MIN_VOTES)
         .sort((a, b) => {
-          const diff = (topTwoMarginByPoll[a.id] ?? 1) - (topTwoMarginByPoll[b.id] ?? 1);
+          const diff = (distributionImbalanceByPoll[a.id] ?? 1) - (distributionImbalanceByPoll[b.id] ?? 1);
           if (diff !== 0) return diff;
           return (totalVoteCountsByPoll[b.id] || 0) - (totalVoteCountsByPoll[a.id] || 0);
         });
     }
 
     return basePolls;
-  }, [searchedPolls, featuredPoll?.id, selectedSortFilter, recentVoteCounts, totalVoteCountsByPoll, leadingVoteShareByPoll, topTwoMarginByPoll]);
+  }, [searchedPolls, featuredPoll?.id, selectedSortFilter, recentVoteCounts, totalVoteCountsByPoll, leadingVoteShareByPoll, distributionImbalanceByPoll]);
 
 const trendingPolls = useMemo(() => {
   const pollMap = new Map(regionalHomepagePolls.map((poll) => [poll.id, poll]));
