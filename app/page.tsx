@@ -370,19 +370,28 @@ const [selectedSortFilter, setSelectedSortFilter] = useState<SortFilter>("Newest
     const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString();
     const twentyFourHoursAgoMs = now.getTime() - 24 * 60 * 60 * 1000;
 
-   const [recentVotesResult, optionTotalsResult] = await Promise.all([
-  supabase.rpc("get_recent_poll_votes"),
-  supabase
-    .from("poll_options")
-    .select("poll_id, vote_count"),
-]);
+   const recentVotesResult = await supabase.rpc("get_recent_poll_votes");
 
 if (recentVotesResult.error) {
   console.error("Homepage recent votes query failed", recentVotesResult.error);
 }
 
-if (optionTotalsResult.error) {
-  console.error("Homepage option totals query failed", optionTotalsResult.error);
+const optionTotals: Array<{ poll_id: number | string; vote_count: number | null }> = [];
+const OPTION_PAGE_SIZE = 1000;
+for (let from = 0; ; from += OPTION_PAGE_SIZE) {
+  const { data, error } = await supabase
+    .from("poll_options")
+    .select("poll_id, vote_count")
+    .range(from, from + OPTION_PAGE_SIZE - 1);
+
+  if (error) {
+    console.error("Homepage option totals query failed", error);
+    break;
+  }
+
+  const page = (data || []) as Array<{ poll_id: number | string; vote_count: number | null }>;
+  optionTotals.push(...page);
+  if (page.length < OPTION_PAGE_SIZE) break;
 }
 
 const recentCounts: Record<number, number> = {};
@@ -398,7 +407,7 @@ let last24Total = 0;
 
     const totalVoteCounts: Record<number, number> = {};
     const optionVoteCountsByPoll: Record<number, number[]> = {};
-    (optionTotalsResult.data || []).forEach((option) => {
+    optionTotals.forEach((option) => {
       const pollId = Number(option.poll_id);
       if (!validPollIds.has(pollId)) return;
       const voteCount = Number(option.vote_count || 0);
@@ -1498,20 +1507,30 @@ className="h-10 min-w-[88px] cursor-pointer rounded-xl px-3 text-sm font-medium 
 <p className="mt-4 mb-2 text-xs text-gray-400 uppercase tracking-wide text-center">
   Sort by
 </p>
-<div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-center">
-            {SORT_FILTERS.map((filter) => {
+<div className="mx-auto grid max-w-[520px] grid-cols-6 gap-2 sm:flex sm:max-w-none sm:flex-wrap sm:justify-center">
+            {SORT_FILTERS.map((filter, index) => {
               const isActive = selectedSortFilter === filter;
+              const sortStyles = [
+                { bg: "#172033", border: "#34415a", text: "#cbd5e1", active: "#dbeafe" },
+                { bg: "#1d1b2e", border: "#403b5f", text: "#d8d2f0", active: "#ede9fe" },
+                { bg: "#18251f", border: "#354b40", text: "#c8ddd1", active: "#dcfce7" },
+                { bg: "#2a2118", border: "#554331", text: "#e3d2bc", active: "#ffedd5" },
+                { bg: "#261b24", border: "#51394c", text: "#decbd9", active: "#fce7f3" },
+              ][index];
 
               return (
                 <button
                   key={filter}
                   type="button"
                   onClick={() => setSelectedSortFilter(filter)}
-className={`h-8 cursor-pointer rounded-lg border px-3 text-xs font-medium transition ${
-  isActive
-    ? "border-gray-400 bg-gray-200 text-black"
-    : "border-gray-700 bg-gray-900 text-gray-400 hover:border-gray-600 hover:bg-gray-800"
-}`}
+                  className={`col-span-2 h-8 cursor-pointer rounded-lg border px-2 text-[11px] font-medium transition sm:px-3 sm:text-xs ${
+                    index === 3 ? "col-start-2" : ""
+                  }`}
+                  style={{
+                    backgroundColor: isActive ? sortStyles.active : sortStyles.bg,
+                    borderColor: isActive ? sortStyles.active : sortStyles.border,
+                    color: isActive ? "#111827" : sortStyles.text,
+                  }}
                 >
                   {filter}
                 </button>
