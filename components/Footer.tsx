@@ -62,7 +62,7 @@ export default function Footer() {
     </div>
 
     <span className="text-xs text-gray-400">
-      Websites • Business Software • Direction
+      Websites. Software. Business Advisory.
     </span>
 
     <span className="text-xs font-semibold text-green-400">
