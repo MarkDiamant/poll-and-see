@@ -111,8 +111,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       await syncOptions(supabaseAdmin, pollId, options, optionImageUrls);
       await preserveSubmitterEmail(supabaseAdmin, pollId, typedSubmission.email);
       if (typedSubmission.email && updatedPoll.slug) await sendApprovedEmail({ to: typedSubmission.email, pollUrl: `https://www.pollandsee.com/poll/${updatedPoll.slug}` });
-      const { error: deleteSubmissionError } = await supabaseAdmin.from("poll_submissions").delete().eq("id", submissionId);
-      if (deleteSubmissionError) return NextResponse.json({ error: "Poll approved, but submission could not be removed. Please delete it manually." }, { status: 500 });
+      const { error: preserveSubmissionError } = await supabaseAdmin.from("poll_submissions").update({ status: "ready" }).eq("id", submissionId);
+      if (preserveSubmissionError) return NextResponse.json({ error: "Poll approved, but submission status could not be updated." }, { status: 500 });
       return NextResponse.json({ poll: updatedPoll });
     }
 
@@ -122,8 +122,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     await syncOptions(supabaseAdmin, insertedPoll.id, options, optionImageUrls);
     await preserveSubmitterEmail(supabaseAdmin, insertedPoll.id, typedSubmission.email);
     if (typedSubmission.email && insertedPoll.slug) await sendApprovedEmail({ to: typedSubmission.email, pollUrl: `https://www.pollandsee.com/poll/${insertedPoll.slug}` });
-    const { error: deleteSubmissionError } = await supabaseAdmin.from("poll_submissions").delete().eq("id", submissionId);
-    if (deleteSubmissionError) return NextResponse.json({ error: "Poll created, but submission could not be removed. Please delete it manually." }, { status: 500 });
+    const { error: preserveSubmissionError } = await supabaseAdmin.from("poll_submissions").update({ status: "ready", poll_id: insertedPoll.id }).eq("id", submissionId);
+    if (preserveSubmissionError) return NextResponse.json({ error: "Poll created, but submission status could not be updated." }, { status: 500 });
     return NextResponse.json({ poll: insertedPoll });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Could not approve submission." }, { status: 500 });
