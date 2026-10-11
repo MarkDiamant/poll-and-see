@@ -106,9 +106,14 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
 
     if (typedSubmission.poll_id) {
       const pollId = typedSubmission.poll_id;
-      const { data: updatedPoll, error: pollUpdateError } = await supabaseAdmin.from("polls").update({ question: typedSubmission.question, description: typedSubmission.description || "", category: typedSubmission.category || "General", region: typedSubmission.region || "Universal", is_private: Boolean(typedSubmission.is_private), is_publicly_listed: !Boolean(typedSubmission.is_private), created_at: new Date().toISOString(), ...(typedSubmission.email ? { submitter_email: typedSubmission.email.trim() } : {}) }).eq("id", pollId).select("id, question, description, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed").single();
+      // A linked poll may have been edited by an administrator after submission.
+      // Publishing must change visibility only, never overwrite its content or creation date.
+      const { data: updatedPoll, error: pollUpdateError } = await supabaseAdmin.from("polls")
+        .update({ is_publicly_listed: !Boolean(typedSubmission.is_private) })
+        .eq("id", pollId)
+        .select("id, question, description, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed")
+        .single();
       if (pollUpdateError || !updatedPoll) return NextResponse.json({ error: pollUpdateError?.message || "Could not approve submission." }, { status: 500 });
-      await syncOptions(supabaseAdmin, pollId, options, optionImageUrls);
       await preserveSubmitterEmail(supabaseAdmin, pollId, typedSubmission.email);
       if (typedSubmission.email && updatedPoll.slug) await sendApprovedEmail({ to: typedSubmission.email, pollUrl: `https://www.pollandsee.com/poll/${updatedPoll.slug}` });
       const { error: preserveSubmissionError } = await supabaseAdmin.from("poll_submissions").update({ status: "ready" }).eq("id", submissionId);
