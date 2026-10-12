@@ -18,6 +18,7 @@ type Poll = {
   is_private?: boolean;
   is_publicly_listed?: boolean;
   created_at?: string | null;
+  published_at?: string | null;
 };
 
 type PollOption = {
@@ -123,8 +124,8 @@ function getBadgeLabel(
   const now = Date.now();
   const fortyEightHoursAgo = now - 48 * 60 * 60 * 1000;
 
-  if (poll.created_at) {
-    const createdAtTime = new Date(poll.created_at).getTime();
+  if (poll.published_at || poll.created_at) {
+    const createdAtTime = new Date(poll.published_at || poll.created_at || "").getTime();
     if (!Number.isNaN(createdAtTime) && createdAtTime >= fortyEightHoursAgo) {
       return "New";
     }
@@ -467,10 +468,10 @@ let last24Total = 0;
           const [pollsResult, totalPollCountResult] = await Promise.all([
                 supabase
           .from("polls")
-          .select("id, question, description, category, region, slug, featured, is_private, is_publicly_listed, created_at")
+          .select("id, question, description, category, region, slug, featured, is_private, is_publicly_listed, created_at, published_at")
           .eq("is_private", false)
           .eq("is_publicly_listed", true)
-.order("created_at", { ascending: false }),
+.order("published_at", { ascending: false, nullsFirst: false }),
         supabase
           .from("site_stats")
           .select("total_polls")
@@ -696,11 +697,11 @@ useEffect(() => {
       const { data, error } = await supabase
         .from("polls")
         .select(
-          "id, question, description, category, region, slug, featured, is_private, is_publicly_listed, created_at"
+          "id, question, description, category, region, slug, featured, is_private, is_publicly_listed, created_at, published_at"
         )
         .eq("is_private", false)
         .eq("is_publicly_listed", true)
-        .order("created_at", { ascending: false });
+        .order("published_at", { ascending: false, nullsFirst: false });
 
       if (error) {
         console.error("Could not refresh polls after region change", error);
