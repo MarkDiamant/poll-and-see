@@ -108,8 +108,10 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       const pollId = typedSubmission.poll_id;
       // A linked poll may have been edited by an administrator after submission.
       // Publishing must change visibility only, never overwrite its content or creation date.
+      const { data: existingPoll } = await supabaseAdmin.from("polls").select("is_publicly_listed, published_at").eq("id", pollId).single();
+      const isBecomingPublic = !Boolean(typedSubmission.is_private) && !existingPoll?.is_publicly_listed;
       const { data: updatedPoll, error: pollUpdateError } = await supabaseAdmin.from("polls")
-        .update({ is_publicly_listed: !Boolean(typedSubmission.is_private) })
+        .update({ is_publicly_listed: !Boolean(typedSubmission.is_private), ...(isBecomingPublic ? { published_at: new Date().toISOString() } : {}) })
         .eq("id", pollId)
         .select("id, question, description, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed")
         .single();
@@ -122,7 +124,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     }
 
     const slug = await generateUniqueSlug(supabaseAdmin);
-    const { data: insertedPoll, error: pollInsertError } = await supabaseAdmin.from("polls").insert({ question: typedSubmission.question, description: typedSubmission.description || "", category: typedSubmission.category || "General", region: typedSubmission.region || "Universal", slug, featured: false, is_private: Boolean(typedSubmission.is_private), is_publicly_listed: !Boolean(typedSubmission.is_private), total_votes: 0, created_at: new Date().toISOString(), ...(typedSubmission.email ? { submitter_email: typedSubmission.email.trim() } : {}) }).select("id, question, description, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed").single();
+    const { data: insertedPoll, error: pollInsertError } = await supabaseAdmin.from("polls").insert({ question: typedSubmission.question, description: typedSubmission.description || "", category: typedSubmission.category || "General", region: typedSubmission.region || "Universal", slug, featured: false, is_private: Boolean(typedSubmission.is_private), is_publicly_listed: !Boolean(typedSubmission.is_private), total_votes: 0, created_at: new Date().toISOString(), published_at: typedSubmission.is_private ? null : new Date().toISOString(), ...(typedSubmission.email ? { submitter_email: typedSubmission.email.trim() } : {}) }).select("id, question, description, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed").single();
     if (pollInsertError || !insertedPoll) return NextResponse.json({ error: pollInsertError?.message || "Could not create poll." }, { status: 500 });
     await syncOptions(supabaseAdmin, insertedPoll.id, options, optionImageUrls);
     await preserveSubmitterEmail(supabaseAdmin, insertedPoll.id, typedSubmission.email);
