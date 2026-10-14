@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     .eq("is_active", true)
     .lte("start_at", now)
     .gt("end_at", now)
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: false });
 
   if (error) {
     return NextResponse.json(
