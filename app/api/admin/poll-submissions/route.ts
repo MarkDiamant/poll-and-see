@@ -117,7 +117,15 @@ let query = supabaseAdmin
       }
     });
 
-    // A published poll belongs in Live Polls, not in the submissions queue.\n    // Retain its submission record for audit/history, but do not return it here.\n    const publiclyListedPollIds = new Set((pollRows || []).filter((poll) => poll.is_publicly_listed).map((poll) => Number(poll.id)));\n    const submissions = (data || [])\n      .filter((row) => !row.poll_id || !publiclyListedPollIds.has(Number(row.poll_id)))\n      .map((row) => ({\n        ...row,\n        slug: row.poll_id ? slugByPollId.get(row.poll_id) || null : null,\n      }));
+    // A published poll belongs in Live Polls, not in the submissions queue.
+    // Retain its submission record for audit/history, but do not return it here.
+    const publiclyListedPollIds = new Set((pollRows || []).filter((poll) => poll.is_publicly_listed).map((poll) => Number(poll.id)));
+    const submissions = (data || [])
+      .filter((row) => !row.poll_id || !publiclyListedPollIds.has(Number(row.poll_id)))
+      .map((row) => ({
+        ...row,
+        slug: row.poll_id ? slugByPollId.get(row.poll_id) || null : null,
+      }));
 
     const hiddenSubmissionPollIds = new Set(
       (allSubmissionRows || [])
