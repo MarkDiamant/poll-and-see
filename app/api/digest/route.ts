@@ -9,6 +9,7 @@ type PollRow = {
   category: string;
   slug: string;
   created_at: string;
+  published_at: string | null;
   is_private?: boolean | null;
   is_publicly_listed?: boolean | null;
 };
@@ -50,7 +51,18 @@ function escapeHtmlAttribute(value: string) {
   return escapeHtml(value);
 }
 
-function getLookbackHours() {
+function getLookbackHours(now: Date) {
+  const londonWeekday = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    weekday: "short",
+  }).format(now);
+
+  // Sunday normally catches up everything published since Friday's digest.
+  // On 25 October 2026 a Saturday digest was already sent, so use 24 hours
+  // once to avoid sending its Friday polls again to the same subscribers.
+  if (londonWeekday === "Sun") {
+    return now.toISOString().slice(0, 10) === "2026-10-25" ? 24 : 48;
+  }
   return 24;
 }
 
@@ -526,7 +538,17 @@ export async function GET(request: NextRequest) {
     });
 
     const now = new Date();
-    const lookbackHours = getLookbackHours();
+    const londonWeekday = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/London",
+      weekday: "short",
+    }).format(now);
+
+    // Defence in depth: do not send a digest on Shabbos even if called manually.
+    if (londonWeekday === "Sat") {
+      return NextResponse.json({ ok: true, skipped: "Saturday digest disabled", sent: 0 });
+    }
+
+    const lookbackHours = getLookbackHours(now);
     const cutoff = new Date(now.getTime() - lookbackHours * 60 * 60 * 1000).toISOString();
 
     const [
@@ -535,11 +557,13 @@ export async function GET(request: NextRequest) {
     ] = await Promise.all([
       supabaseAdmin
         .from("polls")
-        .select("id, question, description, category, slug, created_at, is_private, is_publicly_listed")
+        .select("id, question, description, category, slug, created_at, published_at, is_private, is_publicly_listed")
         .eq("is_private", false)
         .eq("is_publicly_listed", true)
-        .gte("created_at", cutoff)
-        .order("created_at", { ascending: false }),
+        .not("published_at", "is", null)
+        .gte("published_at", cutoff)
+        .lte("published_at", now.toISOString())
+        .order("published_at", { ascending: false }),
       supabaseAdmin
         .from("subscribers")
         .select("id, email, category_preferences, is_active")
