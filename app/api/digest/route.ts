@@ -57,11 +57,9 @@ function getLookbackHours(now: Date) {
     weekday: "short",
   }).format(now);
 
-  // Sunday normally catches up everything published since Friday's digest.
-  // On 25 October 2026 a Saturday digest was already sent, so use 24 hours
-  // once to avoid sending its Friday polls again to the same subscribers.
+  // Sunday catches up everything published since Friday's digest.
   if (londonWeekday === "Sun") {
-    return now.toISOString().slice(0, 10) === "2026-10-25" ? 24 : 48;
+    return 48;
   }
   return 24;
 }
@@ -586,9 +584,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-        const polls = ((pollsData || []) as PollRow[]).filter(
-      (poll) => poll.is_private !== true && poll.is_publicly_listed === true
-    );
+        const polls = ((pollsData || []) as PollRow[]).filter((poll) => {
+      if (poll.is_private === true || poll.is_publicly_listed !== true) return false;
+      // Incident recovery: Saturday 24 Oct sent these two Friday polls already.
+      // Exclude them only from Sunday's catch-up; the older poll #1002 was
+      // published on Friday after the digest and has never been emailed.
+      if (now.toISOString().slice(0, 10) === "2026-10-25" &&
+          (poll.id === 1014 || poll.id === 1015)) return false;
+      return true;
+    });
     const subscribers = (subscribersData || []) as SubscriberRow[];
 
     if (polls.length === 0 || subscribers.length === 0) {
