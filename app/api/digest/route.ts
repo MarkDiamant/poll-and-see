@@ -503,17 +503,12 @@ export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get("authorization");
     const cronSecret = process.env.CRON_SECRET;
-    const legacySecret = request.nextUrl.searchParams.get("secret");
-    const digestSecret = process.env.DIGEST_SECRET;
     const dryRun = request.nextUrl.searchParams.get("dryRun") === "1";
 
     const isValidCronRequest =
       cronSecret && authHeader === `Bearer ${cronSecret}`;
 
-    const isValidManualRequest =
-      digestSecret && legacySecret === digestSecret;
-
-    if (!isValidCronRequest && !isValidManualRequest) {
+    if (!isValidCronRequest) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
