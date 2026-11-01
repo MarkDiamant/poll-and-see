@@ -111,7 +111,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       const { data: existingPoll } = await supabaseAdmin.from("polls").select("is_publicly_listed, published_at").eq("id", pollId).single();
       const isBecomingPublic = !Boolean(typedSubmission.is_private) && !existingPoll?.is_publicly_listed;
       const { data: updatedPoll, error: pollUpdateError } = await supabaseAdmin.from("polls")
-        .update({ is_publicly_listed: !Boolean(typedSubmission.is_private), ...(isBecomingPublic ? { published_at: new Date().toISOString() } : {}) })
+        .update({ is_private: Boolean(typedSubmission.is_private), is_publicly_listed: !Boolean(typedSubmission.is_private), ...(isBecomingPublic ? { published_at: new Date().toISOString() } : {}) })
         .eq("id", pollId)
         .select("id, question, description, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed")
         .single();
