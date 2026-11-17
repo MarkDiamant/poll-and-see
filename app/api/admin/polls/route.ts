@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { fetchAllById, loadAdminInventory } from "@/lib/adminInventory";
 
 function getAdminClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -21,55 +22,36 @@ export async function GET(request: NextRequest) {
   try {
     const supabaseAdmin = getAdminClient();
     const search = request.nextUrl.searchParams.get("q")?.trim() || "";
-    let query = supabaseAdmin.from("polls").select("id, question, description, category, region, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed").order("created_at", { ascending: false });
-    if (search) {
-      const safeSearch = search.replace(/[%(),]/g, " ");
-      query = query.or(`question.ilike.%${safeSearch}%,description.ilike.%${safeSearch}%,slug.ilike.%${safeSearch}%`);
-    }
-    const [{ data: pollsData, error: pollsError }, { data: slugRows, error: slugError }, { data: submissionRows, error: submissionRowsError }, pendingResult] = await Promise.all([
-      query,
-      supabaseAdmin.from("polls").select("id, slug").not("slug", "is", null),
-      supabaseAdmin.from("poll_submissions").select("poll_id, status").not("poll_id", "is", null),
-      supabaseAdmin.from("poll_submissions").select("id", { count: "exact", head: true }).neq("status", "hidden"),
+    const [inventory, pollsData] = await Promise.all([
+      loadAdminInventory(supabaseAdmin),
+      fetchAllById(after => {
+        let query = supabaseAdmin.from("polls").select("id, question, description, category, region, slug, is_private, featured, embed_token, is_embeddable, embed_active, embed_voting_enabled, created_at, is_publicly_listed").order("id").limit(1000);
+        if (after !== null) query = query.gt("id", after);
+        if (search) {
+          const safeSearch = search.replace(/[%(),]/g, " ");
+          query = query.or(`question.ilike.%${safeSearch}%,description.ilike.%${safeSearch}%,slug.ilike.%${safeSearch}%`);
+        }
+        return query;
+      }),
     ]);
-    if (pollsError || slugError || submissionRowsError) return NextResponse.json({ error: "Could not load polls." }, { status: 500 });
-
-    const hiddenSubmissionPollIds = new Set(
-      (submissionRows || [])
-        .filter((row) => row.status === "hidden")
-        .map((row) => Number(row.poll_id))
-        .filter((id) => Number.isInteger(id))
-    );
-    const nonLiveSubmissionPollIds = new Set(
-      (submissionRows || [])
-        .filter((row) => row.status !== "hidden")
-        .map((row) => Number(row.poll_id))
-        .filter((id) => Number.isInteger(id))
-    );
-    // Hidden polls never belong in Live Polls. Otherwise a publicly listed poll is live,
-    // while an unlisted poll with an active submission remains in Submissions.
-    const basePolls = (pollsData || []).filter(
-      (poll) =>
-        !hiddenSubmissionPollIds.has(Number(poll.id)) &&
-        (Boolean(poll.is_publicly_listed) || !nonLiveSubmissionPollIds.has(Number(poll.id)))
-    );
+    const basePolls = pollsData.filter(p => inventory.liveIds.has(Number(p.id)))
+      .sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id - a.id);
     const pollIds = basePolls.map((poll) => Number(poll.id));
     const optionRows: Array<{ id:number; poll_id:number; option_text:string; image_url:string|null; vote_count:number }> = [];
-    if (pollIds.length) {
-      let from = 0;
-      const pageSize = 1000;
-      while (true) {
-        const { data, error } = await supabaseAdmin.from("poll_options").select("id, poll_id, option_text, image_url, vote_count").in("poll_id", pollIds).order("poll_id", { ascending: true }).order("id", { ascending: true }).range(from, from + pageSize - 1);
-        if (error) return NextResponse.json({ error: "Could not load polls." }, { status: 500 });
-        optionRows.push(...((data || []) as typeof optionRows));
-        if (!data || data.length < pageSize) break;
-        from += pageSize;
-      }
+    // Bound the IN list as well as the result page size, avoiding oversized URLs.
+    for (let offset = 0; offset < pollIds.length; offset += 200) {
+      const batch = pollIds.slice(offset, offset + 200);
+      const rows = await fetchAllById(after => {
+        let query = supabaseAdmin.from("poll_options").select("id, poll_id, option_text, image_url, vote_count").in("poll_id", batch).order("id").limit(1000);
+        if (after !== null) query = query.gt("id", after);
+        return query;
+      });
+      optionRows.push(...rows);
     }
     const optionsByPoll = new Map<number, typeof optionRows>();
     optionRows.forEach((row) => { const existing = optionsByPoll.get(Number(row.poll_id)) || []; existing.push({ ...row, id:Number(row.id), poll_id:Number(row.poll_id), vote_count:Number(row.vote_count || 0) }); optionsByPoll.set(Number(row.poll_id), existing); });
     const polls = basePolls.map((poll) => ({ ...poll, options: optionsByPoll.get(Number(poll.id)) || [] }));
-    return NextResponse.json({ polls, allSlugs: (slugRows || []).filter((row) => row.slug).map((row) => ({ id: row.id, slug: row.slug as string })), pendingSubmissionsCount: pendingResult.count || 0 });
+    return NextResponse.json({ polls, allSlugs: inventory.polls.filter(row => row.slug).map(row => ({ id: row.id, slug: row.slug as string })), pendingSubmissionsCount: inventory.submissionCount });
   } catch { return NextResponse.json({ error: "Could not load polls." }, { status: 500 }); }
 }
 

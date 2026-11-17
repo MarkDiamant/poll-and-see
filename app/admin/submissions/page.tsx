@@ -57,6 +57,7 @@ const [regionFilter, setRegionFilter] = useState<"all" | "UK" | "US" | "Universa
 const [scheduleFilter, setScheduleFilter] = useState<"all" | "unscheduled" | "scheduled">("all");
   const [submissions, setSubmissions] = useState<PollSubmissionRow[]>([]);
   const [livePollCount, setLivePollCount] = useState(0);
+  const [pendingSubmissionsCount, setPendingSubmissionsCount] = useState(0);
   const [hiddenPollCount, setHiddenPollCount] = useState(0);
   const [questionEdits, setQuestionEdits] = useState<Record<number, string>>({});
   const [descriptionEdits, setDescriptionEdits] = useState<Record<number, string>>({});
@@ -139,6 +140,7 @@ useEffect(() => {
         if (isCancelled) return;
 setSubmissions(nextSubmissions);
         setLivePollCount(data.livePollCount || 0);
+        setPendingSubmissionsCount(data.pendingSubmissionsCount || 0);
 
         const hiddenResponse = await fetch("/api/admin/hidden", {
           headers: {
@@ -302,6 +304,7 @@ return () => {
     setAdminKeyInput("");
     setSubmissions([]);
     setLivePollCount(0);
+    setPendingSubmissionsCount(0);
     setQuestionEdits({});
     setDescriptionEdits({});
     setOptionsEdits({});
@@ -695,7 +698,7 @@ const hideSubmission = async (submissionId: number) => {
                 className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-black"
               >
                 <span>Submissions</span>
-                {badge(sortedSubmissions.length, true)}
+                {badge(pendingSubmissionsCount, true)}
               </Link>
 <Link
   href="/admin/schedule"
