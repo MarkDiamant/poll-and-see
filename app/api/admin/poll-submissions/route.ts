@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { fetchAllById, loadAdminInventory } from "@/lib/adminInventory";
 
 function getAdminClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -83,71 +84,28 @@ export async function GET(request: NextRequest) {
     const supabaseAdmin = getAdminClient();
     const search = request.nextUrl.searchParams.get("q")?.trim() || "";
 
-let query = supabaseAdmin
-  .from("poll_submissions")
-  .select("id, poll_id, email, question, description, category, region, options, option_image_urls, is_private, status, scheduled_publish_at, created_at")
-  .neq("status", "hidden")
-  .order("created_at", { ascending: false });
-
-    if (search) {
-      const safeSearch = search.replace(/[%(),]/g, " ");
-      query = query.or(
-        `question.ilike.%${safeSearch}%,description.ilike.%${safeSearch}%,email.ilike.%${safeSearch}%`
-      );
-    }
-
-    const [
-      { data, error },
-      { data: pollRows, error: pollRowsError },
-      { data: allSubmissionRows, error: allSubmissionRowsError },
-    ] = await Promise.all([
-      query,
-      supabaseAdmin.from("polls").select("id, slug, is_publicly_listed"),
-      supabaseAdmin.from("poll_submissions").select("poll_id, status").not("poll_id", "is", null),
+    const [inventory, data] = await Promise.all([
+      loadAdminInventory(supabaseAdmin),
+      fetchAllById(after => {
+        let query = supabaseAdmin.from("poll_submissions")
+          .select("id, poll_id, email, question, description, category, region, options, option_image_urls, is_private, status, scheduled_publish_at, created_at")
+          .neq("status", "hidden").order("id").limit(1000);
+        if (after !== null) query = query.gt("id", after);
+        if (search) {
+          const safeSearch = search.replace(/[%(),]/g, " ");
+          query = query.or(`question.ilike.%${safeSearch}%,description.ilike.%${safeSearch}%,email.ilike.%${safeSearch}%`);
+        }
+        return query;
+      }),
     ]);
-
-    if (error || pollRowsError || allSubmissionRowsError) {
-      return NextResponse.json({ error: "Could not load submissions." }, { status: 500 });
-    }
-
-    const slugByPollId = new Map<number, string>();
-    (pollRows || []).forEach((row) => {
-      if (row.slug) {
-        slugByPollId.set(row.id, row.slug);
-      }
-    });
-
-    // A published poll belongs in Live Polls, not in the submissions queue.
-    // Retain its submission record for audit/history, but do not return it here.
-    const publiclyListedPollIds = new Set((pollRows || []).filter((poll) => poll.is_publicly_listed).map((poll) => Number(poll.id)));
-    const submissions = (data || [])
-      .filter((row) => !row.poll_id || !publiclyListedPollIds.has(Number(row.poll_id)))
-      .map((row) => ({
-        ...row,
-        slug: row.poll_id ? slugByPollId.get(row.poll_id) || null : null,
-      }));
-
-    const hiddenSubmissionPollIds = new Set(
-      (allSubmissionRows || [])
-        .filter((row) => row.status === "hidden")
-        .map((row) => Number(row.poll_id))
-        .filter((id) => Number.isInteger(id))
-    );
-    const nonLiveSubmissionPollIds = new Set(
-      (allSubmissionRows || [])
-        .filter((row) => row.status !== "hidden")
-        .map((row) => Number(row.poll_id))
-        .filter((id) => Number.isInteger(id))
-    );
-    const livePollCount = (pollRows || []).filter(
-      (poll) =>
-        !hiddenSubmissionPollIds.has(Number(poll.id)) &&
-        (Boolean(poll.is_publicly_listed) || !nonLiveSubmissionPollIds.has(Number(poll.id)))
-    ).length;
-
+    const slugByPollId = new Map(inventory.polls.map(p => [Number(p.id), p.slug]));
+    const submissions = data.filter(inventory.isQueued)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id - a.id)
+      .map(row => ({ ...row, slug: row.poll_id ? slugByPollId.get(Number(row.poll_id)) || null : null }));
     return NextResponse.json({
       submissions,
-      livePollCount,
+      livePollCount: inventory.liveIds.size,
+      pendingSubmissionsCount: inventory.submissionCount,
     });
   } catch {
     return NextResponse.json({ error: "Could not load submissions." }, { status: 500 });
